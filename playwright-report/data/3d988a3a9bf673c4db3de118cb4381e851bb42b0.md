@@ -1,0 +1,47 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - generic [ref=e4]:
+      - heading "Create Account" [level=1] [ref=e5]
+      - paragraph [ref=e6]: Set up your Arcus Smart Home
+    - generic [ref=e7]:
+      - generic [ref=e9]: "1"
+      - generic [ref=e12]: "2"
+      - generic [ref=e15]: "3"
+      - generic [ref=e18]: "4"
+    - generic [ref=e19]:
+      - heading "Account" [level=2] [ref=e20]
+      - generic [ref=e21]:
+        - generic [ref=e22]:
+          - generic [ref=e23]:
+            - generic [ref=e24]: First Name
+            - textbox "First Name" [ref=e25]
+          - generic [ref=e26]:
+            - generic [ref=e27]: Last Name
+            - textbox "Last Name" [ref=e28]
+        - generic [ref=e29]:
+          - generic [ref=e30]: Email
+          - textbox "Email" [ref=e31]
+        - generic [ref=e32]:
+          - generic [ref=e33]: Phone (optional)
+          - textbox "Phone (optional)" [ref=e34]
+        - generic [ref=e35]:
+          - generic [ref=e36]: Password
+          - textbox "Password" [ref=e37]
+        - generic [ref=e38]:
+          - generic [ref=e39]: Confirm Password
+          - textbox "Confirm Password" [ref=e40]
+        - generic [ref=e41]:
+          - checkbox "Keep me up to date with news and offers" [ref=e42]
+          - text: Keep me up to date with news and offers
+        - button "Create Account" [ref=e43]
+    - paragraph [ref=e44]:
+      - text: Already have an account?
+      - link "Log in" [ref=e45] [cursor=pointer]:
+        - /url: /login
+  - button "Open Next.js Dev Tools" [ref=e51] [cursor=pointer]:
+    - img [ref=e52]
+  - alert [ref=e55]
+```

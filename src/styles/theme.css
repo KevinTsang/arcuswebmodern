@@ -1,0 +1,76 @@
+/*
+ * Design tokens extracted from src/styles/variables/
+ * color-palette.less, layout.less, typography.less
+ */
+
+@theme {
+  /* === Colors (Bird species theme) === */
+
+  /* Status Colors */
+  --color-ibis: #FF0000;
+  --color-canary: #FFB500;
+  --color-kingfisher: #00BFB3;
+  --color-peacock: #0095C8;
+  --color-bluejay: #004B87;
+  --color-loon: #8781BD;
+  --color-honeycreeper: #3C1053;
+  --color-lovebird: #26D07C;
+  --color-cardinal: #CE0F69;
+  --color-parakeet: #00BA6D;
+
+  /* Greys */
+  --color-raven: #000000;
+  --color-swift: #333333;
+  --color-coot: #666666;
+  --color-grouse: #999999;
+  --color-heron: #CCCCCC;
+  --color-pigeon: #EFEFEF;
+  --color-dove: #FBFBFB;
+  --color-crane: #FFFFFF;
+
+  /* Alarm Colors */
+  --color-fire: #AE0007;
+  --color-police: #0056AE;
+  --color-water: #0097AE;
+  --color-panic: #8C8C8C;
+
+  /* Alarm Backgrounds */
+  --color-fire-bg: #EFCCCD;
+  --color-police-bg: #CCDDEF;
+  --color-water-bg: #CCEAEF;
+  --color-care-bg: #F1E8F6;
+
+  /* === Typography === */
+  --font-family-base: "Helvetica Neue", Helvetica, Arial, sans-serif;
+
+  --font-size-base: 1rem;           /* 16px */
+  --font-size-larger: 1.375rem;     /* 22px */
+  --font-size-large: 1.1875rem;     /* 19px */
+  --font-size-small: 0.875rem;      /* 14px */
+  --font-size-smaller: 0.75rem;     /* 12px */
+
+  --font-size-h1: 1.875rem;         /* 30px */
+  --font-size-h2: 1.4375rem;        /* 23px */
+  --font-size-h3: 1.25rem;          /* 20px */
+  --font-size-h4: 1.125rem;         /* 18px */
+  --font-size-h5: 1rem;             /* 16px */
+  --font-size-h6: 0.9375rem;        /* 15px */
+
+  --line-height-base: 1.5rem;       /* 24px */
+  --heading-font-weight: 300;
+  --heading-line-height: 1.1;
+
+  /* === Layout === */
+  --gutter: 30px;
+  --border-radius-base: 4px;
+
+  /* Z-indexes */
+  --z-radio-button: 500;
+  --z-navbar: 1000;
+  --z-dropdown: 1010;
+  --z-popover: 1030;
+  --z-tooltip: 1030;
+  --z-modal-bg: 1070;
+  --z-modal: 1080;
+  --z-notifications: 1090;
+}
