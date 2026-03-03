@@ -11,9 +11,6 @@ export type { CorneaMessage, EventSubject } from './cornea';
 export { default as Bridge } from './bridge';
 export type { BridgeConfig } from './bridge';
 
-export { Backoff } from './backoff';
-export type { BackoffOptions } from './backoff';
-
 export { default as propertyAliases } from './property-aliases';
 export type { PropertyAliasMap } from './property-aliases';
 

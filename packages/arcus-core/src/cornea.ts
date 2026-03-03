@@ -1,14 +1,14 @@
 /**
  * WebSocket library for communicating with the Arcus platform.
- * Actively tries to reconnect using exponential backoff if the connection
- * is not cleanly closed. Implements a simple EventEmitter pattern.
+ * Uses partysocket for automatic reconnection with exponential backoff.
+ * Implements a simple EventEmitter pattern for application-level events.
  *
- * Ported from src/cornea/cornea.js — removed jQuery queue workaround
- * and System.isEnv dependency.
+ * Ported from src/cornea/cornea.js — replaced native WebSocket + custom
+ * backoff with partysocket's ReconnectingWebSocket.
  */
 
+import { WebSocket as ReconnectingWebSocket } from 'partysocket';
 import { v1 as uuidv1 } from 'uuid';
-import { Backoff } from './backoff';
 
 // ── Minimal EventEmitter ──────────────────────────────────────────────
 
@@ -86,11 +86,6 @@ interface PendingRequest {
   timeout: ReturnType<typeof setTimeout>;
 }
 
-interface ConnectionPromise {
-  resolve: () => void;
-  reject: (reason?: any) => void;
-}
-
 export interface EventSubject {
   id: string;
   namespace: string;
@@ -101,13 +96,7 @@ export interface EventSubject {
 
 export class Cornea extends EventEmitter {
   id: string | null = null;
-  connected: Promise<void> | null = null;
-  private connectionPromise: ConnectionPromise | null = null;
-  socket: WebSocket | null = null;
-  reconnecting = false;
-  connecting = false;
-  wasConnected = false;
-  private backoff: Backoff | null = null;
+  socket: ReconnectingWebSocket | null = null;
   requests: Record<string, PendingRequest> = {};
   timeout = 50 * 1000;
   url = '';
@@ -125,100 +114,61 @@ export class Cornea extends EventEmitter {
     }
   }
 
-  resetState(): void {
-    this.id = null;
-    this.connected = null;
-    this.connectionPromise = null;
-    this.socket = null;
-    this.reconnecting = false;
-    this.connecting = false;
-    this.wasConnected = false;
-    this.backoff = null;
-    this.requests = {};
-  }
-
+  /**
+   * Open a WebSocket connection to the given URL.
+   * Returns a promise that resolves once the first connection succeeds.
+   * Reconnection after abnormal closures is handled automatically by
+   * partysocket; close codes 1000 and 4001 stop reconnection.
+   */
   initialize(url: string): Promise<void> {
     if (typeof url !== 'string') {
       throw new Error('URL must be defined to establish a web socket connection');
     }
 
-    if (typeof WebSocket === 'undefined') {
-      throw new Error('WebSockets not supported in the current environment.');
-    }
-
-    if (!this.backoff) {
-      this.backoff = new Backoff(
-        {
-          initial: 100,
-          max: 30000,
-          callback: () => this.connect(),
-        },
-        this.debug,
-      );
+    // Clean up any existing connection before starting a new one
+    if (this.socket) {
+      this.cleanup();
     }
 
     this.url = url;
 
-    if (!this.socket) {
-      this.connect();
-    }
-    return this.connected!;
-  }
+    return new Promise<void>((resolve, reject) => {
+      let settled = false;
 
-  connect(): Promise<void> {
-    this.log('Connecting...');
-    this.connecting = true;
-
-    if (!this.connected) {
-      this.connected = new Promise<void>((resolve, reject) => {
-        this.connectionPromise = { resolve, reject };
+      this.socket = new ReconnectingWebSocket(url, undefined, {
+        maxReconnectionDelay: 30000,
+        minReconnectionDelay: 100,
+        reconnectionDelayGrowFactor: 2,
+        connectionTimeout: 4000,
+        debug: this.debug,
       });
-    }
 
-    this.socket = new WebSocket(this.url);
+      this.socket.onopen = () => {
+        this.id = uuidv1();
+        this.log('Connected');
+        if (!settled) {
+          settled = true;
+          resolve();
+        }
+      };
 
-    this.socket.onopen = () => {
-      this.connectionPromise!.resolve();
-      this.onOpen();
-    };
+      this.socket.onerror = (ev) => {
+        this.log('Error', ev);
+        if (!settled) {
+          settled = true;
+          reject(ev);
+        }
+      };
 
-    this.socket.onerror = (ev) => {
-      if (this.connectionPromise) {
-        this.connectionPromise.reject(ev);
-      }
-      this.onError(ev);
-    };
-
-    this.socket.onclose = (ev) => this.onClose(ev);
-    this.socket.onmessage = (ev) => this.onMessage(ev);
-
-    return this.connected.then(() => this.onConnected());
-  }
-
-  private onConnected(): void {
-    this.log('Connected!');
-    this.connecting = false;
-    this.stopReconnect();
-  }
-
-  private stopReconnect(): void {
-    this.reconnecting = false;
-    if (this.backoff) {
-      this.backoff.cancel();
-    }
-  }
-
-  reconnect(): void {
-    if (this.reconnecting) return;
-    this.reconnecting = true;
-    this.log('Attempting to reconnect...');
-    this.backoff!.start();
+      this.socket.onclose = (ev) => this.onClose(ev as CloseEvent);
+      this.socket.onmessage = (ev) => this.onMessage(ev);
+    });
   }
 
   send(msg: CorneaMessage): Promise<Record<string, any>> {
     return new Promise((resolve, reject) => {
       const socket = this.socket;
-      if (!socket || socket.readyState !== WebSocket.OPEN) {
+      if (!socket || socket.readyState !== ReconnectingWebSocket.OPEN) {
         const errorMessage = this.getErrorMessage(
           "Wait a moment... we're getting things ready for you.",
           msg,
@@ -227,49 +177,33 @@ export class Cornea extends EventEmitter {
         return;
       }
 
-      this.connected!.then(() => {
-        const uuid = uuidv1();
-        const currentId = this.id;
-        msg.headers.correlationId = uuid;
+      const uuid = uuidv1();
+      const currentId = this.id;
+      msg.headers.correlationId = uuid;
 
-        this.requests[uuid] = {
-          resolve,
-          reject,
-          timeout: setTimeout(() => {
-            if (this.id === currentId) {
-              const timeoutMessage = this.getErrorMessage(
-                'Oops, there seems to be a problem connecting right now.',
-                msg,
-              );
-              reject(timeoutMessage.payload.attributes);
-            }
-          }, this.timeout),
-        };
+      this.requests[uuid] = {
+        resolve,
+        reject,
+        timeout: setTimeout(() => {
+          if (this.id === currentId) {
+            const timeoutMessage = this.getErrorMessage(
+              'Oops, there seems to be a problem connecting right now.',
+              msg,
+            );
+            reject(timeoutMessage.payload.attributes);
+          }
+        }, this.timeout),
+      };
 
-        this.log(`--> ${msg.type}`, msg);
-        const payload = JSON.stringify(msg);
+      this.log(`--> ${msg.type}`, msg);
 
-        try {
-          socket.send(payload);
-        } catch (e) {
-          this.log('Error', e);
-          reject(e);
-        }
-      }).catch((e) => reject(e));
+      try {
+        socket.send(JSON.stringify(msg));
+      } catch (e) {
+        this.log('Error', e);
+        reject(e);
+      }
     });
-  }
-
-  close(): void {
-    this.log('Closing Connection');
-    this.stopReconnect();
-    if (!this.socket) return;
-    this.socket.close();
-  }
-
-  private onOpen(): void {
-    this.id = uuidv1();
-    this.wasConnected = true;
-    this.log('Connected');
   }
 
   getEventSubject(source: string | undefined): EventSubject | null {
@@ -287,6 +221,15 @@ export class Cornea extends EventEmitter {
     }
 
     return { id: parts[2], namespace: parts[1], address: source };
+  }
+
+  cleanup(): void {
+    if (this.socket) {
+      this.socket.close(); // stops partysocket reconnection
+      this.socket = null;
+    }
+    this.id = null;
+    this.requests = {};
   }
 
   private onMessage(ev: MessageEvent): void {
@@ -326,10 +269,6 @@ export class Cornea extends EventEmitter {
     }
   }
 
-  private onError(ev: Event): void {
-    this.log('Error', ev);
-  }
-
   private getErrorMessage(errorMessage: string, originalMessage: CorneaMessage): CorneaMessage {
     return {
       type: 'Error',
@@ -350,27 +289,15 @@ export class Cornea extends EventEmitter {
   private onClose(ev: CloseEvent): void {
     this.log('Connection Closed', ev);
     this.emit('WebSocketClosed', ev);
-    this.connected = null;
 
-    if (![1000, 4001].includes(ev.code)) {
-      if (this.reconnecting) {
-        this.backoff!.continue();
-      } else if (this.wasConnected) {
-        this.reconnect();
-      } else {
-        this.cleanup();
-      }
-    } else {
+    // 1000 = clean logout, 4001 = session ended — stop reconnecting
+    if ([1000, 4001].includes(ev.code)) {
       this.cleanup();
       if (ev.code === 4001) {
         this.emit('sess unauthorized');
       }
     }
-  }
-
-  cleanup(): void {
-    this.close();
-    this.resetState();
+    // For any other close code, partysocket reconnects automatically
   }
 }
 
