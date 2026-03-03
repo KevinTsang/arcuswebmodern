@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --port 3000",
+    "dev": "next dev --experimental-https --experimental-https-key certs/key.pem --experimental-https-cert certs/cert.pem --hostname localdev.irisbylowes.com --port 8443",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
@@ -15,7 +15,7 @@
   "dependencies": {
     "@reduxjs/toolkit": "^2.5.0",
     "@tailwindcss/postcss": "^4.2.1",
-    "next": "^15.1.0",
+    "next": "^16.1.6",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-redux": "^9.2.0"
@@ -31,7 +31,7 @@
     "@types/react-dom": "^19.0.0",
     "cypress": "^15.11.0",
     "eslint": "^9.0.0",
-    "eslint-config-next": "^15.1.0",
+    "eslint-config-next": "^16.1.6",
     "jest": "^30.2.0",
     "jest-environment-jsdom": "^30.2.0",
     "postcss": "^8.4.49",

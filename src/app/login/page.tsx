@@ -88,7 +88,7 @@ function LoginForm() {
           loginThunk({
             username: emailAddress,
             password,
-            isPublic: isPublic ? 'true' : undefined,
+            isPublic,
           }),
         ).unwrap();
 

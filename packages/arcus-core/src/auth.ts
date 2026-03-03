@@ -76,7 +76,7 @@ class Auth {
   async login(
     username: string,
     password: string,
-    isPublic?: string,
+    isPublic: boolean,
   ): Promise<void> {
     const config = getConfig();
     const url = `${config.apiUrl.replace(/\/+$/, '')}/login`;
@@ -91,7 +91,7 @@ class Auth {
       body: new URLSearchParams({
         user: username,
         password,
-        ...(isPublic ? { public: isPublic } : {}),
+        public: isPublic ? 'true' : 'false',
       }),
     });
 

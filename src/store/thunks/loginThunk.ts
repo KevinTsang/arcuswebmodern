@@ -36,7 +36,7 @@ export function initializeCoreConfig(): void {
 export const loginThunk = createAsyncThunk(
   'auth/login',
   async (
-    { username, password, isPublic }: { username: string; password: string; isPublic?: string },
+    { username, password, isPublic }: { username: string; password: string; isPublic: boolean },
     { dispatch },
   ) => {
     initializeCoreConfig();
