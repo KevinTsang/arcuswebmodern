@@ -23,7 +23,7 @@ import auth from '@arcus/core/auth';
 import Bridge from '@arcus/core/bridge';
 import { loginSuccess } from '@/store/slices/authSlice';
 import { loadPlaceDataThunk } from '@/store/thunks/loadPlaceDataThunk';
-import { initializeCoreConfig } from '@/store/thunks/loginThunk';
+import { initializeCoreConfig } from '@/store/thunks/initConfig';
 import { useFormValidation, type ValidationConstraints } from '@/hooks/useFormValidation';
 
 // ── Steps ─────────────────────────────────────────────────────────

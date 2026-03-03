@@ -1,38 +1,25 @@
 /**
- * Async thunks for authentication.
+ * Async thunk for login with username and password.
  *
- * Replaces the auth flow from src/models/auth.js and the session
- * handling in src/app.js.
+ * 1. POST credentials + open WebSocket
+ * 2. Wait for SessionCreated event
+ * 3. Fetch account data
+ * 4. Determine placeId
+ * 5. SessionService.SetActivePlace(placeId)
+ * 6. createSession() server action (server-side cookie)
+ * 7. Store placeId in localStorage
+ * 8. Dispatch loginSuccess
+ * 9. Return { person, account, placeId }
  */
 
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import auth from '@arcus/core/auth';
-import { setConfig } from '@arcus/core/config';
 import Bridge from '@arcus/core/bridge';
 import { SessionService } from '@arcus/core/services';
-import { setAuthenticating, loginSuccess, loginFailed, logout } from '../slices/authSlice';
+import { setAuthenticating, loginSuccess, loginFailed } from '../slices/authSlice';
+import { createSession } from '@/app/actions/session';
+import { initializeCoreConfig } from './initConfig';
 
-/**
- * Initialize the @arcus/core config from Next.js env vars.
- * Must be called before any auth or service calls.
- */
-export function initializeCoreConfig(): void {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? '';
-  const wsUrl = process.env.NEXT_PUBLIC_WS_URL ?? '';
-  const version = process.env.NEXT_PUBLIC_APP_VERSION ?? '1.0.0';
-  const redirectUrl = process.env.NEXT_PUBLIC_REDIRECT_URL ?? '';
-  const isProduction = process.env.NODE_ENV === 'production';
-
-  setConfig({ apiUrl, wsUrl, version, redirectUrl, isProduction });
-  Bridge.configure({ apiUrl, version });
-}
-
-/**
- * Log in with username and password.
- * 1. Calls auth.login() to POST credentials and open WebSocket
- * 2. Waits for SessionCreated event with person/account data
- * 3. Dispatches loginSuccess with person + account
- */
 export const loginThunk = createAsyncThunk(
   'auth/login',
   async (
@@ -62,9 +49,10 @@ export const loginThunk = createAsyncThunk(
         auth.login(username, password, isPublic).catch(reject);
       });
 
-      // The SessionCreated event payload contains person and account attributes
-      // Load full person and account from session
       const person = sessionData;
+      const personId = person['base:id'] as string;
+
+      // Fetch account data
       const accountId = person['person:currPlace']
         ? undefined
         : person['person:accountId'];
@@ -78,76 +66,25 @@ export const loginThunk = createAsyncThunk(
         }
       }
 
+      // Determine placeId from person data
+      const placeId = (person['person:currPlace'] as string)
+        ?? (account['account:owner'] as string)
+        ?? undefined;
+
+      if (placeId) {
+        // Scope the platform session to this place
+        await SessionService.SetActivePlace(placeId);
+        // Set server-side cookie for SSR/middleware
+        await createSession(personId, placeId, isPublic);
+        // Persist for session restore
+        localStorage.setItem('arcus:placeId', placeId);
+      }
+
       dispatch(loginSuccess({ person, account }));
-      return { person, account };
+      return { person, account, placeId };
     } catch (error) {
       dispatch(loginFailed());
       throw error;
     }
-  },
-);
-
-/**
- * Attempt to re-authenticate using an existing session cookie.
- * Called on app mount to restore session state.
- */
-export const authenticateThunk = createAsyncThunk(
-  'auth/authenticate',
-  async (_, { dispatch }) => {
-    initializeCoreConfig();
-    dispatch(setAuthenticating(true));
-
-    try {
-      const sessionData = await new Promise<Record<string, any>>((resolve, reject) => {
-        const onSuccess = (data: Record<string, any>) => {
-          auth.off('authentication:success', onSuccess);
-          auth.off('authentication:fail', onFail);
-          resolve(data);
-        };
-        const onFail = () => {
-          auth.off('authentication:success', onSuccess);
-          auth.off('authentication:fail', onFail);
-          reject(new Error('No valid session'));
-        };
-
-        auth.on('authentication:success', onSuccess);
-        auth.on('authentication:fail', onFail);
-
-        auth.authenticate().catch(reject);
-      });
-
-      const person = sessionData;
-      let account: Record<string, any> = {};
-
-      const accountId = person['person:accountId'];
-      if (accountId) {
-        try {
-          account = await Bridge.request('base:GetAttributes', `SERV:account:${accountId}`, {});
-        } catch {
-          // OK if account fetch fails
-        }
-      }
-
-      dispatch(loginSuccess({ person, account }));
-      return { person, account };
-    } catch {
-      dispatch(loginFailed());
-      return null;
-    }
-  },
-);
-
-/**
- * Log out: calls auth.logout(), clears cornea, dispatches logout action.
- */
-export const logoutThunk = createAsyncThunk(
-  'auth/logout',
-  async (_, { dispatch }) => {
-    try {
-      await auth.logout();
-    } catch {
-      // Ensure we logout even if the request fails
-    }
-    dispatch(logout());
   },
 );

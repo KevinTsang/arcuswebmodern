@@ -21,7 +21,7 @@ import auth from '@arcus/core/auth';
 import Bridge from '@arcus/core/bridge';
 import { loginSuccess } from '@/store/slices/authSlice';
 import { loadPlaceDataThunk } from '@/store/thunks/loadPlaceDataThunk';
-import { initializeCoreConfig } from '@/store/thunks/loginThunk';
+import { initializeCoreConfig } from '@/store/thunks/initConfig';
 import { useFormValidation, type ValidationConstraints } from '@/hooks/useFormValidation';
 
 type InviteStep = 'code' | 'confirm' | 'create-login' | 'pin' | 'welcome';
@@ -149,7 +149,7 @@ export default function InvitePage() {
         };
         auth.on('authentication:success', onSuccess);
         auth.on('authentication:fail', onFail);
-        auth.login(inviteeEmail, password).catch(reject);
+        auth.login(inviteeEmail, password, false).catch(reject);
       });
 
       setPersonData(sessionData);

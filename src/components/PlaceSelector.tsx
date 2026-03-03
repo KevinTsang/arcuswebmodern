@@ -12,7 +12,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { SessionService } from '@arcus/core/services';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { switchPlaceThunk } from '@/store/thunks/switchPlaceThunk';
-import { logoutThunk } from '@/store/thunks/loginThunk';
+import { logoutThunk } from '@/store/thunks/logoutThunk';
 import { useSidePanel } from '@/components/SidePanel';
 
 interface AvailablePlace {

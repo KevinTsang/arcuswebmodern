@@ -11,7 +11,7 @@
 import { useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { authenticateThunk } from '@/store/thunks/loginThunk';
+import { authenticateThunk } from '@/store/thunks/authenticateThunk';
 
 const PUBLIC_ROUTES = ['/login', '/create-account', '/invite'];
 

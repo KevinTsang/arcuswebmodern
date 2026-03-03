@@ -92,12 +92,9 @@ function LoginForm() {
           }),
         ).unwrap();
 
-        // On success, load place data and redirect
-        const placeId =
-          (result.person?.['person:currPlace'] as string) ??
-          (result.account?.['account:owner'] as string);
-        if (placeId) {
-          await dispatch(loadPlaceDataThunk(placeId)).unwrap();
+        // SetActivePlace + cookie already handled inside loginThunk
+        if (result.placeId) {
+          await dispatch(loadPlaceDataThunk(result.placeId)).unwrap();
         }
 
         const redirect = searchParams.get('redirect') ?? '/';
