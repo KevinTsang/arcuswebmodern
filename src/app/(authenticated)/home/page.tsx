@@ -183,6 +183,7 @@ export default function HomePage() {
       {/* History Sidebar */}
       {showSidebar && (
         <div className="bg-pigeon md:border-r border-heron w-full md:max-w-[350px] flex-shrink-0 overflow-hidden">
+          <img src="/default-home.jpg" alt={placeName} />
           <div className="flex justify-center items-center py-4 mx-[var(--gutter)] border-b border-heron">
             <h2 className="text-[length:var(--font-size-h3)] font-[var(--heading-font-weight)] text-swift text-center">
               <span className="icon-app-location-2 mr-2" />
