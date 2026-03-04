@@ -18,7 +18,7 @@ export function ProgressBar({ percent, label, color = 'bg-peacock' }: ProgressBa
   return (
     <div>
       {label && (
-        <div className="flex justify-between text-xs text-grouse mb-1">
+        <div className="progress-bar-label flex justify-between text-xs text-grouse mb-1">
           <span>{label}</span>
           <span>{Math.round(clamped)}%</span>
         </div>

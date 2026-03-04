@@ -31,7 +31,7 @@ export function ControlSwitch({ checked, onChange, label, disabled = false }: Co
           }`}
         />
       </button>
-      {label && <span className="text-sm text-coot">{label}</span>}
+      {label && <span className="control-switch-label text-sm text-coot">{label}</span>}
     </label>
   );
 }
