@@ -10,8 +10,9 @@
  * Sidebar shows recent history events.
  */
 
-import { useMemo, useCallback } from 'react';
+import { useMemo, useCallback, useState, useEffect } from 'react';
 import Link from 'next/link';
+import Bridge from '@arcus/core/bridge';
 import { useAppSelector } from '@/store/hooks';
 import { selectAllDevices } from '@/store/slices/devicesSlice';
 import { selectAllScenes } from '@/store/slices/scenesSlice';
@@ -72,12 +73,59 @@ const SERVICE_TO_NAMESPACE: Record<string, string> = {
   WATER: 'subwater',
 };
 
+interface HistoryEntry {
+  timestamp: number;
+  subjectName: string;
+  longMessage: string;
+}
+
+function formatDate(ts: number): string {
+  return new Date(ts).toLocaleDateString(undefined, {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+  });
+}
+
+function formatTime(ts: number): string {
+  return new Date(ts).toLocaleTimeString(undefined, {
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+}
+
 export default function HomePage() {
   const place = useAppSelector((s) => s.place.place);
   const preferences = useAppSelector((s) => s.place.preferences);
   const subsystems = useAppSelector(selectAllSubsystems);
+  const placeId = useAppSelector((s) => s.place.placeId);
 
   const placeName = (place?.['place:name'] as string) ?? 'Your Home';
+
+  const [showSidebar, setShowSidebar] = useState(true);
+  const [events, setEvents] = useState<HistoryEntry[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
+
+  // Fetch dashboard history
+  const fetchHistory = useCallback(async () => {
+    if (!placeId) return;
+    setRefreshing(true);
+    try {
+      const result = await Bridge.request(
+        'place:ListDashboardEntries',
+        `SERV:place:${placeId}`,
+        { limit: 5 },
+      );
+      setEvents((result.results as HistoryEntry[]) ?? []);
+    } catch {
+      // silently fail
+    }
+    setRefreshing(false);
+  }, [placeId]);
+
+  useEffect(() => {
+    fetchHistory();
+  }, [fetchHistory]);
 
   // Card ordering from preferences
   const cards = useMemo(() => {
@@ -98,25 +146,108 @@ export default function HomePage() {
     [subsystems],
   );
 
-  return (
-    <div className="p-[var(--gutter)]">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-[length:var(--font-size-h2)] font-[var(--heading-font-weight)] text-swift">
-          {placeName}
-        </h2>
-      </div>
+  // Group history events by date
+  const historyItems = useMemo(() => {
+    const items: React.ReactNode[] = [];
+    let lastDate = '';
+    for (let i = 0; i < events.length; i++) {
+      const entry = events[i];
+      const date = formatDate(entry.timestamp);
+      if (date !== lastDate) {
+        lastDate = date;
+        items.push(
+          <div key={`date-${i}`} className="text-center py-2">
+            <small className="text-xs text-grouse border-b border-t border-heron px-3 py-1">
+              {date}
+            </small>
+          </div>,
+        );
+      }
+      items.push(
+        <div key={i} className="flex gap-3 py-2">
+          <span className="text-xs text-swift font-semibold w-[90px] flex-shrink-0 text-right uppercase pt-0.5">
+            {formatTime(entry.timestamp)}
+          </span>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm text-swift">{entry.subjectName}</p>
+            <p className="text-xs text-grouse mt-0.5">{entry.longMessage}</p>
+          </div>
+        </div>,
+      );
+    }
+    return items;
+  }, [events]);
 
-      {/* Dashboard cards */}
-      <div className="space-y-4">
-        {cards.map((card) => {
-          if (!isAvailable(card.serviceName) && card.serviceName !== 'FAVORITES') {
-            return null;
-          }
-          return (
-            <DashboardCardRenderer key={card.serviceName} serviceName={card.serviceName} />
-          );
-        })}
+  return (
+    <div className="flex flex-col-reverse md:flex-row">
+      {/* History Sidebar */}
+      {showSidebar && (
+        <div className="bg-pigeon md:border-r border-heron w-full md:max-w-[350px] flex-shrink-0 overflow-hidden">
+          <div className="flex justify-center items-center py-4 mx-[var(--gutter)] border-b border-heron">
+            <h2 className="text-[length:var(--font-size-h3)] font-[var(--heading-font-weight)] text-swift text-center">
+              <span className="icon-app-location-2 mr-2" />
+              {placeName}
+            </h2>
+          </div>
+
+          <div className="flex justify-center items-center gap-2 pt-4 pb-2">
+            <h2 className="text-[length:var(--font-size-h4)] font-[var(--heading-font-weight)] text-swift">
+              History
+            </h2>
+            <button
+              onClick={fetchHistory}
+              className="text-peacock hover:opacity-75 transition-opacity"
+              title="Refresh history"
+            >
+              <span className={`icon-app-refresh text-sm ${refreshing ? 'animate-spin' : ''}`} />
+            </button>
+          </div>
+
+          <div className="px-[var(--gutter)] pb-2">
+            {events.length === 0 ? (
+              <p className="text-sm text-grouse py-4 text-center">No recent activity.</p>
+            ) : (
+              historyItems
+            )}
+          </div>
+
+          <div className="flex justify-center py-4">
+            <Link
+              href="/history"
+              className="bg-peacock text-crane px-6 py-2 rounded-[var(--border-radius-base)] hover:opacity-90 transition-opacity text-sm"
+            >
+              More
+            </Link>
+          </div>
+        </div>
+      )}
+
+      {/* Main Content */}
+      <div className="flex-1 min-w-0">
+        {/* Context bar with sidebar toggle */}
+        <div className="hidden md:flex items-center px-[var(--gutter)] pt-4 pb-2">
+          <button
+            onClick={() => setShowSidebar(!showSidebar)}
+            className="text-peacock hover:opacity-75 transition-opacity"
+            title={showSidebar ? 'Hide sidebar' : 'Show sidebar'}
+          >
+            <span className={showSidebar ? 'icon-app-sidebar-2 text-lg' : 'icon-app-sidebar-1 text-lg'} />
+          </button>
+        </div>
+
+        <div className="p-[var(--gutter)]">
+          {/* Dashboard cards */}
+          <div className="space-y-4">
+            {cards.map((card) => {
+              if (!isAvailable(card.serviceName) && card.serviceName !== 'FAVORITES') {
+                return null;
+              }
+              return (
+                <DashboardCardRenderer key={card.serviceName} serviceName={card.serviceName} />
+              );
+            })}
+          </div>
+        </div>
       </div>
     </div>
   );
