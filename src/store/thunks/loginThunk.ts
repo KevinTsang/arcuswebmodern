@@ -1,24 +1,24 @@
 /**
  * Async thunk for login with username and password.
  *
+ * Follows the arcusweb flow (auth.login → SessionCreated → SetActivePlace):
  * 1. POST credentials + open WebSocket
- * 2. Wait for SessionCreated event
- * 3. Fetch account data
- * 4. Determine placeId
- * 5. SessionService.SetActivePlace(placeId)
- * 6. createSession() server action (server-side cookie)
- * 7. Store placeId in localStorage
- * 8. Dispatch loginSuccess
- * 9. Return { person, account, placeId }
+ * 2. Wait for SessionCreated event (payload: { personId, places[] })
+ * 3. Determine placeId from places array (OWNER first, then alphabetical)
+ * 4. SessionService.SetActivePlace(placeId)
+ * 5. createSession() server action (server-side cookie)
+ * 6. Store placeId in localStorage
+ * 7. Dispatch loginSuccess
+ * 8. Return { session, placeId }
  */
 
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import auth from '@arcus/core/auth';
-import Bridge from '@arcus/core/bridge';
 import { SessionService } from '@arcus/core/services';
 import { setAuthenticating, loginSuccess, loginFailed } from '../slices/authSlice';
 import { createSession } from '@/app/actions/session';
 import { initializeCoreConfig } from './initConfig';
+import { getDefaultPlaceId } from './placeSelection';
 
 export const loginThunk = createAsyncThunk(
   'auth/login',
@@ -30,8 +30,9 @@ export const loginThunk = createAsyncThunk(
     dispatch(setAuthenticating(true));
 
     try {
-      // auth.login() opens WebSocket; SessionCreated fires with user data
-      const sessionData = await new Promise<Record<string, any>>((resolve, reject) => {
+      // auth.login() POSTs credentials then opens WebSocket.
+      // SessionCreated fires once the server confirms the session.
+      const session = await new Promise<Record<string, any>>((resolve, reject) => {
         const onSuccess = (data: Record<string, any>) => {
           auth.off('authentication:success', onSuccess);
           auth.off('authentication:fail', onFail);
@@ -49,27 +50,17 @@ export const loginThunk = createAsyncThunk(
         auth.login(username, password, isPublic).catch(reject);
       });
 
-      const person = sessionData;
-      const personId = person['base:id'] as string;
+      // SessionCreated payload: { personId, places[], ... }
+      const personId = session.personId as string;
+      const places = (session.places ?? []) as Array<{
+        placeId: string;
+        placeName: string;
+        accountId: string;
+        role: string;
+      }>;
 
-      // Fetch account data
-      const accountId = person['person:currPlace']
-        ? undefined
-        : person['person:accountId'];
-
-      let account: Record<string, any> = {};
-      if (accountId) {
-        try {
-          account = await Bridge.request('base:GetAttributes', `SERV:account:${accountId}`, {});
-        } catch {
-          // Account fetch may fail for non-owner, that's OK
-        }
-      }
-
-      // Determine placeId from person data
-      const placeId = (person['person:currPlace'] as string)
-        ?? (account['account:owner'] as string)
-        ?? undefined;
+      // Determine default place (same logic as arcusweb PlaceManager)
+      const placeId = getDefaultPlaceId(places, personId);
 
       if (placeId) {
         // Scope the platform session to this place
@@ -77,11 +68,11 @@ export const loginThunk = createAsyncThunk(
         // Set server-side cookie for SSR/middleware
         await createSession(personId, placeId, isPublic);
         // Persist for session restore
-        localStorage.setItem('arcus:placeId', placeId);
+        localStorage.setItem(`arcus:placeId`, placeId);
       }
 
-      dispatch(loginSuccess({ person, account }));
-      return { person, account, placeId };
+      dispatch(loginSuccess({ person: session, account: {} }));
+      return { session, placeId };
     } catch (error) {
       dispatch(loginFailed());
       throw error;

@@ -1,15 +1,18 @@
 /**
  * Async thunk to re-authenticate using an existing session cookie.
  * Called on app mount to restore session state.
+ *
+ * Same flow as loginThunk but skips the POST — just opens WebSocket
+ * (the platform auth cookie is already set from a previous login).
  */
 
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import auth from '@arcus/core/auth';
-import Bridge from '@arcus/core/bridge';
 import { SessionService } from '@arcus/core/services';
 import { setAuthenticating, loginSuccess, loginFailed } from '../slices/authSlice';
 import { createSession } from '@/app/actions/session';
 import { initializeCoreConfig } from './initConfig';
+import { getDefaultPlaceId } from './placeSelection';
 
 export const authenticateThunk = createAsyncThunk(
   'auth/authenticate',
@@ -18,7 +21,7 @@ export const authenticateThunk = createAsyncThunk(
     dispatch(setAuthenticating(true));
 
     try {
-      const sessionData = await new Promise<Record<string, any>>((resolve, reject) => {
+      const session = await new Promise<Record<string, any>>((resolve, reject) => {
         const onSuccess = (data: Record<string, any>) => {
           auth.off('authentication:success', onSuccess);
           auth.off('authentication:fail', onFail);
@@ -36,26 +39,17 @@ export const authenticateThunk = createAsyncThunk(
         auth.authenticate().catch(reject);
       });
 
-      const person = sessionData;
-      let account: Record<string, any> = {};
+      // SessionCreated payload: { personId, places[], ... }
+      const personId = session.personId as string;
+      const places = (session.places ?? []) as Array<{
+        placeId: string;
+        placeName: string;
+        accountId: string;
+        role: string;
+      }>;
 
-      const accountId = person['person:accountId'];
-      if (accountId) {
-        try {
-          account = await Bridge.request('base:GetAttributes', `SERV:account:${accountId}`, {});
-        } catch {
-          // OK if account fetch fails
-        }
-      }
-
-      // Determine placeId: prefer localStorage, fall back to person:currPlace
-      const personId = person['base:id'] as string;
-      const storedPlaceId = typeof window !== 'undefined'
-        ? localStorage.getItem('arcus:placeId')
-        : null;
-      const placeId = storedPlaceId
-        ?? (person['person:currPlace'] as string)
-        ?? undefined;
+      // Determine default place (same logic as arcusweb PlaceManager)
+      const placeId = getDefaultPlaceId(places, personId);
 
       if (placeId) {
         // Scope the platform session to this place
@@ -64,8 +58,8 @@ export const authenticateThunk = createAsyncThunk(
         await createSession(personId, placeId);
       }
 
-      dispatch(loginSuccess({ person, account }));
-      return { person, account, placeId };
+      dispatch(loginSuccess({ person: session, account: {} }));
+      return { session, placeId };
     } catch {
       dispatch(loginFailed());
       return null;

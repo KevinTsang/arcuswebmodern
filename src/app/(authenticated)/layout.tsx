@@ -11,6 +11,7 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import { loadPlaceDataThunk } from '@/store/thunks/loadPlaceDataThunk';
+import { getDefaultPlaceId, type SessionPlace } from '@/store/thunks/placeSelection';
 import Header from '@/components/Header';
 import { SidePanelProvider } from '@/components/SidePanel';
 
@@ -31,10 +32,13 @@ export default function AuthenticatedLayout({
     }
   }, [authenticated, authenticating, router]);
 
-  // Load place data when authenticated but no placeId set yet
+  // Load place data when authenticated but no placeId set yet.
+  // SessionCreated payload has { personId, places[] }, not person model attributes.
   useEffect(() => {
     if (authenticated && person && !placeId) {
-      const defaultPlaceId = person['person:currPlace'] as string | undefined;
+      const personId = person.personId as string;
+      const places = (person.places ?? []) as SessionPlace[];
+      const defaultPlaceId = getDefaultPlaceId(places, personId);
       if (defaultPlaceId) {
         dispatch(loadPlaceDataThunk(defaultPlaceId));
       }
