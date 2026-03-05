@@ -18,6 +18,31 @@ import {
 
 type DeviceObj = Record<string, unknown>;
 
+// ── Multi-Switch Instance Helpers ─────────────────────────────────────
+
+/**
+ * Get switch instance keys from a multi-switch device (e.g., ZEN17 dual relay).
+ * Reads `base:instances` and returns keys whose capabilities include `swit`.
+ * Returns empty array for single-switch or non-switch devices.
+ */
+export function getSwitchInstances(device: DeviceObj): string[] {
+  const instances = device['base:instances'] as Record<string, string[]> | undefined;
+  if (!instances) return [];
+  return Object.entries(instances)
+    .filter(([, caps]) => Array.isArray(caps) && caps.includes('swit'))
+    .map(([key]) => key);
+}
+
+/**
+ * Format an instance key to a human-readable label.
+ * e.g., "relay1" → "Relay 1", "outlet2" → "Outlet 2"
+ */
+export function formatInstanceName(key: string): string {
+  return key
+    .replace(/([a-z])(\d)/i, '$1 $2')
+    .replace(/^./, (c) => c.toUpperCase());
+}
+
 // ── Device State Helpers ──────────────────────────────────────────────
 
 /** Celsius to Fahrenheit */
@@ -36,7 +61,12 @@ export function isDeviceOn(device: DeviceObj, config: DeviceWebConfig): boolean 
   if (config['web:isOnUnlessOffline']) {
     return !isDeviceOffline(device);
   }
-  // Switch capability
+  // Multi-switch: on if any instance is ON
+  const switchInstances = getSwitchInstances(device);
+  if (switchInstances.length > 1) {
+    return switchInstances.some((key) => device[`swit:state:${key}`] === 'ON');
+  }
+  // Single switch capability
   if (device['swit:state'] !== undefined) {
     return device['swit:state'] === 'ON';
   }
@@ -301,6 +331,17 @@ function getBadgeInfo(key: string, device: DeviceObj): BadgeInfo | null {
 export function getDeviceStatusText(device: DeviceObj, config: DeviceWebConfig): string {
   const on = isDeviceOn(device, config);
   const hint = ((device['dev:devtypehint'] as string) ?? '').replace(/\W/g, '').toLowerCase();
+
+  // Multi-switch: show per-instance status
+  const switchInstances = getSwitchInstances(device);
+  if (switchInstances.length > 1) {
+    return switchInstances
+      .map((key) => {
+        const state = device[`swit:state:${key}`] === 'ON' ? 'On' : 'Off';
+        return `${formatInstanceName(key)} ${state}`;
+      })
+      .join(', ');
+  }
 
   switch (hint) {
     case 'switch':

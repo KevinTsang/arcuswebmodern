@@ -11,7 +11,7 @@
 import { memo, useState, useCallback } from 'react';
 import { useDevice } from '@/hooks/useDeviceCapability';
 import { useDeviceActions } from '@/hooks/useDeviceActions';
-import { isDeviceOn, isDeviceOpen } from '@/hooks/useDeviceConfig';
+import { isDeviceOn, isDeviceOpen, getSwitchInstances, formatInstanceName } from '@/hooks/useDeviceConfig';
 import { resolveDeviceConfig } from '@/lib/deviceConfig';
 
 interface DeviceActionsProps {
@@ -32,6 +32,8 @@ function DeviceActionsInner({ address, action }: DeviceActionsProps) {
       return <OpenCloseValve address={address} />;
     case 'thermostat-slider':
       return <ThermostatControl address={address} />;
+    case 'multi-toggle':
+      return <MultiToggle address={address} />;
     default:
       return null;
   }
@@ -173,6 +175,63 @@ function OpenCloseValve({ address }: { address: string }) {
     >
       {pending ? '...' : open ? 'Close' : 'Open'}
     </button>
+  );
+}
+
+// ── Multi-Toggle (ZEN17 dual relay, ZEN14 double plug, etc.) ──────────
+
+function MultiToggle({ address }: { address: string }) {
+  const device = useDevice(address);
+  const { setAttribute } = useDeviceActions(address);
+  const [pendingKey, setPendingKey] = useState<string | null>(null);
+
+  const instances = device ? getSwitchInstances(device) : [];
+
+  const handleToggle = useCallback(
+    async (instanceKey: string, currentlyOn: boolean) => {
+      setPendingKey(instanceKey);
+      try {
+        await setAttribute(`swit:state:${instanceKey}`, currentlyOn ? 'OFF' : 'ON');
+      } finally {
+        setPendingKey(null);
+      }
+    },
+    [setAttribute],
+  );
+
+  if (!device || instances.length === 0) return null;
+
+  return (
+    <div className="flex items-center gap-3">
+      {instances.map((key) => {
+        const on = device[`swit:state:${key}`] === 'ON';
+        const pending = pendingKey === key;
+        return (
+          <div key={key} className="flex items-center gap-1.5">
+            <span className="text-xs text-grouse">{formatInstanceName(key)}</span>
+            <button
+              onClick={() => handleToggle(key, on)}
+              disabled={pending}
+              className={`
+                relative inline-flex h-7 w-12 items-center rounded-full transition-colors
+                ${on ? 'bg-peacock' : 'bg-heron'}
+                disabled:opacity-50
+              `}
+              role="switch"
+              aria-checked={on}
+              title={`Turn ${formatInstanceName(key)} ${on ? 'off' : 'on'}`}
+            >
+              <span
+                className={`
+                  inline-block h-5 w-5 rounded-full bg-crane shadow transition-transform
+                  ${on ? 'translate-x-6' : 'translate-x-1'}
+                `}
+              />
+            </button>
+          </div>
+        );
+      })}
+    </div>
   );
 }
 

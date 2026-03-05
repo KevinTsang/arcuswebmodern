@@ -423,6 +423,17 @@ export function resolveDeviceConfig(device: DeviceObj): DeviceWebConfig {
     Object.assign(config, productConfig[productId]);
   }
 
+  // Auto-detect multi-switch devices (e.g., ZEN17 dual relay, ZEN14 double plug)
+  const instances = device['base:instances'] as Record<string, string[]> | undefined;
+  if (instances) {
+    const switchInstanceKeys = Object.entries(instances)
+      .filter(([, caps]) => Array.isArray(caps) && caps.includes('swit'));
+    if (switchInstanceKeys.length > 1) {
+      config['web:panel:action'] = 'multi-toggle';
+      config['web:card:action'] = 'multi-toggle';
+    }
+  }
+
   return config;
 }
 
