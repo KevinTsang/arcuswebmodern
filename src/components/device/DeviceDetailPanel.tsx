@@ -14,6 +14,7 @@ import { isDeviceOffline, formatTemp } from '@/hooks/useDeviceConfig';
 import { useSidePanel } from '@/components/SidePanel';
 import { useAppDispatch } from '@/store/hooks';
 import { addNotification } from '@/store/slices/uiSlice';
+import { useDeviceActions } from '@/hooks/useDeviceActions';
 
 interface DeviceDetailPanelProps {
   address: string;
@@ -23,8 +24,10 @@ export function DeviceDetailPanel({ address }: DeviceDetailPanelProps) {
   const device = useDevice(address);
   const { closeRight } = useSidePanel();
   const dispatch = useAppDispatch();
+  const { sendCommand } = useDeviceActions(address);
   const [confirmRemove, setConfirmRemove] = useState(false);
   const [removing, setRemoving] = useState(false);
+  const [identifying, setIdentifying] = useState(false);
 
   const handleRemove = useCallback(async () => {
     if (!device) return;
@@ -40,8 +43,21 @@ export function DeviceDetailPanel({ address }: DeviceDetailPanelProps) {
     setRemoving(false);
   }, [address, device, dispatch, closeRight]);
 
+  const handleIdentify = useCallback(async () => {
+    setIdentifying(true);
+    try {
+      await sendCommand('ident:Identify');
+    } catch (e) {
+      dispatch(addNotification({ type: 'error', message: 'Failed to identify device' }));
+    } finally {
+      setIdentifying(false);
+    }
+  }, [sendCommand, dispatch]);
+
   if (!device) return null;
 
+  const caps = (device['base:caps'] as string[]) ?? [];
+  const supportsIdentify = caps.includes('ident');
   const name = (device['dev:name'] as string) ?? 'Unknown Device';
   const devType = (device['dev:devtypehint'] as string) ?? '';
   const vendor = (device['dev:vendor'] as string) ?? '';
@@ -61,7 +77,18 @@ export function DeviceDetailPanel({ address }: DeviceDetailPanelProps) {
         <button onClick={closeRight} className="text-grouse hover:text-swift text-sm">Done</button>
       </div>
 
-      <h4 className="text-base font-medium text-swift mb-4">{name}</h4>
+      <div className="flex items-center justify-between mb-4">
+        <h4 className="text-base font-medium text-swift">{name}</h4>
+        {supportsIdentify && (
+          <button
+            onClick={handleIdentify}
+            disabled={identifying}
+            className="text-sm text-kingfisher hover:underline disabled:opacity-50"
+          >
+            {identifying ? 'Identifying...' : 'Identify'}
+          </button>
+        )}
+      </div>
 
       {/* Info rows */}
       <dl className="space-y-3 mb-8">
