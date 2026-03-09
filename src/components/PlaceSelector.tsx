@@ -17,7 +17,7 @@ import { useSidePanel } from '@/components/SidePanel';
 
 interface AvailablePlace {
   placeId: string;
-  placeName: string;
+  name: string;
   role: string;
   [key: string]: unknown;
 }
@@ -35,7 +35,7 @@ export default function PlaceSelector() {
       .then((res: any) => {
         const sorted = (res.places ?? []).sort(
           (a: AvailablePlace, b: AvailablePlace) =>
-            (a.placeName ?? '').localeCompare(b.placeName ?? ''),
+            (a.name ?? '').localeCompare(b.name ?? ''),
         );
         setPlaces(sorted);
         setLoading(false);
@@ -98,7 +98,7 @@ export default function PlaceSelector() {
                     `}
                   />
                   <div>
-                    <span className="block font-medium">{place.placeName ?? 'Unnamed Place'}</span>
+                    <span className="block font-medium">{place.name ?? 'Unnamed Place'}</span>
                     {place.role && (
                       <span className="text-xs text-grouse capitalize">{place.role}</span>
                     )}
