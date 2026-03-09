@@ -45,7 +45,7 @@ const propertyAliases: PropertyAliasMap = {
       });
     },
     'ruletmpl:Resolve'(obj: any) {
-      if (obj.selectors.on) {
+      if (obj.selectors?.on) {
         obj.selectors.ON = obj.selectors.on;
         delete obj.selectors.on;
       }
