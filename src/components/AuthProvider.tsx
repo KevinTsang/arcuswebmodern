@@ -8,7 +8,7 @@
  * On failure, redirects to /login.
  */
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { authenticateThunk } from '@/store/thunks/authenticateThunk';
@@ -28,6 +28,11 @@ export default function AuthProvider({
   const router = useRouter();
   const pathname = usePathname();
   const { authenticating, authenticated } = useAppSelector((s) => s.auth);
+  // Track whether authenticating has ever been true (thunk has started)
+  const hasStartedAuth = useRef(false);
+  if (authenticating) {
+    hasStartedAuth.current = true;
+  }
 
   useEffect(() => {
     if (!authenticated && !authenticating) {
@@ -36,14 +41,15 @@ export default function AuthProvider({
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    // If authentication finished and failed, redirect to login (unless already on public route)
+    // Only redirect after the auth attempt has started and then completed
+    if (!hasStartedAuth.current) return;
     if (!authenticating && !authenticated && !isPublicRoute(pathname)) {
       router.replace('/login');
     }
   }, [authenticating, authenticated, pathname, router]);
 
-  // While authenticating, show a loading state (unless on a public page)
-  if (authenticating && !isPublicRoute(pathname)) {
+  // While authenticating (or before auth has started), show a loading state (unless on a public page)
+  if (!authenticated && !isPublicRoute(pathname)) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-grouse text-lg">Loading...</div>
