@@ -13,6 +13,7 @@ import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import { selectAllScenes } from '@/store/slices/scenesSlice';
 import { addNotification } from '@/store/slices/uiSlice';
 import { useSidePanel } from '@/components/SidePanel';
+import { ScenePanel } from '@/components/scene/ScenePanel';
 
 // ── Scene Card ────────────────────────────────────────────────────────
 
@@ -114,115 +115,6 @@ function SceneCard({
   );
 }
 
-// ── Scene Edit Panel (Side Panel Content) ─────────────────────────────
-
-function SceneEditPanel({ scene }: { scene: Record<string, unknown> }) {
-  const dispatch = useAppDispatch();
-  const { closeRight } = useSidePanel();
-  const [name, setName] = useState((scene['scene:name'] as string) ?? '');
-  const [saving, setSaving] = useState(false);
-  const [deleting, setDeleting] = useState(false);
-  const [confirmDelete, setConfirmDelete] = useState(false);
-
-  const address = scene['base:address'] as string;
-
-  const handleSave = useCallback(async () => {
-    if (!name.trim()) return;
-    setSaving(true);
-    try {
-      await Bridge.request('base:SetAttributes', address, {
-        'scene:name': name.trim(),
-      });
-      dispatch(addNotification({ type: 'success', message: 'Scene saved' }));
-      closeRight();
-    } catch {
-      dispatch(addNotification({ type: 'error', message: 'Failed to save scene' }));
-    }
-    setSaving(false);
-  }, [address, name, dispatch, closeRight]);
-
-  const handleDelete = useCallback(async () => {
-    setDeleting(true);
-    try {
-      await Bridge.request('scene:Delete', address, {});
-      dispatch(addNotification({ type: 'success', message: 'Scene deleted' }));
-      closeRight();
-    } catch {
-      dispatch(addNotification({ type: 'error', message: 'Failed to delete scene' }));
-    }
-    setDeleting(false);
-  }, [address, dispatch, closeRight]);
-
-  return (
-    <div>
-      <h3 className="text-lg font-semibold text-swift mb-4">Edit Scene</h3>
-
-      <div className="mb-4">
-        <label htmlFor="sceneName" className="block text-sm font-medium text-swift mb-1">
-          Scene Name
-        </label>
-        <input
-          id="sceneName"
-          type="text"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          className="w-full px-3 py-2 border border-grouse rounded-[var(--border-radius-base)] focus:outline-none focus:border-peacock"
-        />
-      </div>
-
-      <p className="text-sm text-grouse mb-6">
-        Full scene action editing will be available in a future update.
-      </p>
-
-      <div className="flex gap-3 mb-8">
-        <button
-          onClick={handleSave}
-          disabled={saving || !name.trim()}
-          className="bg-peacock text-crane px-5 py-2 rounded-[var(--border-radius-base)] hover:opacity-90 transition-opacity disabled:opacity-50 text-sm"
-        >
-          {saving ? 'Saving...' : 'Save'}
-        </button>
-        <button
-          onClick={closeRight}
-          className="border border-heron text-coot px-5 py-2 rounded-[var(--border-radius-base)] hover:bg-pigeon transition-colors text-sm"
-        >
-          Cancel
-        </button>
-      </div>
-
-      <hr className="border-heron mb-4" />
-
-      {!confirmDelete ? (
-        <button
-          onClick={() => setConfirmDelete(true)}
-          className="text-sm text-cardinal hover:underline"
-        >
-          Delete Scene
-        </button>
-      ) : (
-        <div>
-          <p className="text-sm text-swift mb-3">Are you sure you want to delete this scene?</p>
-          <div className="flex gap-3">
-            <button
-              onClick={handleDelete}
-              disabled={deleting}
-              className="bg-cardinal text-crane px-4 py-2 rounded-[var(--border-radius-base)] text-sm disabled:opacity-50"
-            >
-              {deleting ? 'Deleting...' : 'Yes, Delete'}
-            </button>
-            <button
-              onClick={() => setConfirmDelete(false)}
-              className="border border-heron text-coot px-4 py-2 rounded-[var(--border-radius-base)] text-sm"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
 // ── Page Component ────────────────────────────────────────────────────
 
 export default function ScenesPage() {
@@ -230,22 +122,36 @@ export default function ScenesPage() {
   const placeName = useAppSelector(
     (s) => (s.place.place?.['place:name'] as string) ?? 'Your Home',
   );
-  const { openRight } = useSidePanel();
+  const { openRight, expandRight } = useSidePanel();
 
   const handleEdit = useCallback(
     (scene: Record<string, unknown>) => {
-      openRight(<SceneEditPanel scene={scene} />);
+      openRight(<ScenePanel scene={scene} />);
+      expandRight();
     },
-    [openRight],
+    [openRight, expandRight],
   );
+
+  const handleAddScene = useCallback(() => {
+    openRight(<ScenePanel />);
+    expandRight();
+  }, [openRight, expandRight]);
 
   return (
     <div className="p-[var(--gutter)]">
       {/* Context bar */}
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-[length:var(--font-size-h2)] font-[var(--heading-font-weight)] text-swift">
-          Scenes
-        </h2>
+        <div className="flex items-center gap-3">
+          <h2 className="text-[length:var(--font-size-h2)] font-[var(--heading-font-weight)] text-swift">
+            Scenes
+          </h2>
+          <button
+            onClick={handleAddScene}
+            className="bg-peacock text-crane px-3 py-1.5 rounded-[var(--border-radius-base)] hover:opacity-90 text-sm font-medium"
+          >
+            + Add Scene
+          </button>
+        </div>
         <span className="text-sm text-grouse">{placeName}</span>
       </div>
 
