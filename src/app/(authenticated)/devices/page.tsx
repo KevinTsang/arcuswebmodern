@@ -7,8 +7,11 @@
  * (network rebuild and device removal guidance).
  */
 
-import { useState } from 'react';
-import { useAppSelector } from '@/store/hooks';
+import { useState, useCallback, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
+import Bridge from '@arcus/core/bridge';
+import { useAppSelector, useAppDispatch } from '@/store/hooks';
+import { addNotification } from '@/store/slices/uiSlice';
 import { selectAllDevices } from '@/store/slices/devicesSlice';
 import { DeviceList, HubPanel, ZWaveTools } from '@/components/device';
 
@@ -16,14 +19,64 @@ type ViewMode = 'devices' | 'zwave';
 
 export default function DevicesPage() {
   const [view, setView] = useState<ViewMode>('devices');
+  const router = useRouter();
+  const dispatch = useAppDispatch();
   const placeName = useAppSelector(
     (s) => (s.place.place?.['place:name'] as string) ?? 'Your Home',
   );
   const hub = useAppSelector((s) => s.hub.hub);
   const devices = useAppSelector(selectAllDevices);
+  const subsystems = useAppSelector((s) => s.subsystems);
 
   const hasHub = !!hub;
   const hasDevices = devices.length > 0;
+
+  const pairingSubAddr = useMemo(() => {
+    if (!subsystems?.entities) return null;
+    const entries = Object.values(subsystems.entities) as Array<Record<string, unknown>>;
+    const sub = entries.find((s) => {
+      const addr = s['base:address'] as string;
+      return addr?.includes('subpairing');
+    });
+    return (sub?.['base:address'] as string) ?? null;
+  }, [subsystems]);
+
+  const handleAddHubOrKit = useCallback(async () => {
+    if (!hub) {
+      router.push('/hub-setup');
+      return;
+    }
+    if (!pairingSubAddr) {
+      router.push('/hub-setup');
+      return;
+    }
+    try {
+      const [devResp, kitResp] = await Promise.all([
+        Bridge.request('subpairing:ListPairingDevices', pairingSubAddr, {}),
+        Bridge.request('subpairing:GetKitInformation', pairingSubAddr, {}),
+      ]);
+      const devices = (devResp['devices'] as Array<Record<string, unknown>>) ?? [];
+      const kitInfo = (kitResp['kitInfo'] as Array<Record<string, unknown>>) ?? [];
+      const unpaired = kitInfo.filter((kd) =>
+        devices.some(
+          (pd) =>
+            kd['protocolAddress'] === pd['pairdev:protocolAddress'] &&
+            pd['pairdev:pairingState'] === 'PAIRING',
+        ),
+      );
+      if (unpaired.length > 0) {
+        if (hub['hubconn:state'] === 'OFFLINE') {
+          dispatch(addNotification({ type: 'error', message: 'Hub Offline. Re-connect your Hub and then try to pair.' }));
+        } else {
+          router.push('/kit-activate');
+        }
+      } else {
+        dispatch(addNotification({ type: 'info', message: 'Your Hub is already paired. No kit devices awaiting activation.' }));
+      }
+    } catch {
+      dispatch(addNotification({ type: 'info', message: 'Your Hub is already paired. No kit devices awaiting activation.' }));
+    }
+  }, [hub, pairingSubAddr, router, dispatch]);
 
   return (
     <div className="p-[var(--gutter)]">
@@ -83,12 +136,20 @@ export default function DevicesPage() {
               Pair a hub and devices to start controlling your smart home.
               Visit the Product Catalog to browse available devices.
             </p>
-            <a
-              href="/product-catalog"
-              className="inline-block bg-peacock text-crane px-6 py-2.5 rounded-[var(--border-radius-base)] text-sm hover:opacity-90 transition-opacity"
-            >
-              Shop Devices
-            </a>
+            <div className="flex justify-center gap-3">
+              <button
+                onClick={handleAddHubOrKit}
+                className="bg-peacock text-crane px-6 py-2.5 rounded-[var(--border-radius-base)] text-sm hover:opacity-90 transition-opacity"
+              >
+                Add a Hub or Smart Kit
+              </button>
+              <a
+                href="/product-catalog"
+                className="inline-block bg-heron text-swift px-6 py-2.5 rounded-[var(--border-radius-base)] text-sm border border-grouse hover:bg-crane transition-colors"
+              >
+                Shop Devices
+              </a>
+            </div>
           </div>
         ) : (
           <div>
