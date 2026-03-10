@@ -11,6 +11,11 @@ jest.mock('next/navigation', () => ({
   useRouter: () => ({ push: mockPush }),
 }));
 
+jest.mock('next/link', () => ({
+  __esModule: true,
+  default: ({ href, children, ...props }: any) => <a href={href} {...props}>{children}</a>,
+}));
+
 let mockHub: Record<string, unknown> | null = null;
 let mockDevices: Record<string, unknown>[] = [];
 let mockSubsystems: { entities: Record<string, Record<string, unknown>> } | null = null;

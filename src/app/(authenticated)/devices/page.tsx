@@ -8,6 +8,7 @@
  */
 
 import { useState, useCallback, useMemo } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Bridge from '@arcus/core/bridge';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
@@ -112,12 +113,12 @@ export default function DevicesPage() {
         </div>
 
         {hasHub && view === 'devices' && (
-          <a
+          <Link
             href="/product-catalog"
             className="bg-peacock text-crane px-5 py-2 rounded-[var(--border-radius-base)] text-sm hover:opacity-90 transition-opacity"
           >
             + Add Device
-          </a>
+          </Link>
         )}
       </div>
 
@@ -143,12 +144,12 @@ export default function DevicesPage() {
               >
                 Add a Hub or Smart Kit
               </button>
-              <a
+              <Link
                 href="/product-catalog"
                 className="inline-block bg-heron text-swift px-6 py-2.5 rounded-[var(--border-radius-base)] text-sm border border-grouse hover:bg-crane transition-colors"
               >
                 Shop Devices
-              </a>
+              </Link>
             </div>
           </div>
         ) : (
