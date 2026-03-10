@@ -1,16 +1,17 @@
 /**
- * Async thunk to re-authenticate using an existing session cookie.
+ * Async thunk to re-authenticate using the platform's irisAuthToken cookie.
  * Called on app mount to restore session state.
  *
- * Same flow as loginThunk but skips the POST — just opens WebSocket
- * (the platform auth cookie is already set from a previous login).
+ * Same flow as loginThunk but skips the POST — just opens WebSocket.
+ * The browser sends the irisAuthToken cookie automatically on the
+ * WebSocket upgrade handshake; the platform validates it and fires
+ * SessionCreated if the session is still valid.
  */
 
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import auth from '@arcus/core/auth';
 import { SessionService } from '@arcus/core/services';
 import { setAuthenticating, loginSuccess, loginFailed } from '../slices/authSlice';
-import { createSession } from '@/app/actions/session';
 import { initializeCoreConfig } from './initConfig';
 import { getDefaultPlaceId } from './placeSelection';
 
@@ -54,8 +55,6 @@ export const authenticateThunk = createAsyncThunk(
       if (placeId) {
         // Scope the platform session to this place
         await SessionService.SetActivePlace(placeId);
-        // Set server-side cookie for SSR/middleware
-        await createSession(personId, placeId);
       }
 
       dispatch(loginSuccess({ person: session, account: {} }));
