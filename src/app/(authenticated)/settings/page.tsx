@@ -10,6 +10,7 @@
  */
 
 import { useState, useCallback } from 'react';
+import Link from 'next/link';
 import Bridge from '@arcus/core/bridge';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import { selectAllPeople } from '@/store/slices/peopleSlice';
@@ -171,6 +172,15 @@ function PeoplePlacesSection() {
               label="Service Level"
               value={formatServiceLevel(place['place:serviceLevel'] as string)}
             />
+            <div className="flex justify-between text-sm pt-1">
+              <span className="text-grouse">API Access</span>
+              <Link
+                href="/settings/api-keys"
+                className="text-peacock hover:underline"
+              >
+                Manage API Keys
+              </Link>
+            </div>
           </>
         )}
       </InfoCard>

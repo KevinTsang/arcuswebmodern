@@ -1,3 +1,4 @@
+export { default as ApiKeyService } from './ApiKeyService';
 export { default as AccountService } from './AccountService';
 export { default as AlarmService } from './AlarmService';
 export { default as BridgeService } from './BridgeService';
@@ -24,6 +25,7 @@ export { default as VideoService } from './VideoService';
 /**
  * Service map keyed by namespace, matching the original service.js pattern.
  */
+import ApiKeyService from './ApiKeyService';
 import AccountService from './AccountService';
 import AlarmService from './AlarmService';
 import BridgeService from './BridgeService';
@@ -48,6 +50,7 @@ import SupportSessionService from './SupportSessionService';
 import VideoService from './VideoService';
 
 export const services = {
+  apikey: ApiKeyService,
   account: AccountService,
   alarmservice: AlarmService,
   bridgesvc: BridgeService,
