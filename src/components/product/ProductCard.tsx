@@ -1,0 +1,41 @@
+interface Product {
+  'base:address': string;
+  'product:name': string;
+  'product:vendor': string;
+  'product:shortName'?: string;
+  'product:id': string;
+  'product:hubRequired': boolean;
+  [key: string]: unknown;
+}
+
+interface ProductCardProps {
+  product: Product;
+  onSelect: (product: Product) => void;
+}
+
+export default function ProductCard({ product, onSelect }: ProductCardProps) {
+  const name = product['product:name'] ?? product['product:shortName'] ?? 'Unknown';
+  const vendor = (product['product:vendor'] as string) ?? '';
+  const hubRequired = product['product:hubRequired'];
+
+  return (
+    <button
+      onClick={() => onSelect(product)}
+      className="border border-heron rounded-[var(--border-radius-base)] p-4 text-center hover:border-peacock hover:shadow-sm transition-all flex flex-col items-center gap-2"
+    >
+      {/* Product icon placeholder */}
+      <div className="w-16 h-16 bg-pigeon/50 rounded-[var(--border-radius-base)] flex items-center justify-center">
+        <span className="icon-app-devices text-2xl text-grouse" />
+      </div>
+      <div>
+        <p className="text-sm font-medium text-swift leading-tight">{name}</p>
+        {vendor && <p className="text-xs text-grouse mt-0.5">{vendor}</p>}
+      </div>
+      {hubRequired && (
+        <span className="text-[10px] bg-pigeon text-grouse rounded-full px-2 py-0.5">
+          Hub Required
+        </span>
+      )}
+    </button>
+  );
+}
