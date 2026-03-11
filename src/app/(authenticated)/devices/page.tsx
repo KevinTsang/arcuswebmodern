@@ -114,7 +114,7 @@ export default function DevicesPage() {
 
         {hasHub && view === 'devices' && (
           <Link
-            href="/product-catalog"
+            href="/pairing"
             className="bg-peacock text-crane px-5 py-2 rounded-[var(--border-radius-base)] text-sm hover:opacity-90 transition-opacity"
           >
             + Add Device

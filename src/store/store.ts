@@ -10,6 +10,7 @@ import incidentsReducer from './slices/incidentsSlice';
 import peopleReducer from './slices/peopleSlice';
 import hubReducer from './slices/hubSlice';
 import uiReducer from './slices/uiSlice';
+import pairingReducer from './slices/pairingSlice';
 import { corneaMiddleware } from './middleware/corneaMiddleware';
 
 export const store = configureStore({
@@ -25,6 +26,7 @@ export const store = configureStore({
     people: peopleReducer,
     hub: hubReducer,
     ui: uiReducer,
+    pairing: pairingReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

@@ -96,6 +96,13 @@ describe('DevicesPage – No Devices Paired state', () => {
     render(<DevicesPage />);
     expect(screen.getByText('+ Add Device')).toBeInTheDocument();
   });
+
+  it('"+ Add Device" links to /pairing', () => {
+    mockHub = { 'base:address': 'SERV:hub:hub-1' };
+    render(<DevicesPage />);
+    const link = screen.getByText('+ Add Device').closest('a');
+    expect(link).toHaveAttribute('href', '/pairing');
+  });
 });
 
 describe('DevicesPage – Add a Hub or Smart Kit button', () => {
