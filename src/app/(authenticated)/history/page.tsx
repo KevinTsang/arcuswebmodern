@@ -7,120 +7,10 @@
  * Uses Bridge.request to fetch history entries from the place.
  */
 
-import { useState, useEffect, useCallback, useRef } from 'react';
-import Bridge from '@arcus/core/bridge';
+import { useState, useMemo } from 'react';
 import { useAppSelector } from '@/store/hooks';
 import { selectAllDevices } from '@/store/slices/devicesSlice';
-
-interface HistoryEntry {
-  timestamp: number;
-  subjectName: string;
-  longMessage: string;
-}
-
-function formatDate(ts: number): string {
-  return new Date(ts).toLocaleDateString(undefined, {
-    weekday: 'long',
-    month: 'long',
-    day: 'numeric',
-  });
-}
-
-function formatTime(ts: number): string {
-  return new Date(ts).toLocaleTimeString(undefined, {
-    hour: 'numeric',
-    minute: '2-digit',
-  });
-}
-
-// ── History List ──────────────────────────────────────────────────────
-
-function HistoryList({
-  entries,
-  loading,
-  hasMore,
-  onLoadMore,
-}: {
-  entries: HistoryEntry[];
-  loading: boolean;
-  hasMore: boolean;
-  onLoadMore: () => void;
-}) {
-  const sentinelRef = useRef<HTMLDivElement>(null);
-
-  // Intersection observer for infinite scroll
-  useEffect(() => {
-    if (!hasMore || loading) return;
-    const sentinel = sentinelRef.current;
-    if (!sentinel) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting) {
-          onLoadMore();
-        }
-      },
-      { threshold: 0.1 },
-    );
-    observer.observe(sentinel);
-    return () => observer.disconnect();
-  }, [hasMore, loading, onLoadMore]);
-
-  if (entries.length === 0 && !loading) {
-    return (
-      <div className="text-center py-12">
-        <p className="text-grouse">No recent activity.</p>
-      </div>
-    );
-  }
-
-  // Group entries by date
-  let lastDate = '';
-  const items: React.ReactNode[] = [];
-
-  for (let i = 0; i < entries.length; i++) {
-    const entry = entries[i];
-    const date = formatDate(entry.timestamp);
-
-    if (date !== lastDate) {
-      lastDate = date;
-      if (i > 0) {
-        items.push(<div key={`spacer-${i}`} className="h-4" />);
-      }
-      items.push(
-        <h3 key={`date-${i}`} className="text-sm font-semibold text-swift mb-2">
-          {date}
-        </h3>,
-      );
-    }
-
-    items.push(
-      <div key={i} className="flex gap-3 py-2 border-b border-pigeon">
-        <span className="text-xs text-grouse w-16 flex-shrink-0 pt-0.5">
-          {formatTime(entry.timestamp)}
-        </span>
-        <div className="flex-1 min-w-0">
-          <p className="text-sm text-swift">{entry.subjectName}</p>
-          <p className="text-xs text-grouse mt-0.5">{entry.longMessage}</p>
-        </div>
-      </div>,
-    );
-  }
-
-  return (
-    <div>
-      {items}
-      {hasMore && <div ref={sentinelRef} className="h-8" />}
-      {loading && (
-        <div className="text-center py-4">
-          <p className="text-sm text-grouse">Loading more...</p>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ── Page Component ────────────────────────────────────────────────────
+import { HistoryList, useHistoryFetch } from '@/components/history';
 
 type FilterMode = 'all' | 'device';
 
@@ -129,79 +19,21 @@ export default function HistoryPage() {
   const place = useAppSelector((s) => s.place.place);
   const devices = useAppSelector(selectAllDevices);
 
-  const [entries, setEntries] = useState<HistoryEntry[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [nextToken, setNextToken] = useState<string | undefined>(undefined);
-  const [hasMore, setHasMore] = useState(true);
   const [filterMode, setFilterMode] = useState<FilterMode>('all');
   const [selectedDevice, setSelectedDevice] = useState('');
 
   const placeAddress = placeId ? `SERV:place:${placeId}` : '';
   const isPremium = place?.['place:serviceLevel'] === 'PREMIUM';
 
-  const fetchHistory = useCallback(
-    async (address: string, token?: string, append = false) => {
-      if (loading) return;
-      setLoading(true);
-      try {
-        const result = await Bridge.request('place:ListHistoryEntries', address, {
-          limit: 20,
-          token,
-        });
-        const newEntries = (result.results as HistoryEntry[]) ?? [];
-        const newToken = result.nextToken as string | undefined;
-
-        if (append) {
-          setEntries((prev) => [...prev, ...newEntries]);
-        } else {
-          setEntries(newEntries);
-        }
-        setNextToken(newToken);
-        setHasMore(newEntries.length > 0 && !!newToken);
-      } catch {
-        setHasMore(false);
-      }
-      setLoading(false);
-    },
-    [loading],
-  );
-
-  // Initial fetch
-  useEffect(() => {
-    if (!placeAddress) return;
-    setEntries([]);
-    setNextToken(undefined);
-    setHasMore(true);
-
+  const fetchAddress = useMemo(() => {
     if (filterMode === 'device' && selectedDevice) {
       const device = devices.find((d) => d['base:id'] === selectedDevice);
-      if (device) {
-        fetchHistory(device['base:address'] as string);
-        return;
-      }
+      if (device) return device['base:address'] as string;
     }
-    fetchHistory(placeAddress);
-  }, [placeAddress, filterMode, selectedDevice]); // eslint-disable-line react-hooks/exhaustive-deps
+    return placeAddress;
+  }, [filterMode, selectedDevice, devices, placeAddress]);
 
-  const handleLoadMore = useCallback(() => {
-    if (!nextToken || loading) return;
-    const address =
-      filterMode === 'device' && selectedDevice
-        ? (devices.find((d) => d['base:id'] === selectedDevice)?.['base:address'] as string) ?? placeAddress
-        : placeAddress;
-    fetchHistory(address, nextToken, true);
-  }, [nextToken, loading, filterMode, selectedDevice, devices, placeAddress, fetchHistory]);
-
-  const handleRefresh = useCallback(() => {
-    setEntries([]);
-    setNextToken(undefined);
-    setHasMore(true);
-    const address =
-      filterMode === 'device' && selectedDevice
-        ? (devices.find((d) => d['base:id'] === selectedDevice)?.['base:address'] as string) ?? placeAddress
-        : placeAddress;
-    fetchHistory(address);
-  }, [filterMode, selectedDevice, devices, placeAddress, fetchHistory]);
+  const { entries, loading, hasMore, loadMore, refresh } = useHistoryFetch(fetchAddress);
 
   return (
     <div className="p-[var(--gutter)]">
@@ -211,7 +43,7 @@ export default function HistoryPage() {
           History
         </h2>
         <button
-          onClick={handleRefresh}
+          onClick={refresh}
           className="text-peacock hover:text-bluejay transition-colors text-sm"
           title="Refresh"
         >
@@ -273,7 +105,7 @@ export default function HistoryPage() {
             entries={entries}
             loading={loading}
             hasMore={hasMore}
-            onLoadMore={handleLoadMore}
+            onLoadMore={loadMore}
           />
         </div>
       </div>
