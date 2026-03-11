@@ -207,6 +207,32 @@ describe('SettingsPage – People & Places section', () => {
     fireEvent.click(screen.getByText('People & Places'));
     expect(screen.getByText('Jane Smith')).toBeInTheDocument();
   });
+
+  it('shows + Add Person button', () => {
+    render(<SettingsPage />);
+    fireEvent.click(screen.getByText('People & Places'));
+    expect(screen.getByText('+ Add Person')).toBeInTheDocument();
+  });
+
+  it('opens side panel when + Add Person is clicked', () => {
+    render(<SettingsPage />);
+    fireEvent.click(screen.getByText('People & Places'));
+    fireEvent.click(screen.getByText('+ Add Person'));
+    expect(mockOpenRight).toHaveBeenCalled();
+  });
+
+  it('shows + Add Place button', () => {
+    render(<SettingsPage />);
+    fireEvent.click(screen.getByText('People & Places'));
+    expect(screen.getByText('+ Add Place')).toBeInTheDocument();
+  });
+
+  it('opens side panel when + Add Place is clicked', () => {
+    render(<SettingsPage />);
+    fireEvent.click(screen.getByText('People & Places'));
+    fireEvent.click(screen.getByText('+ Add Place'));
+    expect(mockOpenRight).toHaveBeenCalled();
+  });
 });
 
 describe('SettingsPage – Invitation section', () => {

@@ -18,6 +18,9 @@ import { addNotification } from '@/store/slices/uiSlice';
 import { loginSuccess } from '@/store/slices/authSlice';
 import { setPlace } from '@/store/slices/placeSlice';
 import { useSidePanel } from '@/components/SidePanel';
+import AddPersonPanel from '@/components/settings/AddPersonPanel';
+import AddPlacePanel from '@/components/settings/AddPlacePanel';
+import Field from '@/components/settings/Field';
 
 type SettingsSection = 'profile' | 'people-places' | 'invitation';
 
@@ -186,7 +189,17 @@ function PeoplePlacesSection() {
       </InfoCard>
 
       {/* People at place */}
-      <InfoCard title="People">
+      <InfoCard
+        title="People"
+        action={
+          <button
+            onClick={() => openRight(<AddPersonPanel />)}
+            className="text-sm text-peacock hover:underline"
+          >
+            + Add Person
+          </button>
+        }
+      >
         {people.length === 0 ? (
           <p className="text-sm text-grouse">No people at this place.</p>
         ) : (
@@ -207,6 +220,14 @@ function PeoplePlacesSection() {
           </div>
         )}
       </InfoCard>
+
+      {/* Add place */}
+      <button
+        onClick={() => openRight(<AddPlacePanel />)}
+        className="px-4 py-2 bg-peacock text-crane rounded-[var(--border-radius-base)] text-sm font-medium hover:bg-peacock/90"
+      >
+        + Add Place
+      </button>
     </div>
   );
 }
@@ -590,33 +611,6 @@ function InfoRow({ label, value }: { label: string; value: string }) {
     <div className="flex justify-between text-sm">
       <span className="text-grouse">{label}</span>
       <span className="text-swift">{value}</span>
-    </div>
-  );
-}
-
-function Field({
-  label,
-  value,
-  onChange,
-  type = 'text',
-  placeholder,
-}: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  type?: string;
-  placeholder?: string;
-}) {
-  return (
-    <div>
-      <label className="block text-sm text-grouse mb-1">{label}</label>
-      <input
-        type={type}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        className="w-full border border-heron rounded-[var(--border-radius-base)] px-3 py-2 text-sm text-swift focus:outline-none focus:border-peacock"
-      />
     </div>
   );
 }
