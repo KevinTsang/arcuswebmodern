@@ -91,6 +91,12 @@ export default function SearchingStage({
               ))}
             </div>
           )}
+          <button
+            onClick={onCancel}
+            className="mt-4 px-4 py-2 border border-heron rounded-[var(--border-radius-base)] text-sm text-coot hover:bg-pigeon"
+          >
+            Cancel
+          </button>
         </>
       ) : (
         <>

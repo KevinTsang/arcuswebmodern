@@ -50,6 +50,17 @@ describe('SearchingStage – device search', () => {
     expect(screen.getByText('Device Found')).toBeInTheDocument();
     expect(screen.getByText('Connecting…')).toBeInTheDocument();
   });
+
+  it('shows Cancel button while searching', () => {
+    render(<SearchingStage {...defaultProps} />);
+    expect(screen.getByText('Cancel')).toBeInTheDocument();
+  });
+
+  it('calls onCancel when Cancel is clicked during search', () => {
+    render(<SearchingStage {...defaultProps} />);
+    fireEvent.click(screen.getByText('Cancel'));
+    expect(mockCancel).toHaveBeenCalled();
+  });
 });
 
 describe('SearchingStage – search timed out', () => {

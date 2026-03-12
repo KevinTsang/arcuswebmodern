@@ -63,18 +63,7 @@ export default function PairingPage() {
     };
   }, [dispatch]);
 
-  // Load product from sessionStorage on mount (if available)
-  useEffect(() => {
-    const stored = sessionStorage.getItem('pairing:product');
-    if (stored) {
-      const parsed = JSON.parse(stored);
-      const productId = parsed['product:id'];
-      dispatch(loadProduct({
-        product: parsed,
-        isHubPairing: productId === 'dee000' || productId === 'dee001',
-      }));
-    }
-  }, [dispatch]);
+  // Product loading is handled in the auto-start effect below to avoid race conditions.
 
   // Find pairing subsystem address
   const pairingSubAddr = (() => {
@@ -87,13 +76,19 @@ export default function PairingPage() {
     return (sub?.['base:address'] as string) ?? null;
   })();
 
-  // Cleanup on unmount
+  // Stop pairing on unmount or page refresh/close
   useEffect(() => {
-    return () => {
+    const stopPairing = () => {
       if (pollRef.current) clearInterval(pollRef.current);
       if (pairingSubAddr) {
         Bridge.request('subpairing:StopSearching', pairingSubAddr, {}).catch(() => {});
       }
+    };
+
+    window.addEventListener('beforeunload', stopPairing);
+    return () => {
+      window.removeEventListener('beforeunload', stopPairing);
+      stopPairing();
     };
   }, [pairingSubAddr]);
 
@@ -179,10 +174,22 @@ export default function PairingPage() {
     }
   }, [pairing.product, pairingSubAddr, dispatch, startSearch]);
 
-  // Auto-start pairing when product is loaded (non-hub),
-  // or start generic search when no product is set
+  // Load product from sessionStorage and auto-start pairing in a single effect
+  // to avoid race conditions between separate load and start effects.
   const hasInitiated = useRef(false);
   useEffect(() => {
+    // Load product from sessionStorage if not yet in state
+    const stored = sessionStorage.getItem('pairing:product');
+    if (stored && !pairing.product) {
+      const parsed = JSON.parse(stored);
+      const productId = parsed['product:id'];
+      dispatch(loadProduct({
+        product: parsed,
+        isHubPairing: productId === 'dee000' || productId === 'dee001',
+      }));
+      return; // Wait for re-render with product populated in state
+    }
+
     if (hasInitiated.current) return;
     if (!pairingSubAddr) return;
     if (pairing.isHubPairing) return;
@@ -194,7 +201,7 @@ export default function PairingPage() {
       hasInitiated.current = true;
       startSearch();
     }
-  }, [pairing.product, pairing.isHubPairing, pairing.stage, pairingSubAddr, startPairing, startSearch]);
+  }, [pairing.product, pairing.isHubPairing, pairing.stage, pairingSubAddr, startPairing, startSearch, dispatch]);
 
   // ── Hub Registration ───────────────────────────────────────
 
@@ -337,6 +344,7 @@ export default function PairingPage() {
               dispatch={dispatch}
               onStartSearch={startSearch}
               onStartHubRegistration={handleStartHubRegistration}
+              onCancel={() => router.push('/product-catalog')}
             />
           )}
 

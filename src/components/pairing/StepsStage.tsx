@@ -13,6 +13,7 @@ interface StepsStageProps {
   dispatch: AppDispatch;
   onStartSearch: () => void;
   onStartHubRegistration: () => void;
+  onCancel: () => void;
 }
 
 export default function StepsStage({
@@ -25,6 +26,7 @@ export default function StepsStage({
   dispatch,
   onStartSearch,
   onStartHubRegistration,
+  onCancel,
 }: StepsStageProps) {
   // Generic pairing: waiting for search to start
   if (!isHubPairing && !product) {
@@ -36,6 +38,12 @@ export default function StepsStage({
           </div>
         </div>
         <p className="text-sm text-grouse">Starting device search…</p>
+        <button
+          onClick={onCancel}
+          className="mt-4 px-4 py-2 border border-heron rounded-[var(--border-radius-base)] text-sm text-coot hover:bg-pigeon"
+        >
+          Cancel
+        </button>
       </div>
     );
   }

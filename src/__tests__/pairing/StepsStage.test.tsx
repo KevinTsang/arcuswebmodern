@@ -4,6 +4,7 @@ import StepsStage from '@/components/pairing/StepsStage';
 const mockDispatch = jest.fn();
 const mockStartSearch = jest.fn();
 const mockStartHubRegistration = jest.fn();
+const mockCancel = jest.fn();
 
 const defaultProps = {
   product: null,
@@ -15,6 +16,7 @@ const defaultProps = {
   dispatch: mockDispatch,
   onStartSearch: mockStartSearch,
   onStartHubRegistration: mockStartHubRegistration,
+  onCancel: mockCancel,
 };
 
 const mockProduct = {
@@ -37,6 +39,17 @@ describe('StepsStage – generic pairing (no product)', () => {
   it('shows "Starting device search…" when no product and not hub pairing', () => {
     render(<StepsStage {...defaultProps} />);
     expect(screen.getByText('Starting device search…')).toBeInTheDocument();
+  });
+
+  it('shows Cancel button', () => {
+    render(<StepsStage {...defaultProps} />);
+    expect(screen.getByText('Cancel')).toBeInTheDocument();
+  });
+
+  it('calls onCancel when Cancel is clicked', () => {
+    render(<StepsStage {...defaultProps} />);
+    fireEvent.click(screen.getByText('Cancel'));
+    expect(mockCancel).toHaveBeenCalled();
   });
 });
 
@@ -142,4 +155,5 @@ describe('StepsStage – product pairing with steps', () => {
     fireEvent.click(screen.getByText('Search for Device'));
     expect(mockStartSearch).toHaveBeenCalled();
   });
+
 });

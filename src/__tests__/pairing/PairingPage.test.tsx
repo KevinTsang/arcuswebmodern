@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import PairingPage from '@/app/(authenticated)/pairing/page';
 
 // ── Mocks ─────────────────────────────────────────────────────────────
@@ -166,13 +166,22 @@ describe('PairingPage – lifecycle', () => {
     expect(mockDispatch).toHaveBeenCalledWith({ type: 'pairing/resetPairing' });
   });
 
-  it('loads product from sessionStorage on mount', () => {
+  it('loads product from sessionStorage when product is not in state', () => {
     const product = { 'product:id': 'sensor1', 'product:name': 'Motion Sensor' };
     sessionStorage.setItem('pairing:product', JSON.stringify(product));
+    // product is null in mockPairingState — product loads from sessionStorage
     render(<PairingPage />);
     expect(mockLoadProduct).toHaveBeenCalledWith(
       expect.objectContaining({ product, isHubPairing: false }),
     );
+  });
+
+  it('does not re-load product when already in state', () => {
+    const product = { 'product:id': 'sensor1', 'product:name': 'Motion Sensor', 'base:address': 'SERV:product:sensor1' };
+    sessionStorage.setItem('pairing:product', JSON.stringify(product));
+    mockPairingState = { ...mockPairingState, product };
+    render(<PairingPage />);
+    expect(mockLoadProduct).not.toHaveBeenCalled();
   });
 
   it('sets isHubPairing true for hub product dee001', () => {
@@ -190,6 +199,155 @@ describe('PairingPage – lifecycle', () => {
     render(<PairingPage />);
     expect(mockLoadProduct).toHaveBeenCalledWith(
       expect.objectContaining({ isHubPairing: true }),
+    );
+  });
+
+  it('calls StopSearching on unmount when pairing subsystem is available', () => {
+    const pairingSubAddr = 'SERV:subpairing:place-1';
+    mockSubsystems = { [pairingSubAddr]: { 'base:address': pairingSubAddr } };
+    mockBridgeRequest.mockResolvedValue({});
+
+    const { unmount } = render(<PairingPage />);
+    mockBridgeRequest.mockClear();
+    unmount();
+
+    expect(mockBridgeRequest).toHaveBeenCalledWith(
+      'subpairing:StopSearching',
+      pairingSubAddr,
+      {},
+    );
+  });
+
+  it('calls StopSearching on beforeunload when pairing subsystem is available', () => {
+    const pairingSubAddr = 'SERV:subpairing:place-1';
+    mockSubsystems = { [pairingSubAddr]: { 'base:address': pairingSubAddr } };
+    mockBridgeRequest.mockResolvedValue({});
+
+    render(<PairingPage />);
+    mockBridgeRequest.mockClear();
+    window.dispatchEvent(new Event('beforeunload'));
+
+    expect(mockBridgeRequest).toHaveBeenCalledWith(
+      'subpairing:StopSearching',
+      pairingSubAddr,
+      {},
+    );
+  });
+
+  it('removes beforeunload listener on unmount', () => {
+    const pairingSubAddr = 'SERV:subpairing:place-1';
+    mockSubsystems = { [pairingSubAddr]: { 'base:address': pairingSubAddr } };
+    mockBridgeRequest.mockResolvedValue({});
+
+    const { unmount } = render(<PairingPage />);
+    unmount();
+    mockBridgeRequest.mockClear();
+
+    window.dispatchEvent(new Event('beforeunload'));
+    expect(mockBridgeRequest).not.toHaveBeenCalledWith(
+      'subpairing:StopSearching',
+      expect.any(String),
+      expect.anything(),
+    );
+  });
+});
+
+describe('PairingPage – auto-start pairing', () => {
+  const pairingSubAddr = 'SERV:subpairing:place-1';
+
+  beforeEach(() => {
+    mockSubsystems = {
+      [pairingSubAddr]: { 'base:address': pairingSubAddr },
+    };
+  });
+
+  it('calls StartPairing with productAddress when product is selected from catalog', async () => {
+    const product = {
+      'base:address': 'SERV:product:c3c055',
+      'product:id': 'c3c055',
+      'product:name': 'Smart Plug',
+    };
+    // Simulate product-catalog setting sessionStorage before navigating to /pairing
+    sessionStorage.setItem('pairing:product', JSON.stringify(product));
+    // Simulate loadProduct having populated the Redux state
+    mockPairingState = { ...mockPairingState, product };
+    mockBridgeRequest.mockResolvedValue({ steps: [] });
+
+    render(<PairingPage />);
+
+    await waitFor(() => {
+      expect(mockBridgeRequest).toHaveBeenCalledWith(
+        'subpairing:StartPairing',
+        pairingSubAddr,
+        { productAddress: 'SERV:product:c3c055' },
+      );
+    });
+  });
+
+  it('loads product from sessionStorage and waits for state before starting pairing', () => {
+    const product = {
+      'base:address': 'SERV:product:c3c055',
+      'product:id': 'c3c055',
+      'product:name': 'Smart Plug',
+    };
+    sessionStorage.setItem('pairing:product', JSON.stringify(product));
+    // product is NOT in mockPairingState yet — effect should load it and wait
+    render(<PairingPage />);
+
+    // Should dispatch loadProduct from sessionStorage
+    expect(mockLoadProduct).toHaveBeenCalledWith(
+      expect.objectContaining({ product, isHubPairing: false }),
+    );
+    // Should NOT start searching or pairing until product is in state
+    expect(mockBridgeRequest).not.toHaveBeenCalledWith(
+      'subpairing:Search',
+      expect.any(String),
+      expect.anything(),
+    );
+    expect(mockBridgeRequest).not.toHaveBeenCalledWith(
+      'subpairing:StartPairing',
+      expect.any(String),
+      expect.anything(),
+    );
+  });
+
+  it('calls Search for generic pairing when no product exists anywhere', async () => {
+    mockBridgeRequest.mockResolvedValue({ devices: [] });
+    // No product in sessionStorage, no product in state
+    render(<PairingPage />);
+
+    await waitFor(() => {
+      expect(mockBridgeRequest).toHaveBeenCalledWith(
+        'subpairing:Search',
+        pairingSubAddr,
+        { productAddress: '' },
+      );
+    });
+  });
+
+  it('does not auto-start when pairing subsystem is unavailable', () => {
+    mockSubsystems = {};
+    mockPairingState = {
+      ...mockPairingState,
+      product: { 'base:address': 'SERV:product:c3c055', 'product:name': 'Smart Plug' },
+    };
+    render(<PairingPage />);
+
+    expect(mockBridgeRequest).not.toHaveBeenCalled();
+  });
+
+  it('does not auto-start for hub pairing products', () => {
+    mockPairingState = {
+      ...mockPairingState,
+      product: { 'base:address': 'SERV:product:dee001', 'product:name': 'Smart Hub' },
+      isHubPairing: true,
+    };
+    render(<PairingPage />);
+
+    expect(mockBridgeRequest).not.toHaveBeenCalledWith(
+      'subpairing:StartPairing',
+      expect.any(String),
+      expect.anything(),
     );
   });
 });
