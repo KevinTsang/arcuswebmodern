@@ -96,11 +96,14 @@ describe('AddPlacePanel – interactions', () => {
         'account:AddPlace',
         'SERV:account:acct-1',
         {
-          'place:name': 'Beach House',
-          'place:streetAddress1': '456 Ocean Ave',
-          'place:city': 'Malibu',
-          'place:stateProv': 'CA',
-          'place:zipCode': '90265',
+          place: {
+            'place:name': 'Beach House',
+            'place:streetAddress1': '456 Ocean Ave',
+            'place:city': 'Malibu',
+            'place:stateProv': 'CA',
+            'place:zipCode': '90265',
+          },
+          serviceLevel: 'BASIC',
         },
       ),
     );

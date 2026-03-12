@@ -14,6 +14,7 @@
 
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import auth from '@arcus/core/auth';
+import Bridge from '@arcus/core/bridge';
 import { SessionService } from '@arcus/core/services';
 import { setAuthenticating, loginSuccess, loginFailed } from '../slices/authSlice';
 import { initializeCoreConfig } from './initConfig';
@@ -68,7 +69,18 @@ export const loginThunk = createAsyncThunk(
         localStorage.setItem(`arcus:placeId`, placeId);
       }
 
-      dispatch(loginSuccess({ person: session, account: {} }));
+      // Fetch the account object for the selected place
+      const selectedPlace = places.find((p) => p.placeId === placeId);
+      if (!selectedPlace?.accountId) {
+        throw new Error('No account found for the selected place');
+      }
+      const account = await Bridge.request(
+        'base:GetAttributes',
+        `SERV:account:${selectedPlace.accountId}`,
+        {},
+      ) as Record<string, unknown>;
+
+      dispatch(loginSuccess({ person: session, account }));
       return { session, placeId };
     } catch (error) {
       dispatch(loginFailed());

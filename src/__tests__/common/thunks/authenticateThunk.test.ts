@@ -30,7 +30,8 @@ jest.mock('@arcus/core/auth', () => ({
 }));
 
 jest.mock('@arcus/core/config', () => ({ setConfig: jest.fn() }));
-jest.mock('@arcus/core/bridge', () => ({ __esModule: true, default: { configure: jest.fn() } }));
+const mockBridgeRequest = jest.fn().mockResolvedValue({});
+jest.mock('@arcus/core/bridge', () => ({ __esModule: true, default: { configure: jest.fn(), request: (...args: any[]) => mockBridgeRequest(...args) } }));
 
 // Track dispatched actions
 const dispatched: any[] = [];
@@ -98,7 +99,7 @@ describe('authenticateThunk', () => {
     );
     expect(success).toBeDefined();
     expect(success.payload.person).toEqual(sessionPayload);
-    expect(success.payload.account).toEqual({});
+    expect(success.payload.account).toBeDefined();
   });
 
   it('calls SetActivePlace with the default placeId', async () => {
@@ -162,6 +163,37 @@ describe('authenticateThunk', () => {
     const result = await authenticateThunk()(dispatch, () => ({}), undefined);
 
     expect(result.payload).toBeNull();
+  });
+
+  it('fetches account for the selected place', async () => {
+    const accountData = { 'base:address': 'SERV:account:acc-1', 'account:state': 'ACTIVE' };
+    mockBridgeRequest.mockResolvedValueOnce(accountData);
+    mockAuthenticate.mockImplementation(() => {
+      emitAuth('authentication:success', sessionPayload);
+      return Promise.resolve();
+    });
+
+    await authenticateThunk()(dispatch, () => ({}), undefined);
+
+    expect(mockBridgeRequest).toHaveBeenCalledWith(
+      'base:GetAttributes',
+      'SERV:account:acc-1',
+      {},
+    );
+    const success = dispatched.find((a) => a.type === loginSuccess.type);
+    expect(success.payload.account).toEqual(accountData);
+  });
+
+  it('dispatches loginFailed when account fetch fails', async () => {
+    mockBridgeRequest.mockRejectedValueOnce(new Error('fail'));
+    mockAuthenticate.mockImplementation(() => {
+      emitAuth('authentication:success', sessionPayload);
+      return Promise.resolve();
+    });
+
+    await authenticateThunk()(dispatch, () => ({}), undefined);
+
+    expect(dispatched).toContainEqual(loginFailed());
   });
 
   it('cleans up auth listeners after success', async () => {

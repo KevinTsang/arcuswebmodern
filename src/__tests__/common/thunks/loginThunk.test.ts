@@ -29,7 +29,8 @@ jest.mock('@arcus/core/auth', () => ({
 }));
 
 jest.mock('@arcus/core/config', () => ({ setConfig: jest.fn() }));
-jest.mock('@arcus/core/bridge', () => ({ __esModule: true, default: { configure: jest.fn() } }));
+const mockBridgeRequest = jest.fn().mockResolvedValue({});
+jest.mock('@arcus/core/bridge', () => ({ __esModule: true, default: { configure: jest.fn(), request: (...args: any[]) => mockBridgeRequest(...args) } }));
 
 const dispatched: any[] = [];
 const dispatch = Object.assign(
@@ -178,6 +179,37 @@ describe('loginThunk', () => {
     await loginThunk({ ...creds, isPublic: true })(dispatch, () => ({}), undefined);
 
     expect(mockLogin).toHaveBeenCalledWith('user@test.com', 'secret', true);
+  });
+
+  it('fetches account for the selected place', async () => {
+    const accountData = { 'base:address': 'SERV:account:acc-1', 'account:state': 'ACTIVE' };
+    mockBridgeRequest.mockResolvedValueOnce(accountData);
+    mockLogin.mockImplementation(() => {
+      emitAuth('authentication:success', sessionPayload);
+      return Promise.resolve();
+    });
+
+    await loginThunk(creds)(dispatch, () => ({}), undefined);
+
+    expect(mockBridgeRequest).toHaveBeenCalledWith(
+      'base:GetAttributes',
+      'SERV:account:acc-1',
+      {},
+    );
+    const success = dispatched.find((a) => a.type === loginSuccess.type);
+    expect(success.payload.account).toEqual(accountData);
+  });
+
+  it('dispatches loginFailed when account fetch fails', async () => {
+    mockBridgeRequest.mockRejectedValueOnce(new Error('fail'));
+    mockLogin.mockImplementation(() => {
+      emitAuth('authentication:success', sessionPayload);
+      return Promise.resolve();
+    });
+
+    await loginThunk(creds)(dispatch, () => ({}), undefined).catch(() => {});
+
+    expect(dispatched).toContainEqual(loginFailed());
   });
 
   it('picks non-OWNER place when no OWNER exists', async () => {

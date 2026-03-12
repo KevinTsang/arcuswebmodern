@@ -27,11 +27,14 @@ export default function AddPlacePanel() {
     setSaving(true);
     try {
       const resp = await Bridge.request('account:AddPlace', accountAddress, {
-        'place:name': name.trim(),
-        'place:streetAddress1': street1.trim(),
-        'place:city': city.trim(),
-        'place:stateProv': stateProv.trim(),
-        'place:zipCode': zip.trim(),
+        place: {
+          'place:name': name.trim(),
+          'place:streetAddress1': street1.trim(),
+          'place:city': city.trim(),
+          'place:stateProv': stateProv.trim(),
+          'place:zipCode': zip.trim(),
+        },
+        serviceLevel: 'BASIC',
       });
       dispatch(setPlace(resp as Record<string, unknown>));
       dispatch(addNotification({ type: 'success', message: 'Place created!' }));
