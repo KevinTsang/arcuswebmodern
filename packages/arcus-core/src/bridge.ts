@@ -49,11 +49,11 @@ const Bridge = {
    * Uses Cornea WebSocket to make a request.
    * Handles property alias/unalias transforms for rule contexts.
    */
-  request(
+  request<T = Record<string, any>>(
     type: string,
     destination: string,
     attrs?: Record<string, any>,
-  ): Promise<Record<string, any>> {
+  ): Promise<T> {
     const unalias = propertyAliases.unalias[type];
     if (unalias && attrs?.context) {
       unalias(attrs.context);
@@ -65,7 +65,7 @@ const Bridge = {
       if (alias) {
         alias(response);
       }
-      return response;
+      return response as T;
     });
   },
 
@@ -73,11 +73,11 @@ const Bridge = {
    * Uses fetch to make a RESTful request.
    * Replaces jQuery $.post with native fetch API.
    */
-  async restfulRequest(
+  async restfulRequest<T = Record<string, any>>(
     type: string,
     destination: string,
     attrs?: Record<string, any>,
-  ): Promise<Record<string, any>> {
+  ): Promise<T> {
     const message = formatMessage(type, destination, attrs);
     const url = `${bridgeConfig.apiUrl.replace(/\/+$/, '')}/${type.replace(':', '/')}`;
 
@@ -100,7 +100,7 @@ const Bridge = {
     }
 
     const result = await response.json();
-    return result.payload.attributes;
+    return result.payload.attributes as T;
   },
 };
 

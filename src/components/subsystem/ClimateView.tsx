@@ -7,6 +7,7 @@
  * temperature/humidity readings and thermostat device cards.
  */
 
+import { Base } from '@arcus/core';
 import { useClimateSubsystem } from '@/hooks/useSubsystem';
 import { cToF, formatTemp } from '@/hooks/useDeviceConfig';
 import { DevicePanel } from '@/components/device';
@@ -41,7 +42,7 @@ export function ClimateView() {
         <div>
           <h3 className="text-sm font-medium text-swift mb-3">Thermostats</h3>
           {controlDevices.map((device) => (
-            <DevicePanel key={device.id} address={device['base:address']} />
+            <DevicePanel key={device.id} address={device[Base.ATTR_ADDRESS]} />
           ))}
         </div>
       )}
@@ -53,7 +54,7 @@ export function ClimateView() {
           {tempDevices
             .filter((d) => !controlDevices.find((c) => c.id === d.id))
             .map((device) => (
-              <DevicePanel key={device.id} address={device['base:address']} />
+              <DevicePanel key={device.id} address={device[Base.ATTR_ADDRESS]} />
             ))}
         </div>
       )}

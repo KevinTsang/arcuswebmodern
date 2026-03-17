@@ -8,6 +8,7 @@
  */
 
 import { memo } from 'react';
+import { Hub, HubAdvanced, HubPower } from '@arcus/core';
 import { useAppSelector } from '@/store/hooks';
 
 function HubPanelInner() {
@@ -15,12 +16,12 @@ function HubPanelInner() {
 
   if (!hub) return null;
 
-  const state = (hub['hub:state'] as string) ?? '';
-  const online = state === 'NORMAL';
-  const modelName = (hub['hub:model'] as string) ?? 'Smart Hub';
-  const name = (hub['hub:name'] as string) ?? modelName;
-  const firmwareVersion = (hub['hubadv:osver'] as string) ?? '';
-  const batteryPowered = hub['hubpow:source'] === 'BATTERY';
+  const state = (hub[Hub.ATTR_STATE] as string) ?? '';
+  const online = state === Hub.STATE_NORMAL;
+  const modelName = (hub[Hub.ATTR_MODEL] as string) ?? 'Smart Hub';
+  const name = (hub[Hub.ATTR_NAME] as string) ?? modelName;
+  const firmwareVersion = (hub[HubAdvanced.ATTR_OSVER] as string) ?? '';
+  const batteryPowered = hub[HubPower.ATTR_SOURCE] === HubPower.SOURCE_BATTERY;
   const battery = hub['hubpow:mainslevel'] as number | undefined;
 
   return (

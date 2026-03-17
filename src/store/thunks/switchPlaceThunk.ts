@@ -5,12 +5,13 @@
  */
 
 import { createAsyncThunk } from '@reduxjs/toolkit';
+import type { RootState } from '../store';
 import { SessionService } from '@arcus/core/services';
 import { loadPlaceDataThunk } from './loadPlaceDataThunk';
 
-export const switchPlaceThunk = createAsyncThunk(
+export const switchPlaceThunk = createAsyncThunk<string, string, { state: RootState }>(
   'place/switchPlace',
-  async (placeId: string, { dispatch }) => {
+  async (placeId, { dispatch }) => {
     // Tell the platform to switch the active place for this session
     await SessionService.SetActivePlace(placeId);
 

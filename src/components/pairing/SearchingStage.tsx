@@ -1,5 +1,7 @@
-import type { PairingProduct, PairingDevice } from './types';
+import { Base, Product } from '@arcus/core';
+import type { PairingDevice, PairingProduct } from '@/store/entityTypes';
 import type { AppDispatch } from '@/store/store';
+import { HUB_REGISTRATION_ERRORS } from '@/arcus/types';
 import { hubRetry } from '@/store/slices/pairingSlice';
 import DeviceStateRow from './DeviceStateRow';
 
@@ -34,9 +36,9 @@ export default function SearchingStage({
         ) : hubRegistrationState?.startsWith('error') ? (
           <>
             <p className="text-sm text-cardinal mb-4">
-              {hubRegistrationState === 'error.register.alreadyregistered'
+              {hubRegistrationState === HUB_REGISTRATION_ERRORS.ALREADY_REGISTERED
                 ? 'This hub is already registered to another account.'
-                : hubRegistrationState === 'error.register.orphanedhub'
+                : hubRegistrationState === HUB_REGISTRATION_ERRORS.ORPHANED_HUB
                   ? 'This hub needs to be reset. Please contact support.'
                   : 'Invalid Hub ID. Please check and try again.'}
             </p>
@@ -81,13 +83,13 @@ export default function SearchingStage({
           </div>
           <p className="text-sm text-grouse mb-2">
             {product
-              ? `Looking for your ${product['product:name']}…`
+              ? `Looking for your ${product[Product.ATTR_NAME]}…`
               : 'Looking for devices…'}
           </p>
           {devices.length > 0 && (
             <div className="mt-4 space-y-2">
               {devices.map((d) => (
-                <DeviceStateRow key={d['base:address']} device={d} />
+                <DeviceStateRow key={d[Base.ATTR_ADDRESS]} device={d} />
               ))}
             </div>
           )}

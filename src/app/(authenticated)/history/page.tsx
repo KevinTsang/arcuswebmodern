@@ -8,6 +8,7 @@
  */
 
 import { useState, useMemo } from 'react';
+import { Base, Device, Place } from '@arcus/core';
 import { useAppSelector } from '@/store/hooks';
 import { selectAllDevices } from '@/store/slices/devicesSlice';
 import { HistoryList, useHistoryFetch } from '@/components/history';
@@ -23,12 +24,12 @@ export default function HistoryPage() {
   const [selectedDevice, setSelectedDevice] = useState('');
 
   const placeAddress = placeId ? `SERV:place:${placeId}` : '';
-  const isPremium = place?.['place:serviceLevel'] === 'PREMIUM';
+  const isPremium = place?.[Place.ATTR_SERVICELEVEL] === 'PREMIUM';
 
   const fetchAddress = useMemo(() => {
     if (filterMode === 'device' && selectedDevice) {
-      const device = devices.find((d) => d['base:id'] === selectedDevice);
-      if (device) return device['base:address'] as string;
+      const device = devices.find((d) => d[Base.ATTR_ID] === selectedDevice);
+      if (device) return device[Base.ATTR_ADDRESS] as string;
     }
     return placeAddress;
   }, [filterMode, selectedDevice, devices, placeAddress]);
@@ -83,8 +84,8 @@ export default function HistoryPage() {
                   >
                     <option value="">Choose a Device</option>
                     {devices.map((d) => (
-                      <option key={d.id} value={d['base:id'] as string}>
-                        {(d['dev:name'] as string) ?? 'Unknown'}
+                      <option key={d.id} value={d[Base.ATTR_ID] as string}>
+                        {(d[Device.ATTR_NAME] as string) ?? 'Unknown'}
                       </option>
                     ))}
                   </select>

@@ -1,7 +1,9 @@
 import Bridge from '@arcus/core/bridge';
+import { Base, SceneTemplate as SceneTemplateCap } from '@arcus/core';
 import { SceneService } from '@arcus/core/services';
 import { SelectorType } from './types';
 import type { SelectorDef } from './types';
+import type { ResolveActionsResponse, ActionSelector } from '@/arcus/types';
 
 export interface ResolvedAction {
   id: string;
@@ -11,7 +13,7 @@ export interface ResolvedAction {
   selectors: Record<string, SelectorDef[]>;
 }
 
-interface SceneTemplate {
+interface SceneTemplateObj {
   'base:address': string;
   'base:id': string;
   'scenetmpl:custom'?: boolean;
@@ -32,24 +34,21 @@ export interface ResolveResult {
  * - LIST:  { type: "LIST", name: "fanspeed", value: [["Low", "LOW"], ["Medium", "MED"]] }
  * - Others (PERCENT, RANGE, BOOLEAN, TEMPERATURE, THERMOSTAT, DURATION): pass through as-is
  */
-function transformSelector(raw: Record<string, unknown>): SelectorDef {
-  const type = (raw['type'] as string) ?? '';
-  const name = (raw['name'] as string) ?? '';
+function transformSelector(raw: ActionSelector): SelectorDef {
+  const { type = '', name = '', value } = raw;
   const base: SelectorDef = { type, name };
 
   // Copy numeric fields if present
-  if (raw['min'] != null) base.min = Number(raw['min']);
-  if (raw['max'] != null) base.max = Number(raw['max']);
-  if (raw['step'] != null) base.step = Number(raw['step']);
-
-  const value = raw['value'];
+  if (raw.min != null) base.min = raw.min;
+  if (raw.max != null) base.max = raw.max;
+  if (raw.step != null) base.step = raw.step;
 
   if (type === SelectorType.GROUP && Array.isArray(value)) {
     // GROUP tuples: [[optionValue, [sub-selector-objects]], ...]
     base.options = value.map((tuple: unknown) => {
       if (!Array.isArray(tuple)) return { label: String(tuple), value: String(tuple) };
       const optValue = String(tuple[0] ?? '');
-      const subRaw = Array.isArray(tuple[1]) ? tuple[1] as Array<Record<string, unknown>> : [];
+      const subRaw = Array.isArray(tuple[1]) ? tuple[1] as ActionSelector[] : [];
       return {
         label: optValue,
         value: optValue,
@@ -73,11 +72,11 @@ function transformSelector(raw: Record<string, unknown>): SelectorDef {
   return base;
 }
 
-function transformSelectors(raw: Record<string, unknown[]>): Record<string, SelectorDef[]> {
+function transformSelectors(raw: Record<string, ActionSelector[]>): Record<string, SelectorDef[]> {
   const result: Record<string, SelectorDef[]> = {};
   for (const [deviceAddr, selectors] of Object.entries(raw)) {
     if (!Array.isArray(selectors)) continue;
-    result[deviceAddr] = selectors.map((s) => transformSelector(s as Record<string, unknown>));
+    result[deviceAddr] = selectors.map(transformSelector);
   }
   return result;
 }
@@ -96,39 +95,38 @@ export async function resolveSceneActions(
 ): Promise<ResolveResult> {
   // Step 1: List available templates (mirrors arcusweb scenes.js place setter)
   const templatesResult = await SceneService.ListSceneTemplates(placeId);
-  const templates = (templatesResult as Record<string, unknown>)['sceneTemplates'] as SceneTemplate[] | undefined;
+  const templates = (templatesResult as Record<string, unknown>)['sceneTemplates'] as SceneTemplateObj[] | undefined;
 
   if (!templates || templates.length === 0) {
     throw new Error('No scene templates available');
   }
 
   // Step 2: Find the target template
-  let template: SceneTemplate | undefined;
+  let template: SceneTemplateObj | undefined;
   if (templateId) {
-    template = templates.find((t) => t['base:id'] === templateId);
+    template = templates.find((t) => t[Base.ATTR_ID] === templateId);
   }
   // Fall back to the custom template (used for new scenes and as default)
   if (!template) {
-    template = templates.find((t) => t['scenetmpl:custom'] === true)
-      ?? templates.find((t) => t['base:address'] === 'SERV:scenetmpl:custom');
+    template = templates.find((t) => t[SceneTemplateCap.ATTR_CUSTOM] === true)
+      ?? templates.find((t) => t[Base.ATTR_ADDRESS] === 'SERV:scenetmpl:custom');
   }
 
   if (!template) {
     throw new Error('Custom scene template not found');
   }
 
-  const templateAddress = template['base:address'];
+  const templateAddress = template[Base.ATTR_ADDRESS];
 
   // Step 3: Resolve actions for this template (mirrors SceneTemplate.ResolveActions)
-  const result = await Bridge.request('scenetmpl:ResolveActions', templateAddress, { placeId });
-  const raw = (result as Record<string, unknown>)['actions'] as Array<Record<string, unknown>> | undefined;
+  const result = await Bridge.request<ResolveActionsResponse>(SceneTemplateCap.CMD_RESOLVEACTIONS, templateAddress, { placeId });
 
-  const actions: ResolvedAction[] = (raw ?? []).map((a) => ({
-    id: (a['id'] as string) ?? '',
-    name: (a['name'] as string) ?? '',
-    satisfiable: a['satisfiable'] !== false,
-    typehint: a['typehint'] as string | undefined,
-    selectors: a['selectors'] ? transformSelectors(a['selectors'] as Record<string, unknown[]>) : {},
+  const actions: ResolvedAction[] = (result.actions ?? []).map((a) => ({
+    id: a.id ?? '',
+    name: a.name ?? '',
+    satisfiable: a.satisfiable !== false,
+    typehint: a.typehint,
+    selectors: a.selectors ? transformSelectors(a.selectors) : {},
   }));
 
   actions.sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));

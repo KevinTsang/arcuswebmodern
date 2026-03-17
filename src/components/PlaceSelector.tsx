@@ -14,13 +14,7 @@ import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { switchPlaceThunk } from '@/store/thunks/switchPlaceThunk';
 import { logoutThunk } from '@/store/thunks/logoutThunk';
 import { useSidePanel } from '@/components/SidePanel';
-
-interface AvailablePlace {
-  placeId: string;
-  name: string;
-  role: string;
-  [key: string]: unknown;
-}
+import type { AvailablePlace } from '@/arcus/types';
 
 export default function PlaceSelector() {
   const dispatch = useAppDispatch();

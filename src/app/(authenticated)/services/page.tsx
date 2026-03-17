@@ -10,6 +10,7 @@
  */
 
 import { useState, useCallback, useMemo } from 'react';
+import { Place } from '@arcus/core';
 import { useAppSelector } from '@/store/hooks';
 import { subsystemConfigs, type SubsystemConfigEntry } from '@/lib/subsystemConfig';
 import {
@@ -26,7 +27,7 @@ import {
 export default function ServicesPage() {
   const [activeSlug, setActiveSlug] = useState(subsystemConfigs[0]?.slug ?? 'alarms');
   const placeName = useAppSelector(
-    (s) => (s.place.place?.['place:name'] as string) ?? 'Your Home',
+    (s) => s.place.place?.[Place.ATTR_NAME] ?? 'Your Home',
   );
 
   const activeConfig = useMemo(

@@ -9,6 +9,7 @@
  */
 
 import { memo, useState, useCallback } from 'react';
+import { Device, DeviceAdvanced } from '@arcus/core';
 import { useDevice } from '@/hooks/useDeviceCapability';
 import { useDeviceActions } from '@/hooks/useDeviceActions';
 import {
@@ -42,12 +43,12 @@ function DevicePanelInner({ address }: DevicePanelProps) {
 
   if (!device || !config) return null;
 
-  const name = (device['dev:name'] as string) ?? 'Unknown Device';
+  const name = (device[Device.ATTR_NAME] as string) ?? 'Unknown Device';
   const offline = isDeviceOffline(device);
   const on = isDeviceOn(device, config);
   const panelAction = config['web:panel:action'];
   const isFavorite = device['dev:favorite'] === true;
-  const hasErrors = !!(device['devadv:errors'] as Record<string, string> | undefined);
+  const hasErrors = !!(device[DeviceAdvanced.ATTR_ERRORS] as Record<string, string> | undefined);
 
   const handleStartRename = () => {
     setNameValue(name);
@@ -57,7 +58,7 @@ function DevicePanelInner({ address }: DevicePanelProps) {
   const handleSaveName = async () => {
     if (nameValue.trim() && nameValue.trim() !== name) {
       try {
-        await setAttribute('dev:name', nameValue.trim());
+        await setAttribute(Device.ATTR_NAME, nameValue.trim());
       } catch {
         dispatch(addNotification({ type: 'error', message: 'Failed to rename device' }));
       }

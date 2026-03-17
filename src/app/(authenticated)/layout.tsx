@@ -13,6 +13,7 @@ import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import { loadPlaceDataThunk } from '@/store/thunks/loadPlaceDataThunk';
 import { getDefaultPlaceId, type SessionPlace } from '@/store/thunks/placeSelection';
 import Header from '@/components/Header';
+import InvitationBanner from '@/components/InvitationBanner';
 import { SidePanelProvider } from '@/components/SidePanel';
 
 export default function AuthenticatedLayout({
@@ -58,6 +59,7 @@ export default function AuthenticatedLayout({
     <SidePanelProvider>
       <div className="min-h-screen flex flex-col">
         <Header />
+        <InvitationBanner />
         <main className="flex-1">
           {!ready ? (
             <div className="flex items-center justify-center py-20">

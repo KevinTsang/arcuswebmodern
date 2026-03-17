@@ -1,3 +1,5 @@
+import { Product as ProductCap } from '@arcus/core';
+
 interface Product {
   'base:address': string;
   'product:name': string;
@@ -14,9 +16,9 @@ interface ProductCardProps {
 }
 
 export default function ProductCard({ product, onSelect }: ProductCardProps) {
-  const name = product['product:name'] ?? product['product:shortName'] ?? 'Unknown';
-  const vendor = (product['product:vendor'] as string) ?? '';
-  const hubRequired = product['product:hubRequired'];
+  const name = product[ProductCap.ATTR_NAME] ?? product[ProductCap.ATTR_SHORTNAME] ?? 'Unknown';
+  const vendor = (product[ProductCap.ATTR_VENDOR] as string) ?? '';
+  const hubRequired = product[ProductCap.ATTR_HUBREQUIRED];
 
   return (
     <button

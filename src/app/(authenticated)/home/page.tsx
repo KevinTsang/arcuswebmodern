@@ -14,6 +14,9 @@ import { useMemo, useCallback, useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import Bridge from '@arcus/core/bridge';
+import { Base, Place, Subsystem } from '@arcus/core';
+import type { ListHistoryEntriesResponse } from '@/arcus/types';
+import type { HistoryEntry } from '@/components/history/HistoryList';
 import { useAppSelector } from '@/store/hooks';
 import { selectAllSubsystems } from '@/store/slices/subsystemsSlice';
 import {
@@ -59,11 +62,6 @@ const SERVICE_TO_NAMESPACE: Record<string, string> = {
   WATER: 'subwater',
 };
 
-interface HistoryEntry {
-  timestamp: number;
-  subjectName: string;
-  longMessage: string;
-}
 
 function formatDate(ts: number): string {
   return new Date(ts).toLocaleDateString(undefined, {
@@ -86,7 +84,7 @@ export default function HomePage() {
   const subsystems = useAppSelector(selectAllSubsystems);
   const placeId = useAppSelector((s) => s.place.placeId);
 
-  const placeName = (place?.['place:name'] as string) ?? 'Your Home';
+  const placeName = place?.[Place.ATTR_NAME] ?? 'Your Home';
 
   const [showSidebar, setShowSidebar] = useState(true);
   const [events, setEvents] = useState<HistoryEntry[]>([]);
@@ -97,12 +95,12 @@ export default function HomePage() {
     if (!placeId) return;
     setRefreshing(true);
     try {
-      const result = await Bridge.request(
-        'place:ListDashboardEntries',
+      const result = await Bridge.request<ListHistoryEntriesResponse>(
+        Place.CMD_LISTDASHBOARDENTRIES,
         `SERV:place:${placeId}`,
         { limit: 5 },
       );
-      setEvents((result.results as HistoryEntry[]) ?? []);
+      setEvents(result.results ?? []);
     } catch {
       // silently fail
     }
@@ -125,8 +123,8 @@ export default function HomePage() {
       const ns = SERVICE_TO_NAMESPACE[serviceName];
       if (!ns) return serviceName === 'FAVORITES';
       return subsystems.some((s) => {
-        const addr = s['base:address'] as string;
-        return addr?.startsWith(`SERV:${ns}:`) && s['subs:available'] !== false;
+        const addr = s[Base.ATTR_ADDRESS] as string;
+        return addr?.startsWith(`SERV:${ns}:`) && s[Subsystem.ATTR_AVAILABLE] !== false;
       });
     },
     [subsystems],

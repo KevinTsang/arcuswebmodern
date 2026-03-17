@@ -15,7 +15,10 @@
 
 import { useCallback, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import { Base, Device, Product, PairingDevice, PairingSubsystem, Hub, Place } from '@arcus/core';
 import Bridge from '@arcus/core/bridge';
+import type { ListPairingDevicesResponse, StartPairingResponse, RegisterHubV2Response } from '@/arcus/types';
+import { HUB_REGISTRATION_ERRORS } from '@/arcus/types';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import { addNotification } from '@/store/slices/uiSlice';
 import { setHub } from '@/store/slices/hubSlice';
@@ -41,9 +44,7 @@ import {
   SearchingStage,
   CustomizeStage,
   CompletedStage,
-  PAIRING_STATES,
 } from '@/components/pairing';
-import type { PairingDevice, PairingStep } from '@/components/pairing';
 
 export default function PairingPage() {
   const router = useRouter();
@@ -70,10 +71,10 @@ export default function PairingPage() {
     if (!subsystems?.entities) return null;
     const entries = Object.values(subsystems.entities) as Array<Record<string, unknown>>;
     const sub = entries.find((s) => {
-      const addr = s['base:address'] as string;
+      const addr = s[Base.ATTR_ADDRESS] as string;
       return addr?.includes('subpairing');
     });
-    return (sub?.['base:address'] as string) ?? null;
+    return (sub?.[Base.ATTR_ADDRESS] as string) ?? null;
   })();
 
   // Stop pairing on unmount or page refresh/close
@@ -81,7 +82,7 @@ export default function PairingPage() {
     const stopPairing = () => {
       if (pollRef.current) clearInterval(pollRef.current);
       if (pairingSubAddr) {
-        Bridge.request('subpairing:StopSearching', pairingSubAddr, {}).catch(() => {});
+        Bridge.request(PairingSubsystem.CMD_STOPSEARCHING, pairingSubAddr, {}).catch(() => {});
       }
     };
 
@@ -100,40 +101,40 @@ export default function PairingPage() {
     dispatch(startSearchAction());
 
     try {
-      await Bridge.request('subpairing:Search', pairingSubAddr, {
-        productAddress: pairing.product?.['base:address'] ?? '',
+      await Bridge.request(PairingSubsystem.CMD_SEARCH, pairingSubAddr, {
+        productAddress: pairing.product?.[Base.ATTR_ADDRESS] ?? '',
       });
 
       const checkDevices = async () => {
         try {
-          const resp = await Bridge.request('subpairing:ListPairingDevices', pairingSubAddr, {});
-          const devList = (resp['devices'] as PairingDevice[]) ?? [];
+          const resp = await Bridge.request<ListPairingDevicesResponse>(PairingSubsystem.CMD_LISTPAIRINGDEVICES, pairingSubAddr, {});
+          const devList = resp.devices ?? [];
           dispatch(setDevices(devList));
 
           const paired = devList.find(
-            (d) => d['pairdev:pairingState'] === PAIRING_STATES.PAIRED,
+            (d) => d[PairingDevice.ATTR_PAIRINGSTATE] === PairingDevice.PAIRINGSTATE_PAIRED,
           );
           if (paired) {
             if (pollRef.current) clearInterval(pollRef.current);
             dispatch(devicePaired({
               device: paired,
-              defaultName: paired['pairdev:deviceAddress']
+              defaultName: paired[PairingDevice.ATTR_DEVICEADDRESS]
                 ? ''
-                : (pairing.product?.['product:name'] ?? 'New Device'),
+                : (pairing.product?.[Product.ATTR_NAME] ?? 'New Device'),
             }));
           }
 
           const mispaired = devList.find(
             (d) =>
-              d['pairdev:pairingState'] === PAIRING_STATES.MISPAIRED ||
-              d['pairdev:pairingState'] === PAIRING_STATES.MISCONFIGURED,
+              d[PairingDevice.ATTR_PAIRINGSTATE] === PairingDevice.PAIRINGSTATE_MISPAIRED ||
+              d[PairingDevice.ATTR_PAIRINGSTATE] === PairingDevice.PAIRINGSTATE_MISCONFIGURED,
           );
           if (mispaired && !paired) {
             if (pollRef.current) clearInterval(pollRef.current);
             dispatch(deviceMispaired(mispaired));
           }
-        } catch {
-          // Polling error, continue
+        } catch (e) {
+          console.warn('Pairing device poll failed:', e);
         }
       };
 
@@ -157,11 +158,11 @@ export default function PairingPage() {
 
     dispatch(setPairingLoading(true));
     try {
-      const resp = await Bridge.request('subpairing:StartPairing', pairingSubAddr, {
-        productAddress: pairing.product['base:address'],
+      const resp = await Bridge.request<StartPairingResponse>(PairingSubsystem.CMD_STARTPAIRING, pairingSubAddr, {
+        productAddress: pairing.product[Base.ATTR_ADDRESS],
       });
 
-      const pairingSteps = (resp['steps'] as PairingStep[]) ?? [];
+      const pairingSteps = resp.steps ?? [];
       dispatch(setSteps(pairingSteps));
 
       if (pairingSteps.length === 0) {
@@ -182,7 +183,7 @@ export default function PairingPage() {
     const stored = sessionStorage.getItem('pairing:product');
     if (stored && !pairing.product) {
       const parsed = JSON.parse(stored);
-      const productId = parsed['product:id'];
+      const productId = parsed[Product.ATTR_ID];
       dispatch(loadProduct({
         product: parsed,
         isHubPairing: productId === 'dee000' || productId === 'dee001',
@@ -213,30 +214,29 @@ export default function PairingPage() {
     const pollHub = async () => {
       try {
         const placeAddr = `SERV:place:${placeId}`;
-        const resp = await Bridge.request('place:RegisterHubV2', placeAddr, {
+        const resp = await Bridge.request<RegisterHubV2Response>(Place.CMD_REGISTERHUBV2, placeAddr, {
           hubId: pairing.hubId.trim().toUpperCase(),
         });
 
-        const regState = resp['state'] as string;
-        dispatch(setHubRegistrationState(regState));
+        dispatch(setHubRegistrationState(resp.state));
 
-        if (regState === 'REGISTERED') {
+        if (resp.state === Hub.REGISTRATIONSTATE_REGISTERED) {
           if (pollRef.current) clearInterval(pollRef.current);
-          const hubData = resp['hub'] as Record<string, unknown>;
+          const hubData = resp.hub;
           if (hubData) {
             dispatch(setHub(hubData));
           }
           dispatch(hubRegistered());
         } else if (
-          regState === 'error.register.alreadyregistered' ||
-          regState === 'error.register.orphanedhub' ||
-          regState === 'request.param.invalid'
+          resp.state === HUB_REGISTRATION_ERRORS.ALREADY_REGISTERED ||
+          resp.state === HUB_REGISTRATION_ERRORS.ORPHANED_HUB ||
+          resp.state === HUB_REGISTRATION_ERRORS.INVALID_PARAM
         ) {
           if (pollRef.current) clearInterval(pollRef.current);
-          dispatch(hubRegistrationError(regState));
+          dispatch(hubRegistrationError(resp.state));
         }
-      } catch {
-        // Continue polling
+      } catch (e) {
+        console.warn('Hub registration poll failed:', e);
       }
     };
 
@@ -250,12 +250,12 @@ export default function PairingPage() {
     if (pairing.isHubPairing) {
       if (hub && pairing.deviceName.trim()) {
         try {
-          const hubAddr = hub['base:address'] as string;
-          await Bridge.request('base:SetAttributes', hubAddr, {
-            'dev:name': pairing.deviceName.trim(),
+          const hubAddr = hub[Base.ATTR_ADDRESS] as string;
+          await Bridge.request(Base.CMD_SETATTRIBUTES, hubAddr, {
+            [Device.ATTR_NAME]: pairing.deviceName.trim(),
           });
         } catch {
-          // Non-critical
+          dispatch(addNotification({ type: 'error', message: 'Failed to set hub name.' }));
         }
       }
       dispatch(customizationComplete());
@@ -264,28 +264,28 @@ export default function PairingPage() {
 
     if (pairing.activeDevice) {
       try {
-        await Bridge.request('pairdev:Customize', pairing.activeDevice['base:address'], {});
+        await Bridge.request(PairingDevice.CMD_CUSTOMIZE, pairing.activeDevice[Base.ATTR_ADDRESS], {});
 
         if (pairing.deviceName.trim()) {
-          const devAddr = pairing.activeDevice['pairdev:deviceAddress'] as string;
+          const devAddr = pairing.activeDevice[PairingDevice.ATTR_DEVICEADDRESS] as string;
           if (devAddr) {
-            await Bridge.request('base:SetAttributes', devAddr, {
-              'dev:name': pairing.deviceName.trim(),
+            await Bridge.request(Base.CMD_SETATTRIBUTES, devAddr, {
+              [Device.ATTR_NAME]: pairing.deviceName.trim(),
             });
           }
         }
 
-        await Bridge.request('pairdev:AddCustomization', pairing.activeDevice['base:address'], {
+        await Bridge.request(PairingDevice.CMD_ADDCUSTOMIZATION, pairing.activeDevice[Base.ATTR_ADDRESS], {
           customization: 'NAME',
         });
 
         if (pairing.isFavorite) {
-          await Bridge.request('pairdev:AddCustomization', pairing.activeDevice['base:address'], {
+          await Bridge.request(PairingDevice.CMD_ADDCUSTOMIZATION, pairing.activeDevice[Base.ATTR_ADDRESS], {
             customization: 'FAVORITE',
           });
         }
       } catch {
-        // Non-critical
+        dispatch(addNotification({ type: 'error', message: 'Failed to save device customization. You can rename the device later from the Devices page.' }));
       }
     }
     dispatch(customizationComplete());
@@ -296,7 +296,7 @@ export default function PairingPage() {
   const handleFinish = useCallback(async () => {
     if (pairingSubAddr) {
       try {
-        await Bridge.request('subpairing:DismissAll', pairingSubAddr, {});
+        await Bridge.request(PairingSubsystem.CMD_DISMISSALL, pairingSubAddr, {});
       } catch {
         // OK
       }
@@ -311,7 +311,7 @@ export default function PairingPage() {
   }, [router]);
 
   const productName = pairing.product
-    ? `${pairing.product['product:vendor'] ?? ''} ${pairing.product['product:name'] ?? ''}`.trim()
+    ? `${pairing.product[Product.ATTR_VENDOR] ?? ''} ${pairing.product[Product.ATTR_NAME] ?? ''}`.trim()
     : '';
 
   return (

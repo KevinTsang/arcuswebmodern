@@ -1,5 +1,5 @@
-import type { PairingDevice } from './types';
-import { PAIRING_STATES } from './types';
+import { PairingDevice as PairingDeviceCap } from '@arcus/core';
+import type { PairingDevice } from '@/store/entityTypes';
 
 interface CompletedStageProps {
   isHubPairing: boolean;
@@ -17,8 +17,8 @@ export default function CompletedStage({
   onPairAnother,
 }: CompletedStageProps) {
   const isMispaired =
-    activeDevice?.['pairdev:pairingState'] === PAIRING_STATES.MISPAIRED ||
-    activeDevice?.['pairdev:pairingState'] === PAIRING_STATES.MISCONFIGURED;
+    activeDevice?.[PairingDeviceCap.ATTR_PAIRINGSTATE] === PairingDeviceCap.PAIRINGSTATE_MISPAIRED ||
+    activeDevice?.[PairingDeviceCap.ATTR_PAIRINGSTATE] === PairingDeviceCap.PAIRINGSTATE_MISCONFIGURED;
 
   return (
     <div className="text-center py-6">

@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import Bridge from '@arcus/core/bridge';
+import { Base, Rule, RuleTemplate } from '@arcus/core';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import { addNotification } from '@/store/slices/uiSlice';
 import { useSidePanel } from '@/components/SidePanel';
@@ -39,28 +40,28 @@ export function RulePanel({ rule, template, placeId }: RulePanelProps) {
   const { closeRight } = useSidePanel();
   const ruleTemplates = useAppSelector((s) => s.rules.ruleTemplates);
 
-  const address = rule?.['base:address'] as string | undefined;
+  const address = rule?.[Base.ATTR_ADDRESS] as string | undefined;
 
   // In edit mode, find the template from the rule's template id
   const resolvedTemplate = useMemo(() => {
     if (template) return template;
     if (!rule) return undefined;
-    const templateId = rule['rule:template'] as string | undefined;
+    const templateId = rule[Rule.ATTR_TEMPLATE] as string | undefined;
     if (!templateId) return undefined;
-    return ruleTemplates.find((t) => t['base:id'] === templateId);
+    return ruleTemplates.find((t) => t[Base.ATTR_ID] === templateId);
   }, [template, rule, ruleTemplates]);
 
-  const templateAddress = resolvedTemplate?.['base:address'] as string | undefined;
-  const templateString = (resolvedTemplate?.['ruletmpl:template'] as string) ?? '';
+  const templateAddress = resolvedTemplate?.[Base.ATTR_ADDRESS] as string | undefined;
+  const templateString = (resolvedTemplate?.[RuleTemplate.ATTR_TEMPLATE] as string) ?? '';
   const segments = useMemo(() => parseTemplateString(templateString), [templateString]);
 
   const [name, setName] = useState(
-    isEdit ? ((rule['rule:name'] as string) ?? '') : ((resolvedTemplate?.['ruletmpl:name'] as string) ?? ''),
+    isEdit ? ((rule[Rule.ATTR_NAME] as string) ?? '') : ((resolvedTemplate?.[RuleTemplate.ATTR_NAME] as string) ?? ''),
   );
   const [selectors, setSelectors] = useState<Record<string, ResolvedSelector>>({});
   const [context, setContext] = useState<Record<string, string>>(() => {
     if (!rule) return {};
-    const ctx = rule['rule:context'] as Record<string, unknown> | undefined;
+    const ctx = rule[Rule.ATTR_CONTEXT] as Record<string, unknown> | undefined;
     if (!ctx) return {};
     const result: Record<string, string> = {};
     for (const [k, v] of Object.entries(ctx)) {
@@ -82,7 +83,7 @@ export function RulePanel({ rule, template, placeId }: RulePanelProps) {
     let cancelled = false;
     (async () => {
       try {
-        const result = await Bridge.request('ruletmpl:Resolve', templateAddress, { placeId }) as ResolveResponse;
+        const result = await Bridge.request<ResolveResponse>(RuleTemplate.CMD_RESOLVE, templateAddress, { placeId });
         if (cancelled) return;
         // Server may return selectors under a 'selectors' key or directly at the top level
         const selectorMap = result.selectors ?? (result as Record<string, ServerSelector>);
@@ -117,21 +118,21 @@ export function RulePanel({ rule, template, placeId }: RulePanelProps) {
     setSaving(true);
     try {
       if (isEdit && address) {
-        await Bridge.request('base:SetAttributes', address, { 'rule:name': name.trim() });
+        await Bridge.request(Base.CMD_SETATTRIBUTES, address, { [Rule.ATTR_NAME]: name.trim() });
         if (selectorKeys.length > 0) {
           const updateContext: Record<string, string> = {};
           for (const key of selectorKeys) {
             if (context[key]) updateContext[key] = context[key];
           }
-          await Bridge.request('rule:UpdateContext', address, {
+          await Bridge.request(Rule.CMD_UPDATECONTEXT, address, {
             context: updateContext,
-            template: resolvedTemplate?.['base:id'] ?? '',
+            template: resolvedTemplate?.[Base.ATTR_ID] ?? '',
           });
         }
         dispatch(addNotification({ type: 'success', message: 'Rule saved' }));
       } else if (templateAddress) {
         if (!allFilled) return;
-        await Bridge.request('ruletmpl:CreateRule', templateAddress, {
+        await Bridge.request(RuleTemplate.CMD_CREATERULE, templateAddress, {
           placeId,
           name: name.trim(),
           description: templateString,
@@ -150,7 +151,7 @@ export function RulePanel({ rule, template, placeId }: RulePanelProps) {
     if (!address) return;
     setDeleting(true);
     try {
-      await Bridge.request('rule:Delete', address, {});
+      await Bridge.request(Rule.CMD_DELETE, address, {});
       dispatch(addNotification({ type: 'success', message: 'Rule deleted' }));
       closeRight();
     } catch {

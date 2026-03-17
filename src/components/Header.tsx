@@ -10,6 +10,7 @@
 import { useState, useCallback } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { Person } from '@arcus/core';
 import { useAppSelector } from '@/store/hooks';
 import { useSidePanel } from '@/components/SidePanel';
 import PlaceSelector from '@/components/PlaceSelector';
@@ -30,7 +31,7 @@ export default function Header() {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   const isAccountLoading = account === null;
-  const firstName = (person?.['person:firstName'] as string) ?? '';
+  const firstName = person?.[Person.ATTR_FIRSTNAME] ?? '';
 
   const handlePlaceSelector = useCallback(() => {
     if (isAccountLoading) return;

@@ -7,8 +7,10 @@
  */
 
 import type { Middleware } from '@reduxjs/toolkit';
+import type { RootState } from '../store';
 import cornea from '@arcus/core/cornea';
 import propertyAliases from '@arcus/core/property-aliases';
+import { Base, Person } from '@arcus/core';
 import { loginSuccess, logout } from '../slices/authSlice';
 import { deviceAdded, deviceUpdated, deviceRemoved } from '../slices/devicesSlice';
 import { subsystemAdded, subsystemUpdated, subsystemRemoved } from '../slices/subsystemsSlice';
@@ -19,6 +21,9 @@ import { incidentAdded, incidentUpdated, incidentRemoved } from '../slices/incid
 import { personAdded, personUpdated, personRemoved } from '../slices/peopleSlice';
 import { setHub, updateHub, clearHub } from '../slices/hubSlice';
 import { setPlace } from '../slices/placeSlice';
+import { setInvitations } from '../slices/invitationsSlice';
+import Bridge from '@arcus/core/bridge';
+import type { PendingInvitationsResponse } from '@/arcus/types';
 
 /**
  * Maps Cornea event namespace prefixes to Redux action creators.
@@ -41,17 +46,17 @@ interface EntityActions {
 
 /** Extract address and build entity with `id` for EntityAdapter. */
 function toEntity(obj: CorneaObj) {
-  const address = obj['base:address'] as string;
-  return { ...obj, id: address, 'base:address': address } as any;
+  const address = obj[Base.ATTR_ADDRESS] as string;
+  return { ...obj, id: address, [Base.ATTR_ADDRESS]: address } as any;
 }
 
 /** Extract address for update payloads (needs 'base:address'). */
 function toUpdate(obj: CorneaObj) {
-  return { ...obj, 'base:address': obj['base:address'] as string } as any;
+  return { ...obj, [Base.ATTR_ADDRESS]: obj[Base.ATTR_ADDRESS] as string } as any;
 }
 
 function addr(obj: CorneaObj): string {
-  return obj['base:address'] as string;
+  return obj[Base.ATTR_ADDRESS] as string;
 }
 
 const ENTITY_NAMESPACE_MAP: Record<string, EntityActions> = {
@@ -111,19 +116,19 @@ function applyPropertyAlias(eventName: string, obj: Record<string, any>): void {
   if (alias) alias(obj);
 }
 
-function subscribeToCorneaEvents(dispatch: (action: any) => void): void {
+function subscribeToCorneaEvents(dispatch: (action: any) => void, getState: () => RootState): void {
   // Clean up any previous subscriptions
   unsubscribeFromCorneaEvents();
 
   // Subscribe to entity namespaces (ModelConnection pattern)
   for (const [namespace, actions] of Object.entries(ENTITY_NAMESPACE_MAP)) {
     const onValueChange = (obj: Record<string, any>) => {
-      applyPropertyAlias(`${namespace} base:ValueChange`, obj);
+      applyPropertyAlias(`${namespace} ${Base.EVENT_VALUECHANGE}`, obj);
       dispatch(actions.updated(obj));
     };
 
     const onAdded = (obj: Record<string, any>) => {
-      applyPropertyAlias(`${namespace} base:Added`, obj);
+      applyPropertyAlias(`${namespace} ${Base.EVENT_ADDED}`, obj);
       dispatch(actions.added(obj));
     };
 
@@ -131,14 +136,14 @@ function subscribeToCorneaEvents(dispatch: (action: any) => void): void {
       dispatch(actions.removed(obj));
     };
 
-    cornea.on(`${namespace} base:ValueChange`, onValueChange);
-    cornea.on(`${namespace} base:Added`, onAdded);
-    cornea.on(`${namespace} base:Deleted`, onDeleted);
+    cornea.on(`${namespace} ${Base.EVENT_VALUECHANGE}`, onValueChange);
+    cornea.on(`${namespace} ${Base.EVENT_ADDED}`, onAdded);
+    cornea.on(`${namespace} ${Base.EVENT_DELETED}`, onDeleted);
 
     cleanupListeners.push(
-      () => cornea.off(`${namespace} base:ValueChange`, onValueChange),
-      () => cornea.off(`${namespace} base:Added`, onAdded),
-      () => cornea.off(`${namespace} base:Deleted`, onDeleted),
+      () => cornea.off(`${namespace} ${Base.EVENT_VALUECHANGE}`, onValueChange),
+      () => cornea.off(`${namespace} ${Base.EVENT_ADDED}`, onAdded),
+      () => cornea.off(`${namespace} ${Base.EVENT_DELETED}`, onDeleted),
     );
   }
 
@@ -153,14 +158,14 @@ function subscribeToCorneaEvents(dispatch: (action: any) => void): void {
     dispatch(clearHub());
   };
 
-  cornea.on(`${HUB_NAMESPACE} base:ValueChange`, onHubValueChange);
-  cornea.on(`${HUB_NAMESPACE} base:Added`, onHubAdded);
-  cornea.on(`${HUB_NAMESPACE} base:Deleted`, onHubDeleted);
+  cornea.on(`${HUB_NAMESPACE} ${Base.EVENT_VALUECHANGE}`, onHubValueChange);
+  cornea.on(`${HUB_NAMESPACE} ${Base.EVENT_ADDED}`, onHubAdded);
+  cornea.on(`${HUB_NAMESPACE} ${Base.EVENT_DELETED}`, onHubDeleted);
 
   cleanupListeners.push(
-    () => cornea.off(`${HUB_NAMESPACE} base:ValueChange`, onHubValueChange),
-    () => cornea.off(`${HUB_NAMESPACE} base:Added`, onHubAdded),
-    () => cornea.off(`${HUB_NAMESPACE} base:Deleted`, onHubDeleted),
+    () => cornea.off(`${HUB_NAMESPACE} ${Base.EVENT_VALUECHANGE}`, onHubValueChange),
+    () => cornea.off(`${HUB_NAMESPACE} ${Base.EVENT_ADDED}`, onHubAdded),
+    () => cornea.off(`${HUB_NAMESPACE} ${Base.EVENT_DELETED}`, onHubDeleted),
   );
 
   // Place events — single entity
@@ -168,10 +173,34 @@ function subscribeToCorneaEvents(dispatch: (action: any) => void): void {
     dispatch(setPlace(obj));
   };
 
-  cornea.on(`${PLACE_NAMESPACE} base:ValueChange`, onPlaceValueChange);
+  cornea.on(`${PLACE_NAMESPACE} ${Base.EVENT_VALUECHANGE}`, onPlaceValueChange);
 
   cleanupListeners.push(
-    () => cornea.off(`${PLACE_NAMESPACE} base:ValueChange`, onPlaceValueChange),
+    () => cornea.off(`${PLACE_NAMESPACE} ${Base.EVENT_VALUECHANGE}`, onPlaceValueChange),
+  );
+
+  // Invitation events — person:InvitationPending is broadcast from the
+  // place address, so the Cornea event namespace is 'place'.
+  // Mirrors context-bar.js: Cornea.on('place person:InvitationPending', ...)
+  const refreshInvitations = () => {
+    const personId = getState().auth.person?.['personId'];
+    if (typeof personId !== 'string') return;
+    Bridge.request<PendingInvitationsResponse>(Person.CMD_PENDINGINVITATIONS, `SERV:person:${personId}`, {})
+      .then((result) => {
+        dispatch(setInvitations(result.invitations ?? []));
+      })
+      .catch(() => {});
+  };
+
+  const onInvitationPending = () => refreshInvitations();
+  const onInvitationCancelled = () => refreshInvitations();
+
+  cornea.on(`place ${Person.EVENT_INVITATIONPENDING}`, onInvitationPending);
+  cornea.on(`place ${Person.EVENT_INVITATIONCANCELLED}`, onInvitationCancelled);
+
+  cleanupListeners.push(
+    () => cornea.off(`place ${Person.EVENT_INVITATIONPENDING}`, onInvitationPending),
+    () => cornea.off(`place ${Person.EVENT_INVITATIONCANCELLED}`, onInvitationCancelled),
   );
 
   // Session unauthorized — triggers logout
@@ -202,7 +231,7 @@ export const corneaMiddleware: Middleware = (storeApi) => (next) => (action) => 
 
   // After loginSuccess is dispatched, subscribe to Cornea events
   if (loginSuccess.match(action)) {
-    subscribeToCorneaEvents(storeApi.dispatch);
+    subscribeToCorneaEvents(storeApi.dispatch, storeApi.getState);
   }
 
   // After logout is dispatched, unsubscribe from Cornea events

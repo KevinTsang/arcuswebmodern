@@ -1,4 +1,5 @@
-import type { PairingProduct, PairingStep } from './types';
+import type { PairingProduct } from '@/store/entityTypes';
+import type { PairingStep } from './types';
 import type { AppDispatch } from '@/store/store';
 import { nextStep, prevStep } from '@/store/slices/pairingSlice';
 import HubRegistrationSteps from './HubRegistrationSteps';

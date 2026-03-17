@@ -38,6 +38,22 @@ beforeEach(() => {
   };
 });
 
+function fillAndSubmit(relationship?: string, pleaseDescribe?: string) {
+  const inputs = screen.getAllByRole('textbox');
+  fireEvent.change(inputs[0], { target: { value: 'Jane' } });
+  fireEvent.change(inputs[1], { target: { value: 'Smith' } });
+  fireEvent.change(screen.getByPlaceholderText('person@example.com'), { target: { value: 'jane@test.com' } });
+
+  if (relationship) {
+    fireEvent.change(screen.getByRole('combobox'), { target: { value: relationship } });
+  }
+  if (pleaseDescribe) {
+    fireEvent.change(screen.getByPlaceholderText('e.g. Property Manager'), { target: { value: pleaseDescribe } });
+  }
+
+  fireEvent.click(screen.getByText('Send Invitation'));
+}
+
 // ── Tests ─────────────────────────────────────────────────────────────
 
 describe('AddPersonPanel – rendering', () => {
@@ -47,11 +63,12 @@ describe('AddPersonPanel – rendering', () => {
     expect(screen.getByText('Send an invitation to join this place.')).toBeInTheDocument();
   });
 
-  it('shows First Name, Last Name, and Email fields', () => {
+  it('shows First Name, Last Name, Email, and Relationship fields', () => {
     render(<AddPersonPanel />);
     expect(screen.getByText('First Name')).toBeInTheDocument();
     expect(screen.getByText('Last Name')).toBeInTheDocument();
     expect(screen.getByText('Email')).toBeInTheDocument();
+    expect(screen.getByText('Relationship')).toBeInTheDocument();
   });
 
   it('shows Send Invitation and Cancel buttons', () => {
@@ -64,6 +81,73 @@ describe('AddPersonPanel – rendering', () => {
     render(<AddPersonPanel />);
     expect(screen.getByText('Send Invitation')).toBeDisabled();
   });
+
+  it('shows relationship dropdown with grouped options', () => {
+    render(<AddPersonPanel />);
+    const select = screen.getByRole('combobox');
+    expect(select).toBeInTheDocument();
+    expect(screen.getByText('Spouse/Partner')).toBeInTheDocument();
+    expect(screen.getByText('Friend')).toBeInTheDocument();
+    expect(screen.getByText('Babysitter (Nanny)')).toBeInTheDocument();
+  });
+});
+
+describe('AddPersonPanel – relationship', () => {
+  beforeEach(() => {
+    mockBridgeRequest.mockImplementation((type: string) => {
+      if (type === 'place:CreateInvitation') {
+        return Promise.resolve({ invitation: { code: 'abc' } });
+      }
+      return Promise.resolve({});
+    });
+  });
+
+  it('defaults to OTHER when no relationship selected', async () => {
+    render(<AddPersonPanel />);
+    fillAndSubmit();
+
+    await waitFor(() => {
+      expect(mockBridgeRequest).toHaveBeenCalledWith(
+        'place:CreateInvitation',
+        'SERV:place:place-1',
+        expect.objectContaining({ relationship: 'OTHER' }),
+      );
+    });
+  });
+
+  it('sends selected relationship tag', async () => {
+    render(<AddPersonPanel />);
+    fillAndSubmit('people_family_spouse');
+
+    await waitFor(() => {
+      expect(mockBridgeRequest).toHaveBeenCalledWith(
+        'place:CreateInvitation',
+        'SERV:place:place-1',
+        expect.objectContaining({ relationship: 'people_family_spouse' }),
+      );
+    });
+  });
+
+  it('shows Please Describe field when Other is selected', () => {
+    render(<AddPersonPanel />);
+    expect(screen.queryByPlaceholderText('e.g. Property Manager')).not.toBeInTheDocument();
+
+    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'people_service_other' } });
+    expect(screen.getByPlaceholderText('e.g. Property Manager')).toBeInTheDocument();
+  });
+
+  it('sends custom description when Other is selected and described', async () => {
+    render(<AddPersonPanel />);
+    fillAndSubmit('people_service_other', 'Property Manager');
+
+    await waitFor(() => {
+      expect(mockBridgeRequest).toHaveBeenCalledWith(
+        'place:CreateInvitation',
+        'SERV:place:place-1',
+        expect.objectContaining({ relationship: 'Property Manager' }),
+      );
+    });
+  });
 });
 
 describe('AddPersonPanel – interactions', () => {
@@ -74,32 +158,42 @@ describe('AddPersonPanel – interactions', () => {
     expect(screen.getByText('Send Invitation')).not.toBeDisabled();
   });
 
-  it('calls place:SendInvitation with form data on submit', async () => {
-    mockBridgeRequest.mockResolvedValue({});
+  it('calls CreateInvitation then SendInvitation on submit', async () => {
+    const fakeInvitation = { code: 'abc', inviteeEmail: 'jane@test.com' };
+    mockBridgeRequest.mockImplementation((type: string) => {
+      if (type === 'place:CreateInvitation') {
+        return Promise.resolve({ invitation: fakeInvitation });
+      }
+      return Promise.resolve({});
+    });
+
     render(<AddPersonPanel />);
+    fillAndSubmit();
 
-    const inputs = screen.getAllByRole('textbox');
-    fireEvent.change(inputs[0], { target: { value: 'Jane' } });
-    fireEvent.change(inputs[1], { target: { value: 'Smith' } });
-    fireEvent.change(inputs[2], { target: { value: 'jane@test.com' } });
-
-    fireEvent.click(screen.getByText('Send Invitation'));
-
-    await waitFor(() =>
+    await waitFor(() => {
+      expect(mockBridgeRequest).toHaveBeenCalledWith(
+        'place:CreateInvitation',
+        'SERV:place:place-1',
+        { firstName: 'Jane', lastName: 'Smith', email: 'jane@test.com', relationship: 'OTHER' },
+      );
       expect(mockBridgeRequest).toHaveBeenCalledWith(
         'place:SendInvitation',
         'SERV:place:place-1',
-        { firstName: 'Jane', lastName: 'Smith', email: 'jane@test.com' },
-      ),
-    );
+        { invitation: fakeInvitation },
+      );
+    });
   });
 
   it('dispatches success notification and closes panel on success', async () => {
-    mockBridgeRequest.mockResolvedValue({});
+    mockBridgeRequest.mockImplementation((type: string) => {
+      if (type === 'place:CreateInvitation') {
+        return Promise.resolve({ invitation: { code: 'x' } });
+      }
+      return Promise.resolve({});
+    });
     render(<AddPersonPanel />);
 
-    const emailInput = screen.getByPlaceholderText('person@example.com');
-    fireEvent.change(emailInput, { target: { value: 'jane@test.com' } });
+    fireEvent.change(screen.getByPlaceholderText('person@example.com'), { target: { value: 'jane@test.com' } });
     fireEvent.click(screen.getByText('Send Invitation'));
 
     await waitFor(() => {
@@ -115,8 +209,7 @@ describe('AddPersonPanel – interactions', () => {
     mockBridgeRequest.mockRejectedValue(new Error('fail'));
     render(<AddPersonPanel />);
 
-    const emailInput = screen.getByPlaceholderText('person@example.com');
-    fireEvent.change(emailInput, { target: { value: 'jane@test.com' } });
+    fireEvent.change(screen.getByPlaceholderText('person@example.com'), { target: { value: 'jane@test.com' } });
     fireEvent.click(screen.getByText('Send Invitation'));
 
     await waitFor(() =>
@@ -131,5 +224,23 @@ describe('AddPersonPanel – interactions', () => {
     render(<AddPersonPanel />);
     fireEvent.click(screen.getByText('Cancel'));
     expect(mockCloseRight).toHaveBeenCalled();
+  });
+
+  it('calls onSent callback after successful send', async () => {
+    const onSent = jest.fn();
+    mockBridgeRequest.mockImplementation((type: string) => {
+      if (type === 'place:CreateInvitation') {
+        return Promise.resolve({ invitation: { code: 'x' } });
+      }
+      return Promise.resolve({});
+    });
+
+    render(<AddPersonPanel onSent={onSent} />);
+    fireEvent.change(screen.getByPlaceholderText('person@example.com'), { target: { value: 'jane@test.com' } });
+    fireEvent.click(screen.getByText('Send Invitation'));
+
+    await waitFor(() => {
+      expect(onSent).toHaveBeenCalled();
+    });
   });
 });

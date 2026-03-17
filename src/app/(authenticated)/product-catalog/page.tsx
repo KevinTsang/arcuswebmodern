@@ -10,6 +10,7 @@
 
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
+import { Base, Hub, Product as ProductCap } from '@arcus/core';
 import { ProductCatalogService } from '@arcus/core/services';
 import { useAppSelector } from '@/store/hooks';
 import { ProductCard } from '@/components/product';
@@ -78,7 +79,7 @@ export default function ProductCatalogPage() {
       setProducts(allProducts);
       return;
     }
-    setProducts(allProducts.filter((p) => p['product:vendor'] === selectedBrand));
+    setProducts(allProducts.filter((p) => p[ProductCap.ATTR_VENDOR] === selectedBrand));
   }, [selectedBrand, allProducts]);
 
   // Search
@@ -105,23 +106,23 @@ export default function ProductCatalogPage() {
   const filteredProducts = useMemo(() => {
     const list = searchResults ?? products;
     if (filterMode === 'all') return list;
-    if (filterMode === 'hub-required') return list.filter((p) => p['product:hubRequired']);
-    return list.filter((p) => !p['product:hubRequired']);
+    if (filterMode === 'hub-required') return list.filter((p) => p[ProductCap.ATTR_HUBREQUIRED]);
+    return list.filter((p) => !p[ProductCap.ATTR_HUBREQUIRED]);
   }, [products, searchResults, filterMode]);
 
   // Navigate to pairing
   const handleSelectProduct = useCallback(
     (product: Product) => {
       // Validation checks
-      if (product['product:hubRequired'] && !hub) {
+      if (product[ProductCap.ATTR_HUBREQUIRED] && !hub) {
         alert('A Smart Hub is required to pair this device. Please set up a hub first.');
         return;
       }
-      if (product['product:hubRequired'] && hub?.['hub:state'] === 'DOWN') {
+      if (product[ProductCap.ATTR_HUBREQUIRED] && hub?.[Hub.ATTR_STATE] === Hub.STATE_DOWN) {
         alert('Your hub is offline. Please reconnect your hub before pairing.');
         return;
       }
-      if (product['product:appRequired']) {
+      if (product[ProductCap.ATTR_APPREQUIRED]) {
         alert('This device requires the mobile app to pair.');
         return;
       }
@@ -241,7 +242,7 @@ export default function ProductCatalogPage() {
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
             {filteredProducts.map((product) => (
               <ProductCard
-                key={product['base:address']}
+                key={product[Base.ATTR_ADDRESS]}
                 product={product}
                 onSelect={handleSelectProduct}
               />

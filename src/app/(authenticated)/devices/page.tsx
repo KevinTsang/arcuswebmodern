@@ -11,6 +11,8 @@ import { useState, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Bridge from '@arcus/core/bridge';
+import { Base, Place, PairingDevice, PairingSubsystem, HubConnection } from '@arcus/core';
+import type { ListPairingDevicesResponse, GetKitInformationResponse } from '@/arcus/types';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import { addNotification } from '@/store/slices/uiSlice';
 import { selectAllDevices } from '@/store/slices/devicesSlice';
@@ -23,7 +25,7 @@ export default function DevicesPage() {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const placeName = useAppSelector(
-    (s) => (s.place.place?.['place:name'] as string) ?? 'Your Home',
+    (s) => s.place.place?.[Place.ATTR_NAME] ?? 'Your Home',
   );
   const hub = useAppSelector((s) => s.hub.hub);
   const devices = useAppSelector(selectAllDevices);
@@ -36,10 +38,10 @@ export default function DevicesPage() {
     if (!subsystems?.entities) return null;
     const entries = Object.values(subsystems.entities) as Array<Record<string, unknown>>;
     const sub = entries.find((s) => {
-      const addr = s['base:address'] as string;
+      const addr = s[Base.ATTR_ADDRESS] as string;
       return addr?.includes('subpairing');
     });
-    return (sub?.['base:address'] as string) ?? null;
+    return (sub?.[Base.ATTR_ADDRESS] as string) ?? null;
   }, [subsystems]);
 
   const handleAddHubOrKit = useCallback(async () => {
@@ -53,20 +55,20 @@ export default function DevicesPage() {
     }
     try {
       const [devResp, kitResp] = await Promise.all([
-        Bridge.request('subpairing:ListPairingDevices', pairingSubAddr, {}),
-        Bridge.request('subpairing:GetKitInformation', pairingSubAddr, {}),
+        Bridge.request<ListPairingDevicesResponse>(PairingSubsystem.CMD_LISTPAIRINGDEVICES, pairingSubAddr, {}),
+        Bridge.request<GetKitInformationResponse>(PairingSubsystem.CMD_GETKITINFORMATION, pairingSubAddr, {}),
       ]);
-      const devices = (devResp['devices'] as Array<Record<string, unknown>>) ?? [];
-      const kitInfo = (kitResp['kitInfo'] as Array<Record<string, unknown>>) ?? [];
+      const devices = devResp.devices ?? [];
+      const kitInfo = kitResp.kitInfo ?? [];
       const unpaired = kitInfo.filter((kd) =>
         devices.some(
           (pd) =>
-            kd['protocolAddress'] === pd['pairdev:protocolAddress'] &&
-            pd['pairdev:pairingState'] === 'PAIRING',
+            kd.protocolAddress === pd[PairingDevice.ATTR_PROTOCOLADDRESS] &&
+            pd[PairingDevice.ATTR_PAIRINGSTATE] === PairingDevice.PAIRINGSTATE_PAIRING,
         ),
       );
       if (unpaired.length > 0) {
-        if (hub['hubconn:state'] === 'OFFLINE') {
+        if (hub[HubConnection.ATTR_STATE] === HubConnection.STATE_OFFLINE) {
           dispatch(addNotification({ type: 'error', message: 'Hub Offline. Re-connect your Hub and then try to pair.' }));
         } else {
           router.push('/kit-activate');
@@ -74,8 +76,9 @@ export default function DevicesPage() {
       } else {
         dispatch(addNotification({ type: 'info', message: 'Your Hub is already paired. No kit devices awaiting activation.' }));
       }
-    } catch {
-      dispatch(addNotification({ type: 'info', message: 'Your Hub is already paired. No kit devices awaiting activation.' }));
+    } catch (e) {
+      console.error('Failed to check kit devices:', e);
+      dispatch(addNotification({ type: 'error', message: 'Unable to check for kit devices. Verify your hub is online.' }));
     }
   }, [hub, pairingSubAddr, router, dispatch]);
 

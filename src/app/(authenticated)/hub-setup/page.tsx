@@ -11,6 +11,7 @@
 
 import { useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { Base, Product } from '@arcus/core';
 import { useAppSelector } from '@/store/hooks';
 
 interface ProductGroup {
@@ -73,7 +74,7 @@ export default function HubSetupPage() {
 
       // Find product in store
       const product = products.find(
-        (p) => (p['product:id'] as string) === hubId,
+        (p) => (p[Product.ATTR_ID] as string) === hubId,
       );
 
       if (product) {
@@ -83,11 +84,11 @@ export default function HubSetupPage() {
         sessionStorage.setItem(
           'pairing:product',
           JSON.stringify({
-            'base:address': `SERV:product:${hubId}`,
-            'product:id': hubId,
-            'product:name': hubId === 'dee001' ? 'Wi-Fi Smart Hub' : 'Smart Hub',
-            'product:vendor': 'Arcus',
-            'product:hubRequired': false,
+            [Base.ATTR_ADDRESS]: `SERV:product:${hubId}`,
+            [Product.ATTR_ID]: hubId,
+            [Product.ATTR_NAME]: hubId === 'dee001' ? 'Wi-Fi Smart Hub' : 'Smart Hub',
+            [Product.ATTR_VENDOR]: 'Arcus',
+            [Product.ATTR_HUBREQUIRED]: false,
           }),
         );
       }

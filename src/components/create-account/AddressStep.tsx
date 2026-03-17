@@ -1,0 +1,98 @@
+'use client';
+
+import { useCallback, type FormEvent } from 'react';
+import { Base, Place } from '@arcus/core';
+import Bridge from '@arcus/core/bridge';
+import { useCreateAccount } from './CreateAccountContext';
+import FormField from './FormField';
+
+export default function AddressStep() {
+  const { state, dispatch, addrForm } = useCreateAccount();
+
+  const { street1, street2, city, state: addrState, zip, placeId, loading } = state;
+  const allValues = { street1, city, state: addrState, zip };
+
+  const handleSubmit = useCallback(
+    async (ev: FormEvent) => {
+      ev.preventDefault();
+      if (!addrForm.formValidates(['street1', 'city', 'state', 'zip'], allValues)) return;
+
+      if (!placeId) {
+        dispatch({ type: 'SET_STEP', step: 'pin' });
+        return;
+      }
+
+      dispatch({ type: 'SET_LOADING', loading: true });
+      dispatch({ type: 'CLEAR_ERROR' });
+
+      try {
+        await Bridge.request(Base.CMD_SETATTRIBUTES, `SERV:place:${placeId}`, {
+          [Place.ATTR_STREETADDRESS1]: street1,
+          [Place.ATTR_STREETADDRESS2]: street2,
+          [Place.ATTR_CITY]: city,
+          [Place.ATTR_STATEPROV]: addrState,
+          [Place.ATTR_ZIPCODE]: zip,
+        });
+        dispatch({ type: 'SET_STEP', step: 'pin' });
+      } catch {
+        dispatch({ type: 'SET_ERROR', error: 'Failed to save address. You can update it later in Settings.' });
+        dispatch({ type: 'SET_STEP', step: 'pin' });
+      } finally {
+        dispatch({ type: 'SET_LOADING', loading: false });
+      }
+    },
+    [street1, street2, city, addrState, zip, placeId, addrForm, dispatch, allValues],
+  );
+
+  const handleSkip = useCallback(() => {
+    dispatch({ type: 'SET_STEP', step: 'pin' });
+  }, [dispatch]);
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4 mt-4">
+      <p className="text-sm text-grouse">Enter your home address for accurate weather and service information.</p>
+      <FormField
+        label="Street Address" id="street1" value={street1}
+        onChange={(v) => dispatch({ type: 'SET_FIELD', field: 'street1', value: v })}
+        form={addrForm} allValues={allValues}
+      />
+      <FormField
+        label="Street Address 2 (optional)" id="street2" value={street2}
+        onChange={(v) => dispatch({ type: 'SET_FIELD', field: 'street2', value: v })}
+      />
+      <div className="grid grid-cols-3 gap-3">
+        <FormField
+          label="City" id="city" value={city}
+          onChange={(v) => dispatch({ type: 'SET_FIELD', field: 'city', value: v })}
+          form={addrForm} allValues={allValues}
+        />
+        <FormField
+          label="State" id="state" value={addrState}
+          onChange={(v) => dispatch({ type: 'SET_FIELD', field: 'state', value: v })}
+          form={addrForm} allValues={allValues}
+        />
+        <FormField
+          label="ZIP" id="zip" value={zip}
+          onChange={(v) => dispatch({ type: 'SET_FIELD', field: 'zip', value: v })}
+          form={addrForm} allValues={allValues}
+        />
+      </div>
+      <div className="flex gap-2">
+        <button
+          type="submit"
+          disabled={loading}
+          className="flex-1 py-2.5 bg-peacock text-crane rounded-[var(--border-radius-base)] text-sm font-medium hover:bg-peacock/90 disabled:opacity-50"
+        >
+          {loading ? 'Saving\u2026' : 'Save Address'}
+        </button>
+        <button
+          type="button"
+          onClick={handleSkip}
+          className="px-4 py-2.5 border border-heron rounded-[var(--border-radius-base)] text-sm text-coot hover:bg-pigeon"
+        >
+          Skip
+        </button>
+      </div>
+    </form>
+  );
+}

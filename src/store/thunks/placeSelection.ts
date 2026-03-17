@@ -7,12 +7,7 @@
  * 3. Fall back to the first place alphabetically
  */
 
-export interface SessionPlace {
-  placeId: string;
-  placeName: string;
-  accountId: string;
-  role: string;
-}
+import type { SessionPlace } from '@/arcus/types';
 
 export function getDefaultPlaceId(
   places: SessionPlace[],

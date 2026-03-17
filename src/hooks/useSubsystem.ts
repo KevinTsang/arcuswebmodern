@@ -6,6 +6,12 @@
  */
 
 import { useMemo } from 'react';
+import {
+  Base, Switch, DoorLock, Contact, MotorizedDoor, Temperature, RelativeHumidity,
+  SecuritySubsystem, AlarmSubsystem, ClimateSubsystem, DoorsNLocksSubsystem,
+  PresenceSubsystem, CareSubsystem, CamerasSubsystem, LawnNGardenSubsystem,
+  WaterSubsystem, LightsNSwitchesSubsystem,
+} from '@arcus/core';
 import { useAppSelector } from '@/store/hooks';
 import { selectAllSubsystems } from '@/store/slices/subsystemsSlice';
 import { selectAllDevices } from '@/store/slices/devicesSlice';
@@ -21,7 +27,7 @@ export function useSubsystem(namespace: string): SubsystemObj | undefined {
   const subsystems = useAppSelector(selectAllSubsystems);
   return useMemo(() => {
     return subsystems.find((s) => {
-      const addr = s['base:address'] as string;
+      const addr = s[Base.ATTR_ADDRESS] as string;
       return addr?.startsWith(`SERV:${namespace}:`);
     });
   }, [subsystems, namespace]);
@@ -41,7 +47,7 @@ export function useVisibleSubsystems(): Array<{
       .map((config) => ({
         config,
         subsystem: subsystems.find((s) => {
-          const addr = s['base:address'] as string;
+          const addr = s[Base.ATTR_ADDRESS] as string;
           return addr?.startsWith(`SERV:${config.namespace}:`);
         }),
       }));
@@ -64,7 +70,7 @@ export function useSubsystemDevices(namespace: string, deviceAttributes: string[
         for (const addr of list) addresses.add(addr);
       }
     }
-    return allDevices.filter((d) => addresses.has(d['base:address']));
+    return allDevices.filter((d) => addresses.has(d[Base.ATTR_ADDRESS]));
   }, [subsystem, deviceAttributes, allDevices]);
 }
 
@@ -77,15 +83,15 @@ export function useAlarmSubsystem() {
   const alarm = useSubsystem('subalarm');
 
   return useMemo(() => {
-    const securityMode = (security?.['subsecurity:alarmMode'] as string) ?? 'OFF';
-    const securityState = (security?.['subsecurity:alarmState'] as string) ?? 'DISARMED';
+    const securityMode = (security?.[SecuritySubsystem.ATTR_ALARMMODE] as string) ?? SecuritySubsystem.ALARMMODE_OFF;
+    const securityState = (security?.[SecuritySubsystem.ATTR_ALARMSTATE] as string) ?? SecuritySubsystem.ALARMSTATE_DISARMED;
     const currentIncident = security?.['subsecurity:currentIncident'] as string | undefined;
-    const securityDevices = (security?.['subsecurity:securityDevices'] as string[]) ?? [];
-    const triggeredDevices = (security?.['subsecurity:triggeredDevices'] as string[]) ?? [];
-    const offlineDevices = (security?.['subsecurity:offlineDevices'] as string[]) ?? [];
-    const recordOnSecurity = (alarm?.['subalarm:recordOnSecurity'] as boolean) ?? false;
-    const fanShutoffOnSmoke = (alarm?.['subalarm:fanShutoffOnSmoke'] as boolean) ?? false;
-    const fanShutoffOnCO = (alarm?.['subalarm:fanShutoffOnCO'] as boolean) ?? false;
+    const securityDevices = (security?.[SecuritySubsystem.ATTR_SECURITYDEVICES] as string[]) ?? [];
+    const triggeredDevices = (security?.[SecuritySubsystem.ATTR_TRIGGEREDDEVICES] as string[]) ?? [];
+    const offlineDevices = (security?.[SecuritySubsystem.ATTR_OFFLINEDEVICES] as string[]) ?? [];
+    const recordOnSecurity = (alarm?.[AlarmSubsystem.ATTR_RECORDONSECURITY] as boolean) ?? false;
+    const fanShutoffOnSmoke = (alarm?.[AlarmSubsystem.ATTR_FANSHUTOFFONSMOKE] as boolean) ?? false;
+    const fanShutoffOnCO = (alarm?.[AlarmSubsystem.ATTR_FANSHUTOFFONCO] as boolean) ?? false;
 
     return {
       securityMode,
@@ -110,26 +116,26 @@ export function useClimateSubsystem() {
   const allDevices = useAppSelector(selectAllDevices);
 
   return useMemo(() => {
-    const primaryTempDevice = sub?.['subclimate:primaryTemperatureDevice'] as string | undefined;
-    const primaryHumidDevice = sub?.['subclimate:primaryHumidityDevice'] as string | undefined;
-    const tempDeviceAddrs = (sub?.['subclimate:temperatureDevices'] as string[]) ?? [];
-    const humidDeviceAddrs = (sub?.['subclimate:humidityDevices'] as string[]) ?? [];
-    const controlDeviceAddrs = (sub?.['subclimate:controlDevices'] as string[]) ?? [];
+    const primaryTempDevice = sub?.[ClimateSubsystem.ATTR_PRIMARYTEMPERATUREDEVICE] as string | undefined;
+    const primaryHumidDevice = sub?.[ClimateSubsystem.ATTR_PRIMARYHUMIDITYDEVICE] as string | undefined;
+    const tempDeviceAddrs = (sub?.[ClimateSubsystem.ATTR_TEMPERATUREDEVICES] as string[]) ?? [];
+    const humidDeviceAddrs = (sub?.[ClimateSubsystem.ATTR_HUMIDITYDEVICES] as string[]) ?? [];
+    const controlDeviceAddrs = (sub?.[ClimateSubsystem.ATTR_CONTROLDEVICES] as string[]) ?? [];
 
-    const controlDevices = allDevices.filter((d) => controlDeviceAddrs.includes(d['base:address']));
-    const tempDevices = allDevices.filter((d) => tempDeviceAddrs.includes(d['base:address']));
-    const humidDevices = allDevices.filter((d) => humidDeviceAddrs.includes(d['base:address']));
+    const controlDevices = allDevices.filter((d) => controlDeviceAddrs.includes(d[Base.ATTR_ADDRESS]));
+    const tempDevices = allDevices.filter((d) => tempDeviceAddrs.includes(d[Base.ATTR_ADDRESS]));
+    const humidDevices = allDevices.filter((d) => humidDeviceAddrs.includes(d[Base.ATTR_ADDRESS]));
 
     // Get primary readings
     const primaryTempEntity = primaryTempDevice
-      ? allDevices.find((d) => d['base:address'] === primaryTempDevice)
+      ? allDevices.find((d) => d[Base.ATTR_ADDRESS] === primaryTempDevice)
       : tempDevices[0];
     const primaryHumidEntity = primaryHumidDevice
-      ? allDevices.find((d) => d['base:address'] === primaryHumidDevice)
+      ? allDevices.find((d) => d[Base.ATTR_ADDRESS] === primaryHumidDevice)
       : humidDevices[0];
 
-    const temperature = primaryTempEntity?.['temp:temperature'] as number | undefined;
-    const humidity = primaryHumidEntity?.['humid:humidity'] as number | undefined;
+    const temperature = primaryTempEntity?.[Temperature.ATTR_TEMPERATURE] as number | undefined;
+    const humidity = primaryHumidEntity?.[RelativeHumidity.ATTR_HUMIDITY] as number | undefined;
 
     return {
       subsystem: sub,
@@ -148,20 +154,20 @@ export function useDoorsLocksSubsystem() {
   const allDevices = useAppSelector(selectAllDevices);
 
   return useMemo(() => {
-    const lockAddrs = (sub?.['subdoorsnlocks:lockDevices'] as string[]) ?? [];
-    const motorizedAddrs = (sub?.['subdoorsnlocks:motorizedDoorDevices'] as string[]) ?? [];
-    const contactAddrs = (sub?.['subdoorsnlocks:contactSensorDevices'] as string[]) ?? [];
-    const petDoorAddrs = (sub?.['subdoorsnlocks:petDoorDevices'] as string[]) ?? [];
-    const chimeConfig = (sub?.['subdoorsnlocks:chimeConfig'] as Record<string, unknown>) ?? {};
+    const lockAddrs = (sub?.[DoorsNLocksSubsystem.ATTR_LOCKDEVICES] as string[]) ?? [];
+    const motorizedAddrs = (sub?.[DoorsNLocksSubsystem.ATTR_MOTORIZEDDOORDEVICES] as string[]) ?? [];
+    const contactAddrs = (sub?.[DoorsNLocksSubsystem.ATTR_CONTACTSENSORDEVICES] as string[]) ?? [];
+    const petDoorAddrs = (sub?.[DoorsNLocksSubsystem.ATTR_PETDOORDEVICES] as string[]) ?? [];
+    const chimeConfig = (sub?.[DoorsNLocksSubsystem.ATTR_CHIMECONFIG] as Record<string, unknown>) ?? {};
 
-    const locks = allDevices.filter((d) => lockAddrs.includes(d['base:address']));
-    const motorized = allDevices.filter((d) => motorizedAddrs.includes(d['base:address']));
-    const contacts = allDevices.filter((d) => contactAddrs.includes(d['base:address']));
-    const petDoors = allDevices.filter((d) => petDoorAddrs.includes(d['base:address']));
+    const locks = allDevices.filter((d) => lockAddrs.includes(d[Base.ATTR_ADDRESS]));
+    const motorized = allDevices.filter((d) => motorizedAddrs.includes(d[Base.ATTR_ADDRESS]));
+    const contacts = allDevices.filter((d) => contactAddrs.includes(d[Base.ATTR_ADDRESS]));
+    const petDoors = allDevices.filter((d) => petDoorAddrs.includes(d[Base.ATTR_ADDRESS]));
 
-    const unlockedCount = locks.filter((d) => d['doorlock:lockstate'] === 'UNLOCKED').length;
-    const openCount = contacts.filter((d) => d['cont:contact'] === 'OPENED').length
-      + motorized.filter((d) => (d['motdoor:doorstate'] as string) !== 'CLOSED').length;
+    const unlockedCount = locks.filter((d) => d[DoorLock.ATTR_LOCKSTATE] === DoorLock.LOCKSTATE_UNLOCKED).length;
+    const openCount = contacts.filter((d) => d[Contact.ATTR_CONTACT] === Contact.CONTACT_OPENED).length
+      + motorized.filter((d) => (d[MotorizedDoor.ATTR_DOORSTATE] as string) !== MotorizedDoor.DOORSTATE_CLOSED).length;
 
     return {
       subsystem: sub,
@@ -183,13 +189,13 @@ export function useHomeFamilySubsystem() {
   const people = useAppSelector(selectAllPeople);
 
   return useMemo(() => {
-    const peopleAtHomeAddrs = (sub?.['subspres:peopleAtHome'] as string[]) ?? [];
-    const peopleAwayAddrs = (sub?.['subspres:peopleAway'] as string[]) ?? [];
-    const devicesAtHomeAddrs = (sub?.['subspres:devicesAtHome'] as string[]) ?? [];
-    const devicesAwayAddrs = (sub?.['subspres:devicesAway'] as string[]) ?? [];
+    const peopleAtHomeAddrs = (sub?.[PresenceSubsystem.ATTR_PEOPLEATHOME] as string[]) ?? [];
+    const peopleAwayAddrs = (sub?.[PresenceSubsystem.ATTR_PEOPLEAWAY] as string[]) ?? [];
+    const devicesAtHomeAddrs = (sub?.[PresenceSubsystem.ATTR_DEVICESATHOME] as string[]) ?? [];
+    const devicesAwayAddrs = (sub?.[PresenceSubsystem.ATTR_DEVICESAWAY] as string[]) ?? [];
 
-    const peopleAtHome = people.filter((p) => peopleAtHomeAddrs.includes(p['base:address']));
-    const peopleAway = people.filter((p) => peopleAwayAddrs.includes(p['base:address']));
+    const peopleAtHome = people.filter((p) => peopleAtHomeAddrs.includes(p[Base.ATTR_ADDRESS]));
+    const peopleAway = people.filter((p) => peopleAwayAddrs.includes(p[Base.ATTR_ADDRESS]));
 
     return {
       subsystem: sub,
@@ -206,13 +212,13 @@ export function useCareSubsystem() {
   const sub = useSubsystem('subcare');
 
   return useMemo(() => {
-    const alarmState = (sub?.['subcare:alarmState'] as string) ?? 'READY';
-    const alarmMode = (sub?.['subcare:alarmMode'] as string) ?? 'ON';
-    const behaviors = (sub?.['subcare:behaviors'] as Record<string, unknown>[]) ?? [];
-    const careDevices = (sub?.['subcare:careDevices'] as string[]) ?? [];
-    const callTree = (sub?.['subcare:callTree'] as Record<string, unknown>[]) ?? [];
-    const lastAlertCause = sub?.['subcare:lastAlertCause'] as string | undefined;
-    const silent = (sub?.['subcare:silent'] as boolean) ?? false;
+    const alarmState = (sub?.[CareSubsystem.ATTR_ALARMSTATE] as string) ?? CareSubsystem.ALARMSTATE_READY;
+    const alarmMode = (sub?.[CareSubsystem.ATTR_ALARMMODE] as string) ?? CareSubsystem.ALARMMODE_ON;
+    const behaviors = (sub?.[CareSubsystem.ATTR_BEHAVIORS] as Record<string, unknown>[]) ?? [];
+    const careDevices = (sub?.[CareSubsystem.ATTR_CAREDEVICES] as string[]) ?? [];
+    const callTree = (sub?.[CareSubsystem.ATTR_CALLTREE] as Record<string, unknown>[]) ?? [];
+    const lastAlertCause = sub?.[CareSubsystem.ATTR_LASTALERTCAUSE] as string | undefined;
+    const silent = (sub?.[CareSubsystem.ATTR_SILENT] as boolean) ?? false;
 
     return {
       subsystem: sub,
@@ -233,9 +239,9 @@ export function useCamerasSubsystem() {
   const allDevices = useAppSelector(selectAllDevices);
 
   return useMemo(() => {
-    const cameraAddrs = (sub?.['subcameras:cameras'] as string[]) ?? [];
-    const cameras = allDevices.filter((d) => cameraAddrs.includes(d['base:address']));
-    const maxStreams = (sub?.['subcameras:maxSimultaneousStreams'] as number) ?? 4;
+    const cameraAddrs = (sub?.[CamerasSubsystem.ATTR_CAMERAS] as string[]) ?? [];
+    const cameras = allDevices.filter((d) => cameraAddrs.includes(d[Base.ATTR_ADDRESS]));
+    const maxStreams = (sub?.[CamerasSubsystem.ATTR_MAXSIMULTANEOUSSTREAMS] as number) ?? 4;
 
     return {
       subsystem: sub,
@@ -251,10 +257,10 @@ export function useLawnGardenSubsystem() {
   const allDevices = useAppSelector(selectAllDevices);
 
   return useMemo(() => {
-    const controllerAddrs = (sub?.['sublawnngarden:controllers'] as string[]) ?? [];
-    const controllers = allDevices.filter((d) => controllerAddrs.includes(d['base:address']));
-    const zonesWatering = (sub?.['sublawnngarden:zonesWatering'] as Record<string, unknown>[]) ?? [];
-    const nextEvent = sub?.['sublawnngarden:nextEvent'] as Record<string, unknown> | undefined;
+    const controllerAddrs = (sub?.[LawnNGardenSubsystem.ATTR_CONTROLLERS] as string[]) ?? [];
+    const controllers = allDevices.filter((d) => controllerAddrs.includes(d[Base.ATTR_ADDRESS]));
+    const zonesWatering = (sub?.[LawnNGardenSubsystem.ATTR_ZONESWATERING] as Record<string, unknown>[]) ?? [];
+    const nextEvent = sub?.[LawnNGardenSubsystem.ATTR_NEXTEVENT] as Record<string, unknown> | undefined;
 
     return {
       subsystem: sub,
@@ -271,9 +277,9 @@ export function useWaterSubsystem() {
   const allDevices = useAppSelector(selectAllDevices);
 
   return useMemo(() => {
-    const waterAddrs = (sub?.['subwater:waterDevices'] as string[]) ?? [];
-    const closedValveAddrs = (sub?.['subwater:closedWaterValves'] as string[]) ?? [];
-    const waterDevices = allDevices.filter((d) => waterAddrs.includes(d['base:address']));
+    const waterAddrs = (sub?.[WaterSubsystem.ATTR_WATERDEVICES] as string[]) ?? [];
+    const closedValveAddrs = (sub?.[WaterSubsystem.ATTR_CLOSEDWATERVALVES] as string[]) ?? [];
+    const waterDevices = allDevices.filter((d) => waterAddrs.includes(d[Base.ATTR_ADDRESS]));
 
     return {
       subsystem: sub,
@@ -289,9 +295,9 @@ export function useLightsSwitchesSubsystem() {
   const allDevices = useAppSelector(selectAllDevices);
 
   return useMemo(() => {
-    const switchAddrs = (sub?.['sublightsnswitches:switchDevices'] as string[]) ?? [];
-    const devices = allDevices.filter((d) => switchAddrs.includes(d['base:address']));
-    const onCount = devices.filter((d) => d['swit:state'] === 'ON').length;
+    const switchAddrs = (sub?.[LightsNSwitchesSubsystem.ATTR_SWITCHDEVICES] as string[]) ?? [];
+    const devices = allDevices.filter((d) => switchAddrs.includes(d[Base.ATTR_ADDRESS]));
+    const onCount = devices.filter((d) => d[Switch.ATTR_STATE] === Switch.STATE_ON).length;
 
     return {
       subsystem: sub,

@@ -8,6 +8,7 @@
  */
 
 import { useState, useCallback, useEffect, useMemo } from 'react';
+import { Thermostat } from '@arcus/core';
 import { SchedulerService } from '@arcus/core/services';
 import { useAppSelector } from '@/store/hooks';
 import { selectSchedulerByAddress } from '@/store/slices/schedulersSlice';
@@ -60,7 +61,7 @@ export function ScheduleEditPanel({
         days: (cmd['days'] as string[]) ?? [],
         scheduleId: sId,
         label: targetName,
-        color: sId === 'HEAT' ? 'var(--color-cardinal)' : sId === 'COOL' ? 'var(--color-peacock)' : undefined,
+        color: sId === Thermostat.HVACMODE_HEAT ? 'var(--color-cardinal)' : sId === Thermostat.HVACMODE_COOL ? 'var(--color-peacock)' : undefined,
       });
     }
     return parsed;

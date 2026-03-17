@@ -8,7 +8,9 @@
  */
 
 import { createAsyncThunk } from '@reduxjs/toolkit';
+import type { RootState } from '../store';
 import Bridge from '@arcus/core/bridge';
+import { Base, Place, Person } from '@arcus/core';
 import {
   ProductCatalogService,
   SubsystemService,
@@ -25,10 +27,13 @@ import { schedulersReceived, schedulersClear } from '../slices/schedulersSlice';
 import { incidentsClear } from '../slices/incidentsSlice';
 import { peopleReceived, peopleClear } from '../slices/peopleSlice';
 import { setHub, clearHub } from '../slices/hubSlice';
+import { setInvitations, clearInvitations } from '../slices/invitationsSlice';
+import type { ListDevicesResponse, ListPersonsResponse, GetHubResponse, PendingInvitationsResponse } from '@/arcus/types';
+import type { PlaceData } from '@/components/settings/types';
 
-export const loadPlaceDataThunk = createAsyncThunk(
+export const loadPlaceDataThunk = createAsyncThunk<string, string, { state: RootState }>(
   'place/loadData',
-  async (placeId: string, { dispatch }) => {
+  async (placeId, { dispatch, getState }) => {
     // Clear all entity state (mirrors app.js removeAttr calls)
     dispatch(setPlaceId(placeId)); // also sets ready=false
     dispatch(devicesClear());
@@ -39,6 +44,7 @@ export const loadPlaceDataThunk = createAsyncThunk(
     dispatch(incidentsClear());
     dispatch(peopleClear());
     dispatch(clearHub());
+    dispatch(clearInvitations());
 
     const placeAddress = `SERV:place:${placeId}`;
 
@@ -89,7 +95,7 @@ export const loadPlaceDataThunk = createAsyncThunk(
       }),
 
       // Place (then load devices, persons, hub from place)
-      Bridge.request('base:GetAttributes', placeAddress, {}).catch((e) => {
+      Bridge.request<PlaceData>(Base.CMD_GETATTRIBUTES, placeAddress, {}).catch((e) => {
         console.error('Failed to load place:', e);
         return null;
       }),
@@ -137,35 +143,35 @@ export const loadPlaceDataThunk = createAsyncThunk(
       // Load devices, persons, hub from place in parallel
       // These are place capability methods (not service methods)
       const [devicesResult, personsResult, hubResult] = await Promise.all([
-        Bridge.request('place:ListDevices', placeAddress, {}).catch((e) => {
+        Bridge.request<ListDevicesResponse>(Place.CMD_LISTDEVICES, placeAddress, {}).catch((e) => {
           console.error('Failed to load devices:', e);
-          return { devices: [] };
+          return { devices: [] } as ListDevicesResponse;
         }),
-        Bridge.request('place:ListPersons', placeAddress, {}).catch((e) => {
+        Bridge.request<ListPersonsResponse>(Place.CMD_LISTPERSONS, placeAddress, {}).catch((e) => {
           console.error('Failed to load persons:', e);
-          return { persons: [] };
+          return { persons: [] } as ListPersonsResponse;
         }),
-        Bridge.request('place:GetHub', placeAddress, {}).catch((e) => {
+        Bridge.request<GetHubResponse>(Place.CMD_GETHUB, placeAddress, {}).catch((e) => {
           console.error('Failed to load hub:', e);
-          return { hub: {} };
+          return { hub: {} } as GetHubResponse;
         }),
       ]);
 
       // Dispatch devices
-      const devices = (devicesResult as any).devices ?? [];
+      const devices = devicesResult.devices ?? [];
       dispatch(devicesReceived(devices));
 
       // Dispatch persons
-      const persons = (personsResult as any).persons ?? [];
+      const persons = personsResult.persons ?? [];
       dispatch(peopleReceived(persons));
 
       // Handle hub — mirrors the halfFull pattern from app.js
-      const hub = (hubResult as any).hub ?? {};
-      if (hub['base:id']) {
+      const hub = hubResult.hub ?? {};
+      if (hub[Base.ATTR_ID]) {
         dispatch(setHub(hub));
 
         // Fetch full hub attributes asynchronously (non-blocking)
-        Bridge.request('base:GetAttributes', `SERV:${hub['base:id']}:hub`, {})
+        Bridge.request(Base.CMD_GETATTRIBUTES, `SERV:${hub[Base.ATTR_ID]}:hub`, {})
           .then((fullHub) => {
             dispatch(setHub({ ...hub, ...fullHub }));
           })
@@ -173,6 +179,18 @@ export const loadPlaceDataThunk = createAsyncThunk(
             console.error('Failed to load full hub attributes:', e);
           });
       }
+    }
+
+    // Fetch pending invitations for the current person (non-blocking)
+    const personId = getState().auth.person?.['personId'];
+    if (typeof personId === 'string') {
+      Bridge.request<PendingInvitationsResponse>(Person.CMD_PENDINGINVITATIONS, `SERV:person:${personId}`, {})
+        .then((result) => {
+          dispatch(setInvitations(result.invitations ?? []));
+        })
+        .catch((e) => {
+          console.error('Failed to load pending invitations:', e);
+        });
     }
 
     // Mark place as ready

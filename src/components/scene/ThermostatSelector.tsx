@@ -1,3 +1,4 @@
+import { Thermostat } from '@arcus/core';
 import { cToF } from '@/hooks/useDeviceConfig';
 
 interface ThermostatSelectorProps {
@@ -7,14 +8,14 @@ interface ThermostatSelectorProps {
 }
 
 export function ThermostatSelector({ name, values, onChange }: ThermostatSelectorProps) {
-  const mode = (values['mode'] as string) ?? 'OFF';
+  const mode = (values['mode'] as string) ?? Thermostat.HVACMODE_OFF;
   const heat = typeof values['heatsetpoint'] === 'number' ? values['heatsetpoint'] as number : 20;
   const cool = typeof values['coolsetpoint'] === 'number' ? values['coolsetpoint'] as number : 24;
   return (
     <div className="space-y-2">
       <span className="text-xs text-grouse block">{name}</span>
       <div className="flex flex-wrap gap-1">
-        {['OFF', 'HEAT', 'COOL', 'AUTO'].map((m) => (
+        {[Thermostat.HVACMODE_OFF, Thermostat.HVACMODE_HEAT, Thermostat.HVACMODE_COOL, Thermostat.HVACMODE_AUTO].map((m) => (
           <button
             key={m}
             onClick={() => onChange('mode', m)}
@@ -26,7 +27,7 @@ export function ThermostatSelector({ name, values, onChange }: ThermostatSelecto
           </button>
         ))}
       </div>
-      {(mode === 'HEAT' || mode === 'AUTO') && (
+      {(mode === Thermostat.HVACMODE_HEAT || mode === Thermostat.HVACMODE_AUTO) && (
         <div className="flex items-center gap-2">
           <span className="text-xs text-grouse w-12">Heat</span>
           <button onClick={() => onChange('heatsetpoint', Number((heat - 0.5556).toFixed(2)))} className="w-7 h-7 rounded border border-heron text-swift hover:bg-pigeon text-sm">-</button>
@@ -34,7 +35,7 @@ export function ThermostatSelector({ name, values, onChange }: ThermostatSelecto
           <button onClick={() => onChange('heatsetpoint', Number((heat + 0.5556).toFixed(2)))} className="w-7 h-7 rounded border border-heron text-swift hover:bg-pigeon text-sm">+</button>
         </div>
       )}
-      {(mode === 'COOL' || mode === 'AUTO') && (
+      {(mode === Thermostat.HVACMODE_COOL || mode === Thermostat.HVACMODE_AUTO) && (
         <div className="flex items-center gap-2">
           <span className="text-xs text-grouse w-12">Cool</span>
           <button onClick={() => onChange('coolsetpoint', Number((cool - 0.5556).toFixed(2)))} className="w-7 h-7 rounded border border-heron text-swift hover:bg-pigeon text-sm">-</button>

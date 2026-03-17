@@ -18,6 +18,8 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Bridge from '@arcus/core/bridge';
+import { Base, Person, Place } from '@arcus/core';
+import type { PromonSettingsResponse } from '@/arcus/types';
 import { ProMonitoringService } from '@arcus/core/services';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import { addNotification } from '@/store/slices/uiSlice';
@@ -69,7 +71,7 @@ export default function ProMonitoringPage() {
   // Load ProMonitoring settings
   useEffect(() => {
     if (!place) return;
-    const placeAddr = place['base:address'] as string;
+    const placeAddr = place[Base.ATTR_ADDRESS] as string;
     ProMonitoringService.GetSettings(placeAddr)
       .then((resp) => {
         const s = resp as Record<string, unknown>;
@@ -88,12 +90,12 @@ export default function ProMonitoringPage() {
       });
   }, [place]);
 
-  const settingsAddr = settings?.['base:address'] as string | undefined;
+  const settingsAddr = settings?.[Base.ATTR_ADDRESS] as string | undefined;
 
   const saveSettings = useCallback(
     async (attrs: Record<string, unknown>) => {
       if (!settingsAddr) return;
-      await Bridge.request('base:SetAttributes', settingsAddr, attrs);
+      await Bridge.request(Base.CMD_SETATTRIBUTES, settingsAddr, attrs);
     },
     [settingsAddr],
   );
@@ -150,15 +152,15 @@ export default function ProMonitoringPage() {
     setError('');
     try {
       // Verify PIN
-      const personAddr = person?.['base:address'] as string;
-      const placeId = place?.['base:id'] as string;
+      const personAddr = person?.[Base.ATTR_ADDRESS];
+      const placeId = place?.[Base.ATTR_ID] as string;
       if (personAddr && placeId) {
-        await Bridge.request('person:VerifyPin', personAddr, { place: placeId, pin });
+        await Bridge.request(Person.CMD_VERIFYPIN, personAddr, { place: placeId, pin });
       }
 
       // Activate monitoring
       if (settingsAddr) {
-        const serviceLevel = (place?.['place:serviceLevel'] as string) ?? 'PREMIUM_PROMON';
+        const serviceLevel = (place?.[Place.ATTR_SERVICELEVEL] as string) ?? 'PREMIUM_PROMON';
         await Bridge.request('promon:Activate', settingsAddr, {
           testCall: true,
           serviceLevel,
@@ -181,8 +183,8 @@ export default function ProMonitoringPage() {
       // Poll for test status
       const pollStatus = setInterval(async () => {
         try {
-          const resp = await Bridge.request('base:GetAttributes', settingsAddr, {});
-          const status = (resp as Record<string, unknown>)['promon:testCallStatus'] as string;
+          const resp = await Bridge.request<PromonSettingsResponse>(Base.CMD_GETATTRIBUTES, settingsAddr, {});
+          const status = resp['promon:testCallStatus'] ?? null;
           setTestStatus(status);
           if (status === 'SUCCEEDED' || status === 'FAILED') {
             clearInterval(pollStatus);
@@ -205,12 +207,12 @@ export default function ProMonitoringPage() {
     router.push('/services');
   }, [router]);
 
-  const placeName = (place?.['place:name'] as string) ?? 'Your Home';
+  const placeName = place?.[Place.ATTR_NAME] ?? 'Your Home';
   const address = [
-    place?.['place:streetAddress1'] as string,
-    place?.['place:city'] as string,
-    place?.['place:stateProv'] as string,
-    place?.['place:zipCode'] as string,
+    place?.[Place.ATTR_STREETADDRESS1],
+    place?.[Place.ATTR_CITY],
+    place?.[Place.ATTR_STATEPROV],
+    place?.[Place.ATTR_ZIPCODE],
   ].filter(Boolean).join(', ');
 
   return (

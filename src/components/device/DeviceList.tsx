@@ -7,6 +7,7 @@
  * as individual panels with optional filtering.
  */
 
+import { Base } from '@arcus/core';
 import { useAppSelector } from '@/store/hooks';
 import { selectAllDevices } from '@/store/slices/devicesSlice';
 import { DevicePanel } from './DevicePanel';
@@ -28,7 +29,7 @@ export function DeviceList() {
   return (
     <div>
       {devices.map((device) => (
-        <DevicePanel key={device.id} address={device['base:address']} />
+        <DevicePanel key={device.id} address={device[Base.ATTR_ADDRESS]} />
       ))}
     </div>
   );

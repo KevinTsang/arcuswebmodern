@@ -7,6 +7,7 @@
  * devices with connection status.
  */
 
+import { Base } from '@arcus/core';
 import { useCamerasSubsystem } from '@/hooks/useSubsystem';
 import { DevicePanel } from '@/components/device';
 
@@ -30,7 +31,7 @@ export function CamerasView() {
         {cameras.length} camera{cameras.length !== 1 ? 's' : ''} configured
       </p>
       {cameras.map((device) => (
-        <DevicePanel key={device.id} address={device['base:address']} />
+        <DevicePanel key={device.id} address={device[Base.ATTR_ADDRESS]} />
       ))}
     </div>
   );

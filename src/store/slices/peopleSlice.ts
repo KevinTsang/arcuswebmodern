@@ -1,11 +1,9 @@
 import { createSlice, createEntityAdapter, PayloadAction } from '@reduxjs/toolkit';
 import type { RootState } from '../store';
+import { Base } from '@arcus/core';
+import type { PersonEntity, ArcusPayload } from '../entityTypes';
 
-export interface PersonEntity {
-  id: string;
-  'base:address': string;
-  [key: string]: unknown;
-}
+export type { PersonEntity } from '../entityTypes';
 
 const peopleAdapter = createEntityAdapter<PersonEntity>();
 
@@ -14,14 +12,14 @@ const peopleSlice = createSlice({
   initialState: peopleAdapter.getInitialState(),
   reducers: {
     personAdded: peopleAdapter.addOne,
-    personUpdated(state, action: PayloadAction<{ 'base:address': string; [key: string]: unknown }>) {
-      const address = action.payload['base:address'];
-      const { 'base:address': _, ...changes } = action.payload;
+    personUpdated(state, action: PayloadAction<ArcusPayload>) {
+      const address = action.payload[Base.ATTR_ADDRESS];
+      const { [Base.ATTR_ADDRESS]: _, ...changes } = action.payload;
       peopleAdapter.updateOne(state, { id: address, changes });
     },
     personRemoved: peopleAdapter.removeOne,
-    peopleReceived(state, action: PayloadAction<Array<{ 'base:address': string; [key: string]: unknown }>>) {
-      const entities = action.payload.map((p) => ({ ...p, id: p['base:address'] }));
+    peopleReceived(state, action: PayloadAction<ArcusPayload[]>) {
+      const entities = action.payload.map((p) => ({ ...p, id: p[Base.ATTR_ADDRESS] }));
       peopleAdapter.setAll(state, entities);
     },
     peopleClear: peopleAdapter.removeAll,

@@ -1,11 +1,12 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import type { SessionCreatedEvent, Account } from '@/arcus/types';
 
 export interface AuthState {
   authenticating: boolean;
   authenticated: boolean;
   sessionToken: string | null;
-  person: Record<string, unknown> | null;
-  account: Record<string, unknown> | null;
+  person: SessionCreatedEvent | null;
+  account: Account | null;
 }
 
 const initialState: AuthState = {
@@ -23,7 +24,7 @@ const authSlice = createSlice({
     setAuthenticating(state, action: PayloadAction<boolean>) {
       state.authenticating = action.payload;
     },
-    loginSuccess(state, action: PayloadAction<{ person: Record<string, unknown>; account: Record<string, unknown> }>) {
+    loginSuccess(state, action: PayloadAction<{ person: SessionCreatedEvent; account: Account }>) {
       state.authenticated = true;
       state.authenticating = false;
       state.person = action.payload.person;

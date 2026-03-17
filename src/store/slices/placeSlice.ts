@@ -1,8 +1,9 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import type { PlaceData } from '@/components/settings/types';
 
 export interface PlaceState {
   placeId: string | null;
-  place: Record<string, unknown> | null;
+  place: PlaceData | null;
   preferences: Record<string, unknown> | null;
   products: Record<string, unknown>[];
   ready: boolean;
@@ -24,7 +25,7 @@ const placeSlice = createSlice({
       state.placeId = action.payload;
       state.ready = false;
     },
-    setPlace(state, action: PayloadAction<Record<string, unknown>>) {
+    setPlace(state, action: PayloadAction<PlaceData>) {
       state.place = action.payload;
     },
     setPreferences(state, action: PayloadAction<Record<string, unknown>>) {

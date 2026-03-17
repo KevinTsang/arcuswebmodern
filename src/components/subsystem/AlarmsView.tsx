@@ -9,6 +9,7 @@
 
 import { useState, useCallback } from 'react';
 import Bridge from '@arcus/core/bridge';
+import { Base, Device, DeviceConnection, SecuritySubsystem, AlarmSubsystem } from '@arcus/core';
 import { useAlarmSubsystem } from '@/hooks/useSubsystem';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import { selectAllDevices } from '@/store/slices/devicesSlice';
@@ -54,19 +55,19 @@ function AlarmStatus() {
   const [arming, setArming] = useState(false);
 
   const securityDevices = allDevices.filter((d) =>
-    alarm.securityDevices.includes(d['base:address']),
+    alarm.securityDevices.includes(d[Base.ATTR_ADDRESS]),
   );
   const triggeredDevices = allDevices.filter((d) =>
-    alarm.triggeredDevices.includes(d['base:address']),
+    alarm.triggeredDevices.includes(d[Base.ATTR_ADDRESS]),
   );
 
   const handleArm = useCallback(async (mode: 'ON' | 'PARTIAL') => {
     if (!alarm.securitySubsystem) return;
     setArming(true);
     try {
-      const addr = alarm.securitySubsystem['base:address'] as string;
+      const addr = alarm.securitySubsystem[Base.ATTR_ADDRESS] as string;
       await Bridge.request('subsecurity:Arm', addr, { mode });
-      dispatch(addNotification({ type: 'success', message: `Alarm ${mode === 'ON' ? 'armed' : 'partially armed'}` }));
+      dispatch(addNotification({ type: 'success', message: `Alarm ${mode === SecuritySubsystem.ALARMMODE_ON ? 'armed' : 'partially armed'}` }));
     } catch {
       dispatch(addNotification({ type: 'error', message: 'Failed to arm alarm' }));
     }
@@ -77,7 +78,7 @@ function AlarmStatus() {
     if (!alarm.securitySubsystem) return;
     setArming(true);
     try {
-      const addr = alarm.securitySubsystem['base:address'] as string;
+      const addr = alarm.securitySubsystem[Base.ATTR_ADDRESS] as string;
       await Bridge.request('subsecurity:Disarm', addr, {});
       dispatch(addNotification({ type: 'success', message: 'Alarm disarmed' }));
     } catch {
@@ -95,9 +96,9 @@ function AlarmStatus() {
     SOAKING: 'Entry Delay',
   }[alarm.securityState] ?? alarm.securityState;
 
-  const isArmed = alarm.securityState === 'ARMED';
-  const isAlert = alarm.securityState === 'ALERT';
-  const isDisarmed = alarm.securityState === 'DISARMED';
+  const isArmed = alarm.securityState === SecuritySubsystem.ALARMSTATE_ARMED;
+  const isAlert = alarm.securityState === SecuritySubsystem.ALARMSTATE_ALERT;
+  const isDisarmed = alarm.securityState === SecuritySubsystem.ALARMSTATE_DISARMED;
 
   return (
     <div className="space-y-6">
@@ -114,14 +115,14 @@ function AlarmStatus() {
           {stateLabel}
         </div>
         <p className="text-sm text-grouse">
-          {alarm.securityMode === 'ON' ? 'Full' : alarm.securityMode === 'PARTIAL' ? 'Partial' : ''}
+          {alarm.securityMode === SecuritySubsystem.ALARMMODE_ON ? 'Full' : alarm.securityMode === SecuritySubsystem.ALARMMODE_PARTIAL ? 'Partial' : ''}
           {securityDevices.length > 0 && ` \u00B7 ${securityDevices.length} device${securityDevices.length !== 1 ? 's' : ''}`}
         </p>
 
         {/* Triggered devices */}
         {triggeredDevices.length > 0 && (
           <div className="mt-3 text-sm text-cardinal">
-            Triggered: {triggeredDevices.map((d) => (d['dev:name'] as string) ?? 'Unknown').join(', ')}
+            Triggered: {triggeredDevices.map((d) => (d[Device.ATTR_NAME] as string) ?? 'Unknown').join(', ')}
           </div>
         )}
       </div>
@@ -162,9 +163,9 @@ function AlarmStatus() {
           <h3 className="text-sm font-medium text-swift mb-3">Security Devices</h3>
           <div className="space-y-2">
             {securityDevices.map((device) => {
-              const name = (device['dev:name'] as string) ?? 'Unknown';
-              const offline = (device['devconn:state'] as string) === 'OFFLINE';
-              const triggered = alarm.triggeredDevices.includes(device['base:address']);
+              const name = (device[Device.ATTR_NAME] as string) ?? 'Unknown';
+              const offline = (device[DeviceConnection.ATTR_STATE] as string) === DeviceConnection.STATE_OFFLINE;
+              const triggered = alarm.triggeredDevices.includes(device[Base.ATTR_ADDRESS]);
               return (
                 <div
                   key={device.id}
@@ -197,9 +198,9 @@ function AlarmSettings() {
 
   const handleToggle = useCallback(async (attr: string, current: boolean) => {
     if (!alarm.alarmSubsystem) return;
-    const addr = alarm.alarmSubsystem['base:address'] as string;
+    const addr = alarm.alarmSubsystem[Base.ATTR_ADDRESS] as string;
     try {
-      await Bridge.request('base:SetAttributes', addr, { [attr]: !current });
+      await Bridge.request(Base.CMD_SETATTRIBUTES, addr, { [attr]: !current });
     } catch {
       dispatch(addNotification({ type: 'error', message: 'Failed to update setting' }));
     }
@@ -213,19 +214,19 @@ function AlarmSettings() {
         label="Record on Security Alarm"
         description="Record video from cameras when the security alarm is triggered."
         enabled={alarm.recordOnSecurity}
-        onToggle={() => handleToggle('subalarm:recordOnSecurity', alarm.recordOnSecurity)}
+        onToggle={() => handleToggle(AlarmSubsystem.ATTR_RECORDONSECURITY, alarm.recordOnSecurity)}
       />
       <SettingToggle
         label="Fan Shutoff on Smoke"
         description="Automatically shut off fans when smoke is detected."
         enabled={alarm.fanShutoffOnSmoke}
-        onToggle={() => handleToggle('subalarm:fanShutoffOnSmoke', alarm.fanShutoffOnSmoke)}
+        onToggle={() => handleToggle(AlarmSubsystem.ATTR_FANSHUTOFFONSMOKE, alarm.fanShutoffOnSmoke)}
       />
       <SettingToggle
         label="Fan Shutoff on CO"
         description="Automatically shut off fans when carbon monoxide is detected."
         enabled={alarm.fanShutoffOnCO}
-        onToggle={() => handleToggle('subalarm:fanShutoffOnCO', alarm.fanShutoffOnCO)}
+        onToggle={() => handleToggle(AlarmSubsystem.ATTR_FANSHUTOFFONCO, alarm.fanShutoffOnCO)}
       />
     </div>
   );

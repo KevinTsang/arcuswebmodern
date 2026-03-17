@@ -15,7 +15,9 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import auth from '@arcus/core/auth';
 import Bridge from '@arcus/core/bridge';
+import { Base } from '@arcus/core';
 import { SessionService } from '@arcus/core/services';
+import type { SessionCreatedEvent, Account } from '@/arcus/types';
 import { setAuthenticating, loginSuccess, loginFailed } from '../slices/authSlice';
 import { initializeCoreConfig } from './initConfig';
 import { getDefaultPlaceId } from './placeSelection';
@@ -32,8 +34,8 @@ export const loginThunk = createAsyncThunk(
     try {
       // auth.login() POSTs credentials then opens WebSocket.
       // SessionCreated fires once the server confirms the session.
-      const session = await new Promise<Record<string, any>>((resolve, reject) => {
-        const onSuccess = (data: Record<string, any>) => {
+      const session = await new Promise<SessionCreatedEvent>((resolve, reject) => {
+        const onSuccess = (data: SessionCreatedEvent) => {
           auth.off('authentication:success', onSuccess);
           auth.off('authentication:fail', onFail);
           resolve(data);
@@ -50,14 +52,7 @@ export const loginThunk = createAsyncThunk(
         auth.login(username, password, isPublic).catch(reject);
       });
 
-      // SessionCreated payload: { personId, places[], ... }
-      const personId = session.personId as string;
-      const places = (session.places ?? []) as Array<{
-        placeId: string;
-        placeName: string;
-        accountId: string;
-        role: string;
-      }>;
+      const { personId, places = [] } = session;
 
       // Determine default place (same logic as arcusweb PlaceManager)
       const placeId = getDefaultPlaceId(places, personId);
@@ -74,11 +69,11 @@ export const loginThunk = createAsyncThunk(
       if (!selectedPlace?.accountId) {
         throw new Error('No account found for the selected place');
       }
-      const account = await Bridge.request(
-        'base:GetAttributes',
+      const account = await Bridge.request<Account>(
+        Base.CMD_GETATTRIBUTES,
         `SERV:account:${selectedPlace.accountId}`,
         {},
-      ) as Record<string, unknown>;
+      );
 
       dispatch(loginSuccess({ person: session, account }));
       return { session, placeId };

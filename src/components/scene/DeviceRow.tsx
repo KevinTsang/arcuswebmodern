@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { Device } from '@arcus/core';
 import { useAppSelector } from '@/store/hooks';
 import { selectDeviceByAddress } from '@/store/slices/devicesSlice';
 import { getSwitchInstances, formatInstanceName } from '@/hooks/useDeviceConfig';
@@ -47,7 +48,7 @@ export function DeviceRow({
   fallbackName,
 }: DeviceRowProps) {
   const device = useAppSelector((s) => selectDeviceByAddress(s, deviceAddr));
-  const deviceName = (device?.['dev:name'] as string) ?? fallbackName ?? deviceAddr;
+  const deviceName = (device?.[Device.ATTR_NAME] as string) ?? fallbackName ?? deviceAddr;
   const instances = useMemo(() => (device ? getSwitchInstances(device) : []), [device]);
 
   const expandedSelectors = useMemo(

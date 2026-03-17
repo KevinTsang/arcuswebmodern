@@ -7,6 +7,7 @@
  * door sensors, motorized doors, and pet doors with status.
  */
 
+import { Base } from '@arcus/core';
 import { useDoorsLocksSubsystem } from '@/hooks/useSubsystem';
 import { DevicePanel } from '@/components/device';
 
@@ -72,7 +73,7 @@ function DeviceSection({ title, devices }: { title: string; devices: Array<{ id:
     <div>
       <h3 className="text-sm font-medium text-swift mb-3">{title}</h3>
       {devices.map((device) => (
-        <DevicePanel key={device.id} address={device['base:address']} />
+        <DevicePanel key={device.id} address={device[Base.ATTR_ADDRESS]} />
       ))}
     </div>
   );

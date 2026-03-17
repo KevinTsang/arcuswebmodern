@@ -6,6 +6,8 @@
  * components to render for each device type.
  */
 
+import { Base, Device, DevicePower, PowerUse, RelativeHumidity, Motion, Somfyv1 } from '@arcus/core';
+
 // ── Types ─────────────────────────────────────────────────────────────
 
 export interface DeviceWebConfig {
@@ -51,7 +53,7 @@ interface CapabilityPlugin {
 // Maps capability attributes → UI components. Functions receive the device.
 
 function hasCapability(device: DeviceObj, ns: string): boolean {
-  const caps = device['base:caps'] as string[] | undefined;
+  const caps = device[Base.ATTR_CAPS] as string[] | undefined;
   return caps?.includes(ns) ?? false;
 }
 
@@ -62,7 +64,7 @@ export const capabilityPlugins: Record<string, CapabilityPlugin> = {
   'tilt:tiltstate': { badges: ['opened'], configurators: ['orientation'] },
   'temp:temperature': {
     badges: (dev) => {
-      const hint = dev['dev:devtypehint'] as string;
+      const hint = dev[Device.ATTR_DEVTYPEHINT] as string;
       if (['KeyPad', 'Button', 'vent', 'Contact', 'Motion', 'Halo'].includes(hint)) {
         return ['temperature'];
       }
@@ -70,11 +72,11 @@ export const capabilityPlugins: Record<string, CapabilityPlugin> = {
     },
   },
   'pow:instantaneous': {
-    badges: (dev) => (dev['pow:instantaneous'] ? ['power'] : []),
+    badges: (dev) => (dev[PowerUse.ATTR_INSTANTANEOUS] ? ['power'] : []),
   },
   'dim:brightness': {
     badges: (dev) => {
-      const hint = dev['dev:devtypehint'] as string;
+      const hint = dev[Device.ATTR_DEVTYPEHINT] as string;
       return hint === 'Halo' ? [] : ['brightness'];
     },
     configurators: ['brightness'],
@@ -86,7 +88,7 @@ export const capabilityPlugins: Record<string, CapabilityPlugin> = {
       const color = hasCapability(dev, 'color');
       const colorTemp = hasCapability(dev, 'colortemp');
       if (color || colorTemp) {
-        return (dev['dev:devtypehint'] as string) === 'Halo'
+        return (dev[Device.ATTR_DEVTYPEHINT] as string) === 'Halo'
           ? ['color']
           : ['color-or-colortemp'];
       }
@@ -98,7 +100,7 @@ export const capabilityPlugins: Record<string, CapabilityPlugin> = {
   'pres:person': {
     configurators: (dev) => {
       const cfgs = ['assign-device'];
-      if ((dev['dev:devtypehint'] as string) === 'Pendant') cfgs.push('test-coverage');
+      if ((dev[Device.ATTR_DEVTYPEHINT] as string) === 'Pendant') cfgs.push('test-coverage');
       return cfgs;
     },
   },
@@ -107,7 +109,7 @@ export const capabilityPlugins: Record<string, CapabilityPlugin> = {
   'irrcont:controllerState': {
     badges: ['scheduleType'],
     configurators: (dev) => {
-      return (dev['dev:productId'] as string) !== 'deda9d'
+      return (dev[Device.ATTR_PRODUCTID] as string) !== 'deda9d'
         ? ['water-saver', 'irrigation-mode']
         : ['irrigation-mode'];
     },
@@ -115,7 +117,7 @@ export const capabilityPlugins: Record<string, CapabilityPlugin> = {
   'camera:resolution': { badges: ['camera-preview'], configurators: ['camera-resolution'] },
   'devpow:source': {
     badges: (dev) => {
-      if ((dev['dev:devtypehint'] as string) === 'Camera' && dev['devpow:source'] !== 'BATTERY') {
+      if ((dev[Device.ATTR_DEVTYPEHINT] as string) === 'Camera' && dev[DevicePower.ATTR_SOURCE] !== 'BATTERY') {
         return [];
       }
       return ['powerSource'];
@@ -129,16 +131,16 @@ export const capabilityPlugins: Record<string, CapabilityPlugin> = {
   'therm:hvacmode': { badges: ['thermostat'], configurators: ['thermostat-mode'] },
   'but:state': {
     configurators: (dev) => {
-      return (dev['dev:devtypehint'] as string) === 'Pendant' ? [] : ['assign-buttons'];
+      return (dev[Device.ATTR_DEVTYPEHINT] as string) === 'Pendant' ? [] : ['assign-buttons'];
     },
   },
   'humid:humidity': {
-    badges: (dev) => (dev['humid:humidity'] ? ['humidity'] : []),
+    badges: (dev) => (dev[RelativeHumidity.ATTR_HUMIDITY] ? ['humidity'] : []),
   },
   'atmos:pressure': { badges: ['pressure'] },
   'mot:sensitivity': {
     configurators: (dev) => {
-      const supported = dev['mot:sensitivitiesSupported'] as unknown[] | undefined;
+      const supported = dev[Motion.ATTR_SENSITIVITIESSUPPORTED] as unknown[] | undefined;
       return supported?.length ? ['motion-sensitivity'] : [];
     },
   },
@@ -147,7 +149,7 @@ export const capabilityPlugins: Record<string, CapabilityPlugin> = {
   'wifi:ssid': {
     configurators: (dev) => {
       const isSwann = !!dev['swannbatterycamera:sn'];
-      if (isSwann || (dev['dev:devtypehint'] as string) !== 'Camera') return ['wifi-read-only'];
+      if (isSwann || (dev[Device.ATTR_DEVTYPEHINT] as string) !== 'Camera') return ['wifi-read-only'];
       if (hasCapability(dev, 'wifiscan')) return ['wifiscan'];
       return [];
     },
@@ -163,14 +165,14 @@ export const capabilityPlugins: Record<string, CapabilityPlugin> = {
   'ipinfo:ip': {
     configurators: (dev) => {
       const isSwann = !!dev['swannbatterycamera:sn'];
-      return (dev['dev:devtypehint'] as string) === 'Camera' && !isSwann
+      return (dev[Device.ATTR_DEVTYPEHINT] as string) === 'Camera' && !isSwann
         ? ['camera-local-streaming']
         : [];
     },
   },
   'bridge:pairedDevices': {
     configurators: (dev) => {
-      return (dev['dev:devtypehint'] as string) === 'Genie Aladdin Controller'
+      return (dev[Device.ATTR_DEVTYPEHINT] as string) === 'Genie Aladdin Controller'
         ? ['garage-door-controller']
         : [];
     },
@@ -184,7 +186,7 @@ export const capabilityPlugins: Record<string, CapabilityPlugin> = {
   'flow:flow': { badges: ['gpm'] },
   'somfyv1:type': { badges: ['somfy-type'], configurators: ['somfy-type'] },
   'somfyv1:reversed': {
-    badges: (dev) => (dev['somfyv1:reversed'] === 'REVERSED' ? ['somfy-reversed'] : []),
+    badges: (dev) => (dev[Somfyv1.ATTR_REVERSED] === 'REVERSED' ? ['somfy-reversed'] : []),
     configurators: ['somfy-reversed'],
   },
   'somfyv1:currentstate': { configurators: ['somfy-customization'] },
@@ -409,8 +411,8 @@ export const defaultConfig: DeviceWebConfig = {
  * and default configs (most specific wins).
  */
 export function resolveDeviceConfig(device: DeviceObj): DeviceWebConfig {
-  const productId = device['dev:productId'] as string | undefined;
-  const hint = (device['dev:devtypehint'] as string) ?? '';
+  const productId = device[Device.ATTR_PRODUCTID] as string | undefined;
+  const hint = (device[Device.ATTR_DEVTYPEHINT] as string) ?? '';
   const normalizedType = hint.replace(/\W/g, '').toLowerCase();
 
   // Apply in order: defaults, then device type, then product (most specific last wins)
@@ -424,7 +426,7 @@ export function resolveDeviceConfig(device: DeviceObj): DeviceWebConfig {
   }
 
   // Auto-detect multi-switch devices (e.g., ZEN17 dual relay, ZEN14 double plug)
-  const instances = device['base:instances'] as Record<string, string[]> | undefined;
+  const instances = device[Base.ATTR_INSTANCES] as Record<string, string[]> | undefined;
   if (instances) {
     const switchInstanceKeys = Object.entries(instances)
       .filter(([, caps]) => Array.isArray(caps) && caps.includes('swit'));
@@ -441,7 +443,7 @@ export function resolveDeviceConfig(device: DeviceObj): DeviceWebConfig {
  * Resolve badges for a device based on its capabilities.
  */
 export function resolveDeviceBadges(device: DeviceObj): string[] {
-  const caps = device['base:caps'] as string[] | undefined;
+  const caps = device[Base.ATTR_CAPS] as string[] | undefined;
   if (!caps) return [];
 
   const badges: string[] = [];
@@ -462,7 +464,7 @@ export function resolveDeviceBadges(device: DeviceObj): string[] {
  * Resolve configurators for a device based on its capabilities.
  */
 export function resolveDeviceConfigurators(device: DeviceObj): string[] {
-  const caps = device['base:caps'] as string[] | undefined;
+  const caps = device[Base.ATTR_CAPS] as string[] | undefined;
   if (!caps) return [];
 
   const configurators: string[] = [];

@@ -2,6 +2,8 @@
 
 import { useState, useCallback } from 'react';
 import Bridge from '@arcus/core/bridge';
+import { Base, Account, Place } from '@arcus/core';
+import type { AddPlaceResponse } from '@/arcus/types';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import { addNotification } from '@/store/slices/uiSlice';
 import { setPlace } from '@/store/slices/placeSlice';
@@ -20,23 +22,23 @@ export default function AddPlacePanel() {
   const [zip, setZip] = useState('');
   const [saving, setSaving] = useState(false);
 
-  const accountAddress = (account?.['base:address'] as string) ?? '';
+  const accountAddress = account?.[Base.ATTR_ADDRESS] ?? '';
 
   const handleCreate = useCallback(async () => {
     if (!accountAddress || !name.trim()) return;
     setSaving(true);
     try {
-      const resp = await Bridge.request('account:AddPlace', accountAddress, {
+      const resp = await Bridge.request<AddPlaceResponse>(Account.CMD_ADDPLACE, accountAddress, {
         place: {
-          'place:name': name.trim(),
-          'place:streetAddress1': street1.trim(),
-          'place:city': city.trim(),
-          'place:stateProv': stateProv.trim(),
-          'place:zipCode': zip.trim(),
+          [Place.ATTR_NAME]: name.trim(),
+          [Place.ATTR_STREETADDRESS1]: street1.trim(),
+          [Place.ATTR_CITY]: city.trim(),
+          [Place.ATTR_STATEPROV]: stateProv.trim(),
+          [Place.ATTR_ZIPCODE]: zip.trim(),
         },
         serviceLevel: 'BASIC',
       });
-      dispatch(setPlace(resp as Record<string, unknown>));
+      dispatch(setPlace(resp.place));
       dispatch(addNotification({ type: 'success', message: 'Place created!' }));
       closeRight();
     } catch {

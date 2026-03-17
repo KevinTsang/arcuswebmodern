@@ -1,4 +1,5 @@
-import type { PairingProduct } from './types';
+import { Product } from '@arcus/core';
+import type { PairingProduct } from '@/store/entityTypes';
 import type { AppDispatch } from '@/store/store';
 import { setDeviceName, setFavorite } from '@/store/slices/pairingSlice';
 
@@ -33,7 +34,7 @@ export default function CustomizeStage({
             type="text"
             value={deviceName}
             onChange={(e) => dispatch(setDeviceName(e.target.value))}
-            placeholder={isHubPairing ? 'My Hub' : (product?.['product:name'] ?? 'New Device')}
+            placeholder={isHubPairing ? 'My Hub' : (product?.[Product.ATTR_NAME] ?? 'New Device')}
             className="w-full border border-heron rounded-[var(--border-radius-base)] px-3 py-2 text-sm text-swift focus:outline-none focus:border-peacock"
           />
         </div>

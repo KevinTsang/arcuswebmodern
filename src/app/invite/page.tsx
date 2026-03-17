@@ -15,6 +15,7 @@
 import { useState, useCallback, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { Person } from '@arcus/core';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { InvitationService } from '@arcus/core/services';
 import auth from '@arcus/core/auth';
@@ -23,6 +24,7 @@ import { loginSuccess } from '@/store/slices/authSlice';
 import { loadPlaceDataThunk } from '@/store/thunks/loadPlaceDataThunk';
 import { initializeCoreConfig } from '@/store/thunks/initConfig';
 import { useFormValidation, type ValidationConstraints } from '@/hooks/useFormValidation';
+import ChangePinForm from '@/components/ChangePinForm';
 
 type InviteStep = 'code' | 'confirm' | 'create-login' | 'pin' | 'welcome';
 
@@ -40,10 +42,6 @@ const LOGIN_CONSTRAINTS: ValidationConstraints = {
   },
   firstName: { presence: true },
   lastName: { presence: true },
-};
-
-const PIN_CONSTRAINTS: ValidationConstraints = {
-  pin: { presence: true, length: { minimum: 4, maximum: 8, message: 'must be 4-8 digits' } },
 };
 
 export default function InvitePage() {
@@ -68,12 +66,11 @@ export default function InvitePage() {
   const [confirmPassword, setConfirmPassword] = useState('');
 
   // Phase 3: PIN
-  const [pin, setPin] = useState('');
   const [personData, setPersonData] = useState<Record<string, unknown> | null>(null);
   const [placeId, setPlaceId] = useState<string | null>(null);
+  const [pinError, setPinError] = useState<string | null>(null);
 
   const loginForm = useFormValidation(LOGIN_CONSTRAINTS);
-  const pinForm = useFormValidation(PIN_CONSTRAINTS);
 
   // ── Step 1: Look up invitation ─────────────────────────────
 
@@ -122,10 +119,10 @@ export default function InvitePage() {
 
     try {
       const person: Record<string, unknown> = {
-        'person:email': inviteeEmail,
-        'person:firstName': firstName,
-        'person:lastName': lastName,
-        'person:mobileNumber': phone || undefined,
+        [Person.ATTR_EMAIL]: inviteeEmail,
+        [Person.ATTR_FIRSTNAME]: firstName,
+        [Person.ATTR_LASTNAME]: lastName,
+        [Person.ATTR_MOBILENUMBER]: phone || undefined,
       };
 
       await InvitationService.AcceptInvitationCreateLogin(
@@ -153,7 +150,7 @@ export default function InvitePage() {
       });
 
       setPersonData(sessionData);
-      const pId = (sessionData['person:currPlace'] as string) ?? null;
+      const pId = (sessionData[Person.ATTR_CURRPLACE] as string) ?? null;
       setPlaceId(pId);
 
       dispatch(loginSuccess({ person: sessionData, account: {} }));
@@ -167,11 +164,7 @@ export default function InvitePage() {
 
   // ── Step 4: Set PIN ────────────────────────────────────────
 
-  const handlePin = useCallback(async (ev: FormEvent) => {
-    ev.preventDefault();
-    const values = { pin };
-    if (!pinForm.formValidates(['pin'], values)) return;
-
+  const handlePin = useCallback(async (pinValue: string) => {
     const person = personData;
     if (!person) {
       setStep('welcome');
@@ -179,20 +172,21 @@ export default function InvitePage() {
     }
 
     setLoading(true);
-    setError('');
+    setPinError(null);
 
     try {
-      await Bridge.request('person:ChangePinV2', person['base:address'] as string, {
+      const personId = person.personId as string;
+      await Bridge.restfulRequest('person:ChangePinV2', `SERV:person:${personId}`, {
         place: placeId,
-        pin,
+        pin: pinValue,
       });
       setStep('welcome');
     } catch {
-      setError('PIN code not available. Please choose a different PIN.');
+      setPinError('Failed to save PIN code. Please try again.');
     } finally {
       setLoading(false);
     }
-  }, [pin, personData, placeId, pinForm]);
+  }, [personData, placeId]);
 
   // ── Step 5: Welcome ────────────────────────────────────────
 
@@ -311,32 +305,13 @@ export default function InvitePage() {
           )}
 
           {step === 'pin' && (
-            <form onSubmit={handlePin} className="space-y-4">
-              <p className="text-sm text-grouse">
-                Set a PIN code to disarm the security alarm and unlock doors at this place.
-              </p>
-              <ValidatedField
-                label="PIN Code" id="pin" type="password" autoComplete="off"
-                value={pin} onChange={setPin} form={pinForm}
-                allValues={{ pin }} inputMode="numeric"
-              />
-              <div className="flex gap-2">
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="flex-1 py-2.5 bg-peacock text-crane rounded-[var(--border-radius-base)] text-sm font-medium hover:bg-peacock/90 disabled:opacity-50"
-                >
-                  {loading ? 'Setting PIN…' : 'Set PIN'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setStep('welcome')}
-                  className="px-4 py-2.5 border border-heron rounded-[var(--border-radius-base)] text-sm text-coot hover:bg-pigeon"
-                >
-                  Skip
-                </button>
-              </div>
-            </form>
+            <ChangePinForm
+              onSave={handlePin}
+              onSkip={() => setStep('welcome')}
+              loading={loading}
+              error={pinError}
+              description="Set a PIN code to disarm the security alarm and unlock doors at this place."
+            />
           )}
 
           {step === 'welcome' && (

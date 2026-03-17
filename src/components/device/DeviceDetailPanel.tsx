@@ -9,6 +9,7 @@
 
 import { useState, useCallback } from 'react';
 import Bridge from '@arcus/core/bridge';
+import { Base, Device, DeviceAdvanced, DeviceConnection, DevicePower, Identify } from '@arcus/core';
 import { useDevice } from '@/hooks/useDeviceCapability';
 import { isDeviceOffline, formatTemp } from '@/hooks/useDeviceConfig';
 import { useSidePanel } from '@/components/SidePanel';
@@ -32,9 +33,9 @@ export function DeviceDetailPanel({ address }: DeviceDetailPanelProps) {
   const handleRemove = useCallback(async () => {
     if (!device) return;
     setRemoving(true);
-    const devName = (device['dev:name'] as string) ?? 'Unknown Device';
+    const devName = (device[Device.ATTR_NAME] as string) ?? 'Unknown Device';
     try {
-      await Bridge.request('dev:Remove', address, {});
+      await Bridge.request(Device.CMD_REMOVE, address, {});
       dispatch(addNotification({ type: 'success', message: `${devName} removed` }));
       closeRight();
     } catch {
@@ -46,7 +47,7 @@ export function DeviceDetailPanel({ address }: DeviceDetailPanelProps) {
   const handleIdentify = useCallback(async () => {
     setIdentifying(true);
     try {
-      await sendCommand('ident:Identify');
+      await sendCommand(Identify.CMD_IDENTIFY);
     } catch (e) {
       dispatch(addNotification({ type: 'error', message: 'Failed to identify device' }));
     } finally {
@@ -56,19 +57,19 @@ export function DeviceDetailPanel({ address }: DeviceDetailPanelProps) {
 
   if (!device) return null;
 
-  const caps = (device['base:caps'] as string[]) ?? [];
+  const caps = (device[Base.ATTR_CAPS] as string[]) ?? [];
   const supportsIdentify = caps.includes('ident');
-  const name = (device['dev:name'] as string) ?? 'Unknown Device';
-  const devType = (device['dev:devtypehint'] as string) ?? '';
-  const vendor = (device['dev:vendor'] as string) ?? '';
-  const model = (device['dev:model'] as string) ?? '';
-  const productId = (device['dev:productId'] as string) ?? '';
+  const name = (device[Device.ATTR_NAME] as string) ?? 'Unknown Device';
+  const devType = (device[Device.ATTR_DEVTYPEHINT] as string) ?? '';
+  const vendor = (device[Device.ATTR_VENDOR] as string) ?? '';
+  const model = (device[Device.ATTR_MODEL] as string) ?? '';
+  const productId = (device[Device.ATTR_PRODUCTID] as string) ?? '';
   const offline = isDeviceOffline(device);
-  const connState = (device['devconn:state'] as string) ?? '';
-  const protocol = (device['devadv:protocol'] as string) ?? '';
-  const firmwareVersion = (device['devadv:firmwareVersion'] as string) ?? '';
-  const battery = device['devpow:battery'] as number | undefined;
-  const powerSource = (device['devpow:source'] as string) ?? '';
+  const connState = (device[DeviceConnection.ATTR_STATE] as string) ?? '';
+  const protocol = (device[DeviceAdvanced.ATTR_PROTOCOL] as string) ?? '';
+  const firmwareVersion = (device[DeviceAdvanced.ATTR_FIRMWAREVERSION] as string) ?? '';
+  const battery = device[DevicePower.ATTR_BATTERY] as number | undefined;
+  const powerSource = (device[DevicePower.ATTR_SOURCE] as string) ?? '';
 
   return (
     <div>

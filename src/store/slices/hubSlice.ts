@@ -1,7 +1,8 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import type { ArcusPayload } from '@/store/entityTypes';
 
 export interface HubState {
-  hub: Record<string, unknown> | null;
+  hub: ArcusPayload | null;
 }
 
 const initialState: HubState = {
@@ -12,10 +13,10 @@ const hubSlice = createSlice({
   name: 'hub',
   initialState,
   reducers: {
-    setHub(state, action: PayloadAction<Record<string, unknown>>) {
+    setHub(state, action: PayloadAction<ArcusPayload>) {
       state.hub = action.payload;
     },
-    updateHub(state, action: PayloadAction<Record<string, unknown>>) {
+    updateHub(state, action: PayloadAction<ArcusPayload>) {
       if (state.hub) {
         Object.assign(state.hub, action.payload);
       }

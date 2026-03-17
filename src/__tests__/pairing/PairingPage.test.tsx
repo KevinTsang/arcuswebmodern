@@ -1,4 +1,5 @@
 import { render, screen, waitFor } from '@testing-library/react';
+import { Base, Product, PairingDevice, PairingSubsystem } from '@arcus/core';
 import PairingPage from '@/app/(authenticated)/pairing/page';
 
 // ── Mocks ─────────────────────────────────────────────────────────────
@@ -44,17 +45,21 @@ jest.mock('@/store/slices/pairingSlice', () => ({
   resetPairing: () => mockResetPairing(),
 }));
 
-// Mock subcomponents to isolate page tests
+// Capture subcomponent props to allow triggering callbacks in tests
+let capturedCustomizeProps: any = {};
+let capturedCompletedProps: any = {};
+
 jest.mock('@/components/pairing', () => ({
   StageIndicator: ({ stage }: any) => <div data-testid="stage-indicator">{stage}</div>,
   StepsStage: () => <div data-testid="steps-stage">StepsStage</div>,
   SearchingStage: () => <div data-testid="searching-stage">SearchingStage</div>,
-  CustomizeStage: () => <div data-testid="customize-stage">CustomizeStage</div>,
-  CompletedStage: () => <div data-testid="completed-stage">CompletedStage</div>,
-  PAIRING_STATES: {
-    PAIRED: 'PAIRED',
-    MISPAIRED: 'MISPAIRED',
-    MISCONFIGURED: 'MISCONFIGURED',
+  CustomizeStage: (props: any) => {
+    capturedCustomizeProps = props;
+    return <div data-testid="customize-stage">CustomizeStage</div>;
+  },
+  CompletedStage: (props: any) => {
+    capturedCompletedProps = props;
+    return <div data-testid="completed-stage">CompletedStage</div>;
   },
 }));
 
@@ -79,6 +84,8 @@ jest.mock('@/store/hooks', () => ({
 
 beforeEach(() => {
   jest.clearAllMocks();
+  capturedCustomizeProps = {};
+  capturedCompletedProps = {};
   mockPairingState = {
     stage: 'steps',
     product: null,
@@ -111,7 +118,7 @@ describe('PairingPage – rendering', () => {
   it('shows product name in heading when product is set', () => {
     mockPairingState = {
       ...mockPairingState,
-      product: { 'product:vendor': 'Arcus', 'product:name': 'Smart Plug' },
+      product: { [Product.ATTR_VENDOR]: 'Arcus', [Product.ATTR_NAME]: 'Smart Plug' },
     };
     render(<PairingPage />);
     expect(screen.getByText('Pair Arcus Smart Plug')).toBeInTheDocument();
@@ -167,7 +174,7 @@ describe('PairingPage – lifecycle', () => {
   });
 
   it('loads product from sessionStorage when product is not in state', () => {
-    const product = { 'product:id': 'sensor1', 'product:name': 'Motion Sensor' };
+    const product = { [Product.ATTR_ID]: 'sensor1', [Product.ATTR_NAME]: 'Motion Sensor' };
     sessionStorage.setItem('pairing:product', JSON.stringify(product));
     // product is null in mockPairingState — product loads from sessionStorage
     render(<PairingPage />);
@@ -177,7 +184,7 @@ describe('PairingPage – lifecycle', () => {
   });
 
   it('does not re-load product when already in state', () => {
-    const product = { 'product:id': 'sensor1', 'product:name': 'Motion Sensor', 'base:address': 'SERV:product:sensor1' };
+    const product = { [Product.ATTR_ID]: 'sensor1', [Product.ATTR_NAME]: 'Motion Sensor', [Base.ATTR_ADDRESS]: 'SERV:product:sensor1' };
     sessionStorage.setItem('pairing:product', JSON.stringify(product));
     mockPairingState = { ...mockPairingState, product };
     render(<PairingPage />);
@@ -185,7 +192,7 @@ describe('PairingPage – lifecycle', () => {
   });
 
   it('sets isHubPairing true for hub product dee001', () => {
-    const product = { 'product:id': 'dee001', 'product:name': 'Wi-Fi Smart Hub' };
+    const product = { [Product.ATTR_ID]: 'dee001', [Product.ATTR_NAME]: 'Wi-Fi Smart Hub' };
     sessionStorage.setItem('pairing:product', JSON.stringify(product));
     render(<PairingPage />);
     expect(mockLoadProduct).toHaveBeenCalledWith(
@@ -194,7 +201,7 @@ describe('PairingPage – lifecycle', () => {
   });
 
   it('sets isHubPairing true for hub product dee000', () => {
-    const product = { 'product:id': 'dee000', 'product:name': 'Smart Hub' };
+    const product = { [Product.ATTR_ID]: 'dee000', [Product.ATTR_NAME]: 'Smart Hub' };
     sessionStorage.setItem('pairing:product', JSON.stringify(product));
     render(<PairingPage />);
     expect(mockLoadProduct).toHaveBeenCalledWith(
@@ -204,7 +211,7 @@ describe('PairingPage – lifecycle', () => {
 
   it('calls StopSearching on unmount when pairing subsystem is available', () => {
     const pairingSubAddr = 'SERV:subpairing:place-1';
-    mockSubsystems = { [pairingSubAddr]: { 'base:address': pairingSubAddr } };
+    mockSubsystems = { [pairingSubAddr]: { [Base.ATTR_ADDRESS]: pairingSubAddr } };
     mockBridgeRequest.mockResolvedValue({});
 
     const { unmount } = render(<PairingPage />);
@@ -212,7 +219,7 @@ describe('PairingPage – lifecycle', () => {
     unmount();
 
     expect(mockBridgeRequest).toHaveBeenCalledWith(
-      'subpairing:StopSearching',
+      PairingSubsystem.CMD_STOPSEARCHING,
       pairingSubAddr,
       {},
     );
@@ -220,7 +227,7 @@ describe('PairingPage – lifecycle', () => {
 
   it('calls StopSearching on beforeunload when pairing subsystem is available', () => {
     const pairingSubAddr = 'SERV:subpairing:place-1';
-    mockSubsystems = { [pairingSubAddr]: { 'base:address': pairingSubAddr } };
+    mockSubsystems = { [pairingSubAddr]: { [Base.ATTR_ADDRESS]: pairingSubAddr } };
     mockBridgeRequest.mockResolvedValue({});
 
     render(<PairingPage />);
@@ -228,7 +235,7 @@ describe('PairingPage – lifecycle', () => {
     window.dispatchEvent(new Event('beforeunload'));
 
     expect(mockBridgeRequest).toHaveBeenCalledWith(
-      'subpairing:StopSearching',
+      PairingSubsystem.CMD_STOPSEARCHING,
       pairingSubAddr,
       {},
     );
@@ -236,7 +243,7 @@ describe('PairingPage – lifecycle', () => {
 
   it('removes beforeunload listener on unmount', () => {
     const pairingSubAddr = 'SERV:subpairing:place-1';
-    mockSubsystems = { [pairingSubAddr]: { 'base:address': pairingSubAddr } };
+    mockSubsystems = { [pairingSubAddr]: { [Base.ATTR_ADDRESS]: pairingSubAddr } };
     mockBridgeRequest.mockResolvedValue({});
 
     const { unmount } = render(<PairingPage />);
@@ -245,7 +252,7 @@ describe('PairingPage – lifecycle', () => {
 
     window.dispatchEvent(new Event('beforeunload'));
     expect(mockBridgeRequest).not.toHaveBeenCalledWith(
-      'subpairing:StopSearching',
+      PairingSubsystem.CMD_STOPSEARCHING,
       expect.any(String),
       expect.anything(),
     );
@@ -257,15 +264,15 @@ describe('PairingPage – auto-start pairing', () => {
 
   beforeEach(() => {
     mockSubsystems = {
-      [pairingSubAddr]: { 'base:address': pairingSubAddr },
+      [pairingSubAddr]: { [Base.ATTR_ADDRESS]: pairingSubAddr },
     };
   });
 
   it('calls StartPairing with productAddress when product is selected from catalog', async () => {
     const product = {
-      'base:address': 'SERV:product:c3c055',
-      'product:id': 'c3c055',
-      'product:name': 'Smart Plug',
+      [Base.ATTR_ADDRESS]: 'SERV:product:c3c055',
+      [Product.ATTR_ID]: 'c3c055',
+      [Product.ATTR_NAME]: 'Smart Plug',
     };
     // Simulate product-catalog setting sessionStorage before navigating to /pairing
     sessionStorage.setItem('pairing:product', JSON.stringify(product));
@@ -277,7 +284,7 @@ describe('PairingPage – auto-start pairing', () => {
 
     await waitFor(() => {
       expect(mockBridgeRequest).toHaveBeenCalledWith(
-        'subpairing:StartPairing',
+        PairingSubsystem.CMD_STARTPAIRING,
         pairingSubAddr,
         { productAddress: 'SERV:product:c3c055' },
       );
@@ -286,9 +293,9 @@ describe('PairingPage – auto-start pairing', () => {
 
   it('loads product from sessionStorage and waits for state before starting pairing', () => {
     const product = {
-      'base:address': 'SERV:product:c3c055',
-      'product:id': 'c3c055',
-      'product:name': 'Smart Plug',
+      [Base.ATTR_ADDRESS]: 'SERV:product:c3c055',
+      [Product.ATTR_ID]: 'c3c055',
+      [Product.ATTR_NAME]: 'Smart Plug',
     };
     sessionStorage.setItem('pairing:product', JSON.stringify(product));
     // product is NOT in mockPairingState yet — effect should load it and wait
@@ -300,12 +307,12 @@ describe('PairingPage – auto-start pairing', () => {
     );
     // Should NOT start searching or pairing until product is in state
     expect(mockBridgeRequest).not.toHaveBeenCalledWith(
-      'subpairing:Search',
+      PairingSubsystem.CMD_SEARCH,
       expect.any(String),
       expect.anything(),
     );
     expect(mockBridgeRequest).not.toHaveBeenCalledWith(
-      'subpairing:StartPairing',
+      PairingSubsystem.CMD_STARTPAIRING,
       expect.any(String),
       expect.anything(),
     );
@@ -318,7 +325,7 @@ describe('PairingPage – auto-start pairing', () => {
 
     await waitFor(() => {
       expect(mockBridgeRequest).toHaveBeenCalledWith(
-        'subpairing:Search',
+        PairingSubsystem.CMD_SEARCH,
         pairingSubAddr,
         { productAddress: '' },
       );
@@ -329,7 +336,7 @@ describe('PairingPage – auto-start pairing', () => {
     mockSubsystems = {};
     mockPairingState = {
       ...mockPairingState,
-      product: { 'base:address': 'SERV:product:c3c055', 'product:name': 'Smart Plug' },
+      product: { [Base.ATTR_ADDRESS]: 'SERV:product:c3c055', [Product.ATTR_NAME]: 'Smart Plug' },
     };
     render(<PairingPage />);
 
@@ -339,13 +346,13 @@ describe('PairingPage – auto-start pairing', () => {
   it('does not auto-start for hub pairing products', () => {
     mockPairingState = {
       ...mockPairingState,
-      product: { 'base:address': 'SERV:product:dee001', 'product:name': 'Smart Hub' },
+      product: { [Base.ATTR_ADDRESS]: 'SERV:product:dee001', [Product.ATTR_NAME]: 'Smart Hub' },
       isHubPairing: true,
     };
     render(<PairingPage />);
 
     expect(mockBridgeRequest).not.toHaveBeenCalledWith(
-      'subpairing:StartPairing',
+      PairingSubsystem.CMD_STARTPAIRING,
       expect.any(String),
       expect.anything(),
     );
@@ -357,5 +364,145 @@ describe('PairingPage – stage indicator', () => {
     mockPairingState = { ...mockPairingState, stage: 'searching' };
     render(<PairingPage />);
     expect(screen.getByTestId('stage-indicator')).toHaveTextContent('searching');
+  });
+});
+
+describe('PairingPage – error handling', () => {
+  const pairingSubAddr = 'SERV:subpairing:place-1';
+
+  beforeEach(() => {
+    mockSubsystems = {
+      [pairingSubAddr]: { [Base.ATTR_ADDRESS]: pairingSubAddr },
+    };
+  });
+
+  it('dispatches error notification when StartPairing fails', async () => {
+    const product = {
+      [Base.ATTR_ADDRESS]: 'SERV:product:c3c055',
+      [Product.ATTR_ID]: 'c3c055',
+      [Product.ATTR_NAME]: 'Smart Plug',
+    };
+    sessionStorage.setItem('pairing:product', JSON.stringify(product));
+    mockPairingState = { ...mockPairingState, product };
+    mockBridgeRequest.mockRejectedValue(new Error('Hub offline'));
+
+    render(<PairingPage />);
+
+    await waitFor(() => {
+      expect(mockDispatch).toHaveBeenCalledWith({
+        type: 'ui/addNotification',
+        payload: { type: 'error', message: 'Failed to start pairing. Check hub connection.' },
+      });
+    });
+  });
+
+  it('dispatches error notification when Search fails', async () => {
+    // No product — triggers generic search path
+    mockBridgeRequest.mockRejectedValue(new Error('Network error'));
+
+    render(<PairingPage />);
+
+    await waitFor(() => {
+      expect(mockDispatch).toHaveBeenCalledWith({
+        type: 'ui/addNotification',
+        payload: { type: 'error', message: 'Failed to search for devices.' },
+      });
+    });
+  });
+
+  it('logs warning when device poll fails but does not crash', async () => {
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    // Search succeeds, then ListPairingDevices fails
+    mockBridgeRequest
+      .mockResolvedValueOnce({}) // resetPairing dispatch
+      .mockResolvedValueOnce({}) // Search succeeds
+      .mockRejectedValueOnce(new Error('Poll failed')); // ListPairingDevices fails
+
+    mockPairingState = { ...mockPairingState, stage: 'steps' };
+    render(<PairingPage />);
+
+    // Wait for search to be called
+    await waitFor(() => {
+      expect(mockBridgeRequest).toHaveBeenCalledWith(
+        PairingSubsystem.CMD_SEARCH,
+        pairingSubAddr,
+        expect.anything(),
+      );
+    });
+
+    // Fast-forward the 3-second poll interval
+    jest.advanceTimersByTime?.(3000);
+
+    // The component should not have crashed
+    expect(screen.getByTestId('stage-indicator')).toBeInTheDocument();
+    warnSpy.mockRestore();
+  });
+
+  it('dispatches error notification when hub name customization fails', async () => {
+    mockHub = { [Base.ATTR_ADDRESS]: 'SERV:hub-1:hub' };
+    mockPairingState = {
+      ...mockPairingState,
+      stage: 'customize',
+      isHubPairing: true,
+      deviceName: 'My Hub',
+    };
+    mockBridgeRequest.mockRejectedValue(new Error('SetAttributes failed'));
+
+    render(<PairingPage />);
+
+    // Trigger the onCustomize callback
+    await capturedCustomizeProps.onCustomize();
+
+    await waitFor(() => {
+      expect(mockDispatch).toHaveBeenCalledWith({
+        type: 'ui/addNotification',
+        payload: { type: 'error', message: 'Failed to set hub name.' },
+      });
+    });
+
+    // Should still dispatch customizationComplete
+    expect(mockDispatch).toHaveBeenCalledWith({ type: 'pairing/customizationComplete' });
+  });
+
+  it('dispatches error notification when device customization fails', async () => {
+    mockPairingState = {
+      ...mockPairingState,
+      stage: 'customize',
+      isHubPairing: false,
+      activeDevice: {
+        [Base.ATTR_ADDRESS]: 'SERV:pairdev:1',
+        [PairingDevice.ATTR_DEVICEADDRESS]: 'DRIV:dev:1',
+      },
+      deviceName: 'Living Room Plug',
+      isFavorite: true,
+    };
+    mockBridgeRequest.mockRejectedValue(new Error('Customize failed'));
+
+    render(<PairingPage />);
+
+    await capturedCustomizeProps.onCustomize();
+
+    await waitFor(() => {
+      expect(mockDispatch).toHaveBeenCalledWith({
+        type: 'ui/addNotification',
+        payload: { type: 'error', message: 'Failed to save device customization. You can rename the device later from the Devices page.' },
+      });
+    });
+
+    // Should still dispatch customizationComplete
+    expect(mockDispatch).toHaveBeenCalledWith({ type: 'pairing/customizationComplete' });
+  });
+
+  it('navigates to /devices even when DismissAll fails on finish', async () => {
+    mockPairingState = { ...mockPairingState, stage: 'completed' };
+    mockBridgeRequest.mockRejectedValue(new Error('DismissAll failed'));
+
+    render(<PairingPage />);
+
+    await capturedCompletedProps.onFinish();
+
+    await waitFor(() => {
+      expect(mockPush).toHaveBeenCalledWith('/devices');
+    });
   });
 });

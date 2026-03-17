@@ -9,6 +9,7 @@
 
 import { useState, useCallback } from 'react';
 import Bridge from '@arcus/core/bridge';
+import { Base, CareSubsystem } from '@arcus/core';
 import { useCareSubsystem } from '@/hooks/useSubsystem';
 import { useAppDispatch } from '@/store/hooks';
 import { addNotification } from '@/store/slices/uiSlice';
@@ -48,11 +49,11 @@ function CareStatus() {
   const dispatch = useAppDispatch();
   const care = useCareSubsystem();
 
-  const isAlert = care.alarmState === 'ALERT';
+  const isAlert = care.alarmState === CareSubsystem.ALARMSTATE_ALERT;
 
   const handleClear = useCallback(async () => {
     if (!care.subsystem) return;
-    const addr = care.subsystem['base:address'] as string;
+    const addr = care.subsystem[Base.ATTR_ADDRESS] as string;
     try {
       await Bridge.request('subcare:Clear', addr, {});
       dispatch(addNotification({ type: 'success', message: 'Care alert cleared' }));
@@ -73,7 +74,7 @@ function CareStatus() {
         <p className="text-sm text-grouse">
           {isAlert && care.lastAlertCause
             ? care.lastAlertCause
-            : care.alarmMode === 'ON' ? 'Care is active' : 'Care is monitoring'}
+            : care.alarmMode === CareSubsystem.ALARMMODE_ON ? 'Care is active' : 'Care is monitoring'}
         </p>
         {isAlert && (
           <button

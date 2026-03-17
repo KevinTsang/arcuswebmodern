@@ -1,12 +1,13 @@
+import { Valve, WaterSubsystem } from '@arcus/core';
 import { useSubsystemDevices } from '@/hooks/useSubsystem';
 import CardShell from './CardShell';
 import StatusBadge from './StatusBadge';
 
 export default function WaterCard() {
-  const waterDevices = useSubsystemDevices('subwater', ['waterval:valvestate']);
+  const waterDevices = useSubsystemDevices(WaterSubsystem.NAMESPACE, [Valve.ATTR_VALVESTATE]);
 
   const closedCount = waterDevices.filter(
-    (d) => d['waterval:valvestate'] === 'CLOSED',
+    (d) => d[Valve.ATTR_VALVESTATE] === Valve.VALVESTATE_CLOSED,
   ).length;
 
   return (

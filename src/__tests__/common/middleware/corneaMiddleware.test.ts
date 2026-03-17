@@ -28,6 +28,15 @@ jest.mock('@arcus/core/property-aliases', () => ({
   },
 }));
 
+const mockBridgeRequest = jest.fn().mockResolvedValue({ invitations: [] });
+
+jest.mock('@arcus/core/bridge', () => ({
+  __esModule: true,
+  default: { request: (...args: any[]) => mockBridgeRequest(...args) },
+}));
+
+const flushPromises = () => new Promise((r) => setTimeout(r, 0));
+
 import { configureStore } from '@reduxjs/toolkit';
 import authReducer, { loginSuccess, logout } from '@/store/slices/authSlice';
 import devicesReducer from '@/store/slices/devicesSlice';
@@ -40,6 +49,7 @@ import peopleReducer from '@/store/slices/peopleSlice';
 import hubReducer from '@/store/slices/hubSlice';
 import placeReducer from '@/store/slices/placeSlice';
 import uiReducer from '@/store/slices/uiSlice';
+import invitationsReducer from '@/store/slices/invitationsSlice';
 import { corneaMiddleware } from '@/store/middleware/corneaMiddleware';
 
 function createTestStore() {
@@ -56,6 +66,7 @@ function createTestStore() {
       people: peopleReducer,
       hub: hubReducer,
       ui: uiReducer,
+      invitations: invitationsReducer,
     },
     middleware: (getDefault) => getDefault({ serializableCheck: false }).concat(corneaMiddleware),
   });
@@ -144,5 +155,47 @@ describe('corneaMiddleware', () => {
     let totalListeners = 0;
     for (const fns of listeners.values()) totalListeners += fns.size;
     expect(totalListeners).toBe(0);
+  });
+
+  it('subscribes to invitation events after loginSuccess', () => {
+    const store = createTestStore();
+    store.dispatch(loginSuccess({ person: { personId: 'p1' }, account: {} }));
+
+    expect(listeners.has('place person:InvitationPending')).toBe(true);
+    expect(listeners.has('place person:InvitationCancelled')).toBe(true);
+  });
+
+  it('fetches pending invitations on InvitationPending event', async () => {
+    const store = createTestStore();
+    mockBridgeRequest.mockResolvedValue({
+      invitations: [{ code: 'inv1', placeName: 'Home', inviteeEmail: 'a@b.com' }],
+    });
+
+    store.dispatch(loginSuccess({ person: { personId: 'p1' }, account: {} }));
+    emit('place person:InvitationPending');
+
+    await flushPromises();
+
+    expect(mockBridgeRequest).toHaveBeenCalledWith(
+      'person:PendingInvitations',
+      'SERV:person:p1',
+      {},
+    );
+  });
+
+  it('fetches pending invitations on InvitationCancelled event', async () => {
+    const store = createTestStore();
+    mockBridgeRequest.mockResolvedValue({ invitations: [] });
+
+    store.dispatch(loginSuccess({ person: { personId: 'p1' }, account: {} }));
+    emit('place person:InvitationCancelled');
+
+    await flushPromises();
+
+    expect(mockBridgeRequest).toHaveBeenCalledWith(
+      'person:PendingInvitations',
+      'SERV:person:p1',
+      {},
+    );
   });
 });

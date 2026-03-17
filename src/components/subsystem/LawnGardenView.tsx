@@ -6,6 +6,7 @@
  * Replaces src/components/subsystem/lawn-garden/.
  */
 
+import { Base } from '@arcus/core';
 import { useLawnGardenSubsystem } from '@/hooks/useSubsystem';
 import { DevicePanel } from '@/components/device';
 
@@ -46,7 +47,7 @@ export function LawnGardenView() {
       <div>
         <h3 className="text-sm font-medium text-swift mb-3">Controllers</h3>
         {controllers.map((device) => (
-          <DevicePanel key={device.id} address={device['base:address']} />
+          <DevicePanel key={device.id} address={device[Base.ATTR_ADDRESS]} />
         ))}
       </div>
     </div>

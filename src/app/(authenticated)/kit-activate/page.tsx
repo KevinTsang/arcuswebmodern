@@ -10,27 +10,13 @@
 
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
+import { Base, Device, DeviceAdvanced, Product, PairingDevice, PairingSubsystem } from '@arcus/core';
 import Bridge from '@arcus/core/bridge';
+import type { ListPairingDevicesResponse, GetKitInformationResponse, KitDevice } from '@/arcus/types';
+import type { PairingDevice as PairingDeviceData } from '@/store/entityTypes';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import { selectAllDevices } from '@/store/slices/devicesSlice';
 import { addNotification } from '@/store/slices/uiSlice';
-
-interface KitDevice {
-  productId: string;
-  protocolAddress: string;
-  [key: string]: unknown;
-}
-
-interface KitPairingDevice {
-  'base:address': string;
-  'pairdev:pairingState': string;
-  'pairdev:pairingPhase'?: string;
-  'pairdev:protocolAddress': string;
-  'pairdev:productAddress'?: string;
-  'pairdev:deviceAddress'?: string;
-  'pairdev:customizations'?: string[];
-  [key: string]: unknown;
-}
 
 type DeviceState = 'inactive' | 'customizable' | 'active' | 'mispaired' | 'missing';
 
@@ -42,9 +28,9 @@ export default function KitActivatePage() {
   const subsystems = useAppSelector((s) => s.subsystems);
 
   const [kitDevices, setKitDevices] = useState<KitDevice[]>([]);
-  const [pairingDevices, setPairingDevices] = useState<KitPairingDevice[]>([]);
+  const [pairingDevices, setPairingDevices] = useState<PairingDeviceData[]>([]);
   const [loading, setLoading] = useState(true);
-  const [customizingDevice, setCustomizingDevice] = useState<KitPairingDevice | null>(null);
+  const [customizingDevice, setCustomizingDevice] = useState<PairingDeviceData | null>(null);
   const [deviceName, setDeviceName] = useState('');
 
   // Find pairing subsystem address
@@ -52,10 +38,10 @@ export default function KitActivatePage() {
     if (!subsystems?.entities) return null;
     const entries = Object.values(subsystems.entities) as Array<Record<string, unknown>>;
     const sub = entries.find((s) => {
-      const addr = s['base:address'] as string;
+      const addr = s[Base.ATTR_ADDRESS] as string;
       return addr?.includes('subpairing');
     });
-    return (sub?.['base:address'] as string) ?? null;
+    return (sub?.[Base.ATTR_ADDRESS] as string) ?? null;
   }, [subsystems]);
 
   // Load kit information on mount
@@ -66,12 +52,12 @@ export default function KitActivatePage() {
       setLoading(true);
       try {
         const [kitResp, devResp] = await Promise.all([
-          Bridge.request('subpairing:GetKitInformation', pairingSubAddr, {}),
-          Bridge.request('subpairing:ListPairingDevices', pairingSubAddr, {}),
+          Bridge.request<GetKitInformationResponse>(PairingSubsystem.CMD_GETKITINFORMATION, pairingSubAddr, {}),
+          Bridge.request<ListPairingDevicesResponse>(PairingSubsystem.CMD_LISTPAIRINGDEVICES, pairingSubAddr, {}),
         ]);
 
-        setKitDevices((kitResp['kitInfo'] as KitDevice[]) ?? []);
-        setPairingDevices((devResp['devices'] as KitPairingDevice[]) ?? []);
+        setKitDevices(kitResp.kitInfo ?? []);
+        setPairingDevices(devResp.devices ?? []);
       } catch {
         dispatch(addNotification({ type: 'error', message: 'Failed to load kit information.' }));
       } finally {
@@ -86,33 +72,33 @@ export default function KitActivatePage() {
   const deviceStates = useMemo(() => {
     return kitDevices.map((kd) => {
       const pairDev = pairingDevices.find(
-        (pd) => pd['pairdev:protocolAddress'] === kd.protocolAddress,
+        (pd) => pd[PairingDevice.ATTR_PROTOCOLADDRESS] === kd.protocolAddress,
       );
 
       const realDevice = devices.find((d) => {
-        const protocolId = d['devadv:protocolid'] as string;
+        const protocolId = d[DeviceAdvanced.ATTR_PROTOCOLID] as string;
         return protocolId && kd.protocolAddress.includes(protocolId);
       });
 
       const product = products.find(
-        (p) => (p['product:id'] as string) === kd.productId || (p['base:address'] as string)?.includes(kd.productId),
+        (p) => (p[Product.ATTR_ID] as string) === kd.productId || (p[Base.ATTR_ADDRESS] as string)?.includes(kd.productId),
       );
 
       let state: DeviceState = 'missing';
       if (realDevice) {
         if (pairDev) {
-          const pState = pairDev['pairdev:pairingState'];
-          if (pState === 'MISPAIRED' || pState === 'MISCONFIGURED') {
+          const pState = pairDev[PairingDevice.ATTR_PAIRINGSTATE];
+          if (pState === PairingDevice.PAIRINGSTATE_MISPAIRED || pState === PairingDevice.PAIRINGSTATE_MISCONFIGURED) {
             state = 'mispaired';
           } else {
-            const customs = pairDev['pairdev:customizations'] as string[] | undefined;
+            const customs = pairDev[PairingDevice.ATTR_CUSTOMIZATIONS] as string[] | undefined;
             state = customs && customs.length > 0 ? 'active' : 'customizable';
           }
         } else {
           state = 'active';
         }
       } else if (pairDev) {
-        state = pairDev['pairdev:pairingState'] === 'PAIRING' ? 'inactive' : 'missing';
+        state = pairDev[PairingDevice.ATTR_PAIRINGSTATE] === PairingDevice.PAIRINGSTATE_PAIRING ? 'inactive' : 'missing';
       }
 
       return {
@@ -121,7 +107,7 @@ export default function KitActivatePage() {
         realDevice: realDevice ?? null,
         product: product ?? null,
         state,
-        name: (product?.['product:name'] as string) ?? kd.productId,
+        name: (product?.[Product.ATTR_NAME] as string) ?? kd.productId,
       };
     });
   }, [kitDevices, pairingDevices, devices, products]);
@@ -137,7 +123,7 @@ export default function KitActivatePage() {
   }, [deviceStates]);
 
   // Customize a device
-  const handleCustomize = useCallback(async (pairDev: KitPairingDevice) => {
+  const handleCustomize = useCallback(async (pairDev: PairingDeviceData) => {
     setCustomizingDevice(pairDev);
     setDeviceName('');
   }, []);
@@ -146,23 +132,23 @@ export default function KitActivatePage() {
     if (!customizingDevice) return;
 
     try {
-      await Bridge.request('pairdev:Customize', customizingDevice['base:address'], {});
+      await Bridge.request(PairingDevice.CMD_CUSTOMIZE, customizingDevice[Base.ATTR_ADDRESS], {});
 
-      const devAddr = customizingDevice['pairdev:deviceAddress'] as string;
+      const devAddr = customizingDevice[PairingDevice.ATTR_DEVICEADDRESS] as string;
       if (devAddr && deviceName.trim()) {
-        await Bridge.request('base:SetAttributes', devAddr, {
-          'dev:name': deviceName.trim(),
+        await Bridge.request(Base.CMD_SETATTRIBUTES, devAddr, {
+          [Device.ATTR_NAME]: deviceName.trim(),
         });
       }
 
-      await Bridge.request('pairdev:AddCustomization', customizingDevice['base:address'], {
+      await Bridge.request(PairingDevice.CMD_ADDCUSTOMIZATION, customizingDevice[Base.ATTR_ADDRESS], {
         customization: 'NAME',
       });
 
       // Refresh pairing devices
       if (pairingSubAddr) {
-        const resp = await Bridge.request('subpairing:ListPairingDevices', pairingSubAddr, {});
-        setPairingDevices((resp['devices'] as KitPairingDevice[]) ?? []);
+        const resp = await Bridge.request<ListPairingDevicesResponse>(PairingSubsystem.CMD_LISTPAIRINGDEVICES, pairingSubAddr, {});
+        setPairingDevices(resp.devices ?? []);
       }
     } catch {
       dispatch(addNotification({ type: 'error', message: 'Failed to customize device.' }));
@@ -175,7 +161,7 @@ export default function KitActivatePage() {
   const handleFinish = useCallback(async () => {
     if (pairingSubAddr) {
       try {
-        await Bridge.request('subpairing:DismissAll', pairingSubAddr, {});
+        await Bridge.request(PairingSubsystem.CMD_DISMISSALL, pairingSubAddr, {});
       } catch {
         // OK
       }
@@ -302,11 +288,11 @@ function KitDeviceCard({
 }: {
   entry: {
     kitDevice: KitDevice;
-    pairingDevice: KitPairingDevice | null;
+    pairingDevice: PairingDeviceData | null;
     state: DeviceState;
     name: string;
   };
-  onCustomize: (pd: KitPairingDevice) => void;
+  onCustomize: (pd: PairingDeviceData) => void;
 }) {
   const stateConfig: Record<DeviceState, { label: string; color: string; bgColor: string }> = {
     inactive: { label: 'Waiting', color: 'text-grouse', bgColor: 'bg-pigeon/50' },

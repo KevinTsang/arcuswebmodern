@@ -1,11 +1,9 @@
 import { createSlice, createEntityAdapter, PayloadAction } from '@reduxjs/toolkit';
 import type { RootState } from '../store';
+import { Base } from '@arcus/core';
+import type { SubsystemEntity, ArcusPayload } from '../entityTypes';
 
-export interface SubsystemEntity {
-  id: string;
-  'base:address': string;
-  [key: string]: unknown;
-}
+export type { SubsystemEntity } from '../entityTypes';
 
 const subsystemsAdapter = createEntityAdapter<SubsystemEntity>();
 
@@ -14,14 +12,14 @@ const subsystemsSlice = createSlice({
   initialState: subsystemsAdapter.getInitialState(),
   reducers: {
     subsystemAdded: subsystemsAdapter.addOne,
-    subsystemUpdated(state, action: PayloadAction<{ 'base:address': string; [key: string]: unknown }>) {
-      const address = action.payload['base:address'];
-      const { 'base:address': _, ...changes } = action.payload;
+    subsystemUpdated(state, action: PayloadAction<ArcusPayload>) {
+      const address = action.payload[Base.ATTR_ADDRESS];
+      const { [Base.ATTR_ADDRESS]: _, ...changes } = action.payload;
       subsystemsAdapter.updateOne(state, { id: address, changes });
     },
     subsystemRemoved: subsystemsAdapter.removeOne,
-    subsystemsReceived(state, action: PayloadAction<Array<{ 'base:address': string; [key: string]: unknown }>>) {
-      const entities = action.payload.map((s) => ({ ...s, id: s['base:address'] }));
+    subsystemsReceived(state, action: PayloadAction<ArcusPayload[]>) {
+      const entities = action.payload.map((s) => ({ ...s, id: s[Base.ATTR_ADDRESS] }));
       subsystemsAdapter.setAll(state, entities);
     },
     subsystemsClear: subsystemsAdapter.removeAll,

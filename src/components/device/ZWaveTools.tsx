@@ -12,6 +12,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import Bridge from '@arcus/core/bridge';
 import cornea from '@arcus/core/cornea';
+import { Base, Hub, HubAdvanced, HubZwave } from '@arcus/core';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import { addNotification } from '@/store/slices/uiSlice';
 import RemoveZWaveDeviceModal from './RemoveZWaveDeviceModal';
@@ -30,8 +31,8 @@ export function ZWaveTools() {
   const [rebuildExpanded, setRebuildExpanded] = useState(false);
   const [removeModal, setRemoveModal] = useState<RemoveModalState>('closed');
 
-  const hubAddress = (hub?.['base:address'] as string) ?? '';
-  const numZWaveDevices = (hub?.['hubzwave:numDevices'] as number) ?? 0;
+  const hubAddress = (hub?.[Base.ATTR_ADDRESS] as string) ?? '';
+  const numZWaveDevices = (hub?.[HubZwave.ATTR_NUMDEVICES] as number) ?? 0;
   const canRebuild = numZWaveDevices > 0;
 
   // Track whether a device was removed during the current search session
@@ -42,7 +43,7 @@ export function ZWaveTools() {
     deviceRemovedRef.current = false;
     setRemoveModal('search');
     try {
-      await Bridge.request('hub:UnpairingRequest', hubAddress, {
+      await Bridge.request(Hub.CMD_UNPAIRINGREQUEST, hubAddress, {
         actionType: 'START_UNPAIRING',
         timeout: ORPHAN_REMOVAL_TIMEOUT,
         protocol: '',
@@ -57,7 +58,7 @@ export function ZWaveTools() {
   const cancelOrphanRemoval = useCallback(async () => {
     if (hubAddress) {
       try {
-        await Bridge.request('hub:UnpairingRequest', hubAddress, {
+        await Bridge.request(Hub.CMD_UNPAIRINGREQUEST, hubAddress, {
           actionType: 'STOP_UNPAIRING',
         });
       } catch (e) {
@@ -76,13 +77,13 @@ export function ZWaveTools() {
 
     const onHubValueChange = (obj: Record<string, unknown>) => {
       // numDevices decreased → device removed
-      if ('hubzwave:numDevices' in obj) {
+      if (HubZwave.ATTR_NUMDEVICES in obj) {
         deviceRemovedRef.current = true;
         dispatch(addNotification({ type: 'success', message: 'A device was removed.' }));
         setRemoveModal('success');
       }
       // hub:state went from UNPAIRING back to NORMAL → search finished
-      if (obj['hub:state'] === 'NORMAL') {
+      if (obj[Hub.ATTR_STATE] === Hub.STATE_NORMAL) {
         setRemoveModal((prev) => {
           if (prev === 'search') {
             return deviceRemovedRef.current ? 'success' : 'failure';
@@ -98,12 +99,12 @@ export function ZWaveTools() {
       setRemoveModal('success');
     };
 
-    cornea.on(`${hubNs} base:ValueChange`, onHubValueChange);
-    cornea.on('hubadv:UnpairedDeviceRemoved', onUnpairedDeviceRemoved);
+    cornea.on(`${hubNs} ${Base.EVENT_VALUECHANGE}`, onHubValueChange);
+    cornea.on(HubAdvanced.EVENT_UNPAIREDDEVICEREMOVED, onUnpairedDeviceRemoved);
 
     return () => {
-      cornea.off(`${hubNs} base:ValueChange`, onHubValueChange);
-      cornea.off('hubadv:UnpairedDeviceRemoved', onUnpairedDeviceRemoved);
+      cornea.off(`${hubNs} ${Base.EVENT_VALUECHANGE}`, onHubValueChange);
+      cornea.off(HubAdvanced.EVENT_UNPAIREDDEVICEREMOVED, onUnpairedDeviceRemoved);
     };
   }, [removeModal, hubAddress, dispatch]);
 
@@ -111,7 +112,7 @@ export function ZWaveTools() {
     if (!hubAddress) return;
     setRebuilding(true);
     try {
-      await Bridge.request('hubzwave:Heal', hubAddress, { block: false });
+      await Bridge.request(HubZwave.CMD_HEAL, hubAddress, { block: false });
       dispatch(addNotification({ type: 'success', message: 'Z-Wave network rebuild started' }));
     } catch {
       dispatch(addNotification({ type: 'error', message: 'Failed to start Z-Wave rebuild' }));

@@ -79,7 +79,7 @@ describe('AddPlacePanel – interactions', () => {
   });
 
   it('calls account:AddPlace with form data on submit', async () => {
-    mockBridgeRequest.mockResolvedValue({ 'place:name': 'Beach House' });
+    mockBridgeRequest.mockResolvedValue({ place: { 'place:name': 'Beach House' } });
     render(<AddPlacePanel />);
 
     const inputs = screen.getAllByRole('textbox');
@@ -111,7 +111,7 @@ describe('AddPlacePanel – interactions', () => {
 
   it('dispatches setPlace and success notification on success', async () => {
     const newPlace = { 'place:name': 'Beach House' };
-    mockBridgeRequest.mockResolvedValue(newPlace);
+    mockBridgeRequest.mockResolvedValue({ place: newPlace });
     render(<AddPlacePanel />);
 
     const nameInput = screen.getByPlaceholderText('e.g. Lake House');

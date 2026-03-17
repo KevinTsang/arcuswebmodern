@@ -7,6 +7,7 @@
  * simply lists its associated devices.
  */
 
+import { Base } from '@arcus/core';
 import { useSubsystemDevices } from '@/hooks/useSubsystem';
 import { DevicePanel } from '@/components/device';
 import type { SubsystemConfigEntry } from '@/lib/subsystemConfig';
@@ -35,7 +36,7 @@ export function GenericDeviceListView({ config }: GenericDeviceListViewProps) {
         {devices.length} device{devices.length !== 1 ? 's' : ''}
       </p>
       {devices.map((device) => (
-        <DevicePanel key={device.id} address={device['base:address']} />
+        <DevicePanel key={device.id} address={device[Base.ATTR_ADDRESS]} />
       ))}
     </div>
   );

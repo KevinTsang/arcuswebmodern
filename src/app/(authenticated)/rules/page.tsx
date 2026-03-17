@@ -8,6 +8,7 @@
  */
 
 import { useState, useCallback } from 'react';
+import { Place } from '@arcus/core';
 import { useAppSelector } from '@/store/hooks';
 import { selectAllRules } from '@/store/slices/rulesSlice';
 import { useSidePanel } from '@/components/SidePanel';
@@ -24,7 +25,7 @@ export default function RulesPage() {
   const rules = useAppSelector(selectAllRules);
   const placeId = useAppSelector((s) => s.place.placeId) ?? '';
   const placeName = useAppSelector(
-    (s) => (s.place.place?.['place:name'] as string) ?? 'Your Home',
+    (s) => s.place.place?.[Place.ATTR_NAME] ?? 'Your Home',
   );
   const { openRight } = useSidePanel();
 

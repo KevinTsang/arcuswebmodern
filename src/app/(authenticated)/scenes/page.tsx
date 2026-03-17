@@ -9,6 +9,7 @@
 
 import { useState, useCallback } from 'react';
 import Bridge from '@arcus/core/bridge';
+import { Base, Scene, Place } from '@arcus/core';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import { selectAllScenes } from '@/store/slices/scenesSlice';
 import { addNotification } from '@/store/slices/uiSlice';
@@ -27,20 +28,20 @@ function SceneCard({
   const dispatch = useAppDispatch();
   const [firing, setFiring] = useState(false);
 
-  const name = (scene['scene:name'] as string) ?? 'Unnamed Scene';
-  const address = scene['base:address'] as string;
-  const enabled = scene['scene:enabled'] !== false;
-  const actionCount = Array.isArray(scene['scene:actions'])
-    ? (scene['scene:actions'] as unknown[]).length
+  const name = (scene[Scene.ATTR_NAME] as string) ?? 'Unnamed Scene';
+  const address = scene[Base.ATTR_ADDRESS] as string;
+  const enabled = scene[Scene.ATTR_ENABLED] !== false;
+  const actionCount = Array.isArray(scene[Scene.ATTR_ACTIONS])
+    ? (scene[Scene.ATTR_ACTIONS] as unknown[]).length
     : 0;
-  const hasNotification = scene['scene:notification'] === true;
-  const hasSchedule = !!scene['scene:scheduler'];
+  const hasNotification = scene[Scene.ATTR_NOTIFICATION] === true;
+  const hasSchedule = !!scene[Scene.ATTR_SCHEDULER];
 
   const handleFire = useCallback(async () => {
     if (!enabled || firing) return;
     setFiring(true);
     try {
-      await Bridge.request('scene:Fire', address, {});
+      await Bridge.request(Scene.CMD_FIRE, address, {});
       dispatch(addNotification({ type: 'success', message: `${name} executed` }));
     } catch {
       dispatch(addNotification({ type: 'error', message: `Failed to run ${name}` }));
@@ -51,8 +52,8 @@ function SceneCard({
 
   const handleToggleNotification = useCallback(async () => {
     try {
-      await Bridge.request('base:SetAttributes', address, {
-        'scene:notification': !hasNotification,
+      await Bridge.request(Base.CMD_SETATTRIBUTES, address, {
+        [Scene.ATTR_NOTIFICATION]: !hasNotification,
       });
     } catch {
       dispatch(addNotification({ type: 'error', message: 'Failed to update notification setting' }));
@@ -120,7 +121,7 @@ function SceneCard({
 export default function ScenesPage() {
   const scenes = useAppSelector(selectAllScenes);
   const placeName = useAppSelector(
-    (s) => (s.place.place?.['place:name'] as string) ?? 'Your Home',
+    (s) => s.place.place?.[Place.ATTR_NAME] ?? 'Your Home',
   );
   const { openRight, expandRight } = useSidePanel();
 

@@ -109,12 +109,12 @@ describe('ScenesPage – with scenes', () => {
   it('shows action count', () => {
     render(<ScenesPage />);
     expect(screen.getByText('2 actions')).toBeInTheDocument();
-    expect(screen.getByText('1 action')).toBeInTheDocument();
+    expect(screen.getByText(/1 action/)).toBeInTheDocument();
   });
 
   it('shows Scheduled indicator', () => {
     render(<ScenesPage />);
-    expect(screen.getByText('Scheduled')).toBeInTheDocument();
+    expect(screen.getByText(/Scheduled/)).toBeInTheDocument();
   });
 
   it('renders Run Scene buttons', () => {

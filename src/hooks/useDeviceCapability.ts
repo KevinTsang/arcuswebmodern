@@ -11,6 +11,7 @@
  *     useDeviceCapabilities(address, ['swit:state', 'dim:brightness']);
  */
 
+import { Base } from '@arcus/core';
 import { useAppSelector } from '../store/hooks';
 import { selectDeviceByAddress } from '../store/slices/devicesSlice';
 
@@ -63,7 +64,7 @@ export function useDeviceHasCapability(
 ): boolean {
   return useAppSelector((state) => {
     const device = selectDeviceByAddress(state, address);
-    const caps = device?.['base:caps'] as string[] | undefined;
+    const caps = device?.[Base.ATTR_CAPS] as string[] | undefined;
     return caps?.includes(capabilityNamespace) ?? false;
   });
 }

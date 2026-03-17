@@ -7,6 +7,13 @@
  */
 
 import { useMemo } from 'react';
+import {
+  Base, Switch, Contact, Presence, DoorLock, MotorizedDoor, Valve, Dimmer, Fan,
+  Thermostat, DeviceConnection, DevicePower, Device, Temperature, Tilt, Vent,
+  RelativeHumidity, PetDoor, WaterHeater, ColorTemperature, Illuminance,
+  PowerUse, Atmos, SpaceHeater, IrrigationController, WaterSoftener, Flow,
+  UltravioletIndex, AOSmithWaterHeaterController, Somfyv1,
+} from '@arcus/core';
 import { useAppSelector } from '../store/hooks';
 import { selectDeviceByAddress } from '../store/slices/devicesSlice';
 import {
@@ -26,7 +33,7 @@ type DeviceObj = Record<string, unknown>;
  * Returns empty array for single-switch or non-switch devices.
  */
 export function getSwitchInstances(device: DeviceObj): string[] {
-  const instances = device['base:instances'] as Record<string, string[]> | undefined;
+  const instances = device[Base.ATTR_INSTANCES] as Record<string, string[]> | undefined;
   if (!instances) return [];
   return Object.entries(instances)
     .filter(([, caps]) => Array.isArray(caps) && caps.includes('swit'))
@@ -64,54 +71,54 @@ export function isDeviceOn(device: DeviceObj, config: DeviceWebConfig): boolean 
   // Multi-switch: on if any instance is ON
   const switchInstances = getSwitchInstances(device);
   if (switchInstances.length > 1) {
-    return switchInstances.some((key) => device[`swit:state:${key}`] === 'ON');
+    return switchInstances.some((key) => device[`${Switch.ATTR_STATE}:${key}`] === Switch.STATE_ON);
   }
   // Single switch capability
-  if (device['swit:state'] !== undefined) {
-    return device['swit:state'] === 'ON';
+  if (device[Switch.ATTR_STATE] !== undefined) {
+    return device[Switch.ATTR_STATE] === Switch.STATE_ON;
   }
   // Contact sensor
-  if (device['cont:contact'] !== undefined) {
-    return device['cont:contact'] === 'OPENED';
+  if (device[Contact.ATTR_CONTACT] !== undefined) {
+    return device[Contact.ATTR_CONTACT] === Contact.CONTACT_OPENED;
   }
   // Presence sensor
-  if (device['pres:presence'] !== undefined) {
-    return device['pres:presence'] === 'PRESENT';
+  if (device[Presence.ATTR_PRESENCE] !== undefined) {
+    return device[Presence.ATTR_PRESENCE] === Presence.PRESENCE_PRESENT;
   }
   return !isDeviceOffline(device);
 }
 
 export function isDeviceOpen(device: DeviceObj): boolean {
   // Contact sensor
-  if (device['cont:contact'] !== undefined) {
-    return device['cont:contact'] === 'OPENED';
+  if (device[Contact.ATTR_CONTACT] !== undefined) {
+    return device[Contact.ATTR_CONTACT] === Contact.CONTACT_OPENED;
   }
   // Tilt sensor
-  if (device['tilt:tiltstate'] !== undefined) {
-    return device['tilt:tiltstate'] === 'FLAT';
+  if (device[Tilt.ATTR_TILTSTATE] !== undefined) {
+    return device[Tilt.ATTR_TILTSTATE] === Tilt.TILTSTATE_FLAT;
   }
   // Door lock
-  if (device['doorlock:lockstate'] !== undefined) {
-    return device['doorlock:lockstate'] === 'UNLOCKED';
+  if (device[DoorLock.ATTR_LOCKSTATE] !== undefined) {
+    return device[DoorLock.ATTR_LOCKSTATE] === DoorLock.LOCKSTATE_UNLOCKED;
   }
   // Motorized door
-  if (device['motdoor:doorstate'] !== undefined) {
-    return device['motdoor:doorstate'] !== 'CLOSED';
+  if (device[MotorizedDoor.ATTR_DOORSTATE] !== undefined) {
+    return device[MotorizedDoor.ATTR_DOORSTATE] !== MotorizedDoor.DOORSTATE_CLOSED;
   }
   // Valve
-  if (device['valv:valvestate'] !== undefined) {
-    return device['valv:valvestate'] === 'OPEN';
+  if (device[Valve.ATTR_VALVESTATE] !== undefined) {
+    return device[Valve.ATTR_VALVESTATE] === Valve.VALVESTATE_OPEN;
   }
   return false;
 }
 
 export function isDeviceOffline(device: DeviceObj): boolean {
-  const connState = device['devconn:state'] as string | undefined;
-  return connState === 'OFFLINE';
+  const connState = device[DeviceConnection.ATTR_STATE] as string | undefined;
+  return connState === DeviceConnection.STATE_OFFLINE;
 }
 
 export function isDeviceAway(device: DeviceObj): boolean {
-  return device['pres:presence'] === 'ABSENT';
+  return device[Presence.ATTR_PRESENCE] === Presence.PRESENCE_ABSENT;
 }
 
 // ── Icon Resolution ───────────────────────────────────────────────────
@@ -155,7 +162,7 @@ export function resolveDeviceIcon(device: DeviceObj, config: DeviceWebConfig): D
 
   // Text icon (thermostats show temperature)
   const showText = on && config['web:icon:onText'] === 'temperature';
-  const textContent = showText ? formatTemp(device['temp:temperature']) : '';
+  const textContent = showText ? formatTemp(device[Temperature.ATTR_TEMPERATURE]) : '';
 
   // State classes
   const states: string[] = [];
@@ -164,9 +171,9 @@ export function resolveDeviceIcon(device: DeviceObj, config: DeviceWebConfig): D
   if (away) states.push('is-away');
 
   // Radial indicator for dimmers/fans/vents
-  const brightness = (device['dim:brightness'] as number) ?? 0;
-  const fanSpeed = (device['fan:speed'] as number) ?? 0;
-  const ventLevel = (device['vent:level'] as number) ?? 0;
+  const brightness = (device[Dimmer.ATTR_BRIGHTNESS] as number) ?? 0;
+  const fanSpeed = (device[Fan.ATTR_SPEED] as number) ?? 0;
+  const ventLevel = (device[Vent.ATTR_LEVEL] as number) ?? 0;
   const hasRadial = on && (brightness > 0 || fanSpeed > 0 || ventLevel > 0);
 
   return {
@@ -202,32 +209,32 @@ export function resolveDeviceBadgeData(device: DeviceObj): BadgeInfo[] {
 function getBadgeInfo(key: string, device: DeviceObj): BadgeInfo | null {
   switch (key) {
     case 'temperature': {
-      const temp = device['temp:temperature'] as number | undefined;
+      const temp = device[Temperature.ATTR_TEMPERATURE] as number | undefined;
       if (temp == null) return null;
       return { key, label: 'Temp', value: `${formatTemp(temp)}\u00B0`, icon: 'thermometer' };
     }
     case 'thermostat': {
-      const mode = (device['therm:hvacmode'] as string) ?? 'OFF';
-      const active = device['therm:active'] as string;
-      const label = mode === 'OFF' ? 'Off' :
-        mode === 'HEAT' ? 'Heat' :
-        mode === 'COOL' ? 'Cool' :
-        mode === 'AUTO' ? 'Auto' :
-        mode === 'ECO' ? 'Eco' : mode;
-      return { key, label: 'Mode', value: `${label}${active === 'RUNNING' ? ' (Active)' : ''}` };
+      const mode = (device[Thermostat.ATTR_HVACMODE] as string) ?? Thermostat.HVACMODE_OFF;
+      const active = device[Thermostat.ATTR_ACTIVE] as string;
+      const label = mode === Thermostat.HVACMODE_OFF ? 'Off' :
+        mode === Thermostat.HVACMODE_HEAT ? 'Heat' :
+        mode === Thermostat.HVACMODE_COOL ? 'Cool' :
+        mode === Thermostat.HVACMODE_AUTO ? 'Auto' :
+        mode === Thermostat.HVACMODE_ECO ? 'Eco' : mode;
+      return { key, label: 'Mode', value: `${label}${active === Thermostat.ACTIVE_RUNNING ? ' (Active)' : ''}` };
     }
     case 'humidity': {
-      const h = device['humid:humidity'] as number | undefined;
+      const h = device[RelativeHumidity.ATTR_HUMIDITY] as number | undefined;
       if (h == null) return null;
       return { key, label: 'Humidity', value: `${Math.round(h)}%` };
     }
     case 'brightness': {
-      const b = device['dim:brightness'] as number | undefined;
+      const b = device[Dimmer.ATTR_BRIGHTNESS] as number | undefined;
       if (b == null) return null;
       return { key, label: 'Brightness', value: `${b}%` };
     }
     case 'fan-speed': {
-      const speed = device['fan:speed'] as number | undefined;
+      const speed = device[Fan.ATTR_SPEED] as number | undefined;
       if (speed == null) return null;
       const desc = speed === 0 ? 'Off' : speed <= 33 ? 'Low' : speed <= 66 ? 'Med' : 'High';
       return { key, label: 'Fan', value: desc };
@@ -237,88 +244,88 @@ function getBadgeInfo(key: string, device: DeviceObj): BadgeInfo | null {
       return { key, label: 'Status', value: open ? 'Open' : 'Closed' };
     }
     case 'presence': {
-      const present = device['pres:presence'] === 'PRESENT';
+      const present = device[Presence.ATTR_PRESENCE] === Presence.PRESENCE_PRESENT;
       return { key, label: 'Status', value: present ? 'Home' : 'Away' };
     }
     case 'lockState': {
-      const state = (device['petdoor:lockstate'] as string) ?? '';
-      return { key, label: 'Lock', value: state === 'LOCKED' ? 'Locked' : state === 'UNLOCKED' ? 'Unlocked' : 'Auto' };
+      const state = (device[PetDoor.ATTR_LOCKSTATE] as string) ?? '';
+      return { key, label: 'Lock', value: state === PetDoor.LOCKSTATE_LOCKED ? 'Locked' : state === PetDoor.LOCKSTATE_UNLOCKED ? 'Unlocked' : 'Auto' };
     }
     case 'powerSource': {
-      const src = (device['devpow:source'] as string) ?? '';
-      const battery = device['devpow:battery'] as number | undefined;
-      if (src === 'BATTERY' && battery != null) {
+      const src = (device[DevicePower.ATTR_SOURCE] as string) ?? '';
+      const battery = device[DevicePower.ATTR_BATTERY] as number | undefined;
+      if (src === DevicePower.SOURCE_BATTERY && battery != null) {
         return { key, label: 'Battery', value: `${Math.round(battery)}%` };
       }
-      return { key, label: 'Power', value: src === 'LINE' ? 'Plugged In' : src };
+      return { key, label: 'Power', value: src === DevicePower.SOURCE_LINE ? 'Plugged In' : src };
     }
     case 'heatingState': {
-      const heating = device['waterheater:heatingstate'] as boolean;
+      const heating = device[WaterHeater.ATTR_HEATINGSTATE] as boolean;
       return { key, label: 'Heating', value: heating ? 'On' : 'Off' };
     }
     case 'hotWaterLevel': {
-      const level = (device['waterheater:hotwaterlevel'] as string) ?? '';
-      return { key, label: 'Hot Water', value: level === 'HIGH' ? 'High' : level === 'MEDIUM' ? 'Medium' : 'Low' };
+      const level = (device[WaterHeater.ATTR_HOTWATERLEVEL] as string) ?? '';
+      return { key, label: 'Hot Water', value: level === WaterHeater.HOTWATERLEVEL_HIGH ? 'High' : level === WaterHeater.HOTWATERLEVEL_MEDIUM ? 'Medium' : 'Low' };
     }
     case 'lowHeatTarget': {
-      const sp = device['waterheater:setpoint'] as number | undefined;
+      const sp = device[WaterHeater.ATTR_SETPOINT] as number | undefined;
       return sp != null ? { key, label: 'Target', value: `${formatTemp(sp)}\u00B0` } : null;
     }
     case 'leaf': {
       return device['nesttherm:hasleaf'] ? { key, label: 'Leaf', value: 'Active' } : null;
     }
     case 'colortemp': {
-      const ct = device['colortemp:colortemp'] as number | undefined;
+      const ct = device[ColorTemperature.ATTR_COLORTEMP] as number | undefined;
       return ct != null ? { key, label: 'Color Temp', value: `${ct}K` } : null;
     }
     case 'illuminance': {
-      const lux = device['ill:illuminance'] as number | undefined;
+      const lux = device[Illuminance.ATTR_ILLUMINANCE] as number | undefined;
       return lux != null ? { key, label: 'Lux', value: `${Math.round(lux)}` } : null;
     }
     case 'power': {
-      const w = device['pow:instantaneous'] as number | undefined;
+      const w = device[PowerUse.ATTR_INSTANTANEOUS] as number | undefined;
       return w != null ? { key, label: 'Power', value: `${Math.round(w)}W` } : null;
     }
     case 'pressure': {
-      const p = device['atmos:pressure'] as number | undefined;
+      const p = device[Atmos.ATTR_PRESSURE] as number | undefined;
       return p != null ? { key, label: 'Pressure', value: `${Math.round(p)} mbar` } : null;
     }
     case 'spaceheater': {
-      const heating = device['spaceheater:heatstate'] as string;
-      return { key, label: 'Heater', value: heating === 'ON' ? 'Heating' : 'Idle' };
+      const heating = device[SpaceHeater.ATTR_HEATSTATE] as string;
+      return { key, label: 'Heater', value: heating === SpaceHeater.HEATSTATE_ON ? 'Heating' : 'Idle' };
     }
     case 'scheduleType': {
-      const state = (device['irrcont:controllerState'] as string) ?? '';
-      return { key, label: 'Irrigation', value: state === 'WATERING' ? 'Watering' : 'Idle' };
+      const state = (device[IrrigationController.ATTR_CONTROLLERSTATE] as string) ?? '';
+      return { key, label: 'Irrigation', value: state === IrrigationController.CONTROLLERSTATE_WATERING ? 'Watering' : 'Idle' };
     }
     case 'camera-preview':
       return { key, label: 'Camera', value: 'Active' };
     case 'salt-level': {
-      const salt = device['watersoftener:currentSaltLevel'] as string | undefined;
+      const salt = device[WaterSoftener.ATTR_CURRENTSALTLEVEL] as string | undefined;
       return salt != null ? { key, label: 'Salt', value: salt } : null;
     }
     case 'gpm': {
-      const flow = device['flow:flow'] as number | undefined;
+      const flow = device[Flow.ATTR_FLOW] as number | undefined;
       return flow != null ? { key, label: 'Flow', value: `${flow.toFixed(1)} GPM` } : null;
     }
     case 'temperatureLocked':
       return device['nesttherm:locked'] ? { key, label: 'Locked', value: 'Yes' } : null;
     case 'ultraviolet-index': {
-      const uv = device['uvi:index'] as number | undefined;
+      const uv = device[UltravioletIndex.ATTR_INDEX] as number | undefined;
       return uv != null ? { key, label: 'UV', value: `${uv}` } : null;
     }
     case 'waterHeaterEnergySmart': {
-      const mode = device['aosmithwaterheatercontroller:controlmode'] as string | undefined;
+      const mode = device[AOSmithWaterHeaterController.ATTR_CONTROLMODE] as string | undefined;
       return mode ? { key, label: 'Mode', value: mode } : null;
     }
     case 'somfy-type': {
-      const t = device['somfyv1:type'] as string | undefined;
+      const t = device[Somfyv1.ATTR_TYPE] as string | undefined;
       return t ? { key, label: 'Type', value: t } : null;
     }
     case 'somfy-reversed':
       return { key, label: 'Reversed', value: 'Yes' };
     case 'somfy-channel': {
-      const ch = device['somfyv1:channel'] as number | undefined;
+      const ch = device[Somfyv1.ATTR_CHANNEL] as number | undefined;
       return ch != null ? { key, label: 'Channel', value: `${ch}` } : null;
     }
     default:
@@ -330,14 +337,14 @@ function getBadgeInfo(key: string, device: DeviceObj): BadgeInfo | null {
 
 export function getDeviceStatusText(device: DeviceObj, config: DeviceWebConfig): string {
   const on = isDeviceOn(device, config);
-  const hint = ((device['dev:devtypehint'] as string) ?? '').replace(/\W/g, '').toLowerCase();
+  const hint = ((device[Device.ATTR_DEVTYPEHINT] as string) ?? '').replace(/\W/g, '').toLowerCase();
 
   // Multi-switch: show per-instance status
   const switchInstances = getSwitchInstances(device);
   if (switchInstances.length > 1) {
     return switchInstances
       .map((key) => {
-        const state = device[`swit:state:${key}`] === 'ON' ? 'On' : 'Off';
+        const state = device[`${Switch.ATTR_STATE}:${key}`] === Switch.STATE_ON ? 'On' : 'Off';
         return `${formatInstanceName(key)} ${state}`;
       })
       .join(', ');
@@ -349,31 +356,31 @@ export function getDeviceStatusText(device: DeviceObj, config: DeviceWebConfig):
     case 'dimmer':
     case 'light': {
       if (!on) return 'Off';
-      const brightness = device['dim:brightness'] as number | undefined;
+      const brightness = device[Dimmer.ATTR_BRIGHTNESS] as number | undefined;
       return brightness != null ? `${brightness}% Brightness` : 'On';
     }
     case 'fancontrol': {
       if (!on) return 'Off';
-      const speed = device['fan:speed'] as number;
+      const speed = device[Fan.ATTR_SPEED] as number;
       return speed === 0 ? 'Off' : `On`;
     }
     case 'contact':
     case 'tilt':
       return isDeviceOpen(device) ? 'Open' : 'Closed';
     case 'lock':
-      return (device['doorlock:lockstate'] as string) === 'LOCKED' ? 'Locked' : 'Unlocked';
+      return (device[DoorLock.ATTR_LOCKSTATE] as string) === DoorLock.LOCKSTATE_LOCKED ? 'Locked' : 'Unlocked';
     case 'garagedoor':
-      return (device['motdoor:doorstate'] as string) === 'CLOSED' ? 'Closed' : 'Open';
+      return (device[MotorizedDoor.ATTR_DOORSTATE] as string) === MotorizedDoor.DOORSTATE_CLOSED ? 'Closed' : 'Open';
     case 'thermostat':
     case 'nestthermostat':
     case 'tccthermostat': {
-      const mode = (device['therm:hvacmode'] as string) ?? 'OFF';
-      if (mode === 'OFF') return 'Off';
-      const heat = device['therm:heatsetpoint'] as number | undefined;
-      const cool = device['therm:coolsetpoint'] as number | undefined;
-      if (mode === 'HEAT' && heat != null) return `Heat to ${formatTemp(heat)}\u00B0`;
-      if (mode === 'COOL' && cool != null) return `Cool to ${formatTemp(cool)}\u00B0`;
-      if (mode === 'AUTO' && heat != null && cool != null) return `${formatTemp(heat)}\u00B0 - ${formatTemp(cool)}\u00B0`;
+      const mode = (device[Thermostat.ATTR_HVACMODE] as string) ?? Thermostat.HVACMODE_OFF;
+      if (mode === Thermostat.HVACMODE_OFF) return 'Off';
+      const heat = device[Thermostat.ATTR_HEATSETPOINT] as number | undefined;
+      const cool = device[Thermostat.ATTR_COOLSETPOINT] as number | undefined;
+      if (mode === Thermostat.HVACMODE_HEAT && heat != null) return `Heat to ${formatTemp(heat)}\u00B0`;
+      if (mode === Thermostat.HVACMODE_COOL && cool != null) return `Cool to ${formatTemp(cool)}\u00B0`;
+      if (mode === Thermostat.HVACMODE_AUTO && heat != null && cool != null) return `${formatTemp(heat)}\u00B0 - ${formatTemp(cool)}\u00B0`;
       return mode;
     }
     case 'motion':

@@ -13,6 +13,9 @@
 
 import { useCallback, useMemo } from 'react';
 import Bridge from '@arcus/core/bridge';
+import {
+  Base, Switch, Dimmer, Thermostat, DoorLock, Color, ColorTemperature,
+} from '@arcus/core';
 
 /**
  * Core hook providing low-level device command helpers.
@@ -23,7 +26,7 @@ export function useDeviceActions(address: string) {
    */
   const setAttribute = useCallback(
     (key: string, value: unknown) => {
-      return Bridge.request('base:SetAttributes', address, { [key]: value });
+      return Bridge.request(Base.CMD_SETATTRIBUTES, address, { [key]: value });
     },
     [address],
   );
@@ -33,7 +36,7 @@ export function useDeviceActions(address: string) {
    */
   const setAttributes = useCallback(
     (attrs: Record<string, unknown>) => {
-      return Bridge.request('base:SetAttributes', address, attrs);
+      return Bridge.request(Base.CMD_SETATTRIBUTES, address, attrs);
     },
     [address],
   );
@@ -63,12 +66,12 @@ export function useSwitchActions(address: string) {
   const { setAttribute } = useDeviceActions(address);
 
   const turnOn = useCallback(
-    () => setAttribute('swit:state', 'ON'),
+    () => setAttribute(Switch.ATTR_STATE, Switch.STATE_ON),
     [setAttribute],
   );
 
   const turnOff = useCallback(
-    () => setAttribute('swit:state', 'OFF'),
+    () => setAttribute(Switch.ATTR_STATE, Switch.STATE_OFF),
     [setAttribute],
   );
 
@@ -82,7 +85,7 @@ export function useDimmerActions(address: string) {
   const { setAttribute } = useDeviceActions(address);
 
   const setBrightness = useCallback(
-    (brightness: number) => setAttribute('dim:brightness', brightness),
+    (brightness: number) => setAttribute(Dimmer.ATTR_BRIGHTNESS, brightness),
     [setAttribute],
   );
 
@@ -96,40 +99,40 @@ export function useThermostatActions(address: string) {
   const { setAttribute, sendCommand } = useDeviceActions(address);
 
   const setHeatSetpoint = useCallback(
-    (temp: number) => setAttribute('therm:heatsetpoint', temp),
+    (temp: number) => setAttribute(Thermostat.ATTR_HEATSETPOINT, temp),
     [setAttribute],
   );
 
   const setCoolSetpoint = useCallback(
-    (temp: number) => setAttribute('therm:coolsetpoint', temp),
+    (temp: number) => setAttribute(Thermostat.ATTR_COOLSETPOINT, temp),
     [setAttribute],
   );
 
   const setMode = useCallback(
-    (mode: string) => setAttribute('therm:hvacmode', mode),
+    (mode: string) => setAttribute(Thermostat.ATTR_HVACMODE, mode),
     [setAttribute],
   );
 
   const setFanMode = useCallback(
-    (fanMode: number) => setAttribute('therm:fanmode', fanMode),
+    (fanMode: number) => setAttribute(Thermostat.ATTR_FANMODE, fanMode),
     [setAttribute],
   );
 
   const setIdealTemperature = useCallback(
     (temperature: number) =>
-      sendCommand('therm:SetIdealTemperature', { temperature }),
+      sendCommand(Thermostat.CMD_SETIDEALTEMPERATURE, { temperature }),
     [sendCommand],
   );
 
   const incrementIdealTemperature = useCallback(
     (amount: number) =>
-      sendCommand('therm:IncrementIdealTemperature', { amount }),
+      sendCommand(Thermostat.CMD_INCREMENTIDEALTEMPERATURE, { amount }),
     [sendCommand],
   );
 
   const decrementIdealTemperature = useCallback(
     (amount: number) =>
-      sendCommand('therm:DecrementIdealTemperature', { amount }),
+      sendCommand(Thermostat.CMD_DECREMENTIDEALTEMPERATURE, { amount }),
     [sendCommand],
   );
 
@@ -162,17 +165,17 @@ export function useDoorLockActions(address: string) {
   const { setAttribute, sendCommand } = useDeviceActions(address);
 
   const lock = useCallback(
-    () => setAttribute('doorlock:lockstate', 'LOCKED'),
+    () => setAttribute(DoorLock.ATTR_LOCKSTATE, DoorLock.LOCKSTATE_LOCKED),
     [setAttribute],
   );
 
   const unlock = useCallback(
-    () => setAttribute('doorlock:lockstate', 'UNLOCKED'),
+    () => setAttribute(DoorLock.ATTR_LOCKSTATE, DoorLock.LOCKSTATE_UNLOCKED),
     [setAttribute],
   );
 
   const buzzIn = useCallback(
-    () => sendCommand('doorlock:BuzzIn', {}),
+    () => sendCommand(DoorLock.CMD_BUZZIN, {}),
     [sendCommand],
   );
 
@@ -187,12 +190,12 @@ export function useColorActions(address: string) {
 
   const setColor = useCallback(
     (hue: number, saturation: number) =>
-      setAttributes({ 'color:hue': hue, 'color:saturation': saturation }),
+      setAttributes({ [Color.ATTR_HUE]: hue, [Color.ATTR_SATURATION]: saturation }),
     [setAttributes],
   );
 
   const setColorTemperature = useCallback(
-    (colortemp: number) => setAttribute('colortemp:colortemp', colortemp),
+    (colortemp: number) => setAttribute(ColorTemperature.ATTR_COLORTEMP, colortemp),
     [setAttribute],
   );
 

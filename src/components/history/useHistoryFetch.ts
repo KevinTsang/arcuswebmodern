@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import Bridge from '@arcus/core/bridge';
+import { Place } from '@arcus/core';
 import type { HistoryEntry } from './HistoryList';
+import type { ListHistoryEntriesResponse } from '@/arcus/types';
 
 const PAGE_SIZE = 20;
 
@@ -25,12 +27,12 @@ export default function useHistoryFetch(address: string): UseHistoryFetchResult 
       loadingRef.current = true;
       setLoading(true);
       try {
-        const result = await Bridge.request('place:ListHistoryEntries', address, {
+        const result = await Bridge.request<ListHistoryEntriesResponse>(Place.CMD_LISTHISTORYENTRIES, address, {
           limit: PAGE_SIZE,
           token,
         });
-        const newEntries = (result.results as HistoryEntry[]) ?? [];
-        const newToken = result.nextToken as string | undefined;
+        const newEntries = result.results ?? [];
+        const newToken = result.nextToken;
 
         if (append) {
           setEntries((prev) => [...prev, ...newEntries]);

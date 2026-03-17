@@ -1,5 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import type { PairingStage, PairingProduct, PairingDevice, PairingStep } from '@/components/pairing/types';
+import type { PairingDevice, PairingProduct } from '@/store/entityTypes';
+import type { PairingStage, PairingStep } from '@/components/pairing/types';
 
 export interface PairingState {
   stage: PairingStage;

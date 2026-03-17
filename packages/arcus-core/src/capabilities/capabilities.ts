@@ -1633,6 +1633,8 @@ export const MotorizedDoor = {
   DOORSTATE_OBSTRUCTION: 'OBSTRUCTION',
   DOORSTATE_OPENING: 'OPENING',
   DOORSTATE_OPEN: 'OPEN',
+  CMD_OPENGARAGEDOOR: 'motdoor:OpenGarageDoor',
+  CMD_CLOSEGARAGEDOOR: 'motdoor:CloseGarageDoor',
 } as const;
 
 export const PairingDevice = {

@@ -7,6 +7,7 @@
  * or away and device presence counts.
  */
 
+import { Person } from '@arcus/core';
 import { useHomeFamilySubsystem } from '@/hooks/useSubsystem';
 
 export function HomeFamilyView() {
@@ -73,8 +74,8 @@ function PersonList({
       <h3 className="text-sm font-medium text-swift mb-3">{title}</h3>
       <div className="space-y-2">
         {people.map((person) => {
-          const name = ((person['person:firstName'] as string) ?? '') + ' ' + ((person['person:lastName'] as string) ?? '');
-          const email = (person['person:email'] as string) ?? '';
+          const name = ((person[Person.ATTR_FIRSTNAME] as string) ?? '') + ' ' + ((person[Person.ATTR_LASTNAME] as string) ?? '');
+          const email = (person[Person.ATTR_EMAIL] as string) ?? '';
           return (
             <div
               key={person.id as string}

@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import Bridge from '@arcus/core/bridge';
+import { Base, Scene, SceneTemplate } from '@arcus/core';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import { addNotification } from '@/store/slices/uiSlice';
 import { useSidePanel } from '@/components/SidePanel';
@@ -28,10 +29,10 @@ export function ScenePanel({ scene }: ScenePanelProps) {
   const { closeRight } = useSidePanel();
   const placeId = useAppSelector((s) => s.place.placeId) ?? '';
 
-  const address = scene?.['base:address'] as string | undefined;
-  const sceneTemplateId = scene?.['scene:template'] as string | undefined;
+  const address = scene?.[Base.ATTR_ADDRESS] as string | undefined;
+  const sceneTemplateId = scene?.[Scene.ATTR_TEMPLATE] as string | undefined;
 
-  const [name, setName] = useState(isEdit ? ((scene['scene:name'] as string) ?? '') : 'New Scene');
+  const [name, setName] = useState(isEdit ? ((scene[Scene.ATTR_NAME] as string) ?? '') : 'New Scene');
   const [actions, setActions] = useState<ResolvedAction[]>([]);
   const [templateAddress, setTemplateAddress] = useState('');
   const [configuredActions, setConfiguredActions] = useState<Map<string, ActionConfig>>(new Map());
@@ -52,7 +53,7 @@ export function ScenePanel({ scene }: ScenePanelProps) {
 
         // Pre-populate configuredActions from existing scene actions (edit mode)
         if (scene) {
-          const existing = scene['scene:actions'] as Array<Record<string, unknown>> | undefined;
+          const existing = scene[Scene.ATTR_ACTIONS] as Array<Record<string, unknown>> | undefined;
           if (existing) {
             const map = new Map<string, ActionConfig>();
             for (const action of existing) {
@@ -130,13 +131,13 @@ export function ScenePanel({ scene }: ScenePanelProps) {
         }
       }
       if (isEdit && address) {
-        await Bridge.request('base:SetAttributes', address, {
-          'scene:name': name.trim(),
-          'scene:actions': saveActions,
+        await Bridge.request(Base.CMD_SETATTRIBUTES, address, {
+          [Scene.ATTR_NAME]: name.trim(),
+          [Scene.ATTR_ACTIONS]: saveActions,
         });
         dispatch(addNotification({ type: 'success', message: 'Scene saved' }));
       } else {
-        await Bridge.request('scenetmpl:Create', templateAddress, {
+        await Bridge.request(SceneTemplate.CMD_CREATE, templateAddress, {
           placeId,
           name: name.trim(),
           actions: saveActions,
@@ -154,7 +155,7 @@ export function ScenePanel({ scene }: ScenePanelProps) {
     if (!address) return;
     setDeleting(true);
     try {
-      await Bridge.request('scene:Delete', address, {});
+      await Bridge.request(Scene.CMD_DELETE, address, {});
       dispatch(addNotification({ type: 'success', message: 'Scene deleted' }));
       closeRight();
     } catch {

@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 import Bridge from '@arcus/core/bridge';
+import { Base, Rule } from '@arcus/core';
 import { useAppDispatch } from '@/store/hooks';
 import { addNotification } from '@/store/slices/uiSlice';
 
@@ -10,18 +11,18 @@ interface RuleListItemProps {
 
 export function RuleListItem({ rule, onEdit }: RuleListItemProps) {
   const dispatch = useAppDispatch();
-  const name = (rule['rule:name'] as string) ?? 'Unnamed Rule';
-  const description = (rule['rule:description'] as string) ?? '';
-  const address = rule['base:address'] as string;
-  const state = rule['rule:state'] as string;
-  const isEnabled = state === 'ENABLED';
+  const name = (rule[Rule.ATTR_NAME] as string) ?? 'Unnamed Rule';
+  const description = (rule[Rule.ATTR_DESCRIPTION] as string) ?? '';
+  const address = rule[Base.ATTR_ADDRESS] as string;
+  const state = rule[Rule.ATTR_STATE] as string;
+  const isEnabled = state === Rule.STATE_ENABLED;
 
   const handleToggle = useCallback(async () => {
     try {
       if (isEnabled) {
-        await Bridge.request('rule:Disable', address, {});
+        await Bridge.request(Rule.CMD_DISABLE, address, {});
       } else {
-        await Bridge.request('rule:Enable', address, {});
+        await Bridge.request(Rule.CMD_ENABLE, address, {});
       }
     } catch {
       dispatch(addNotification({ type: 'error', message: `Failed to ${isEnabled ? 'disable' : 'enable'} rule` }));

@@ -1,41 +1,41 @@
-import type { PairingDevice } from './types';
-import { PAIRING_STATES, PAIRING_PHASES } from './types';
+import { PairingDevice as PairingDeviceCap } from '@arcus/core';
+import type { PairingDevice } from '@/store/entityTypes';
 
 interface DeviceStateRowProps {
   device: PairingDevice;
 }
 
 export default function DeviceStateRow({ device }: DeviceStateRowProps) {
-  const state = device['pairdev:pairingState'];
-  const phase = device['pairdev:pairingPhase'];
+  const state = device[PairingDeviceCap.ATTR_PAIRINGSTATE];
+  const phase = device[PairingDeviceCap.ATTR_PAIRINGPHASE];
 
   let statusText = 'Discovering…';
   let statusColor = 'text-grouse';
 
-  if (state === PAIRING_STATES.PAIRING) {
+  if (state === PairingDeviceCap.PAIRINGSTATE_PAIRING) {
     switch (phase) {
-      case PAIRING_PHASES.JOIN:
-      case PAIRING_PHASES.CONNECT:
+      case PairingDeviceCap.PAIRINGPHASE_JOIN:
+      case PairingDeviceCap.PAIRINGPHASE_CONNECT:
         statusText = 'Connecting…';
         break;
-      case PAIRING_PHASES.IDENTIFY:
+      case PairingDeviceCap.PAIRINGPHASE_IDENTIFY:
         statusText = 'Identifying…';
         break;
-      case PAIRING_PHASES.PREPARE:
-      case PAIRING_PHASES.CONFIGURE:
+      case PairingDeviceCap.PAIRINGPHASE_PREPARE:
+      case PairingDeviceCap.PAIRINGPHASE_CONFIGURE:
         statusText = 'Configuring…';
         break;
-      case PAIRING_PHASES.PAIRED:
+      case PairingDeviceCap.PAIRINGPHASE_PAIRED:
         statusText = 'Ready';
         statusColor = 'text-honeycreeper';
         break;
       default:
         statusText = 'Pairing…';
     }
-  } else if (state === PAIRING_STATES.PAIRED) {
+  } else if (state === PairingDeviceCap.PAIRINGSTATE_PAIRED) {
     statusText = 'Paired';
     statusColor = 'text-honeycreeper';
-  } else if (state === PAIRING_STATES.MISPAIRED || state === PAIRING_STATES.MISCONFIGURED) {
+  } else if (state === PairingDeviceCap.PAIRINGSTATE_MISPAIRED || state === PairingDeviceCap.PAIRINGSTATE_MISCONFIGURED) {
     statusText = 'Improperly Paired';
     statusColor = 'text-canary';
   }
