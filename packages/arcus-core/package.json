@@ -2,9 +2,7 @@
   "name": "@arcus/core",
   "version": "0.1.0",
   "private": true,
-  "scripts": {
-    "generate:capabilities": "node scripts/generate-capabilities.mjs"
-  },
+  "scripts": {},
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "exports": {

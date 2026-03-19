@@ -17,13 +17,12 @@ import { selectAllSubsystems } from '@/store/slices/subsystemsSlice';
 import { selectAllDevices } from '@/store/slices/devicesSlice';
 import { selectAllPeople } from '@/store/slices/peopleSlice';
 import { type SubsystemConfigEntry, subsystemConfigs } from '@/lib/subsystemConfig';
-
-type SubsystemObj = Record<string, unknown>;
+import type { SubsystemEntity, CareBehavior, CareCallEntry, ChimeConfig, ZoneWateringEntry, LawnGardenEvent } from '@/store/entityTypes';
 
 /**
  * Find a subsystem entity by its namespace prefix (e.g., 'subalarm').
  */
-export function useSubsystem(namespace: string): SubsystemObj | undefined {
+export function useSubsystem(namespace: string): SubsystemEntity | undefined {
   const subsystems = useAppSelector(selectAllSubsystems);
   return useMemo(() => {
     return subsystems.find((s) => {
@@ -38,7 +37,7 @@ export function useSubsystem(namespace: string): SubsystemObj | undefined {
  */
 export function useVisibleSubsystems(): Array<{
   config: SubsystemConfigEntry;
-  subsystem: SubsystemObj | undefined;
+  subsystem: SubsystemEntity | undefined;
 }> {
   const subsystems = useAppSelector(selectAllSubsystems);
   return useMemo(() => {
@@ -158,7 +157,7 @@ export function useDoorsLocksSubsystem() {
     const motorizedAddrs = (sub?.[DoorsNLocksSubsystem.ATTR_MOTORIZEDDOORDEVICES] as string[]) ?? [];
     const contactAddrs = (sub?.[DoorsNLocksSubsystem.ATTR_CONTACTSENSORDEVICES] as string[]) ?? [];
     const petDoorAddrs = (sub?.[DoorsNLocksSubsystem.ATTR_PETDOORDEVICES] as string[]) ?? [];
-    const chimeConfig = (sub?.[DoorsNLocksSubsystem.ATTR_CHIMECONFIG] as Record<string, unknown>) ?? {};
+    const chimeConfig = (sub?.[DoorsNLocksSubsystem.ATTR_CHIMECONFIG] as ChimeConfig) ?? {};
 
     const locks = allDevices.filter((d) => lockAddrs.includes(d[Base.ATTR_ADDRESS]));
     const motorized = allDevices.filter((d) => motorizedAddrs.includes(d[Base.ATTR_ADDRESS]));
@@ -214,9 +213,9 @@ export function useCareSubsystem() {
   return useMemo(() => {
     const alarmState = (sub?.[CareSubsystem.ATTR_ALARMSTATE] as string) ?? CareSubsystem.ALARMSTATE_READY;
     const alarmMode = (sub?.[CareSubsystem.ATTR_ALARMMODE] as string) ?? CareSubsystem.ALARMMODE_ON;
-    const behaviors = (sub?.[CareSubsystem.ATTR_BEHAVIORS] as Record<string, unknown>[]) ?? [];
+    const behaviors = (sub?.[CareSubsystem.ATTR_BEHAVIORS] as CareBehavior[]) ?? [];
     const careDevices = (sub?.[CareSubsystem.ATTR_CAREDEVICES] as string[]) ?? [];
-    const callTree = (sub?.[CareSubsystem.ATTR_CALLTREE] as Record<string, unknown>[]) ?? [];
+    const callTree = (sub?.[CareSubsystem.ATTR_CALLTREE] as CareCallEntry[]) ?? [];
     const lastAlertCause = sub?.[CareSubsystem.ATTR_LASTALERTCAUSE] as string | undefined;
     const silent = (sub?.[CareSubsystem.ATTR_SILENT] as boolean) ?? false;
 
@@ -259,8 +258,8 @@ export function useLawnGardenSubsystem() {
   return useMemo(() => {
     const controllerAddrs = (sub?.[LawnNGardenSubsystem.ATTR_CONTROLLERS] as string[]) ?? [];
     const controllers = allDevices.filter((d) => controllerAddrs.includes(d[Base.ATTR_ADDRESS]));
-    const zonesWatering = (sub?.[LawnNGardenSubsystem.ATTR_ZONESWATERING] as Record<string, unknown>[]) ?? [];
-    const nextEvent = sub?.[LawnNGardenSubsystem.ATTR_NEXTEVENT] as Record<string, unknown> | undefined;
+    const zonesWatering = (sub?.[LawnNGardenSubsystem.ATTR_ZONESWATERING] as ZoneWateringEntry[]) ?? [];
+    const nextEvent = sub?.[LawnNGardenSubsystem.ATTR_NEXTEVENT] as LawnGardenEvent | undefined;
 
     return {
       subsystem: sub,

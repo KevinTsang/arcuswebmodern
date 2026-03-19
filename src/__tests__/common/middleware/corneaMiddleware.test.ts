@@ -38,6 +38,7 @@ jest.mock('@arcus/core/bridge', () => ({
 const flushPromises = () => new Promise((r) => setTimeout(r, 0));
 
 import { configureStore } from '@reduxjs/toolkit';
+import { Base, Device, Switch, Hub, Person, AlarmIncident } from '@arcus/core';
 import authReducer, { loginSuccess, logout } from '@/store/slices/authSlice';
 import devicesReducer from '@/store/slices/devicesSlice';
 import subsystemsReducer from '@/store/slices/subsystemsSlice';
@@ -93,11 +94,11 @@ describe('corneaMiddleware', () => {
     // Should have subscribed to dev, sub, rule, scene, scheduler, incident, person (7 × 3 = 21)
     // plus hub (3) + place (1) + sess (1) = 26
     expect(listeners.size).toBeGreaterThan(0);
-    expect(listeners.has('dev base:ValueChange')).toBe(true);
-    expect(listeners.has('dev base:Added')).toBe(true);
-    expect(listeners.has('dev base:Deleted')).toBe(true);
-    expect(listeners.has('hub base:ValueChange')).toBe(true);
-    expect(listeners.has('place base:ValueChange')).toBe(true);
+    expect(listeners.has(`dev ${Base.EVENT_VALUECHANGE}`)).toBe(true);
+    expect(listeners.has(`dev ${Base.EVENT_ADDED}`)).toBe(true);
+    expect(listeners.has(`dev ${Base.EVENT_DELETED}`)).toBe(true);
+    expect(listeners.has(`hub ${Base.EVENT_VALUECHANGE}`)).toBe(true);
+    expect(listeners.has(`place ${Base.EVENT_VALUECHANGE}`)).toBe(true);
     expect(listeners.has('sess unauthorized')).toBe(true);
   });
 
@@ -106,20 +107,20 @@ describe('corneaMiddleware', () => {
     store.dispatch(loginSuccess({ person: {}, account: {} }));
 
     // First add a device
-    emit('dev base:Added', { 'base:address': 'DRIV:dev:d1', 'dev:name': 'Light' });
+    emit(`dev ${Base.EVENT_ADDED}`, { [Base.ATTR_ADDRESS]: 'DRIV:dev:d1', [Device.ATTR_NAME]: 'Light' });
     expect(store.getState().devices.ids).toContain('DRIV:dev:d1');
 
     // Then update it
-    emit('dev base:ValueChange', { 'base:address': 'DRIV:dev:d1', 'swit:state': 'ON' });
-    expect(store.getState().devices.entities['DRIV:dev:d1']?.['swit:state']).toBe('ON');
+    emit(`dev ${Base.EVENT_VALUECHANGE}`, { [Base.ATTR_ADDRESS]: 'DRIV:dev:d1', [Switch.ATTR_STATE]: 'ON' });
+    expect(store.getState().devices.entities['DRIV:dev:d1']?.[Switch.ATTR_STATE]).toBe('ON');
   });
 
   it('dispatches deviceRemoved on dev base:Deleted', () => {
     const store = createTestStore();
     store.dispatch(loginSuccess({ person: {}, account: {} }));
-    emit('dev base:Added', { 'base:address': 'DRIV:dev:d1', 'dev:name': 'Light' });
+    emit(`dev ${Base.EVENT_ADDED}`, { [Base.ATTR_ADDRESS]: 'DRIV:dev:d1', [Device.ATTR_NAME]: 'Light' });
 
-    emit('dev base:Deleted', { 'base:address': 'DRIV:dev:d1' });
+    emit(`dev ${Base.EVENT_DELETED}`, { [Base.ATTR_ADDRESS]: 'DRIV:dev:d1' });
     expect(store.getState().devices.ids).not.toContain('DRIV:dev:d1');
   });
 
@@ -127,11 +128,11 @@ describe('corneaMiddleware', () => {
     const store = createTestStore();
     store.dispatch(loginSuccess({ person: {}, account: {} }));
 
-    emit('hub base:Added', { 'base:address': 'SERV:hub:h1', 'hub:state': 'NORMAL' });
-    expect(store.getState().hub.hub?.['hub:state']).toBe('NORMAL');
+    emit(`hub ${Base.EVENT_ADDED}`, { [Base.ATTR_ADDRESS]: 'SERV:hub:h1', [Hub.ATTR_STATE]: 'NORMAL' });
+    expect(store.getState().hub.hub?.[Hub.ATTR_STATE]).toBe('NORMAL');
 
-    emit('hub base:ValueChange', { 'hub:state': 'PAIRING' });
-    expect(store.getState().hub.hub?.['hub:state']).toBe('PAIRING');
+    emit(`hub ${Base.EVENT_VALUECHANGE}`, { [Hub.ATTR_STATE]: 'PAIRING' });
+    expect(store.getState().hub.hub?.[Hub.ATTR_STATE]).toBe('PAIRING');
   });
 
   it('dispatches logout on sess unauthorized', () => {
@@ -157,12 +158,82 @@ describe('corneaMiddleware', () => {
     expect(totalListeners).toBe(0);
   });
 
+  it('subscribes to incident alert events after loginSuccess', () => {
+    const store = createTestStore();
+    store.dispatch(loginSuccess({ person: {}, account: {} }));
+
+    expect(listeners.has(`incident ${AlarmIncident.EVENT_SECURITYALERT}`)).toBe(true);
+    expect(listeners.has(`incident ${AlarmIncident.EVENT_WATERALERT}`)).toBe(true);
+    expect(listeners.has(`incident ${AlarmIncident.EVENT_COALERT}`)).toBe(true);
+    expect(listeners.has(`incident ${AlarmIncident.EVENT_SMOKEALERT}`)).toBe(true);
+    expect(listeners.has(`incident ${AlarmIncident.EVENT_PANICALERT}`)).toBe(true);
+  });
+
+  it('dispatches setCurrentIncident on SecurityAlert', () => {
+    const store = createTestStore();
+    store.dispatch(loginSuccess({ person: {}, account: {} }));
+
+    emit(`incident ${AlarmIncident.EVENT_SECURITYALERT}`, { [Base.ATTR_ADDRESS]: 'SERV:incident:i1' });
+    expect(store.getState().incidents.currentIncident).toBe('SERV:incident:i1');
+  });
+
+  it('dispatches setCurrentIncident on WaterAlert', () => {
+    const store = createTestStore();
+    store.dispatch(loginSuccess({ person: {}, account: {} }));
+
+    emit(`incident ${AlarmIncident.EVENT_WATERALERT}`, { [Base.ATTR_ADDRESS]: 'SERV:incident:i2' });
+    expect(store.getState().incidents.currentIncident).toBe('SERV:incident:i2');
+  });
+
+  it('dispatches setCurrentIncident on COAlert', () => {
+    const store = createTestStore();
+    store.dispatch(loginSuccess({ person: {}, account: {} }));
+
+    emit(`incident ${AlarmIncident.EVENT_COALERT}`, { [Base.ATTR_ADDRESS]: 'SERV:incident:i3' });
+    expect(store.getState().incidents.currentIncident).toBe('SERV:incident:i3');
+  });
+
+  it('dispatches setCurrentIncident on SmokeAlert', () => {
+    const store = createTestStore();
+    store.dispatch(loginSuccess({ person: {}, account: {} }));
+
+    emit(`incident ${AlarmIncident.EVENT_SMOKEALERT}`, { [Base.ATTR_ADDRESS]: 'SERV:incident:i4' });
+    expect(store.getState().incidents.currentIncident).toBe('SERV:incident:i4');
+  });
+
+  it('dispatches setCurrentIncident on PanicAlert', () => {
+    const store = createTestStore();
+    store.dispatch(loginSuccess({ person: {}, account: {} }));
+
+    emit(`incident ${AlarmIncident.EVENT_PANICALERT}`, { [Base.ATTR_ADDRESS]: 'SERV:incident:i5' });
+    expect(store.getState().incidents.currentIncident).toBe('SERV:incident:i5');
+  });
+
+  it('does not set current incident when address missing', () => {
+    const store = createTestStore();
+    store.dispatch(loginSuccess({ person: {}, account: {} }));
+
+    emit(`incident ${AlarmIncident.EVENT_SECURITYALERT}`, {});
+    expect(store.getState().incidents.currentIncident).toBeNull();
+  });
+
+  it('unsubscribes alert events on logout', () => {
+    const store = createTestStore();
+    store.dispatch(loginSuccess({ person: {}, account: {} }));
+    expect(listeners.has(`incident ${AlarmIncident.EVENT_SECURITYALERT}`)).toBe(true);
+
+    store.dispatch(logout());
+    // All listeners should have been removed
+    const securityFns = listeners.get(`incident ${AlarmIncident.EVENT_SECURITYALERT}`);
+    expect(!securityFns || securityFns.size === 0).toBe(true);
+  });
+
   it('subscribes to invitation events after loginSuccess', () => {
     const store = createTestStore();
     store.dispatch(loginSuccess({ person: { personId: 'p1' }, account: {} }));
 
-    expect(listeners.has('place person:InvitationPending')).toBe(true);
-    expect(listeners.has('place person:InvitationCancelled')).toBe(true);
+    expect(listeners.has(`place ${Person.EVENT_INVITATIONPENDING}`)).toBe(true);
+    expect(listeners.has(`place ${Person.EVENT_INVITATIONCANCELLED}`)).toBe(true);
   });
 
   it('fetches pending invitations on InvitationPending event', async () => {
@@ -172,12 +243,12 @@ describe('corneaMiddleware', () => {
     });
 
     store.dispatch(loginSuccess({ person: { personId: 'p1' }, account: {} }));
-    emit('place person:InvitationPending');
+    emit(`place ${Person.EVENT_INVITATIONPENDING}`);
 
     await flushPromises();
 
     expect(mockBridgeRequest).toHaveBeenCalledWith(
-      'person:PendingInvitations',
+      Person.CMD_PENDINGINVITATIONS,
       'SERV:person:p1',
       {},
     );
@@ -188,12 +259,12 @@ describe('corneaMiddleware', () => {
     mockBridgeRequest.mockResolvedValue({ invitations: [] });
 
     store.dispatch(loginSuccess({ person: { personId: 'p1' }, account: {} }));
-    emit('place person:InvitationCancelled');
+    emit(`place ${Person.EVENT_INVITATIONCANCELLED}`);
 
     await flushPromises();
 
     expect(mockBridgeRequest).toHaveBeenCalledWith(
-      'person:PendingInvitations',
+      Person.CMD_PENDINGINVITATIONS,
       'SERV:person:p1',
       {},
     );

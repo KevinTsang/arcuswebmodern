@@ -93,6 +93,47 @@ export interface CreateInvitationResponse {
   invitation: Invitation;
 }
 
+// ── Alarm subsystem responses ────────────────────────────────────
+
+export interface ListIncidentsResponse {
+  incidents: ArcusPayload[];
+}
+
+export interface CancelIncidentResponse {
+  warningTitle?: string;
+  warningMessage?: string;
+}
+
+// ── Service list responses ────────────────────────────────────────
+
+export interface GetProductsResponse {
+  products: ArcusPayload[];
+}
+
+export interface GetProductResponse {
+  product: ArcusPayload;
+}
+
+export interface ListSubsystemsResponse {
+  subsystems: ArcusPayload[];
+}
+
+export interface ListSchedulersResponse {
+  schedulers: ArcusPayload[];
+}
+
+export interface ListScenesResponse {
+  scenes: ArcusPayload[];
+}
+
+export interface ListRulesResponse {
+  rules: ArcusPayload[];
+}
+
+export interface ListRuleTemplatesResponse {
+  ruleTemplates: ArcusPayload[];
+}
+
 // ── Session service responses ─────────────────────────────────────
 
 export interface ListAvailablePlacesResponse {

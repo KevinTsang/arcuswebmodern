@@ -10,14 +10,15 @@ import type { Middleware } from '@reduxjs/toolkit';
 import type { RootState } from '../store';
 import cornea from '@arcus/core/cornea';
 import propertyAliases from '@arcus/core/property-aliases';
-import { Base, Person } from '@arcus/core';
+import { Base, Person, AlarmIncident } from '@arcus/core';
+import type { ArcusPayload, PlaceData } from '../entityTypes';
 import { loginSuccess, logout } from '../slices/authSlice';
 import { deviceAdded, deviceUpdated, deviceRemoved } from '../slices/devicesSlice';
 import { subsystemAdded, subsystemUpdated, subsystemRemoved } from '../slices/subsystemsSlice';
 import { ruleAdded, ruleUpdated, ruleRemoved } from '../slices/rulesSlice';
 import { sceneAdded, sceneUpdated, sceneRemoved } from '../slices/scenesSlice';
 import { schedulerAdded, schedulerUpdated, schedulerRemoved } from '../slices/schedulersSlice';
-import { incidentAdded, incidentUpdated, incidentRemoved } from '../slices/incidentsSlice';
+import { incidentAdded, incidentUpdated, incidentRemoved, setCurrentIncident } from '../slices/incidentsSlice';
 import { personAdded, personUpdated, personRemoved } from '../slices/peopleSlice';
 import { setHub, updateHub, clearHub } from '../slices/hubSlice';
 import { setPlace } from '../slices/placeSlice';
@@ -34,29 +35,25 @@ import type { PendingInvitationsResponse } from '@/arcus/types';
  *   `${namespace} base:Added`
  *   `${namespace} base:Deleted`
  */
-// Cornea event payloads are untyped records from the WebSocket boundary.
-// We assert the shape here since all platform messages include 'base:address'.
-type CorneaObj = Record<string, any>;
-
 interface EntityActions {
-  added: (entity: CorneaObj) => any;
-  updated: (entity: CorneaObj) => any;
-  removed: (entity: CorneaObj) => any;
+  added: (entity: ArcusPayload) => { type: string };
+  updated: (entity: ArcusPayload) => { type: string };
+  removed: (entity: ArcusPayload) => { type: string };
 }
 
 /** Extract address and build entity with `id` for EntityAdapter. */
-function toEntity(obj: CorneaObj) {
-  const address = obj[Base.ATTR_ADDRESS] as string;
-  return { ...obj, id: address, [Base.ATTR_ADDRESS]: address } as any;
+function toEntity(obj: ArcusPayload) {
+  const address = obj[Base.ATTR_ADDRESS];
+  return { ...obj, id: address, [Base.ATTR_ADDRESS]: address };
 }
 
 /** Extract address for update payloads (needs 'base:address'). */
-function toUpdate(obj: CorneaObj) {
-  return { ...obj, [Base.ATTR_ADDRESS]: obj[Base.ATTR_ADDRESS] as string } as any;
+function toUpdate(obj: ArcusPayload): ArcusPayload {
+  return { ...obj, [Base.ATTR_ADDRESS]: obj[Base.ATTR_ADDRESS] };
 }
 
-function addr(obj: CorneaObj): string {
-  return obj[Base.ATTR_ADDRESS] as string;
+function addr(obj: ArcusPayload): string {
+  return obj[Base.ATTR_ADDRESS];
 }
 
 const ENTITY_NAMESPACE_MAP: Record<string, EntityActions> = {
@@ -111,28 +108,28 @@ const PLACE_NAMESPACE = 'place';
 // Track cleanup functions so we can unsubscribe on logout
 let cleanupListeners: (() => void)[] = [];
 
-function applyPropertyAlias(eventName: string, obj: Record<string, any>): void {
+function applyPropertyAlias(eventName: string, obj: ArcusPayload): void {
   const alias = propertyAliases.alias[eventName];
   if (alias) alias(obj);
 }
 
-function subscribeToCorneaEvents(dispatch: (action: any) => void, getState: () => RootState): void {
+function subscribeToCorneaEvents(dispatch: (action: { type: string }) => void, getState: () => RootState): void {
   // Clean up any previous subscriptions
   unsubscribeFromCorneaEvents();
 
   // Subscribe to entity namespaces (ModelConnection pattern)
   for (const [namespace, actions] of Object.entries(ENTITY_NAMESPACE_MAP)) {
-    const onValueChange = (obj: Record<string, any>) => {
+    const onValueChange = (obj: ArcusPayload) => {
       applyPropertyAlias(`${namespace} ${Base.EVENT_VALUECHANGE}`, obj);
       dispatch(actions.updated(obj));
     };
 
-    const onAdded = (obj: Record<string, any>) => {
+    const onAdded = (obj: ArcusPayload) => {
       applyPropertyAlias(`${namespace} ${Base.EVENT_ADDED}`, obj);
       dispatch(actions.added(obj));
     };
 
-    const onDeleted = (obj: Record<string, any>) => {
+    const onDeleted = (obj: ArcusPayload) => {
       dispatch(actions.removed(obj));
     };
 
@@ -148,10 +145,10 @@ function subscribeToCorneaEvents(dispatch: (action: any) => void, getState: () =
   }
 
   // Hub events — single entity, not a collection
-  const onHubValueChange = (obj: Record<string, any>) => {
+  const onHubValueChange = (obj: ArcusPayload) => {
     dispatch(updateHub(obj));
   };
-  const onHubAdded = (obj: Record<string, any>) => {
+  const onHubAdded = (obj: ArcusPayload) => {
     dispatch(setHub(obj));
   };
   const onHubDeleted = () => {
@@ -168,9 +165,9 @@ function subscribeToCorneaEvents(dispatch: (action: any) => void, getState: () =
     () => cornea.off(`${HUB_NAMESPACE} ${Base.EVENT_DELETED}`, onHubDeleted),
   );
 
-  // Place events — single entity
-  const onPlaceValueChange = (obj: Record<string, any>) => {
-    dispatch(setPlace(obj));
+  // Place events — single entity (platform always includes base:id for place)
+  const onPlaceValueChange = (obj: ArcusPayload) => {
+    dispatch(setPlace(obj as PlaceData));
   };
 
   cornea.on(`${PLACE_NAMESPACE} ${Base.EVENT_VALUECHANGE}`, onPlaceValueChange);
@@ -178,6 +175,29 @@ function subscribeToCorneaEvents(dispatch: (action: any) => void, getState: () =
   cleanupListeners.push(
     () => cornea.off(`${PLACE_NAMESPACE} ${Base.EVENT_VALUECHANGE}`, onPlaceValueChange),
   );
+
+  // Incident alert events — fired when a new alarm is triggered.
+  // Mirrors incident.js lines 131-135: sets current incident on alert.
+  const ALERT_EVENTS = [
+    AlarmIncident.EVENT_SECURITYALERT,
+    AlarmIncident.EVENT_WATERALERT,
+    AlarmIncident.EVENT_COALERT,
+    AlarmIncident.EVENT_SMOKEALERT,
+    AlarmIncident.EVENT_PANICALERT,
+  ];
+
+  for (const event of ALERT_EVENTS) {
+    const onAlert = (obj: ArcusPayload) => {
+      const address = obj[Base.ATTR_ADDRESS];
+      if (address) {
+        dispatch(setCurrentIncident(address));
+      }
+    };
+    cornea.on(`incident ${event}`, onAlert);
+    cleanupListeners.push(
+      () => cornea.off(`incident ${event}`, onAlert),
+    );
+  }
 
   // Invitation events — person:InvitationPending is broadcast from the
   // place address, so the Cornea event namespace is 'place'.

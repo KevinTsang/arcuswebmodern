@@ -10,7 +10,7 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import type { RootState } from '../store';
 import Bridge from '@arcus/core/bridge';
-import { Base, Place, Person } from '@arcus/core';
+import { Base, Place, Person, AlarmSubsystem, AlarmIncident } from '@arcus/core';
 import {
   ProductCatalogService,
   SubsystemService,
@@ -24,12 +24,18 @@ import { subsystemsReceived, subsystemsClear } from '../slices/subsystemsSlice';
 import { rulesReceived, rulesClear, setRuleTemplates } from '../slices/rulesSlice';
 import { scenesReceived, scenesClear } from '../slices/scenesSlice';
 import { schedulersReceived, schedulersClear } from '../slices/schedulersSlice';
-import { incidentsClear } from '../slices/incidentsSlice';
+import { incidentsClear, incidentsReceived, setCurrentIncident } from '../slices/incidentsSlice';
 import { peopleReceived, peopleClear } from '../slices/peopleSlice';
 import { setHub, clearHub } from '../slices/hubSlice';
 import { setInvitations, clearInvitations } from '../slices/invitationsSlice';
-import type { ListDevicesResponse, ListPersonsResponse, GetHubResponse, PendingInvitationsResponse } from '@/arcus/types';
+import type {
+  ListDevicesResponse, ListPersonsResponse, GetHubResponse, PendingInvitationsResponse,
+  ListIncidentsResponse, GetProductsResponse,
+  ListSubsystemsResponse, ListSchedulersResponse, ListScenesResponse,
+  ListRulesResponse, ListRuleTemplatesResponse,
+} from '@/arcus/types';
 import type { PlaceData } from '@/components/settings/types';
+import type { ArcusPayload } from '../entityTypes';
 
 export const loadPlaceDataThunk = createAsyncThunk<string, string, { state: RootState }>(
   'place/loadData',
@@ -102,38 +108,64 @@ export const loadPlaceDataThunk = createAsyncThunk<string, string, { state: Root
     ]);
 
     // Dispatch products (including hub gen2/gen3 products)
-    const products = (productsResult as any).products ?? [];
+    const products = (productsResult as GetProductsResponse).products ?? [];
     // Also fetch hub generation 2 and 3 product definitions
     const hubProductPromises = ['dee000', 'dee001'].map((productId) =>
       ProductCatalogService.GetProduct(placeAddress, productId)
-        .then((res: any) => res.product)
-        .catch(() => null),
+        .then((res): ArcusPayload | null => (res['product'] as ArcusPayload) ?? null)
+        .catch((): null => null),
     );
     const hubProducts = await Promise.all(hubProductPromises);
-    const allProducts = [
+    const allProducts: ArcusPayload[] = [
       ...products,
-      ...hubProducts.filter(Boolean),
+      ...hubProducts.filter((p): p is ArcusPayload => p !== null),
     ];
     dispatch(setProducts(allProducts));
 
     // Dispatch subsystems
-    const subsystems = (subsystemsResult as any).subsystems ?? [];
+    const subsystems = (subsystemsResult as ListSubsystemsResponse).subsystems ?? [];
     dispatch(subsystemsReceived(subsystems));
 
+    // Load existing incidents from the alarm subsystem (mirrors app.js lines 842-846)
+    const alarmSub = subsystems.find((s: ArcusPayload) => {
+      const addr = s[Base.ATTR_ADDRESS];
+      return addr?.startsWith('SERV:subalarm:');
+    });
+    if (alarmSub) {
+      const alarmAddr = alarmSub[Base.ATTR_ADDRESS];
+      Bridge.request<ListIncidentsResponse>(AlarmSubsystem.CMD_LISTINCIDENTS, alarmAddr, {})
+        .then((result) => {
+          const incidents = result.incidents ?? [];
+          if (incidents.length > 0) {
+            dispatch(incidentsReceived(incidents));
+            // Set current incident if one is in ALERT state
+            const active = incidents.find(
+              (i: ArcusPayload) => i[AlarmIncident.ATTR_ALERTSTATE] === AlarmIncident.ALERTSTATE_ALERT,
+            );
+            if (active) {
+              dispatch(setCurrentIncident(active[Base.ATTR_ADDRESS]));
+            }
+          }
+        })
+        .catch((e) => {
+          console.error('Failed to load incidents:', e);
+        });
+    }
+
     // Dispatch schedulers
-    const schedulers = (schedulersResult as any).schedulers ?? [];
+    const schedulers = (schedulersResult as ListSchedulersResponse).schedulers ?? [];
     dispatch(schedulersReceived(schedulers));
 
     // Dispatch scenes
-    const scenes = (scenesResult as any).scenes ?? [];
+    const scenes = (scenesResult as ListScenesResponse).scenes ?? [];
     dispatch(scenesReceived(scenes));
 
     // Dispatch rules
-    const rules = (rulesResult as any).rules ?? [];
+    const rules = (rulesResult as ListRulesResponse).rules ?? [];
     dispatch(rulesReceived(rules));
 
     // Dispatch rule templates
-    const ruleTemplates = (ruleTemplatesResult as any).ruleTemplates ?? [];
+    const ruleTemplates = (ruleTemplatesResult as ListRuleTemplatesResponse).ruleTemplates ?? [];
     dispatch(setRuleTemplates(ruleTemplates));
 
     // Dispatch place and load dependent data (devices, persons, hub)

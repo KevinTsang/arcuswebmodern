@@ -96,7 +96,7 @@ describe('ChangePinPanel', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Change PIN' }));
 
     await waitFor(() => {
-      expect(screen.getByText('Failed to save PIN code. Please try again.')).toBeInTheDocument();
+      expect(screen.getByText('PIN code was unable to be changed. Please try again.')).toBeInTheDocument();
     });
   });
 

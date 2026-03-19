@@ -82,6 +82,37 @@ export type IncidentEntity = ArcusEntity & Partial<
 /** Subsystem entity — properties vary by subsystem type. */
 export type SubsystemEntity = ArcusEntity;
 
+/** Care behavior from CareSubsystem. */
+export interface CareBehavior {
+  name?: string;
+  description?: string;
+  enabled?: boolean;
+  type?: string;
+}
+
+/** Care call tree entry from CareSubsystem. */
+export interface CareCallEntry {
+  person?: string;
+  enabled?: boolean;
+}
+
+/** Chime configuration from DoorsNLocksSubsystem. */
+export type ChimeConfig = Record<string, boolean>;
+
+/** Zone watering entry from LawnNGardenSubsystem. */
+export interface ZoneWateringEntry {
+  zoneName?: string;
+  zoneNumber?: number;
+  duration?: number;
+}
+
+/** Next scheduled event from LawnNGardenSubsystem. */
+export interface LawnGardenEvent {
+  zoneName?: string;
+  startTime?: number;
+  duration?: number;
+}
+
 /** Scheduler entity. */
 export type SchedulerEntity = ArcusEntity;
 
