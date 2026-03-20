@@ -25,6 +25,15 @@ jest.mock('@/components/scene/ScenePanel', () => ({
   ScenePanel: () => <div>ScenePanel</div>,
 }));
 
+jest.mock('@/components/scene/SceneCard', () => ({
+  SceneCard: ({ scene, onEdit }: { scene: Record<string, unknown>; onEdit: (s: Record<string, unknown>) => void }) => (
+    <div data-testid="scene-card">
+      <span>{scene['scene:name'] as string}</span>
+      <button onClick={() => onEdit(scene)}>Edit</button>
+    </div>
+  ),
+}));
+
 jest.mock('@/store/slices/uiSlice', () => ({
   addNotification: (payload: unknown) => ({ type: 'ui/addNotification', payload }),
 }));
@@ -100,33 +109,16 @@ describe('ScenesPage – with scenes', () => {
     ];
   });
 
-  it('renders scene names', () => {
+  it('renders a SceneCard for each scene', () => {
+    render(<ScenesPage />);
+    const cards = screen.getAllByTestId('scene-card');
+    expect(cards.length).toBe(2);
+  });
+
+  it('passes scene names to SceneCard', () => {
     render(<ScenesPage />);
     expect(screen.getByText('Good Morning')).toBeInTheDocument();
     expect(screen.getByText('Good Night')).toBeInTheDocument();
-  });
-
-  it('shows action count', () => {
-    render(<ScenesPage />);
-    expect(screen.getByText('2 actions')).toBeInTheDocument();
-    expect(screen.getByText(/1 action/)).toBeInTheDocument();
-  });
-
-  it('shows Scheduled indicator', () => {
-    render(<ScenesPage />);
-    expect(screen.getByText(/Scheduled/)).toBeInTheDocument();
-  });
-
-  it('renders Run Scene buttons', () => {
-    render(<ScenesPage />);
-    const runButtons = screen.getAllByText('Run Scene');
-    expect(runButtons.length).toBe(2);
-  });
-
-  it('renders Edit buttons', () => {
-    render(<ScenesPage />);
-    const editButtons = screen.getAllByText('Edit');
-    expect(editButtons.length).toBe(2);
   });
 
   it('does not show empty state', () => {
