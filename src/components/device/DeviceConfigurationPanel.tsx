@@ -17,6 +17,7 @@ import FanSpeedConfigurator from './FanSpeedConfigurator';
 import ThermostatModeConfigurator from './ThermostatModeConfigurator';
 import ColorConfigurator from './ColorConfigurator';
 import ContactSettingConfigurator from './ContactSettingConfigurator';
+import DeviceSettingsConfigurator from './DeviceSettingsConfigurator';
 
 interface DeviceConfigurationPanelProps {
   address: string;
@@ -65,6 +66,8 @@ function Configurator({ type, address }: { type: string; address: string }) {
       return <ColorConfigurator address={address} />;
     case 'contact-setting':
       return <ContactSettingConfigurator address={address} />;
+    case 'device-settings':
+      return <DeviceSettingsConfigurator address={address} />;
     default:
       return (
         <div className="text-xs text-grouse italic">

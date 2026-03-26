@@ -585,6 +585,18 @@ export const DeviceAdvanced = {
   EVENT_REMOVEDDEVICE: 'devadv:RemovedDevice',
 } as const;
 
+export const DeviceSettings = {
+  NAME: 'DeviceSettings',
+  NAMESPACE: 'devsettings',
+  ATTR_PARAMS: 'devsettings:params',
+  CMD_SETPARAM: 'devsettings:SetParam',
+  CMD_GETPARAM: 'devsettings:GetParam',
+  STATUS_OK: 'OK',
+  STATUS_PENDING: 'PENDING',
+  STATUS_INVALID_PARAM: 'INVALID_PARAM',
+  STATUS_INVALID_VALUE: 'INVALID_VALUE',
+} as const;
+
 export const DeviceConnection = {
   NAME: 'DeviceConnection',
   NAMESPACE: 'devconn',
@@ -2643,6 +2655,7 @@ export const NAMESPACE_MAP: Record<string, string> = {
   'dev': 'Device',
   'devadv': 'DeviceAdvanced',
   'devconn': 'DeviceConnection',
+  'devsettings': 'DeviceSettings',
   'devmock': 'DeviceMock',
   'devota': 'DeviceOta',
   'devpow': 'DevicePower',

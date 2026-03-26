@@ -6,7 +6,14 @@
  * components to render for each device type.
  */
 
-import { Base, Device, DevicePower, PowerUse, RelativeHumidity, Motion, Somfyv1 } from '@arcus/core';
+import {
+  AOSmithWaterHeaterController, Atmos, Base, Button, Camera, ColorTemperature, Contact,
+  Device, DevicePower, DeviceSettings, Dimmer, EcowaterWaterSoftener, Fan, Flow, Halo,
+  Illuminance, IpInfo, IrrigationController, Light, Motion, MotorizedDoor, PetDoor,
+  PowerUse, Presence, RelativeHumidity, Somfyv1, SpaceHeater, Temperature, Thermostat,
+  Tilt, UltravioletIndex, Valve, WaterHardness, WaterHeater, WaterSoftener, WeatherRadio,
+  WiFi,
+} from '@arcus/core';
 
 // ── Types ─────────────────────────────────────────────────────────────
 
@@ -58,11 +65,12 @@ function hasCapability(device: DeviceObj, ns: string): boolean {
 }
 
 export const capabilityPlugins: Record<string, CapabilityPlugin> = {
-  'valv:valvestate': { badges: ['opened'] },
-  'halo:roomNames': { configurators: ['assign-halo-room'] },
-  'cont:contact': { badges: ['opened'], configurators: ['contact-setting'] },
-  'tilt:tiltstate': { badges: ['opened'], configurators: ['orientation'] },
-  'temp:temperature': {
+  [DeviceSettings.ATTR_PARAMS]: { configurators: ['device-settings'] },
+  [Valve.ATTR_VALVESTATE]: { badges: ['opened'] },
+  [Halo.ATTR_ROOMNAMES]: { configurators: ['assign-halo-room'] },
+  [Contact.ATTR_CONTACT]: { badges: ['opened'], configurators: ['contact-setting'] },
+  [Tilt.ATTR_TILTSTATE]: { badges: ['opened'], configurators: ['orientation'] },
+  [Temperature.ATTR_TEMPERATURE]: {
     badges: (dev) => {
       const hint = dev[Device.ATTR_DEVTYPEHINT] as string;
       if (['KeyPad', 'Button', 'vent', 'Contact', 'Motion', 'Halo'].includes(hint)) {
@@ -71,19 +79,19 @@ export const capabilityPlugins: Record<string, CapabilityPlugin> = {
       return [];
     },
   },
-  'pow:instantaneous': {
+  [PowerUse.ATTR_INSTANTANEOUS]: {
     badges: (dev) => (dev[PowerUse.ATTR_INSTANTANEOUS] ? ['power'] : []),
   },
-  'dim:brightness': {
+  [Dimmer.ATTR_BRIGHTNESS]: {
     badges: (dev) => {
       const hint = dev[Device.ATTR_DEVTYPEHINT] as string;
       return hint === 'Halo' ? [] : ['brightness'];
     },
     configurators: ['brightness'],
   },
-  'ill:illuminance': { badges: ['illuminance'] },
-  'uvi:index': { badges: ['ultraviolet-index'] },
-  'light:colormode': {
+  [Illuminance.ATTR_ILLUMINANCE]: { badges: ['illuminance'] },
+  [UltravioletIndex.ATTR_INDEX]: { badges: ['ultraviolet-index'] },
+  [Light.ATTR_COLORMODE]: {
     configurators: (dev) => {
       const color = hasCapability(dev, 'color');
       const colorTemp = hasCapability(dev, 'colortemp');
@@ -95,18 +103,18 @@ export const capabilityPlugins: Record<string, CapabilityPlugin> = {
       return [];
     },
   },
-  'colortemp:colortemp': { badges: ['colortemp'] },
-  'pres:presence': { badges: ['presence'] },
-  'pres:person': {
+  [ColorTemperature.ATTR_COLORTEMP]: { badges: ['colortemp'] },
+  [Presence.ATTR_PRESENCE]: { badges: ['presence'] },
+  [Presence.ATTR_PERSON]: {
     configurators: (dev) => {
       const cfgs = ['assign-device'];
       if ((dev[Device.ATTR_DEVTYPEHINT] as string) === 'Pendant') cfgs.push('test-coverage');
       return cfgs;
     },
   },
-  'fan:speed': { badges: ['fan-speed'], configurators: ['fan-speed'] },
-  'petdoor:lockstate': { badges: ['lockState'], configurators: ['petdoor-smartkeys'] },
-  'irrcont:controllerState': {
+  [Fan.ATTR_SPEED]: { badges: ['fan-speed'], configurators: ['fan-speed'] },
+  [PetDoor.ATTR_LOCKSTATE]: { badges: ['lockState'], configurators: ['petdoor-smartkeys'] },
+  [IrrigationController.ATTR_CONTROLLERSTATE]: {
     badges: ['scheduleType'],
     configurators: (dev) => {
       return (dev[Device.ATTR_PRODUCTID] as string) !== 'deda9d'
@@ -114,8 +122,8 @@ export const capabilityPlugins: Record<string, CapabilityPlugin> = {
         : ['irrigation-mode'];
     },
   },
-  'camera:resolution': { badges: ['camera-preview'], configurators: ['camera-resolution'] },
-  'devpow:source': {
+  [Camera.ATTR_RESOLUTION]: { badges: ['camera-preview'], configurators: ['camera-resolution'] },
+  [DevicePower.ATTR_SOURCE]: {
     badges: (dev) => {
       if ((dev[Device.ATTR_DEVTYPEHINT] as string) === 'Camera' && dev[DevicePower.ATTR_SOURCE] !== 'BATTERY') {
         return [];
@@ -123,30 +131,30 @@ export const capabilityPlugins: Record<string, CapabilityPlugin> = {
       return ['powerSource'];
     },
   },
-  'waterheater:heatingstate': { badges: ['heatingState'] },
-  'waterheater:hotwaterlevel': { badges: ['hotWaterLevel'], configurators: ['water-heater-mode'] },
-  'aosmithwaterheatercontroller:controlmode': { badges: ['waterHeaterEnergySmart'] },
-  'waterheater:setpoint': { badges: ['lowHeatTarget'] },
+  [WaterHeater.ATTR_HEATINGSTATE]: { badges: ['heatingState'] },
+  [WaterHeater.ATTR_HOTWATERLEVEL]: { badges: ['hotWaterLevel'], configurators: ['water-heater-mode'] },
+  [AOSmithWaterHeaterController.ATTR_CONTROLMODE]: { badges: ['waterHeaterEnergySmart'] },
+  [WaterHeater.ATTR_SETPOINT]: { badges: ['lowHeatTarget'] },
   'nesttherm:hasleaf': { badges: ['leaf'] },
-  'therm:hvacmode': { badges: ['thermostat'], configurators: ['thermostat-mode'] },
-  'but:state': {
+  [Thermostat.ATTR_HVACMODE]: { badges: ['thermostat'], configurators: ['thermostat-mode'] },
+  [Button.ATTR_STATE]: {
     configurators: (dev) => {
       return (dev[Device.ATTR_DEVTYPEHINT] as string) === 'Pendant' ? [] : ['assign-buttons'];
     },
   },
-  'humid:humidity': {
+  [RelativeHumidity.ATTR_HUMIDITY]: {
     badges: (dev) => (dev[RelativeHumidity.ATTR_HUMIDITY] ? ['humidity'] : []),
   },
-  'atmos:pressure': { badges: ['pressure'] },
-  'mot:sensitivity': {
+  [Atmos.ATTR_PRESSURE]: { badges: ['pressure'] },
+  [Motion.ATTR_SENSITIVITY]: {
     configurators: (dev) => {
       const supported = dev[Motion.ATTR_SENSITIVITIESSUPPORTED] as unknown[] | undefined;
       return supported?.length ? ['motion-sensitivity'] : [];
     },
   },
-  'motdoor:doorstate': { badges: ['opened'] },
-  'halo:haloalertstate': { configurators: ['test-halo'] },
-  'wifi:ssid': {
+  [MotorizedDoor.ATTR_DOORSTATE]: { badges: ['opened'] },
+  [Halo.ATTR_HALOALERTSTATE]: { configurators: ['test-halo'] },
+  [WiFi.ATTR_SSID]: {
     configurators: (dev) => {
       const isSwann = !!dev['swannbatterycamera:sn'];
       if (isSwann || (dev[Device.ATTR_DEVTYPEHINT] as string) !== 'Camera') return ['wifi-read-only'];
@@ -154,15 +162,15 @@ export const capabilityPlugins: Record<string, CapabilityPlugin> = {
       return [];
     },
   },
-  'watersoftener:rechargeStartTime': { configurators: ['water-softener-recharge-time'] },
-  'camera:framerate': {
+  [WaterSoftener.ATTR_RECHARGESTARTTIME]: { configurators: ['water-softener-recharge-time'] },
+  [Camera.ATTR_FRAMERATE]: {
     configurators: (dev) => (dev['swannbatterycamera:sn'] ? [] : ['camera-framerate']),
   },
-  'camera:irLedMode': {
+  [Camera.ATTR_IRLEDMODE]: {
     configurators: (dev) => (dev['swannbatterycamera:sn'] ? [] : ['camera-ir-led-mode']),
   },
-  'camera:flip': { configurators: ['camera-rotation'] },
-  'ipinfo:ip': {
+  [Camera.ATTR_FLIP]: { configurators: ['camera-rotation'] },
+  [IpInfo.ATTR_IP]: {
     configurators: (dev) => {
       const isSwann = !!dev['swannbatterycamera:sn'];
       return (dev[Device.ATTR_DEVTYPEHINT] as string) === 'Camera' && !isSwann
@@ -177,20 +185,20 @@ export const capabilityPlugins: Record<string, CapabilityPlugin> = {
         : [];
     },
   },
-  'spaceheater:heatstate': { badges: ['spaceheater'], configurators: ['space-heater-mode'] },
-  'noaa:alertstate': { configurators: ['noaa-location', 'noaa-radio', 'noaa-weather-alerts'] },
+  [SpaceHeater.ATTR_HEATSTATE]: { badges: ['spaceheater'], configurators: ['space-heater-mode'] },
+  [WeatherRadio.ATTR_ALERTSTATE]: { configurators: ['noaa-location', 'noaa-radio', 'noaa-weather-alerts'] },
   'nesttherm:locked': { badges: ['temperatureLocked'] },
-  'ecowater:continuousRate': { configurators: ['water-flow'] },
-  'waterhardness:hardness': { configurators: ['water-hardness'] },
-  'watersoftener:currentSaltLevel': { badges: ['salt-level'], configurators: ['water-salt-type'] },
-  'flow:flow': { badges: ['gpm'] },
-  'somfyv1:type': { badges: ['somfy-type'], configurators: ['somfy-type'] },
-  'somfyv1:reversed': {
+  [EcowaterWaterSoftener.ATTR_CONTINUOUSRATE]: { configurators: ['water-flow'] },
+  [WaterHardness.ATTR_HARDNESS]: { configurators: ['water-hardness'] },
+  [WaterSoftener.ATTR_CURRENTSALTLEVEL]: { badges: ['salt-level'], configurators: ['water-salt-type'] },
+  [Flow.ATTR_FLOW]: { badges: ['gpm'] },
+  [Somfyv1.ATTR_TYPE]: { badges: ['somfy-type'], configurators: ['somfy-type'] },
+  [Somfyv1.ATTR_REVERSED]: {
     badges: (dev) => (dev[Somfyv1.ATTR_REVERSED] === 'REVERSED' ? ['somfy-reversed'] : []),
     configurators: ['somfy-reversed'],
   },
-  'somfyv1:currentstate': { configurators: ['somfy-customization'] },
-  'somfyv1:channel': { badges: ['somfy-channel'] },
+  [Somfyv1.ATTR_CURRENTSTATE]: { configurators: ['somfy-customization'] },
+  [Somfyv1.ATTR_CHANNEL]: { badges: ['somfy-channel'] },
 };
 
 // ── Product-Specific Config Overrides ─────────────────────────────────
