@@ -1,5 +1,5 @@
 import { render, screen, fireEvent } from '@testing-library/react';
-import KeyCard from '@/components/api-key/KeyCard';
+import KeyCard from '@/components/api-keys/KeyCard';
 import type { ApiKeyMeta } from '@arcus/core/services/ApiKeyService';
 
 const baseKey: ApiKeyMeta = {

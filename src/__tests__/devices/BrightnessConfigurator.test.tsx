@@ -1,6 +1,6 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { Dimmer } from '@arcus/core';
-import BrightnessConfigurator from '@/components/device/BrightnessConfigurator';
+import BrightnessConfigurator from '@/components/devices/BrightnessConfigurator';
 
 const mockSetAttribute = jest.fn();
 let mockDevice: Record<string, unknown> = {};

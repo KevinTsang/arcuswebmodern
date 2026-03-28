@@ -1,5 +1,5 @@
 import { render, screen, fireEvent } from '@testing-library/react';
-import RemoveZWaveDeviceSuccessModal from '@/components/device/RemoveZWaveDeviceSuccessModal';
+import RemoveZWaveDeviceSuccessModal from '@/components/devices/RemoveZWaveDeviceSuccessModal';
 
 describe('RemoveZWaveDeviceSuccessModal', () => {
   it('shows Success heading', () => {

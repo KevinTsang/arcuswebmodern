@@ -12,9 +12,9 @@ import { Place } from '@arcus/core';
 import { useAppSelector } from '@/store/hooks';
 import { selectAllRules } from '@/store/slices/rulesSlice';
 import { useSidePanel } from '@/components/SidePanel';
-import { RulePanel } from '@/components/rule/RulePanel';
-import { RuleListItem } from '@/components/rule/RuleListItem';
-import { RulesLibrary } from '@/components/rule/RulesLibrary';
+import { RulePanel } from '@/components/rules/RulePanel';
+import { RuleListItem } from '@/components/rules/RuleListItem';
+import { RulesLibrary } from '@/components/rules/RulesLibrary';
 
 type ViewMode = 'my' | 'library';
 

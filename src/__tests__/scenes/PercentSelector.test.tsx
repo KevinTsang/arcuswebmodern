@@ -1,7 +1,7 @@
 import { render, screen, fireEvent } from '@testing-library/react';
-import { SelectorType } from '@/components/scene/types';
-import type { SelectorDef } from '@/components/scene/types';
-import { PercentSelector } from '@/components/scene/PercentSelector';
+import { SelectorType } from '@/components/scenes/types';
+import type { SelectorDef } from '@/components/scenes/types';
+import { PercentSelector } from '@/components/scenes/PercentSelector';
 
 let mockOnChange: jest.Mock;
 

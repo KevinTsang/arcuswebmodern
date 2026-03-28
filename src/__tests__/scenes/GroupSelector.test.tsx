@@ -1,7 +1,7 @@
 import { render, screen, fireEvent } from '@testing-library/react';
-import { SelectorType } from '@/components/scene/types';
-import type { SelectorDef } from '@/components/scene/types';
-import { GroupSelector } from '@/components/scene/GroupSelector';
+import { SelectorType } from '@/components/scenes/types';
+import type { SelectorDef } from '@/components/scenes/types';
+import { GroupSelector } from '@/components/scenes/GroupSelector';
 
 let mockOnChange: jest.Mock;
 

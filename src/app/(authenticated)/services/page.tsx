@@ -22,7 +22,7 @@ import {
   HomeFamilyView,
   LawnGardenView,
   GenericDeviceListView,
-} from '@/components/subsystem';
+} from '@/components/subsystems';
 
 export default function ServicesPage() {
   const [activeSlug, setActiveSlug] = useState(subsystemConfigs[0]?.slug ?? 'alarms');

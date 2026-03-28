@@ -1,6 +1,6 @@
-import { getDeviceValue, getTypeFallback, getDefaultValues } from '@/components/scene/sceneDefaults';
-import { SelectorType } from '@/components/scene/types';
-import type { SelectorDef } from '@/components/scene/types';
+import { getDeviceValue, getTypeFallback, getDefaultValues } from '@/components/scenes/sceneDefaults';
+import { SelectorType } from '@/components/scenes/types';
+import type { SelectorDef } from '@/components/scenes/types';
 
 // ── getDeviceValue ────────────────────────────────────────────────────
 

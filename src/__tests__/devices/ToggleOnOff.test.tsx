@@ -1,6 +1,6 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { Switch } from '@arcus/core';
-import ToggleOnOff from '@/components/device/ToggleOnOff';
+import ToggleOnOff from '@/components/devices/ToggleOnOff';
 
 const mockSetAttribute = jest.fn().mockResolvedValue(undefined);
 let mockDevice: Record<string, unknown> = {};

@@ -1,6 +1,6 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { Thermostat } from '@arcus/core';
-import ThermostatModeConfigurator from '@/components/device/ThermostatModeConfigurator';
+import ThermostatModeConfigurator from '@/components/devices/ThermostatModeConfigurator';
 
 const mockSetAttribute = jest.fn();
 let mockDevice: Record<string, unknown> = {};

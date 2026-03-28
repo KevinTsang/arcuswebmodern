@@ -5,9 +5,9 @@ import Link from 'next/link';
 import { useAppSelector } from '@/store/hooks';
 import { ApiKeyService } from '@arcus/core/services';
 import type { ApiKeyMeta } from '@arcus/core/services/ApiKeyService';
-import { emptyPermSet, permSetToStrings, hasAnyPermission, type PermSet } from '@/components/api-key/permissions';
-import PermissionsTable from '@/components/api-key/PermissionsTable';
-import KeyCard from '@/components/api-key/KeyCard';
+import { emptyPermSet, permSetToStrings, hasAnyPermission, type PermSet } from '@/components/api-keys/permissions';
+import PermissionsTable from '@/components/api-keys/PermissionsTable';
+import KeyCard from '@/components/api-keys/KeyCard';
 
 export default function ApiKeysPage() {
   const placeId = useAppSelector((s) => s.place.placeId);

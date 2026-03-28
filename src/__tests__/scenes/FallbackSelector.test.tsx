@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import { FallbackSelector } from '@/components/scene/FallbackSelector';
+import { FallbackSelector } from '@/components/scenes/FallbackSelector';
 
 describe('FallbackSelector', () => {
   it('renders name and value', () => {

@@ -1,5 +1,5 @@
 import { render, screen, fireEvent } from '@testing-library/react';
-import { EnumControl } from '@/components/device/device-settings/EnumControl';
+import { EnumControl } from '@/components/devices/device-settings/EnumControl';
 
 describe('EnumControl – button mode (≤4 options)', () => {
   const options = { '0': 'Off', '1': 'On', '2': 'Auto' };

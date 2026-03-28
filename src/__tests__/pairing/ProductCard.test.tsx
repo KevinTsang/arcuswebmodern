@@ -1,5 +1,5 @@
 import { render, screen, fireEvent } from '@testing-library/react';
-import ProductCard from '@/components/product/ProductCard';
+import ProductCard from '@/components/products/ProductCard';
 
 const mockSelect = jest.fn();
 

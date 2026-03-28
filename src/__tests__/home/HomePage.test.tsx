@@ -20,7 +20,7 @@ jest.mock('@arcus/core/bridge', () => ({
   default: { request: (...args: any[]) => mockBridgeRequest(...args) },
 }));
 
-jest.mock('@/components/device', () => ({
+jest.mock('@/components/devices', () => ({
   DevicePanel: () => <div>DevicePanel</div>,
 }));
 

@@ -5,7 +5,7 @@ import {
   permSetToStrings,
   stringsToPermSet,
   hasAnyPermission,
-} from '@/components/api-key/permissions';
+} from '@/components/api-keys/permissions';
 
 describe('emptyPermSet', () => {
   it('creates an entry for every category', () => {

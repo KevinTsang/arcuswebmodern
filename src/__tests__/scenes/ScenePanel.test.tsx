@@ -1,5 +1,5 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { ScenePanel } from '@/components/scene/ScenePanel';
+import { ScenePanel } from '@/components/scenes/ScenePanel';
 import Bridge from '@arcus/core/bridge';
 
 // ── Mocks ─────────────────────────────────────────────────────────────
@@ -22,7 +22,7 @@ jest.mock('@/store/slices/uiSlice', () => ({
 }));
 
 const mockResolveSceneActions = jest.fn();
-jest.mock('@/components/scene/resolveSceneActions', () => ({
+jest.mock('@/components/scenes/resolveSceneActions', () => ({
   resolveSceneActions: (...args: unknown[]) => mockResolveSceneActions(...args),
 }));
 
@@ -32,7 +32,7 @@ jest.mock('@arcus/core/bridge', () => ({
 }));
 
 // Mock child components to isolate ScenePanel logic
-jest.mock('@/components/scene/ActionCategoryList', () => ({
+jest.mock('@/components/scenes/ActionCategoryList', () => ({
   ActionCategoryList: ({
     name,
     heading,
@@ -56,7 +56,7 @@ jest.mock('@/components/scene/ActionCategoryList', () => ({
   ),
 }));
 
-jest.mock('@/components/scene/ActionDeviceConfigurator', () => ({
+jest.mock('@/components/scenes/ActionDeviceConfigurator', () => ({
   ActionDeviceConfigurator: ({ action, onBack }: { action: { name: string }; onBack: () => void }) => (
     <div data-testid="device-configurator">
       <span>{action.name}</span>

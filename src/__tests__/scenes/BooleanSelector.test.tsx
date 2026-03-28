@@ -1,5 +1,5 @@
 import { render, screen, fireEvent } from '@testing-library/react';
-import { BooleanSelector } from '@/components/scene/BooleanSelector';
+import { BooleanSelector } from '@/components/scenes/BooleanSelector';
 
 let mockOnChange: jest.Mock;
 

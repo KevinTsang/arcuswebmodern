@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import { DeviceActions } from '@/components/device/DeviceActions';
+import { DeviceActions } from '@/components/devices/DeviceActions';
 
 let mockDevice: Record<string, unknown> = {};
 

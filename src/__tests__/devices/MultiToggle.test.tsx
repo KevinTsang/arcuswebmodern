@@ -1,6 +1,6 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { Base, Device, DeviceConnection, Switch } from '@arcus/core';
-import MultiToggle from '@/components/device/MultiToggle';
+import MultiToggle from '@/components/devices/MultiToggle';
 
 const mockSetAttribute = jest.fn().mockResolvedValue(undefined);
 let mockDevice: Record<string, unknown> = {};

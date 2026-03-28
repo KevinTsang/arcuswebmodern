@@ -1,5 +1,5 @@
 import { render, screen, fireEvent } from '@testing-library/react';
-import { RangeControl } from '@/components/device/device-settings/RangeControl';
+import { RangeControl } from '@/components/devices/device-settings/RangeControl';
 
 describe('RangeControl', () => {
   it('renders a number input with current value', () => {

@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
-import DeviceSettingsConfigurator from '@/components/device/DeviceSettingsConfigurator';
-import type { ParamDescriptor } from '@/components/device/device-settings/types';
+import DeviceSettingsConfigurator from '@/components/devices/DeviceSettingsConfigurator';
+import type { ParamDescriptor } from '@/components/devices/device-settings/types';
 
 // ── Mocks ─────────────────────────────────────────────────────────────
 
@@ -10,7 +10,7 @@ jest.mock('@/hooks/useDeviceCapability', () => ({
   useDevice: () => mockDevice,
 }));
 
-jest.mock('@/components/device/device-settings/ParamControl', () => ({
+jest.mock('@/components/devices/device-settings/ParamControl', () => ({
   ParamControl: ({ param }: { param: ParamDescriptor }) => (
     <div data-testid="param-control">{param.description}</div>
   ),

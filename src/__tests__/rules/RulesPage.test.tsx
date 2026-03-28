@@ -9,11 +9,11 @@ jest.mock('@/components/SidePanel', () => ({
   useSidePanel: () => ({ openRight: mockOpenRight }),
 }));
 
-jest.mock('@/components/rule/RulePanel', () => ({
+jest.mock('@/components/rules/RulePanel', () => ({
   RulePanel: () => <div>RulePanel</div>,
 }));
 
-jest.mock('@/components/rule/RuleListItem', () => ({
+jest.mock('@/components/rules/RuleListItem', () => ({
   RuleListItem: ({ rule, onEdit }: any) => (
     <div data-testid="rule-item">
       <span>{rule['rule:name']}</span>
@@ -22,7 +22,7 @@ jest.mock('@/components/rule/RuleListItem', () => ({
   ),
 }));
 
-jest.mock('@/components/rule/RulesLibrary', () => ({
+jest.mock('@/components/rules/RulesLibrary', () => ({
   RulesLibrary: ({ placeId }: any) => <div data-testid="rules-library">Library for {placeId}</div>,
 }));
 

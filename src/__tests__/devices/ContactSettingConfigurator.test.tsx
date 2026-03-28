@@ -1,6 +1,6 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { Contact } from '@arcus/core';
-import ContactSettingConfigurator from '@/components/device/ContactSettingConfigurator';
+import ContactSettingConfigurator from '@/components/devices/ContactSettingConfigurator';
 
 const mockSetAttribute = jest.fn();
 let mockDevice: Record<string, unknown> = {};

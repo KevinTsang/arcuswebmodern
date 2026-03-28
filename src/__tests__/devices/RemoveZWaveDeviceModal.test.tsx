@@ -1,5 +1,5 @@
 import { render, screen, fireEvent } from '@testing-library/react';
-import RemoveZWaveDeviceModal from '@/components/device/RemoveZWaveDeviceModal';
+import RemoveZWaveDeviceModal from '@/components/devices/RemoveZWaveDeviceModal';
 
 describe('RemoveZWaveDeviceModal', () => {
   it('shows Searching heading', () => {

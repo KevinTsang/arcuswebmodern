@@ -1,10 +1,10 @@
 import { render, screen, fireEvent } from '@testing-library/react';
-import { ActionDeviceConfigurator } from '@/components/scene/ActionDeviceConfigurator';
-import type { ResolvedAction, ActionConfig } from '@/components/scene/ScenePanel';
-import { SelectorType } from '@/components/scene/types';
+import { ActionDeviceConfigurator } from '@/components/scenes/ActionDeviceConfigurator';
+import type { ResolvedAction, ActionConfig } from '@/components/scenes/ScenePanel';
+import { SelectorType } from '@/components/scenes/types';
 
 // Mock DeviceRow to avoid Redux dependency
-jest.mock('@/components/scene/DeviceRow', () => ({
+jest.mock('@/components/scenes/DeviceRow', () => ({
   DeviceRow: ({ deviceAddr, enabled, onToggle, onValueChange }: {
     deviceAddr: string;
     enabled: boolean;

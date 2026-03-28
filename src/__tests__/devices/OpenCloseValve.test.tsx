@@ -1,5 +1,5 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import OpenCloseValve from '@/components/device/OpenCloseValve';
+import OpenCloseValve from '@/components/devices/OpenCloseValve';
 
 const mockSetAttribute = jest.fn().mockResolvedValue(undefined);
 let mockDevice: Record<string, unknown> = {};

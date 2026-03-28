@@ -1,6 +1,6 @@
 import { render, screen, fireEvent } from '@testing-library/react';
-import { ActionCategoryList } from '@/components/scene/ActionCategoryList';
-import type { ResolvedAction } from '@/components/scene/ScenePanel';
+import { ActionCategoryList } from '@/components/scenes/ActionCategoryList';
+import type { ResolvedAction } from '@/components/scenes/ScenePanel';
 
 const mockAction = (overrides: Partial<ResolvedAction> = {}): ResolvedAction => ({
   id: 'action1',

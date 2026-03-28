@@ -1,5 +1,5 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { SceneCard } from '@/components/scene/SceneCard';
+import { SceneCard } from '@/components/scenes/SceneCard';
 
 // ── Mocks ─────────────────────────────────────────────────────────────
 

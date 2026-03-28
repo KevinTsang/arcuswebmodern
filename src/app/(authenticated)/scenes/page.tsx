@@ -12,8 +12,8 @@ import { Place } from '@arcus/core';
 import { useAppSelector } from '@/store/hooks';
 import { selectAllScenes } from '@/store/slices/scenesSlice';
 import { useSidePanel } from '@/components/SidePanel';
-import { ScenePanel } from '@/components/scene/ScenePanel';
-import { SceneCard } from '@/components/scene/SceneCard';
+import { ScenePanel } from '@/components/scenes/ScenePanel';
+import { SceneCard } from '@/components/scenes/SceneCard';
 
 // ── Page Component ────────────────────────────────────────────────────
 

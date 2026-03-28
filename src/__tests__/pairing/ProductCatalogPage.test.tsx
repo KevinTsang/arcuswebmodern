@@ -31,7 +31,7 @@ jest.mock('@arcus/core/services', () => ({
   },
 }));
 
-jest.mock('@/components/product', () => ({
+jest.mock('@/components/products', () => ({
   ProductCard: ({ product, onSelect }: any) => (
     <button data-testid={`product-${product['product:id']}`} onClick={() => onSelect(product)}>
       {product['product:name']}

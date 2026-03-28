@@ -10,7 +10,7 @@
 import { Base } from '@arcus/core';
 import { useClimateSubsystem } from '@/hooks/useSubsystem';
 import { cToF, formatTemp } from '@/hooks/useDeviceConfig';
-import { DevicePanel } from '@/components/device';
+import { DevicePanel } from '@/components/devices';
 
 export function ClimateView() {
   const { temperature, humidity, controlDevices, tempDevices } = useClimateSubsystem();

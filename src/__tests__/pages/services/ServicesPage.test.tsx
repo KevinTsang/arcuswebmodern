@@ -14,7 +14,7 @@ jest.mock('@/store/hooks', () => ({
 }));
 
 // Mock subsystem views
-jest.mock('@/components/subsystem', () => ({
+jest.mock('@/components/subsystems', () => ({
   AlarmsView: () => <div data-testid="alarms-view">AlarmsView</div>,
   CamerasView: () => <div data-testid="cameras-view">CamerasView</div>,
   CareView: () => <div data-testid="care-view">CareView</div>,

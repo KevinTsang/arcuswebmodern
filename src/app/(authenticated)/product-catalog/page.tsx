@@ -13,7 +13,7 @@ import { useRouter } from 'next/navigation';
 import { Base, Hub, Product as ProductCap } from '@arcus/core';
 import { ProductCatalogService } from '@arcus/core/services';
 import { useAppSelector } from '@/store/hooks';
-import { ProductCard } from '@/components/product';
+import { ProductCard } from '@/components/products';
 
 type FilterMode = 'all' | 'hub-required' | 'no-hub-required';
 

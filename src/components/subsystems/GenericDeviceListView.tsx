@@ -9,7 +9,7 @@
 
 import { Base } from '@arcus/core';
 import { useSubsystemDevices } from '@/hooks/useSubsystem';
-import { DevicePanel } from '@/components/device';
+import { DevicePanel } from '@/components/devices';
 import type { SubsystemConfigEntry } from '@/lib/subsystemConfig';
 
 interface GenericDeviceListViewProps {

@@ -1,6 +1,6 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { Base, AlarmSubsystem, SecuritySubsystem } from '@arcus/core';
-import { AlarmSettings } from '@/components/subsystem/AlarmSettings';
+import { AlarmSettings } from '@/components/subsystems/AlarmSettings';
 import type { SubsystemEntity } from '@/store/entityTypes';
 
 const mockDispatch = jest.fn();

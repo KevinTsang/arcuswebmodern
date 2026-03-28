@@ -1,5 +1,5 @@
 import { render, screen, fireEvent } from '@testing-library/react';
-import RemoveZWaveDeviceFailureModal from '@/components/device/RemoveZWaveDeviceFailureModal';
+import RemoveZWaveDeviceFailureModal from '@/components/devices/RemoveZWaveDeviceFailureModal';
 
 describe('RemoveZWaveDeviceFailureModal', () => {
   it('shows Removal Timed Out heading', () => {

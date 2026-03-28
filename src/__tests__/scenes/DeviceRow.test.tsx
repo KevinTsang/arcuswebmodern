@@ -1,7 +1,7 @@
 import { render, screen, fireEvent } from '@testing-library/react';
-import { DeviceRow } from '@/components/scene/DeviceRow';
-import { SelectorType } from '@/components/scene/types';
-import type { SelectorDef } from '@/components/scene/types';
+import { DeviceRow } from '@/components/scenes/DeviceRow';
+import { SelectorType } from '@/components/scenes/types';
+import type { SelectorDef } from '@/components/scenes/types';
 
 // Mock Redux selector
 let mockDevice: Record<string, unknown> | undefined;
@@ -21,7 +21,7 @@ jest.mock('@/store/slices/devicesSlice', () => ({
 }));
 
 // Mock SceneDeviceConfigurator to keep tests focused
-jest.mock('@/components/scene/SceneDeviceConfigurator', () => ({
+jest.mock('@/components/scenes/SceneDeviceConfigurator', () => ({
   SceneDeviceConfigurator: ({ selectors }: { selectors: SelectorDef[] }) => (
     <div data-testid="configurator">selectors: {selectors.length}</div>
   ),

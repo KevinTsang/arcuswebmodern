@@ -1,6 +1,6 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { Base, AlarmIncident } from '@arcus/core';
-import IncidentTracker from '@/components/subsystem/IncidentTracker';
+import IncidentTracker from '@/components/subsystems/IncidentTracker';
 import type { IncidentEntity } from '@/store/entityTypes';
 
 const mockDispatch = jest.fn();

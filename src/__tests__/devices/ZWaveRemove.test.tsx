@@ -1,5 +1,5 @@
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
-import { ZWaveTools } from '@/components/device/ZWaveTools';
+import { ZWaveTools } from '@/components/devices/ZWaveTools';
 
 // ── Mocks ─────────────────────────────────────────────────────────────
 

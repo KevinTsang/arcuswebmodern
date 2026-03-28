@@ -1,6 +1,6 @@
 import { render, screen, fireEvent } from '@testing-library/react';
-import { RuleSelectorSection, getSelectorKind } from '@/components/rule/RuleSelectorSection';
-import type { ResolvedSelector } from '@/components/rule/RuleSelectorSection';
+import { RuleSelectorSection, getSelectorKind } from '@/components/rules/RuleSelectorSection';
+import type { ResolvedSelector } from '@/components/rules/RuleSelectorSection';
 
 const deviceSelector: ResolvedSelector = {
   type: 'LIST',

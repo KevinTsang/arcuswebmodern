@@ -1,5 +1,5 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { RuleListItem } from '@/components/rule/RuleListItem';
+import { RuleListItem } from '@/components/rules/RuleListItem';
 import Bridge from '@arcus/core/bridge';
 
 const mockDispatch = jest.fn();

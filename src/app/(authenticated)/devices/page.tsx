@@ -16,7 +16,7 @@ import type { ListPairingDevicesResponse, GetKitInformationResponse } from '@/ar
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import { addNotification } from '@/store/slices/uiSlice';
 import { selectAllDevices } from '@/store/slices/devicesSlice';
-import { DeviceList, HubPanel, ZWaveTools } from '@/components/device';
+import { DeviceList, HubPanel, ZWaveTools } from '@/components/devices';
 
 type ViewMode = 'devices' | 'zwave';
 

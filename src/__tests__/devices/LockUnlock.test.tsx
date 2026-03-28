@@ -1,6 +1,6 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { DoorLock } from '@arcus/core';
-import LockUnlock from '@/components/device/LockUnlock';
+import LockUnlock from '@/components/devices/LockUnlock';
 
 const mockSetAttribute = jest.fn().mockResolvedValue(undefined);
 let mockDevice: Record<string, unknown> = {};

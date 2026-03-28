@@ -1,5 +1,5 @@
 import { render, screen, fireEvent } from '@testing-library/react';
-import { RulesLibrary } from '@/components/rule/RulesLibrary';
+import { RulesLibrary } from '@/components/rules/RulesLibrary';
 
 const mockOpenRight = jest.fn();
 
@@ -23,7 +23,7 @@ jest.mock('@/components/shared/Accordion', () => ({
 }));
 
 // Mock RulePanel to avoid its dependencies
-jest.mock('@/components/rule/RulePanel', () => ({
+jest.mock('@/components/rules/RulePanel', () => ({
   RulePanel: () => <div data-testid="rule-panel" />,
 }));
 

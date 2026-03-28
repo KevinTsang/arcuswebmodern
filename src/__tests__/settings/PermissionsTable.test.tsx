@@ -1,6 +1,6 @@
 import { render, screen, fireEvent } from '@testing-library/react';
-import PermissionsTable from '@/components/api-key/PermissionsTable';
-import { emptyPermSet, PERMISSION_CATEGORIES } from '@/components/api-key/permissions';
+import PermissionsTable from '@/components/api-keys/PermissionsTable';
+import { emptyPermSet, PERMISSION_CATEGORIES } from '@/components/api-keys/permissions';
 
 describe('PermissionsTable', () => {
   it('renders all category labels', () => {

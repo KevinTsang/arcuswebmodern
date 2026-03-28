@@ -1,6 +1,6 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { Base, Color, ColorTemperature } from '@arcus/core';
-import ColorConfigurator from '@/components/device/ColorConfigurator';
+import ColorConfigurator from '@/components/devices/ColorConfigurator';
 
 const mockSetAttribute = jest.fn();
 const mockSetAttributes = jest.fn();

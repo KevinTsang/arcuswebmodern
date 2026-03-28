@@ -1,4 +1,4 @@
-import { resolveSceneActions } from '@/components/scene/resolveSceneActions';
+import { resolveSceneActions } from '@/components/scenes/resolveSceneActions';
 import Bridge from '@arcus/core/bridge';
 import { SceneService } from '@arcus/core/services';
 

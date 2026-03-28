@@ -1,6 +1,6 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { Base, Device, DeviceConnection, SecuritySubsystem, AlarmIncident } from '@arcus/core';
-import { AlarmStatus } from '@/components/subsystem/AlarmStatus';
+import { AlarmStatus } from '@/components/subsystems/AlarmStatus';
 import type { DeviceEntity, IncidentEntity, SubsystemEntity } from '@/store/entityTypes';
 
 const mockDispatch = jest.fn();
@@ -30,7 +30,7 @@ jest.mock('@/store/slices/incidentsSlice', () => ({
 }));
 
 // IncidentTracker is tested separately — render a simplified stub
-jest.mock('@/components/subsystem/IncidentTracker', () => ({
+jest.mock('@/components/subsystems/IncidentTracker', () => ({
   __esModule: true,
   default: ({ incident }: { incident: IncidentEntity }) => (
     <div data-testid="incident-tracker">{incident[AlarmIncident.ATTR_ALERT]}</div>

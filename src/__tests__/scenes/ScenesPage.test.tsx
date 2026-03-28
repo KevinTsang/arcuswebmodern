@@ -21,11 +21,11 @@ jest.mock('@/components/SidePanel', () => ({
   useSidePanel: () => ({ openRight: mockOpenRight, expandRight: mockExpandRight }),
 }));
 
-jest.mock('@/components/scene/ScenePanel', () => ({
+jest.mock('@/components/scenes/ScenePanel', () => ({
   ScenePanel: () => <div>ScenePanel</div>,
 }));
 
-jest.mock('@/components/scene/SceneCard', () => ({
+jest.mock('@/components/scenes/SceneCard', () => ({
   SceneCard: ({ scene, onEdit }: { scene: Record<string, unknown>; onEdit: (s: Record<string, unknown>) => void }) => (
     <div data-testid="scene-card">
       <span>{scene['scene:name'] as string}</span>

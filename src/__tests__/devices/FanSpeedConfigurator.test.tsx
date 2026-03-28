@@ -1,6 +1,6 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { Fan } from '@arcus/core';
-import FanSpeedConfigurator from '@/components/device/FanSpeedConfigurator';
+import FanSpeedConfigurator from '@/components/devices/FanSpeedConfigurator';
 
 const mockSetAttribute = jest.fn();
 let mockDevice: Record<string, unknown> = {};

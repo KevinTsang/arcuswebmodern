@@ -1,6 +1,6 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { ParamControl } from '@/components/device/device-settings/ParamControl';
-import type { ParamDescriptor } from '@/components/device/device-settings/types';
+import { ParamControl } from '@/components/devices/device-settings/ParamControl';
+import type { ParamDescriptor } from '@/components/devices/device-settings/types';
 
 // ── Mocks ─────────────────────────────────────────────────────────────
 

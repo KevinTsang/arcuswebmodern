@@ -1,5 +1,5 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { DeviceDetailPanel } from '@/components/device/DeviceDetailPanel';
+import { DeviceDetailPanel } from '@/components/devices/DeviceDetailPanel';
 
 // ── Mocks ─────────────────────────────────────────────────────────────
 

@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
-import { SelectorType } from '@/components/scene/types';
-import type { SelectorDef } from '@/components/scene/types';
-import { SceneDeviceConfigurator } from '@/components/scene/SceneDeviceConfigurator';
+import { SelectorType } from '@/components/scenes/types';
+import type { SelectorDef } from '@/components/scenes/types';
+import { SceneDeviceConfigurator } from '@/components/scenes/SceneDeviceConfigurator';
 
 let mockOnChange: jest.Mock;
 

@@ -1,6 +1,6 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MotorizedDoor } from '@arcus/core';
-import OpenCloseDoor from '@/components/device/OpenCloseDoor';
+import OpenCloseDoor from '@/components/devices/OpenCloseDoor';
 
 const mockSendCommand = jest.fn().mockResolvedValue(undefined);
 let mockDevice: Record<string, unknown> = {};

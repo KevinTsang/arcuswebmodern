@@ -1,5 +1,5 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { RulePanel, parseTemplateString } from '@/components/rule/RulePanel';
+import { RulePanel, parseTemplateString } from '@/components/rules/RulePanel';
 import Bridge from '@arcus/core/bridge';
 
 // ── Mocks ─────────────────────────────────────────────────────────────

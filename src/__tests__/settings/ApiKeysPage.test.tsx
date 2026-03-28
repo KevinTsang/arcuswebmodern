@@ -22,13 +22,13 @@ jest.mock('@arcus/core/services', () => ({
   },
 }));
 
-jest.mock('@/components/api-key/permissions', () => ({
+jest.mock('@/components/api-keys/permissions', () => ({
   emptyPermSet: () => ({ devices: { r: false, w: false, x: false } }),
   permSetToStrings: () => ['devices:r'],
   hasAnyPermission: (p: any) => Object.values(p).some((v: any) => v.r || v.w || v.x),
 }));
 
-jest.mock('@/components/api-key/PermissionsTable', () => ({
+jest.mock('@/components/api-keys/PermissionsTable', () => ({
   __esModule: true,
   default: ({ onToggle }: any) => (
     <div data-testid="permissions-table">
@@ -37,7 +37,7 @@ jest.mock('@/components/api-key/PermissionsTable', () => ({
   ),
 }));
 
-jest.mock('@/components/api-key/KeyCard', () => ({
+jest.mock('@/components/api-keys/KeyCard', () => ({
   __esModule: true,
   default: ({ apiKey, onRevoke, onDelete }: any) => (
     <div data-testid="key-card">

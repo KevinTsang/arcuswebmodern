@@ -1,5 +1,5 @@
 import { render, screen, fireEvent } from '@testing-library/react';
-import { ThermostatSelector } from '@/components/scene/ThermostatSelector';
+import { ThermostatSelector } from '@/components/scenes/ThermostatSelector';
 
 let mockOnChange: jest.Mock;
 

@@ -9,7 +9,7 @@
 
 import { Base } from '@arcus/core';
 import { useDoorsLocksSubsystem } from '@/hooks/useSubsystem';
-import { DevicePanel } from '@/components/device';
+import { DevicePanel } from '@/components/devices';
 
 export function DoorsLocksView() {
   const { locks, motorized, contacts, petDoors, unlockedCount, openCount, totalDevices } =
