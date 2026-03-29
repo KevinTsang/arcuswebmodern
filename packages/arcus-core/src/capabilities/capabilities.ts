@@ -2148,6 +2148,7 @@ export const Scene = {
   ATTR_FIRING: 'scene:firing',
   ATTR_ACTIONS: 'scene:actions',
   ATTR_LASTFIRETIME: 'scene:lastFireTime',
+  ATTR_FILTERUNCHANGED: 'scene:filterUnchanged',
   ATTR_LASTFIRESTATUS: 'scene:lastFireStatus',
   LASTFIRESTATUS_NOTRUN: 'NOTRUN',
   LASTFIRESTATUS_SUCCESS: 'SUCCESS',

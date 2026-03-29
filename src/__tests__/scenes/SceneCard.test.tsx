@@ -186,6 +186,70 @@ describe('SceneCard – fire scene', () => {
   });
 });
 
+describe('SceneCard – force device state toggle', () => {
+  it('renders Force Device State toggle checked by default (filterUnchanged not set)', () => {
+    render(<SceneCard scene={baseScene()} onEdit={jest.fn()} />);
+    expect(screen.getByText('Force Device State')).toBeInTheDocument();
+    expect(screen.getByRole('switch')).toHaveAttribute('aria-checked', 'true');
+  });
+
+  it('renders Force Device State toggle checked when filterUnchanged is undefined', () => {
+    render(<SceneCard scene={baseScene({ 'scene:filterUnchanged': undefined })} onEdit={jest.fn()} />);
+    expect(screen.getByRole('switch')).toHaveAttribute('aria-checked', 'true');
+  });
+
+  it('renders Force Device State toggle checked when filterUnchanged is false', () => {
+    render(<SceneCard scene={baseScene({ 'scene:filterUnchanged': false })} onEdit={jest.fn()} />);
+    expect(screen.getByRole('switch')).toHaveAttribute('aria-checked', 'true');
+  });
+
+  it('renders Force Device State toggle unchecked when filterUnchanged is true', () => {
+    render(<SceneCard scene={baseScene({ 'scene:filterUnchanged': true })} onEdit={jest.fn()} />);
+    expect(screen.getByRole('switch')).toHaveAttribute('aria-checked', 'false');
+  });
+
+  it('calls Bridge to set filterUnchanged to false when toggling force on', async () => {
+    render(<SceneCard scene={baseScene({ 'scene:filterUnchanged': true })} onEdit={jest.fn()} />);
+    fireEvent.click(screen.getByRole('switch'));
+    await waitFor(() => {
+      expect(mockBridgeRequest).toHaveBeenCalledWith(
+        'base:SetAttributes',
+        'SERV:scene:s1',
+        { 'scene:filterUnchanged': false },
+      );
+    });
+  });
+
+  it('calls Bridge to set filterUnchanged to true when toggling force off', async () => {
+    render(<SceneCard scene={baseScene()} onEdit={jest.fn()} />);
+    fireEvent.click(screen.getByRole('switch'));
+    await waitFor(() => {
+      expect(mockBridgeRequest).toHaveBeenCalledWith(
+        'base:SetAttributes',
+        'SERV:scene:s1',
+        { 'scene:filterUnchanged': true },
+      );
+    });
+  });
+
+  it('optimistically updates toggle and reverts on failure', async () => {
+    mockBridgeRequest.mockRejectedValue(new Error('fail'));
+    render(<SceneCard scene={baseScene()} onEdit={jest.fn()} />);
+    const toggle = screen.getByRole('switch');
+    expect(toggle).toHaveAttribute('aria-checked', 'true');
+    fireEvent.click(toggle);
+    expect(toggle).toHaveAttribute('aria-checked', 'false');
+    await waitFor(() => {
+      expect(toggle).toHaveAttribute('aria-checked', 'true');
+    });
+    expect(mockDispatch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        payload: expect.objectContaining({ type: 'error', message: 'Failed to update force device state setting' }),
+      }),
+    );
+  });
+});
+
 describe('SceneCard – edit', () => {
   it('calls onEdit with the scene when Edit is clicked', () => {
     const onEdit = jest.fn();

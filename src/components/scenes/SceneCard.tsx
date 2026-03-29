@@ -5,6 +5,7 @@ import Bridge from '@arcus/core/bridge';
 import { Base, Scene } from '@arcus/core';
 import { useAppDispatch } from '@/store/hooks';
 import { addNotification } from '@/store/slices/uiSlice';
+import { ControlSwitch } from '@/components/shared/ControlSwitch';
 
 export function SceneCard({
   scene,
@@ -24,6 +25,9 @@ export function SceneCard({
     : 0;
   const hasNotification = scene[Scene.ATTR_NOTIFICATION] === true;
   const hasSchedule = !!scene[Scene.ATTR_SCHEDULER];
+  const [forceDeviceState, setForceDeviceState] = useState(
+    scene[Scene.ATTR_FILTERUNCHANGED] !== true,
+  );
 
   const handleFire = useCallback(async () => {
     if (!enabled || firing) return;
@@ -47,6 +51,18 @@ export function SceneCard({
       dispatch(addNotification({ type: 'error', message: 'Failed to update notification setting' }));
     }
   }, [address, hasNotification, dispatch]);
+
+  const handleToggleForce = useCallback(async (checked: boolean) => {
+    setForceDeviceState(checked);
+    try {
+      await Bridge.request(Base.CMD_SETATTRIBUTES, address, {
+        [Scene.ATTR_FILTERUNCHANGED]: !checked,
+      });
+    } catch {
+      setForceDeviceState(!checked);
+      dispatch(addNotification({ type: 'error', message: 'Failed to update force device state setting' }));
+    }
+  }, [address, dispatch]);
 
   return (
     <div
@@ -76,6 +92,14 @@ export function SceneCard({
             </svg>
           </button>
         </div>
+      </div>
+
+      <div className="flex items-center justify-between mb-3">
+        <ControlSwitch
+          checked={forceDeviceState}
+          onChange={handleToggleForce}
+          label="Force Device State"
+        />
       </div>
 
       <div className="flex items-center gap-2">
