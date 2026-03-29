@@ -1,5 +1,6 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { SceneCard } from '@/components/scenes/SceneCard';
+import type { SceneEntity } from '@/store/entityTypes';
 
 // ── Mocks ─────────────────────────────────────────────────────────────
 
@@ -21,7 +22,8 @@ jest.mock('@/store/slices/uiSlice', () => ({
 
 // ── Helpers ───────────────────────────────────────────────────────────
 
-const baseScene = (overrides: Record<string, unknown> = {}): Record<string, unknown> => ({
+const baseScene = (overrides: Partial<SceneEntity> = {}): SceneEntity => ({
+  id: 'SERV:scene:s1',
   'base:address': 'SERV:scene:s1',
   'scene:name': 'Good Morning',
   'scene:enabled': true,

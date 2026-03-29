@@ -135,5 +135,5 @@ npm run test:e2e:open     # Cypress E2E (interactive)
 
 - Prefer capability constants from `@arcus/core` over raw attribute strings (e.g., `Scene.ATTR_NAME` not `'scene:name'`).
 - Use `useCallback` for event handlers passed to child components or used in dependency arrays.
-- Use `Record<string, unknown>` for untyped device/scene/subsystem objects from the platform.
+- Avoid `unknown` and `Record<string, unknown>` types. Define typed interfaces for data structures (props, API responses, platform objects) instead of passing untyped records. When interfacing with platform models, create interfaces that describe the expected attributes.
 - Error handling: wrap Bridge calls in try/catch, dispatch error notifications on failure.

@@ -10,6 +10,7 @@ import { ActionDeviceConfigurator } from './ActionDeviceConfigurator';
 import { resolveSceneActions } from './resolveSceneActions';
 import type { ResolvedAction } from './resolveSceneActions';
 import type { SelectorDef } from './types';
+import type { SceneEntity } from '@/store/entityTypes';
 
 export type { ResolvedAction } from './resolveSceneActions';
 
@@ -20,7 +21,7 @@ export interface ActionConfig {
 }
 
 interface ScenePanelProps {
-  scene?: Record<string, unknown>;
+  scene?: SceneEntity;
 }
 
 export function ScenePanel({ scene }: ScenePanelProps) {

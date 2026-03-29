@@ -14,6 +14,7 @@ import { selectAllScenes } from '@/store/slices/scenesSlice';
 import { useSidePanel } from '@/components/SidePanel';
 import { ScenePanel } from '@/components/scenes/ScenePanel';
 import { SceneCard } from '@/components/scenes/SceneCard';
+import type { SceneEntity } from '@/store/entityTypes';
 
 // ── Page Component ────────────────────────────────────────────────────
 
@@ -25,7 +26,7 @@ export default function ScenesPage() {
   const { openRight, expandRight } = useSidePanel();
 
   const handleEdit = useCallback(
-    (scene: Record<string, unknown>) => {
+    (scene: SceneEntity) => {
       openRight(<ScenePanel scene={scene} />);
       expandRight();
     },

@@ -10,7 +10,7 @@
 import {
   Base, Device, DeviceConnection, DevicePower, DeviceAdvanced,
   Scene, Rule, Person, AlarmIncident, Place,
-  Account as AccountCap,
+  Account,
   PairingDevice as PairingDeviceCap, Product,
 } from '@arcus/core';
 
@@ -52,7 +52,11 @@ export type SceneEntity = ArcusEntity & Partial<
   Record<typeof Scene.ATTR_ACTIONS, Array<Record<string, unknown>>> &
   Record<typeof Scene.ATTR_NOTIFICATION, boolean> &
   Record<typeof Scene.ATTR_TEMPLATE, string> &
-  Record<typeof Scene.ATTR_SCHEDULER, string>
+  Record<typeof Scene.ATTR_SCHEDULER, string> &
+  Record<typeof Scene.ATTR_FIRING, boolean> &
+  Record<typeof Scene.ATTR_FILTERUNCHANGED, boolean> &
+  Record<typeof Scene.ATTR_LASTFIRETIME, number> &
+  Record<typeof Scene.ATTR_LASTFIRESTATUS, string>
 >;
 
 /** Rule entity with known rule attributes. */
@@ -145,22 +149,22 @@ export type PlaceData = ArcusPayload
 
 /** Account data from API responses. */
 export type AccountData = ArcusPayload
-  & Record<typeof AccountCap.ATTR_STATE, string>
-  & Record<typeof AccountCap.ATTR_OWNER, string>
+  & Record<typeof Account.ATTR_STATE, string>
+  & Record<typeof Account.ATTR_OWNER, string>
   & Partial<
-    Record<typeof AccountCap.ATTR_TAXEXEMPT, boolean> &
-    Record<typeof AccountCap.ATTR_BILLINGFIRSTNAME, string> &
-    Record<typeof AccountCap.ATTR_BILLINGLASTNAME, string> &
-    Record<typeof AccountCap.ATTR_BILLINGCCTYPE, string> &
-    Record<typeof AccountCap.ATTR_BILLINGCCLAST4, string> &
-    Record<typeof AccountCap.ATTR_BILLINGSTREET1, string> &
-    Record<typeof AccountCap.ATTR_BILLINGSTREET2, string> &
-    Record<typeof AccountCap.ATTR_BILLINGCITY, string> &
-    Record<typeof AccountCap.ATTR_BILLINGSTATE, string> &
-    Record<typeof AccountCap.ATTR_BILLINGZIP, string> &
-    Record<typeof AccountCap.ATTR_BILLINGZIPPLUSFOUR, string> &
-    Record<typeof AccountCap.ATTR_CREATED, number> &
-    Record<typeof AccountCap.ATTR_MODIFIED, number>
+    Record<typeof Account.ATTR_TAXEXEMPT, boolean> &
+    Record<typeof Account.ATTR_BILLINGFIRSTNAME, string> &
+    Record<typeof Account.ATTR_BILLINGLASTNAME, string> &
+    Record<typeof Account.ATTR_BILLINGCCTYPE, string> &
+    Record<typeof Account.ATTR_BILLINGCCLAST4, string> &
+    Record<typeof Account.ATTR_BILLINGSTREET1, string> &
+    Record<typeof Account.ATTR_BILLINGSTREET2, string> &
+    Record<typeof Account.ATTR_BILLINGCITY, string> &
+    Record<typeof Account.ATTR_BILLINGSTATE, string> &
+    Record<typeof Account.ATTR_BILLINGZIP, string> &
+    Record<typeof Account.ATTR_BILLINGZIPPLUSFOUR, string> &
+    Record<typeof Account.ATTR_CREATED, number> &
+    Record<typeof Account.ATTR_MODIFIED, number>
   >;
 
 /** Pairing device data from API responses. */

@@ -6,22 +6,23 @@ import { Base, Scene } from '@arcus/core';
 import { useAppDispatch } from '@/store/hooks';
 import { addNotification } from '@/store/slices/uiSlice';
 import { ControlSwitch } from '@/components/shared/ControlSwitch';
+import type { SceneEntity } from '@/store/entityTypes';
 
 export function SceneCard({
   scene,
   onEdit,
 }: {
-  scene: Record<string, unknown>;
-  onEdit: (scene: Record<string, unknown>) => void;
+  scene: SceneEntity;
+  onEdit: (scene: SceneEntity) => void;
 }) {
   const dispatch = useAppDispatch();
   const [firing, setFiring] = useState(false);
 
-  const name = (scene[Scene.ATTR_NAME] as string) ?? 'Unnamed Scene';
-  const address = scene[Base.ATTR_ADDRESS] as string;
+  const name = scene[Scene.ATTR_NAME] ?? 'Unnamed Scene';
+  const address = scene[Base.ATTR_ADDRESS];
   const enabled = scene[Scene.ATTR_ENABLED] !== false;
   const actionCount = Array.isArray(scene[Scene.ATTR_ACTIONS])
-    ? (scene[Scene.ATTR_ACTIONS] as unknown[]).length
+    ? scene[Scene.ATTR_ACTIONS]?.length
     : 0;
   const hasNotification = scene[Scene.ATTR_NOTIFICATION] === true;
   const hasSchedule = !!scene[Scene.ATTR_SCHEDULER];

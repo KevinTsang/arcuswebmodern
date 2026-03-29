@@ -1,5 +1,6 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import ScenesPage from '@/app/(authenticated)/scenes/page';
+import type { SceneEntity } from '@/store/entityTypes';
 
 // ── Mocks ─────────────────────────────────────────────────────────────
 
@@ -26,7 +27,7 @@ jest.mock('@/components/scenes/ScenePanel', () => ({
 }));
 
 jest.mock('@/components/scenes/SceneCard', () => ({
-  SceneCard: ({ scene, onEdit }: { scene: Record<string, unknown>; onEdit: (s: Record<string, unknown>) => void }) => (
+  SceneCard: ({ scene, onEdit }: { scene: SceneEntity; onEdit: (s: SceneEntity) => void }) => (
     <div data-testid="scene-card">
       <span>{scene['scene:name'] as string}</span>
       <button onClick={() => onEdit(scene)}>Edit</button>
