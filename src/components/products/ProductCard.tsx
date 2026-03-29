@@ -1,23 +1,14 @@
 import { Product as ProductCap } from '@arcus/core';
-
-interface Product {
-  'base:address': string;
-  'product:name': string;
-  'product:vendor': string;
-  'product:shortName'?: string;
-  'product:id': string;
-  'product:hubRequired': boolean;
-  [key: string]: unknown;
-}
+import type { PairingProduct } from '@/store/entityTypes';
 
 interface ProductCardProps {
-  product: Product;
-  onSelect: (product: Product) => void;
+  product: PairingProduct;
+  onSelect: (product: PairingProduct) => void;
 }
 
 export default function ProductCard({ product, onSelect }: ProductCardProps) {
   const name = product[ProductCap.ATTR_NAME] ?? product[ProductCap.ATTR_SHORTNAME] ?? 'Unknown';
-  const vendor = (product[ProductCap.ATTR_VENDOR] as string) ?? '';
+  const vendor = product[ProductCap.ATTR_VENDOR] ?? '';
   const hubRequired = product[ProductCap.ATTR_HUBREQUIRED];
 
   return (

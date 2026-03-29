@@ -9,7 +9,7 @@
 
 import {
   Base, Device, DeviceConnection, DevicePower, DeviceAdvanced,
-  Scene, Rule, Person, AlarmIncident, Place,
+  Scene, Rule, RuleTemplate, Person, AlarmIncident, Place,
   Account,
   PairingDevice as PairingDeviceCap, Product,
 } from '@arcus/core';
@@ -66,6 +66,18 @@ export type RuleEntity = ArcusEntity & Partial<
   Record<typeof Rule.ATTR_STATE, string> &
   Record<typeof Rule.ATTR_TEMPLATE, string> &
   Record<typeof Rule.ATTR_CONTEXT, Record<string, unknown>>
+>;
+
+/** Rule template entity from the platform rule template catalog. */
+export type RuleTemplateEntity = ArcusEntity & Partial<
+  Record<typeof RuleTemplate.ATTR_NAME, string> &
+  Record<typeof RuleTemplate.ATTR_DESCRIPTION, string> &
+  Record<typeof RuleTemplate.ATTR_TEMPLATE, string> &
+  Record<typeof RuleTemplate.ATTR_CATEGORIES, string[]> &
+  Record<typeof RuleTemplate.ATTR_KEYWORDS, string[]> &
+  Record<typeof RuleTemplate.ATTR_SATISFIABLE, boolean> &
+  Record<typeof RuleTemplate.ATTR_PREMIUM, boolean> &
+  Record<typeof RuleTemplate.ATTR_EXTRA, string>
 >;
 
 /** Person entity with known person attributes. */

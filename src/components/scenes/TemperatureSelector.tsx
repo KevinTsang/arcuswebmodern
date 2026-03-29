@@ -1,9 +1,10 @@
 import { cToF } from '@/hooks/useDeviceConfig';
+import type { SelectorValue } from './types';
 
 interface TemperatureSelectorProps {
   name: string;
-  current: unknown;
-  onChange: (key: string, value: unknown) => void;
+  current: SelectorValue | undefined;
+  onChange: (key: string, value: SelectorValue) => void;
 }
 
 export function TemperatureSelector({ name, current, onChange }: TemperatureSelectorProps) {

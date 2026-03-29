@@ -22,8 +22,9 @@ import {
   resolveDeviceConfigurators,
   type DeviceWebConfig,
 } from '../lib/deviceConfig';
+import type { DeviceEntity } from '../store/entityTypes';
 
-type DeviceObj = Record<string, unknown>;
+type DeviceObj = DeviceEntity;
 
 // ── Multi-Switch Instance Helpers ─────────────────────────────────────
 

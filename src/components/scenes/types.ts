@@ -1,3 +1,5 @@
+export type SelectorValue = string | number | boolean;
+
 export enum SelectorType {
   GROUP = 'GROUP',
   LIST = 'LIST',
@@ -12,7 +14,7 @@ export enum SelectorType {
 export interface SelectorDef {
   type: SelectorType | string;
   name: string;
-  value?: unknown;
+  value?: SelectorValue;
   min?: number;
   max?: number;
   step?: number;
@@ -21,7 +23,7 @@ export interface SelectorDef {
 
 export interface SelectorProps {
   sel: SelectorDef;
-  current: unknown;
-  values: Record<string, unknown>;
-  onChange: (key: string, value: unknown) => void;
+  current: SelectorValue | undefined;
+  values: Record<string, SelectorValue>;
+  onChange: (key: string, value: SelectorValue) => void;
 }

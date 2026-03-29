@@ -1,10 +1,11 @@
 import { Thermostat } from '@arcus/core';
 import { cToF } from '@/hooks/useDeviceConfig';
+import type { SelectorValue } from './types';
 
 interface ThermostatSelectorProps {
   name: string;
-  values: Record<string, unknown>;
-  onChange: (key: string, value: unknown) => void;
+  values: Record<string, SelectorValue>;
+  onChange: (key: string, value: SelectorValue) => void;
 }
 
 export function ThermostatSelector({ name, values, onChange }: ThermostatSelectorProps) {

@@ -1,13 +1,13 @@
 import { DeviceRow } from './DeviceRow';
 import type { ResolvedAction, ActionConfig } from './ScenePanel';
-import type { SelectorDef } from './types';
+import type { SelectorDef, SelectorValue } from './types';
 
 interface ActionDeviceConfiguratorProps {
   action: ResolvedAction;
   configuredActions: Map<string, ActionConfig>;
   onBack: () => void;
   onToggleDevice: (action: ResolvedAction, deviceAddr: string, selectors: SelectorDef[]) => void;
-  onDeviceValueChange: (actionId: string, deviceAddr: string, key: string, value: unknown) => void;
+  onDeviceValueChange: (actionId: string, deviceAddr: string, key: string, value: SelectorValue) => void;
 }
 
 export function ActionDeviceConfigurator({
@@ -43,7 +43,7 @@ export function ActionDeviceConfigurator({
               deviceAddr={addr}
               selectors={selectors}
               enabled={enabled}
-              values={values as Record<string, unknown>}
+              values={values}
               onToggle={() => onToggleDevice(action, addr, selectors)}
               onValueChange={(key, value) => onDeviceValueChange(action.id, addr, key, value)}
               fallbackName={action.name}

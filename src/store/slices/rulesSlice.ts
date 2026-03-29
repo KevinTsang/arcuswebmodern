@@ -1,16 +1,16 @@
 import { createSlice, createEntityAdapter, PayloadAction } from '@reduxjs/toolkit';
 import type { RootState } from '../store';
 import { Base } from '@arcus/core';
-import type { RuleEntity, ArcusPayload } from '../entityTypes';
+import type { RuleEntity, RuleTemplateEntity, ArcusPayload } from '../entityTypes';
 
-export type { RuleEntity } from '../entityTypes';
+export type { RuleEntity, RuleTemplateEntity } from '../entityTypes';
 
 const rulesAdapter = createEntityAdapter<RuleEntity>();
 
 const rulesSlice = createSlice({
   name: 'rules',
   initialState: rulesAdapter.getInitialState({
-    ruleTemplates: [] as Record<string, unknown>[],
+    ruleTemplates: [] as RuleTemplateEntity[],
   }),
   reducers: {
     ruleAdded: rulesAdapter.addOne,
@@ -28,7 +28,7 @@ const rulesSlice = createSlice({
       rulesAdapter.removeAll(state);
       state.ruleTemplates = [];
     },
-    setRuleTemplates(state, action: PayloadAction<Record<string, unknown>[]>) {
+    setRuleTemplates(state, action: PayloadAction<RuleTemplateEntity[]>) {
       state.ruleTemplates = action.payload;
     },
   },

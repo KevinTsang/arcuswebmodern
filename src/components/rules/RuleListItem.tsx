@@ -3,18 +3,19 @@ import Bridge from '@arcus/core/bridge';
 import { Base, Rule } from '@arcus/core';
 import { useAppDispatch } from '@/store/hooks';
 import { addNotification } from '@/store/slices/uiSlice';
+import type { RuleEntity } from '@/store/entityTypes';
 
 interface RuleListItemProps {
-  rule: Record<string, unknown>;
-  onEdit: (rule: Record<string, unknown>) => void;
+  rule: RuleEntity;
+  onEdit: (rule: RuleEntity) => void;
 }
 
 export function RuleListItem({ rule, onEdit }: RuleListItemProps) {
   const dispatch = useAppDispatch();
-  const name = (rule[Rule.ATTR_NAME] as string) ?? 'Unnamed Rule';
-  const description = (rule[Rule.ATTR_DESCRIPTION] as string) ?? '';
-  const address = rule[Base.ATTR_ADDRESS] as string;
-  const state = rule[Rule.ATTR_STATE] as string;
+  const name = rule[Rule.ATTR_NAME] ?? 'Unnamed Rule';
+  const description = rule[Rule.ATTR_DESCRIPTION] ?? '';
+  const address = rule[Base.ATTR_ADDRESS];
+  const state = rule[Rule.ATTR_STATE];
   const isEnabled = state === Rule.STATE_ENABLED;
 
   const handleToggle = useCallback(async () => {

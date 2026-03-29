@@ -14,6 +14,7 @@ import {
   Tilt, UltravioletIndex, Valve, WaterHardness, WaterHeater, WaterSoftener, WeatherRadio,
   WiFi,
 } from '@arcus/core';
+import type { DeviceEntity } from '@/store/entityTypes';
 
 // ── Types ─────────────────────────────────────────────────────────────
 
@@ -47,7 +48,7 @@ export interface DeviceWebConfig {
   'web:dev:scheduleConfig': string | null;
 }
 
-type DeviceObj = Record<string, unknown>;
+type DeviceObj = DeviceEntity;
 type BadgeFn = (device: DeviceObj) => string[];
 type ConfiguratorFn = (device: DeviceObj) => string[];
 

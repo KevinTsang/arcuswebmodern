@@ -10,6 +10,7 @@
 import { Base } from '@arcus/core';
 import { useDoorsLocksSubsystem } from '@/hooks/useSubsystem';
 import { DevicePanel } from '@/components/devices';
+import type { DeviceEntity } from '@/store/entityTypes';
 
 export function DoorsLocksView() {
   const { locks, motorized, contacts, petDoors, unlockedCount, openCount, totalDevices } =
@@ -68,7 +69,7 @@ export function DoorsLocksView() {
   );
 }
 
-function DeviceSection({ title, devices }: { title: string; devices: Array<{ id: string; 'base:address': string; [key: string]: unknown }> }) {
+function DeviceSection({ title, devices }: { title: string; devices: DeviceEntity[] }) {
   return (
     <div>
       <h3 className="text-sm font-medium text-swift mb-3">{title}</h3>

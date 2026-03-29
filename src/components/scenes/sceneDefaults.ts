@@ -1,4 +1,5 @@
-import { SelectorType, type SelectorDef } from './types';
+import { SelectorType, type SelectorDef, type SelectorValue } from './types';
+import type { DeviceEntity } from '@/store/entityTypes';
 
 /** Maps selector names to device attribute keys for reading live state. */
 enum DeviceAttr {
@@ -17,8 +18,8 @@ enum DeviceAttr {
 
 export function getDeviceValue(
   selName: string,
-  device: Record<string, unknown>,
-): unknown | undefined {
+  device: DeviceEntity,
+): SelectorValue | undefined {
   // Special case: vent derives a state from a numeric level
   if (selName === 'vent') {
     const level = device['vent:level'] as number | undefined;
@@ -34,7 +35,7 @@ export function getDeviceValue(
   return undefined;
 }
 
-export function getTypeFallback(sel: SelectorDef): unknown | undefined {
+export function getTypeFallback(sel: SelectorDef): SelectorValue | undefined {
   switch (sel.type) {
     case SelectorType.GROUP:
     case SelectorType.LIST:
@@ -55,9 +56,9 @@ export function getTypeFallback(sel: SelectorDef): unknown | undefined {
 
 export function getDefaultValues(
   selectors: SelectorDef[],
-  device: Record<string, unknown> | undefined,
-): Record<string, unknown> {
-  const defaults: Record<string, unknown> = {};
+  device: DeviceEntity | undefined,
+): Record<string, SelectorValue> {
+  const defaults: Record<string, SelectorValue> = {};
   for (const sel of selectors) {
     if (device) {
       const live = getDeviceValue(sel.name, device);

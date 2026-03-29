@@ -3,7 +3,7 @@ import { Device, Scene } from '@arcus/core';
 import { useAppSelector } from '@/store/hooks';
 import { selectAllDevices } from '@/store/slices/devicesSlice';
 import { selectAllScenes } from '@/store/slices/scenesSlice';
-import type { SceneEntity } from '@/store/entityTypes';
+import type { DeviceEntity, SceneEntity } from '@/store/entityTypes';
 import CardShell from './CardShell';
 
 export default function FavoritesCard() {
@@ -45,8 +45,8 @@ export default function FavoritesCard() {
   );
 }
 
-function FavoriteDeviceChip({ device }: { device: Record<string, unknown> }) {
-  const name = (device[Device.ATTR_NAME] as string) ?? 'Device';
+function FavoriteDeviceChip({ device }: { device: DeviceEntity }) {
+  const name = device[Device.ATTR_NAME] ?? 'Device';
   return (
     <div className="flex-shrink-0 w-28 text-center p-2 border border-heron rounded-[var(--border-radius-base)]">
       <div className="w-10 h-10 bg-pigeon/50 rounded-full flex items-center justify-center mx-auto mb-1">

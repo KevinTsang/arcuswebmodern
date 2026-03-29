@@ -3,6 +3,7 @@ import { useAppSelector } from '@/store/hooks';
 import { useSidePanel } from '@/components/SidePanel';
 import { Accordion, AccordionPanel } from '@/components/shared/Accordion';
 import { RulePanel } from './RulePanel';
+import type { RuleTemplateEntity } from '@/store/entityTypes';
 
 interface RulesLibraryProps {
   placeId: string;
@@ -14,7 +15,7 @@ export function RulesLibrary({ placeId }: RulesLibraryProps) {
 
   // Group templates by category
   const categories = useMemo(() => {
-    const map = new Map<string, Record<string, unknown>[]>();
+    const map = new Map<string, RuleTemplateEntity[]>();
     for (const tmpl of ruleTemplates) {
       const cats = tmpl['ruletmpl:categories'] as string[] | undefined;
       if (cats) {
@@ -29,7 +30,7 @@ export function RulesLibrary({ placeId }: RulesLibraryProps) {
   }, [ruleTemplates]);
 
   const handleTemplateClick = useCallback(
-    (tmpl: Record<string, unknown>) => {
+    (tmpl: RuleTemplateEntity) => {
       openRight(<RulePanel template={tmpl} placeId={placeId} />);
     },
     [openRight, placeId],

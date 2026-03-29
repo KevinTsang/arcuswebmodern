@@ -9,7 +9,7 @@ import { ActionCategoryList } from './ActionCategoryList';
 import { ActionDeviceConfigurator } from './ActionDeviceConfigurator';
 import { resolveSceneActions } from './resolveSceneActions';
 import type { ResolvedAction } from './resolveSceneActions';
-import type { SelectorDef } from './types';
+import type { SelectorDef, SelectorValue } from './types';
 import type { SceneEntity } from '@/store/entityTypes';
 
 export type { ResolvedAction } from './resolveSceneActions';
@@ -105,7 +105,7 @@ export function ScenePanel({ scene }: ScenePanelProps) {
     });
   }, []);
 
-  const handleDeviceValueChange = useCallback((actionId: string, deviceAddr: string, key: string, value: unknown) => {
+  const handleDeviceValueChange = useCallback((actionId: string, deviceAddr: string, key: string, value: SelectorValue) => {
     setConfiguredActions((prev) => {
       const next = new Map(prev);
       const existing = next.get(actionId);

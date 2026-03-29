@@ -7,6 +7,7 @@ import { useSidePanel } from '@/components/SidePanel';
 import { RuleSelectorSection } from './RuleSelectorSection';
 import type { ResolvedSelector } from './RuleSelectorSection';
 import type { ResolveResponse, ServerSelector, ServerOptionTuple } from './types';
+import type { RuleEntity, RuleTemplateEntity } from '@/store/entityTypes';
 
 type TemplateSegment = { type: 'text'; text: string } | { type: 'variable'; text: string; name: string };
 
@@ -29,8 +30,8 @@ export function parseTemplateString(template: string): TemplateSegment[] {
 }
 
 interface RulePanelProps {
-  rule?: Record<string, unknown>;
-  template?: Record<string, unknown>;
+  rule?: RuleEntity;
+  template?: RuleTemplateEntity;
   placeId: string;
 }
 

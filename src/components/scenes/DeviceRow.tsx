@@ -4,16 +4,16 @@ import { useAppSelector } from '@/store/hooks';
 import { selectDeviceByAddress } from '@/store/slices/devicesSlice';
 import { getSwitchInstances, formatInstanceName } from '@/hooks/useDeviceConfig';
 import { SceneDeviceConfigurator } from './SceneDeviceConfigurator';
-import type { SelectorDef } from './types';
+import type { SelectorDef, SelectorValue } from './types';
 import { SelectorType } from './types';
 
 interface DeviceRowProps {
   deviceAddr: string;
   selectors: SelectorDef[];
   enabled: boolean;
-  values: Record<string, unknown>;
+  values: Record<string, SelectorValue>;
   onToggle: () => void;
-  onValueChange: (key: string, value: unknown) => void;
+  onValueChange: (key: string, value: SelectorValue) => void;
   fallbackName?: string;
 }
 

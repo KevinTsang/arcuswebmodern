@@ -11,6 +11,4 @@ export interface ServerSelector {
 /** The response shape from ruletmpl:Resolve — selectors keyed by template variable name. */
 export interface ResolveResponse {
   selectors?: Record<string, ServerSelector>;
-  /** Selectors may also appear at the top level (without a wrapper key). */
-  [key: string]: unknown;
 }

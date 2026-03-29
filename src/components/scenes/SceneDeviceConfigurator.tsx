@@ -1,4 +1,4 @@
-import { SelectorType, type SelectorDef } from './types';
+import { SelectorType, type SelectorDef, type SelectorValue } from './types';
 import { GroupSelector } from './GroupSelector';
 import { ListSelector } from './ListSelector';
 import { PercentSelector } from './PercentSelector';
@@ -12,9 +12,9 @@ export { type SelectorDef, SelectorType } from './types';
 
 function renderSelector(
   sel: SelectorDef,
-  current: unknown,
-  values: Record<string, unknown>,
-  onChange: (key: string, value: unknown) => void,
+  current: SelectorValue | undefined,
+  values: Record<string, SelectorValue>,
+  onChange: (key: string, value: SelectorValue) => void,
 ) {
   const props = { sel, current, values, onChange };
 
@@ -47,8 +47,8 @@ export function SceneDeviceConfigurator({
   instanceLabels,
 }: {
   selectors: SelectorDef[];
-  values: Record<string, unknown>;
-  onChange: (key: string, value: unknown) => void;
+  values: Record<string, SelectorValue>;
+  onChange: (key: string, value: SelectorValue) => void;
   instanceLabels?: Record<string, string>;
 }) {
   return (

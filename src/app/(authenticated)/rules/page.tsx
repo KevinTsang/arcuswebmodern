@@ -11,6 +11,7 @@ import { useState, useCallback } from 'react';
 import { Place } from '@arcus/core';
 import { useAppSelector } from '@/store/hooks';
 import { selectAllRules } from '@/store/slices/rulesSlice';
+import type { RuleEntity } from '@/store/entityTypes';
 import { useSidePanel } from '@/components/SidePanel';
 import { RulePanel } from '@/components/rules/RulePanel';
 import { RuleListItem } from '@/components/rules/RuleListItem';
@@ -30,7 +31,7 @@ export default function RulesPage() {
   const { openRight } = useSidePanel();
 
   const handleEdit = useCallback(
-    (rule: Record<string, unknown>) => {
+    (rule: RuleEntity) => {
       openRight(<RulePanel rule={rule} placeId={placeId} />);
     },
     [openRight, placeId],

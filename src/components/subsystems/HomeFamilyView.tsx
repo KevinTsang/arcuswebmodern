@@ -9,6 +9,7 @@
 
 import { Person } from '@arcus/core';
 import { useHomeFamilySubsystem } from '@/hooks/useSubsystem';
+import type { PersonEntity } from '@/store/entityTypes';
 
 export function HomeFamilyView() {
   const { peopleAtHome, peopleAway, devicesAtHomeCount, devicesAwayCount } =
@@ -66,7 +67,7 @@ function PersonList({
   status,
 }: {
   title: string;
-  people: Array<Record<string, unknown>>;
+  people: PersonEntity[];
   status: 'home' | 'away';
 }) {
   return (
@@ -74,8 +75,8 @@ function PersonList({
       <h3 className="text-sm font-medium text-swift mb-3">{title}</h3>
       <div className="space-y-2">
         {people.map((person) => {
-          const name = ((person[Person.ATTR_FIRSTNAME] as string) ?? '') + ' ' + ((person[Person.ATTR_LASTNAME] as string) ?? '');
-          const email = (person[Person.ATTR_EMAIL] as string) ?? '';
+          const name = (person[Person.ATTR_FIRSTNAME] ?? '') + ' ' + (person[Person.ATTR_LASTNAME] ?? '');
+          const email = person[Person.ATTR_EMAIL] ?? '';
           return (
             <div
               key={person.id as string}

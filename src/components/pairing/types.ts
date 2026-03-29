@@ -6,6 +6,5 @@ export interface PairingStep {
   order: number;
   instructions: string[];
   title?: string;
-  [key: string]: unknown;
 }
 

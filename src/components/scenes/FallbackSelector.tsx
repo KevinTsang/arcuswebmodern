@@ -1,6 +1,8 @@
+import type { SelectorValue } from './types';
+
 interface FallbackSelectorProps {
   name: string;
-  current: unknown;
+  current: SelectorValue | undefined;
 }
 
 export function FallbackSelector({ name, current }: FallbackSelectorProps) {
