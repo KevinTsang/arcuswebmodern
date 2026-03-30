@@ -27,7 +27,7 @@ export default function AuthProvider({
   const dispatch = useAppDispatch();
   const router = useRouter();
   const pathname = usePathname();
-  const { authenticating, authenticated } = useAppSelector((s) => s.auth);
+  const { authenticating, authenticated, sessionExpired } = useAppSelector((s) => s.auth);
   // Track whether authenticating has ever been true (thunk has started)
   const hasStartedAuth = useRef(false);
   if (authenticating) {
@@ -44,9 +44,17 @@ export default function AuthProvider({
     // Only redirect after the auth attempt has started and then completed
     if (!hasStartedAuth.current) return;
     if (!authenticating && !authenticated && !isPublicRoute(pathname)) {
-      router.replace('/login');
+      const params = new URLSearchParams();
+      if (sessionExpired) {
+        params.set('expired', '1');
+      }
+      if (pathname !== '/') {
+        params.set('redirect', pathname);
+      }
+      const query = params.toString();
+      router.replace(`/login${query ? `?${query}` : ''}`);
     }
-  }, [authenticating, authenticated, pathname, router]);
+  }, [authenticating, authenticated, sessionExpired, pathname, router]);
 
   // While authenticating (or before auth has started), show a loading state (unless on a public page)
   if (!authenticated && !isPublicRoute(pathname)) {

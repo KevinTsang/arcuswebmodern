@@ -3,6 +3,7 @@ import reducer, {
   loginSuccess,
   loginFailed,
   logout,
+  sessionExpired,
   type AuthState,
 } from '@/store/slices/authSlice';
 import { Base, Person, Account } from '@arcus/core';
@@ -10,7 +11,7 @@ import { Base, Person, Account } from '@arcus/core';
 const initial: AuthState = {
   authenticating: false,
   authenticated: false,
-  sessionToken: null,
+  sessionExpired: false,
   person: null,
   account: null,
 };
@@ -49,7 +50,6 @@ describe('authSlice', () => {
     expect(state.authenticating).toBe(false);
     expect(state.person).toBeNull();
     expect(state.account).toBeNull();
-    expect(state.sessionToken).toBeNull();
   });
 
   it('logout clears state', () => {
@@ -59,5 +59,28 @@ describe('authSlice', () => {
     }));
     const state = reducer(logged, logout());
     expect(state).toEqual(initial);
+  });
+
+  it('sessionExpired clears auth and sets sessionExpired flag', () => {
+    const logged = reducer(initial, loginSuccess({
+      person: { name: 'Test' },
+      account: { state: 'ACTIVE' },
+    }));
+    const state = reducer(logged, sessionExpired());
+    expect(state.authenticated).toBe(false);
+    expect(state.sessionExpired).toBe(true);
+    expect(state.person).toBeNull();
+    expect(state.account).toBeNull();
+  });
+
+  it('loginSuccess clears sessionExpired flag', () => {
+    const expired = reducer(initial, sessionExpired());
+    expect(expired.sessionExpired).toBe(true);
+    const state = reducer(expired, loginSuccess({
+      person: { name: 'Test' },
+      account: { state: 'ACTIVE' },
+    }));
+    expect(state.sessionExpired).toBe(false);
+    expect(state.authenticated).toBe(true);
   });
 });

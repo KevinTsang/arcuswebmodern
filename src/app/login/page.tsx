@@ -67,6 +67,7 @@ function LoginForm() {
   const dispatch = useAppDispatch();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const expired = searchParams.get('expired') === '1';
   const [emailAddress, setEmailAddress] = useState('');
   const [password, setPassword] = useState('');
   const [isPublic, setIsPublic] = useState(false);
@@ -109,6 +110,11 @@ function LoginForm() {
 
   return (
     <form onSubmit={handleSubmit} className="w-full max-w-sm">
+      {expired && (
+        <div className="mb-4 rounded-[var(--border-radius-base)] border border-heron bg-pigeon px-4 py-3 text-sm text-swift">
+          Your session has expired. Please log in again.
+        </div>
+      )}
       {form.formError && (
         <div className="mb-4 text-cardinal text-sm">{form.formError}</div>
       )}

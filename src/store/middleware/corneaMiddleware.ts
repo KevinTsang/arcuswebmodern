@@ -12,7 +12,7 @@ import cornea from '@arcus/core/cornea';
 import propertyAliases from '@arcus/core/property-aliases';
 import { Base, Person, AlarmIncident } from '@arcus/core';
 import type { ArcusPayload, PlaceData } from '../entityTypes';
-import { loginSuccess, logout } from '../slices/authSlice';
+import { loginSuccess, logout, sessionExpired } from '../slices/authSlice';
 import { deviceAdded, deviceUpdated, deviceRemoved } from '../slices/devicesSlice';
 import { subsystemAdded, subsystemUpdated, subsystemRemoved } from '../slices/subsystemsSlice';
 import { ruleAdded, ruleUpdated, ruleRemoved } from '../slices/rulesSlice';
@@ -223,9 +223,9 @@ function subscribeToCorneaEvents(dispatch: (action: { type: string }) => void, g
     () => cornea.off(`place ${Person.EVENT_INVITATIONCANCELLED}`, onInvitationCancelled),
   );
 
-  // Session unauthorized — triggers logout
+  // Session unauthorized — marks session as expired and clears auth state
   const onUnauthorized = () => {
-    dispatch(logout());
+    dispatch(sessionExpired());
   };
 
   cornea.on('sess unauthorized', onUnauthorized);
@@ -254,8 +254,8 @@ export const corneaMiddleware: Middleware = (storeApi) => (next) => (action) => 
     subscribeToCorneaEvents(storeApi.dispatch, storeApi.getState);
   }
 
-  // After logout is dispatched, unsubscribe from Cornea events
-  if (logout.match(action)) {
+  // After logout or session expiry, unsubscribe from Cornea events
+  if (logout.match(action) || sessionExpired.match(action)) {
     unsubscribeFromCorneaEvents();
   }
 
