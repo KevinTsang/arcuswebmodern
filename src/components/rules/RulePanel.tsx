@@ -114,12 +114,25 @@ export function RulePanel({ rule, template, placeId }: RulePanelProps) {
   const selectorKeys = Object.keys(selectors);
   const allFilled = selectorKeys.length > 0 && selectorKeys.every((k) => context[k]);
 
+  /** Replace ${variable} placeholders with the selected option's display name. */
+  const resolveDescription = useCallback((): string => {
+    return templateString.replace(/\$\{([^}]+)\}/g, (_match, varName: string) => {
+      const value = context[varName];
+      if (!value) return varName;
+      const option = selectors[varName]?.options.find((o) => o.value === value);
+      return option?.name ?? value;
+    });
+  }, [templateString, context, selectors]);
+
   const handleSave = useCallback(async () => {
     if (!name.trim()) return;
     setSaving(true);
     try {
       if (isEdit && address) {
-        await Bridge.request(Base.CMD_SETATTRIBUTES, address, { [Rule.ATTR_NAME]: name.trim() });
+        await Bridge.request(Base.CMD_SETATTRIBUTES, address, {
+          [Rule.ATTR_NAME]: name.trim(),
+          [Rule.ATTR_DESCRIPTION]: resolveDescription(),
+        });
         if (selectorKeys.length > 0) {
           const updateContext: Record<string, string> = {};
           for (const key of selectorKeys) {
@@ -136,7 +149,7 @@ export function RulePanel({ rule, template, placeId }: RulePanelProps) {
         await Bridge.request(RuleTemplate.CMD_CREATERULE, templateAddress, {
           placeId,
           name: name.trim(),
-          description: templateString,
+          description: resolveDescription(),
           context,
         });
         dispatch(addNotification({ type: 'success', message: 'Rule created' }));
@@ -146,7 +159,7 @@ export function RulePanel({ rule, template, placeId }: RulePanelProps) {
       dispatch(addNotification({ type: 'error', message: isEdit ? 'Failed to save rule' : 'Failed to create rule' }));
     }
     setSaving(false);
-  }, [isEdit, address, name, templateAddress, placeId, templateString, context, allFilled, selectorKeys, resolvedTemplate, dispatch, closeRight]);
+  }, [isEdit, address, name, templateAddress, placeId, context, allFilled, selectorKeys, resolvedTemplate, resolveDescription, dispatch, closeRight]);
 
   const handleDelete = useCallback(async () => {
     if (!address) return;

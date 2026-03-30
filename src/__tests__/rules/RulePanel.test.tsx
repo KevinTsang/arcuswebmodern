@@ -224,6 +224,7 @@ describe('RulePanel (create mode)', () => {
         expect.objectContaining({
           placeId: 'place-1',
           name: 'Chime on Button Press',
+          description: 'When Smart Button 1 is pressed, play Ding Dong',
           context: { button: 'DRIV:dev:btn-1', chime: 'DING_DONG' },
         }),
       );
@@ -316,7 +317,10 @@ describe('RulePanel (edit mode)', () => {
       expect(mockBridge).toHaveBeenCalledWith(
         Base.CMD_SETATTRIBUTES,
         'SERV:rule:place-1.1',
-        { [Rule.ATTR_NAME]: 'Door Bell Button' },
+        {
+          [Rule.ATTR_NAME]: 'Door Bell Button',
+          [Rule.ATTR_DESCRIPTION]: 'When Smart Button 1 is pressed, play Ding Dong',
+        },
       );
       expect(mockBridge).toHaveBeenCalledWith(
         Rule.CMD_UPDATECONTEXT,
