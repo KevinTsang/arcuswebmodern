@@ -1,5 +1,11 @@
 # Arcus Web Modern — Development Guidelines
 
+## Arcus Web Modern - Claude instructions
+The project has the following key documents:
+- [PRD](PRD.md): The goal of the project and the planned features
+
+Always start by reading PRD.md to understand the scope of work remaining. Update the PRD after a feature is complete.
+
 ## Project Overview
 
 Next.js 16 + React 19 smart-home web client. Uses Redux Toolkit for state, Tailwind CSS v4 for styling, Jest 30 + React Testing Library for unit tests, and Cypress for E2E tests.
@@ -130,6 +136,10 @@ npm run lint              # ESLint
 npm run test:e2e          # Cypress E2E (headless)
 npm run test:e2e:open     # Cypress E2E (interactive)
 ```
+
+## Feature Parity
+
+See [`PRD.md`](./PRD.md) for a detailed comparison of this project against the legacy client (`~/arcusweb`). It catalogs every feature area with **Done** / **Partial** / **Missing** status and a prioritized list of remaining gaps.
 
 ## Code Conventions
 
