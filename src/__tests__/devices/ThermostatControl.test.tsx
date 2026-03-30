@@ -1,9 +1,10 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { Thermostat } from '@arcus/core';
+import { Base, Thermostat } from '@arcus/core';
 import ThermostatControl from '@/components/devices/ThermostatControl';
+import type { DeviceEntity } from '@/store/entityTypes';
 
 const mockSetAttribute = jest.fn().mockResolvedValue(undefined);
-let mockDevice: Record<string, unknown> = {};
+let mockDevice: DeviceEntity = { id: 'DRIV:dev:test', [Base.ATTR_ADDRESS]: 'DRIV:dev:test' };
 
 jest.mock('@/hooks/useDeviceCapability', () => ({
   useDevice: () => mockDevice,
@@ -27,13 +28,15 @@ const f75 = (75 - 32) * 5 / 9;
 
 describe('ThermostatControl', () => {
   it('renders "Off" when HVAC mode is OFF', () => {
-    mockDevice = { [Thermostat.ATTR_HVACMODE]: Thermostat.HVACMODE_OFF };
+    mockDevice = { id: 'DRIV:dev:test', [Base.ATTR_ADDRESS]: 'DRIV:dev:test', [Thermostat.ATTR_HVACMODE]: Thermostat.HVACMODE_OFF };
     render(<ThermostatControl address="DRIV:dev:test" />);
     expect(screen.getByText('Off')).toBeInTheDocument();
   });
 
   it('renders heat setpoint in HEAT mode', () => {
     mockDevice = {
+      id: 'DRIV:dev:test',
+      [Base.ATTR_ADDRESS]: 'DRIV:dev:test',
       [Thermostat.ATTR_HVACMODE]: Thermostat.HVACMODE_HEAT,
       [Thermostat.ATTR_HEATSETPOINT]: f70,
     };
@@ -43,6 +46,8 @@ describe('ThermostatControl', () => {
 
   it('renders cool setpoint in COOL mode', () => {
     mockDevice = {
+      id: 'DRIV:dev:test',
+      [Base.ATTR_ADDRESS]: 'DRIV:dev:test',
       [Thermostat.ATTR_HVACMODE]: Thermostat.HVACMODE_COOL,
       [Thermostat.ATTR_COOLSETPOINT]: f75,
     };
@@ -52,6 +57,8 @@ describe('ThermostatControl', () => {
 
   it('renders both setpoints in AUTO mode', () => {
     mockDevice = {
+      id: 'DRIV:dev:test',
+      [Base.ATTR_ADDRESS]: 'DRIV:dev:test',
       [Thermostat.ATTR_HVACMODE]: Thermostat.HVACMODE_AUTO,
       [Thermostat.ATTR_HEATSETPOINT]: f70,
       [Thermostat.ATTR_COOLSETPOINT]: f75,
@@ -64,6 +71,8 @@ describe('ThermostatControl', () => {
 
   it('increments heat setpoint', async () => {
     mockDevice = {
+      id: 'DRIV:dev:test',
+      [Base.ATTR_ADDRESS]: 'DRIV:dev:test',
       [Thermostat.ATTR_HVACMODE]: Thermostat.HVACMODE_HEAT,
       [Thermostat.ATTR_HEATSETPOINT]: f70,
     };
@@ -81,6 +90,8 @@ describe('ThermostatControl', () => {
 
   it('decrements heat setpoint', async () => {
     mockDevice = {
+      id: 'DRIV:dev:test',
+      [Base.ATTR_ADDRESS]: 'DRIV:dev:test',
       [Thermostat.ATTR_HVACMODE]: Thermostat.HVACMODE_HEAT,
       [Thermostat.ATTR_HEATSETPOINT]: f70,
     };
@@ -98,6 +109,8 @@ describe('ThermostatControl', () => {
 
   it('increments cool setpoint', async () => {
     mockDevice = {
+      id: 'DRIV:dev:test',
+      [Base.ATTR_ADDRESS]: 'DRIV:dev:test',
       [Thermostat.ATTR_HVACMODE]: Thermostat.HVACMODE_COOL,
       [Thermostat.ATTR_COOLSETPOINT]: f75,
     };
@@ -115,6 +128,8 @@ describe('ThermostatControl', () => {
 
   it('decrements cool setpoint', async () => {
     mockDevice = {
+      id: 'DRIV:dev:test',
+      [Base.ATTR_ADDRESS]: 'DRIV:dev:test',
       [Thermostat.ATTR_HVACMODE]: Thermostat.HVACMODE_COOL,
       [Thermostat.ATTR_COOLSETPOINT]: f75,
     };

@@ -1,5 +1,7 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import HomePage from '@/app/(authenticated)/home/page';
+import { Base, Device, Scene, Place } from '@arcus/core';
+import type { DeviceEntity, SceneEntity, SubsystemEntity, IncidentEntity, PersonEntity, PlaceData } from '@/store/entityTypes';
 
 // ── Mocks ─────────────────────────────────────────────────────────────
 
@@ -26,14 +28,14 @@ jest.mock('@/components/devices', () => ({
 
 // ── Store state ───────────────────────────────────────────────────────
 
-let mockPlace: Record<string, unknown> | null = null;
+let mockPlace: Partial<PlaceData> | null = null;
 let mockPlaceId: string | null = null;
 let mockPreferences: Record<string, unknown> | null = null;
-let mockDevices: Record<string, unknown>[] = [];
-let mockScenes: Record<string, unknown>[] = [];
-let mockSubsystems: Record<string, unknown>[] = [];
-let mockIncidents: Record<string, unknown>[] = [];
-let mockPeople: Record<string, unknown>[] = [];
+let mockDevices: DeviceEntity[] = [];
+let mockScenes: SceneEntity[] = [];
+let mockSubsystems: SubsystemEntity[] = [];
+let mockIncidents: IncidentEntity[] = [];
+let mockPeople: PersonEntity[] = [];
 
 jest.mock('@/store/hooks', () => ({
   useAppDispatch: () => jest.fn(),
@@ -87,7 +89,7 @@ jest.mock('@/store/slices/peopleSlice', () => ({
 
 beforeEach(() => {
   jest.clearAllMocks();
-  mockPlace = { 'place:name': 'Test Home' };
+  mockPlace = { [Place.ATTR_NAME]: 'Test Home' };
   mockPlaceId = 'place-1';
   mockPreferences = null;
   mockDevices = [];
@@ -146,7 +148,7 @@ describe('HomePage – history', () => {
   it('fetches dashboard history on mount', () => {
     render(<HomePage />);
     expect(mockBridgeRequest).toHaveBeenCalledWith(
-      'place:ListDashboardEntries',
+      Place.CMD_LISTDASHBOARDENTRIES,
       'SERV:place:place-1',
       { limit: 5 },
     );
@@ -183,7 +185,7 @@ describe('HomePage – Favorites card', () => {
 
   it('shows favorite devices', () => {
     mockDevices = [
-      { 'base:address': 'DRIV:dev:d1', 'dev:name': 'Bedroom Light', 'dev:favorite': true, id: 'd1' },
+      { [Base.ATTR_ADDRESS]: 'DRIV:dev:d1', [Device.ATTR_NAME]: 'Bedroom Light', 'dev:favorite': true, id: 'd1' },
     ];
     render(<HomePage />);
     expect(screen.getByText('Bedroom Light')).toBeInTheDocument();
@@ -192,7 +194,7 @@ describe('HomePage – Favorites card', () => {
 
   it('shows favorite scenes', () => {
     mockScenes = [
-      { 'base:address': 'SERV:scene:s1', 'scene:name': 'Goodnight', 'scene:favorite': true, id: 's1' },
+      { [Base.ATTR_ADDRESS]: 'SERV:scene:s1', [Scene.ATTR_NAME]: 'Goodnight', 'scene:favorite': true, id: 's1' },
     ];
     render(<HomePage />);
     expect(screen.getByText('Goodnight')).toBeInTheDocument();
@@ -200,8 +202,8 @@ describe('HomePage – Favorites card', () => {
 
   it('shows plural count for multiple favorites', () => {
     mockDevices = [
-      { 'base:address': 'DRIV:dev:d1', 'dev:name': 'Light 1', 'dev:favorite': true, id: 'd1' },
-      { 'base:address': 'DRIV:dev:d2', 'dev:name': 'Light 2', 'dev:favorite': true, id: 'd2' },
+      { [Base.ATTR_ADDRESS]: 'DRIV:dev:d1', [Device.ATTR_NAME]: 'Light 1', 'dev:favorite': true, id: 'd1' },
+      { [Base.ATTR_ADDRESS]: 'DRIV:dev:d2', [Device.ATTR_NAME]: 'Light 2', 'dev:favorite': true, id: 'd2' },
     ];
     render(<HomePage />);
     expect(screen.getByText('2 favorites')).toBeInTheDocument();
@@ -211,7 +213,7 @@ describe('HomePage – Favorites card', () => {
 describe('HomePage – Alarms card', () => {
   beforeEach(() => {
     mockSubsystems = [
-      { 'base:address': 'SERV:subalarm:place-1', 'subs:available': true },
+      { id: 'SERV:subalarm:place-1', [Base.ATTR_ADDRESS]: 'SERV:subalarm:place-1', 'subs:available': true },
     ];
   });
 
@@ -227,7 +229,7 @@ describe('HomePage – Alarms card', () => {
 
   it('shows active alarm when incident is ALERT', () => {
     mockIncidents = [
-      { 'incident:alertState': 'ALERT', 'incident:alert': 'Smoke detected' },
+      { id: 'inc-1', [Base.ATTR_ADDRESS]: 'SERV:incident:inc-1', 'incident:alertState': 'ALERT', 'incident:alert': 'Smoke detected' },
     ];
     render(<HomePage />);
     expect(screen.getByText('Alarm Active')).toBeInTheDocument();
@@ -255,7 +257,7 @@ describe('HomePage – card visibility', () => {
 
   it('renders Climate card when climate subsystem exists', () => {
     mockSubsystems = [
-      { 'base:address': 'SERV:subclimate:place-1', 'subs:available': true },
+      { id: 'SERV:subclimate:place-1', [Base.ATTR_ADDRESS]: 'SERV:subclimate:place-1', 'subs:available': true },
     ];
     render(<HomePage />);
     expect(screen.getByText('Climate')).toBeInTheDocument();
@@ -263,7 +265,7 @@ describe('HomePage – card visibility', () => {
 
   it('renders Doors & Locks card when subsystem exists', () => {
     mockSubsystems = [
-      { 'base:address': 'SERV:subdoorsnlocks:place-1', 'subs:available': true },
+      { id: 'SERV:subdoorsnlocks:place-1', [Base.ATTR_ADDRESS]: 'SERV:subdoorsnlocks:place-1', 'subs:available': true },
     ];
     render(<HomePage />);
     expect(screen.getByText('Doors & Locks')).toBeInTheDocument();
@@ -271,7 +273,7 @@ describe('HomePage – card visibility', () => {
 
   it('renders Cameras card when subsystem exists', () => {
     mockSubsystems = [
-      { 'base:address': 'SERV:subcameras:place-1', 'subs:available': true },
+      { id: 'SERV:subcameras:place-1', [Base.ATTR_ADDRESS]: 'SERV:subcameras:place-1', 'subs:available': true },
     ];
     render(<HomePage />);
     expect(screen.getByText('Cameras')).toBeInTheDocument();
@@ -279,7 +281,7 @@ describe('HomePage – card visibility', () => {
 
   it('renders Care card when subsystem exists', () => {
     mockSubsystems = [
-      { 'base:address': 'SERV:subcare:place-1', 'subs:available': true },
+      { id: 'SERV:subcare:place-1', [Base.ATTR_ADDRESS]: 'SERV:subcare:place-1', 'subs:available': true },
     ];
     render(<HomePage />);
     expect(screen.getByText('Care')).toBeInTheDocument();
@@ -287,7 +289,7 @@ describe('HomePage – card visibility', () => {
 
   it('renders Home & Family card when subsystem exists', () => {
     mockSubsystems = [
-      { 'base:address': 'SERV:subpresence:place-1', 'subs:available': true },
+      { id: 'SERV:subpresence:place-1', [Base.ATTR_ADDRESS]: 'SERV:subpresence:place-1', 'subs:available': true },
     ];
     render(<HomePage />);
     expect(screen.getByText('Home & Family')).toBeInTheDocument();
@@ -295,7 +297,7 @@ describe('HomePage – card visibility', () => {
 
   it('renders Lights & Switches card when subsystem exists', () => {
     mockSubsystems = [
-      { 'base:address': 'SERV:sublightsnswitches:place-1', 'subs:available': true },
+      { id: 'SERV:sublightsnswitches:place-1', [Base.ATTR_ADDRESS]: 'SERV:sublightsnswitches:place-1', 'subs:available': true },
     ];
     render(<HomePage />);
     expect(screen.getByText('Lights & Switches')).toBeInTheDocument();
@@ -303,7 +305,7 @@ describe('HomePage – card visibility', () => {
 
   it('renders Water card when subsystem exists', () => {
     mockSubsystems = [
-      { 'base:address': 'SERV:subwater:place-1', 'subs:available': true },
+      { id: 'SERV:subwater:place-1', [Base.ATTR_ADDRESS]: 'SERV:subwater:place-1', 'subs:available': true },
     ];
     render(<HomePage />);
     expect(screen.getByText('Water')).toBeInTheDocument();
@@ -313,7 +315,7 @@ describe('HomePage – card visibility', () => {
 describe('HomePage – card ordering from preferences', () => {
   it('hides cards marked as hideCard in preferences', () => {
     mockSubsystems = [
-      { 'base:address': 'SERV:subclimate:place-1', 'subs:available': true },
+      { id: 'SERV:subclimate:place-1', [Base.ATTR_ADDRESS]: 'SERV:subclimate:place-1', 'subs:available': true },
     ];
     mockPreferences = {
       dashboardCards: [
@@ -329,18 +331,18 @@ describe('HomePage – card ordering from preferences', () => {
 
 describe('HomePage – Pro Monitoring badge', () => {
   it('shows Pro badge when service level includes PROMON', () => {
-    mockPlace = { 'place:name': 'Test Home', 'place:serviceLevel': 'PREMIUM_PROMON' };
+    mockPlace = { [Place.ATTR_NAME]: 'Test Home', [Place.ATTR_SERVICELEVEL]: 'PREMIUM_PROMON' };
     mockSubsystems = [
-      { 'base:address': 'SERV:subalarm:place-1', 'subs:available': true },
+      { id: 'SERV:subalarm:place-1', [Base.ATTR_ADDRESS]: 'SERV:subalarm:place-1', 'subs:available': true },
     ];
     render(<HomePage />);
     expect(screen.getByText('Pro')).toBeInTheDocument();
   });
 
   it('does not show Pro badge without PROMON service level', () => {
-    mockPlace = { 'place:name': 'Test Home', 'place:serviceLevel': 'PREMIUM' };
+    mockPlace = { [Place.ATTR_NAME]: 'Test Home', [Place.ATTR_SERVICELEVEL]: 'PREMIUM' };
     mockSubsystems = [
-      { 'base:address': 'SERV:subalarm:place-1', 'subs:available': true },
+      { id: 'SERV:subalarm:place-1', [Base.ATTR_ADDRESS]: 'SERV:subalarm:place-1', 'subs:available': true },
     ];
     render(<HomePage />);
     expect(screen.queryByText('Pro')).not.toBeInTheDocument();

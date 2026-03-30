@@ -1,5 +1,7 @@
 import { render, screen, fireEvent } from '@testing-library/react';
+import { Base, Product } from '@arcus/core';
 import StepsStage from '@/components/pairing/StepsStage';
+import type { PairingProduct } from '@/store/entityTypes';
 
 const mockDispatch = jest.fn();
 const mockStartSearch = jest.fn();
@@ -19,12 +21,12 @@ const defaultProps = {
   onCancel: mockCancel,
 };
 
-const mockProduct = {
-  'base:address': 'SERV:product:prod-1',
-  'product:name': 'Smart Plug',
-  'product:vendor': 'GE',
-  'product:hubRequired': true,
-  'product:id': 'abc123',
+const mockProduct: PairingProduct = {
+  [Base.ATTR_ADDRESS]: 'SERV:product:prod-1',
+  [Product.ATTR_NAME]: 'Smart Plug',
+  [Product.ATTR_VENDOR]: 'GE',
+  [Product.ATTR_HUBREQUIRED]: true,
+  [Product.ATTR_ID]: 'abc123',
 };
 
 const mockSteps = [

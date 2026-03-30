@@ -5,6 +5,7 @@ import reducer, {
   logout,
   type AuthState,
 } from '@/store/slices/authSlice';
+import { Base, Person, Account } from '@arcus/core';
 
 const initial: AuthState = {
   authenticating: false,
@@ -26,8 +27,8 @@ describe('authSlice', () => {
   });
 
   it('loginSuccess sets person, account, and authenticated', () => {
-    const person = { 'person:firstName': 'Alice', 'base:address': 'SERV:person:p1' };
-    const account = { 'account:state': 'ACTIVE', 'base:address': 'SERV:account:a1' };
+    const person = { [Person.ATTR_FIRSTNAME]: 'Alice', [Base.ATTR_ADDRESS]: 'SERV:person:p1' };
+    const account = { [Account.ATTR_STATE]: 'ACTIVE', [Base.ATTR_ADDRESS]: 'SERV:account:a1' };
     const state = reducer(
       { ...initial, authenticating: true },
       loginSuccess({ person, account }),

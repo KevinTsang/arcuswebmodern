@@ -3,6 +3,7 @@
  */
 
 import { setAuthenticating, loginSuccess, loginFailed } from '@/store/slices/authSlice';
+import { Base, Account } from '@arcus/core';
 
 // ── Mocks ─────────────────────────────────────────────────────────────
 
@@ -166,7 +167,7 @@ describe('authenticateThunk', () => {
   });
 
   it('fetches account for the selected place', async () => {
-    const accountData = { 'base:address': 'SERV:account:acc-1', 'account:state': 'ACTIVE' };
+    const accountData = { [Base.ATTR_ADDRESS]: 'SERV:account:acc-1', [Account.ATTR_STATE]: 'ACTIVE' };
     mockBridgeRequest.mockResolvedValueOnce(accountData);
     mockAuthenticate.mockImplementation(() => {
       emitAuth('authentication:success', sessionPayload);
@@ -176,7 +177,7 @@ describe('authenticateThunk', () => {
     await authenticateThunk()(dispatch, () => ({}), undefined);
 
     expect(mockBridgeRequest).toHaveBeenCalledWith(
-      'base:GetAttributes',
+      Base.CMD_GETATTRIBUTES,
       'SERV:account:acc-1',
       {},
     );

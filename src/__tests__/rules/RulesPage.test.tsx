@@ -1,5 +1,7 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import RulesPage from '@/app/(authenticated)/rules/page';
+import { Base, Place, Rule } from '@arcus/core';
+import type { RuleEntity } from '@/store/entityTypes';
 
 // ── Mocks ─────────────────────────────────────────────────────────────
 
@@ -13,20 +15,23 @@ jest.mock('@/components/rules/RulePanel', () => ({
   RulePanel: () => <div>RulePanel</div>,
 }));
 
-jest.mock('@/components/rules/RuleListItem', () => ({
-  RuleListItem: ({ rule, onEdit }: any) => (
-    <div data-testid="rule-item">
-      <span>{rule['rule:name']}</span>
-      <button onClick={() => onEdit(rule)}>Edit</button>
-    </div>
-  ),
-}));
+jest.mock('@/components/rules/RuleListItem', () => {
+  const { Rule: RuleCapability } = jest.requireActual('@arcus/core');
+  return {
+    RuleListItem: ({ rule, onEdit }: any) => (
+      <div data-testid="rule-item">
+        <span>{rule[RuleCapability.ATTR_NAME]}</span>
+        <button onClick={() => onEdit(rule)}>Edit</button>
+      </div>
+    ),
+  };
+});
 
 jest.mock('@/components/rules/RulesLibrary', () => ({
   RulesLibrary: ({ placeId }: any) => <div data-testid="rules-library">Library for {placeId}</div>,
 }));
 
-let mockRules: Record<string, unknown>[] = [];
+let mockRules: RuleEntity[] = [];
 let mockPlaceId: string | null = 'place-1';
 let mockPlaceName: string = 'Your Home';
 
@@ -39,7 +44,7 @@ jest.mock('@/store/hooks', () => ({
       },
       place: {
         placeId: mockPlaceId,
-        place: { 'place:name': mockPlaceName },
+        place: { [Place.ATTR_NAME]: mockPlaceName },
       },
     }),
 }));
@@ -84,8 +89,8 @@ describe('RulesPage – rendering', () => {
 describe('RulesPage – with rules', () => {
   beforeEach(() => {
     mockRules = [
-      { 'rule:name': 'Lock at Night', 'base:address': 'SERV:rule:r1' },
-      { 'rule:name': 'Lights On at Sunset', 'base:address': 'SERV:rule:r2' },
+      { id: 'SERV:rule:r1', [Rule.ATTR_NAME]: 'Lock at Night', [Base.ATTR_ADDRESS]: 'SERV:rule:r1' },
+      { id: 'SERV:rule:r2', [Rule.ATTR_NAME]: 'Lights On at Sunset', [Base.ATTR_ADDRESS]: 'SERV:rule:r2' },
     ];
   });
 

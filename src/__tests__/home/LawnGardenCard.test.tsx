@@ -1,13 +1,15 @@
 import { render, screen } from '@testing-library/react';
 import LawnGardenCard from '@/components/home/LawnGardenCard';
+import { Base } from '@arcus/core';
+import type { SubsystemEntity, DeviceEntity } from '@/store/entityTypes';
 
 jest.mock('next/link', () => ({
   __esModule: true,
   default: ({ href, children, ...props }: any) => <a href={href} {...props}>{children}</a>,
 }));
 
-let mockSubsystems: Record<string, unknown>[] = [];
-let mockDevices: Record<string, unknown>[] = [];
+let mockSubsystems: SubsystemEntity[] = [];
+let mockDevices: DeviceEntity[] = [];
 
 jest.mock('@/store/hooks', () => ({
   useAppSelector: (sel: (s: any) => any) =>
@@ -51,13 +53,14 @@ describe('LawnGardenCard', () => {
   it('shows active watering zone count', () => {
     mockSubsystems = [
       {
-        'base:address': 'SERV:sublawnngarden:place-1',
+        id: 'SERV:sublawnngarden:place-1',
+        [Base.ATTR_ADDRESS]: 'SERV:sublawnngarden:place-1',
         'sublawnngarden:zonesWatering': [{ zone: 1 }, { zone: 2 }],
         'sublawnngarden:controllers': ['DRIV:dev:ctrl1'],
       },
     ];
     mockDevices = [
-      { 'base:address': 'DRIV:dev:ctrl1' },
+      { id: 'DRIV:dev:ctrl1', [Base.ATTR_ADDRESS]: 'DRIV:dev:ctrl1' },
     ];
     render(<LawnGardenCard />);
     expect(screen.getByText('2')).toBeInTheDocument();

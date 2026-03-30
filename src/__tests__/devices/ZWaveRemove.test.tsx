@@ -1,5 +1,7 @@
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
+import { Base } from '@arcus/core';
 import { ZWaveTools } from '@/components/devices/ZWaveTools';
+import type { ArcusEntity } from '@/store/entityTypes';
 
 // ── Mocks ─────────────────────────────────────────────────────────────
 
@@ -33,7 +35,7 @@ jest.mock('@/store/slices/uiSlice', () => ({
   addNotification: (payload: unknown) => ({ type: 'ui/addNotification', payload }),
 }));
 
-let mockHub: Record<string, unknown> | null = null;
+let mockHub: ArcusEntity | null = null;
 
 jest.mock('@/store/hooks', () => ({
   useAppSelector: (sel: (s: any) => any) =>
@@ -52,7 +54,7 @@ beforeEach(() => {
   // Clear cornea listeners
   Object.keys(corneaListeners).forEach((k) => delete corneaListeners[k]);
   mockHub = {
-    'base:address': 'SERV:hub:hub-1',
+    [Base.ATTR_ADDRESS]: 'SERV:hub:hub-1',
     'hubzwave:numDevices': 5,
     'hub:state': 'NORMAL',
   };

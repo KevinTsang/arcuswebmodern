@@ -1,5 +1,6 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import ScenesPage from '@/app/(authenticated)/scenes/page';
+import { Base, Place, Scene } from '@arcus/core';
 import type { SceneEntity } from '@/store/entityTypes';
 
 // ── Mocks ─────────────────────────────────────────────────────────────
@@ -29,7 +30,7 @@ jest.mock('@/components/scenes/ScenePanel', () => ({
 jest.mock('@/components/scenes/SceneCard', () => ({
   SceneCard: ({ scene, onEdit }: { scene: SceneEntity; onEdit: (s: SceneEntity) => void }) => (
     <div data-testid="scene-card">
-      <span>{scene['scene:name'] as string}</span>
+      <span>{scene[Scene.ATTR_NAME] as string}</span>
       <button onClick={() => onEdit(scene)}>Edit</button>
     </div>
   ),
@@ -39,7 +40,7 @@ jest.mock('@/store/slices/uiSlice', () => ({
   addNotification: (payload: unknown) => ({ type: 'ui/addNotification', payload }),
 }));
 
-let mockScenes: Record<string, unknown>[] = [];
+let mockScenes: Partial<SceneEntity>[] = [];
 let mockPlaceName: string = 'Your Home';
 
 jest.mock('@/store/hooks', () => ({
@@ -49,7 +50,7 @@ jest.mock('@/store/hooks', () => ({
         entities: Object.fromEntries(mockScenes.map((s, i) => [`s${i}`, { ...s, id: `s${i}` }])),
         ids: mockScenes.map((_, i) => `s${i}`),
       },
-      place: { place: { 'place:name': mockPlaceName } },
+      place: { place: { [Place.ATTR_NAME]: mockPlaceName } },
     }),
   useAppDispatch: () => mockDispatch,
 }));
@@ -93,19 +94,19 @@ describe('ScenesPage – with scenes', () => {
   beforeEach(() => {
     mockScenes = [
       {
-        'base:address': 'SERV:scene:s1',
-        'scene:name': 'Good Morning',
-        'scene:enabled': true,
-        'scene:actions': [{}, {}],
-        'scene:notification': false,
+        [Base.ATTR_ADDRESS]: 'SERV:scene:s1',
+        [Scene.ATTR_NAME]: 'Good Morning',
+        [Scene.ATTR_ENABLED]: true,
+        [Scene.ATTR_ACTIONS]: [{}, {}],
+        [Scene.ATTR_NOTIFICATION]: false,
       },
       {
-        'base:address': 'SERV:scene:s2',
-        'scene:name': 'Good Night',
-        'scene:enabled': true,
-        'scene:actions': [{}],
-        'scene:notification': true,
-        'scene:scheduler': 'sched1',
+        [Base.ATTR_ADDRESS]: 'SERV:scene:s2',
+        [Scene.ATTR_NAME]: 'Good Night',
+        [Scene.ATTR_ENABLED]: true,
+        [Scene.ATTR_ACTIONS]: [{}],
+        [Scene.ATTR_NOTIFICATION]: true,
+        [Scene.ATTR_SCHEDULER]: 'sched1',
       },
     ];
   });
@@ -139,11 +140,11 @@ describe('ScenesPage – interactions', () => {
   it('opens side panel when Edit is clicked', () => {
     mockScenes = [
       {
-        'base:address': 'SERV:scene:s1',
-        'scene:name': 'Test Scene',
-        'scene:enabled': true,
-        'scene:actions': [],
-        'scene:notification': false,
+        [Base.ATTR_ADDRESS]: 'SERV:scene:s1',
+        [Scene.ATTR_NAME]: 'Test Scene',
+        [Scene.ATTR_ENABLED]: true,
+        [Scene.ATTR_ACTIONS]: [],
+        [Scene.ATTR_NOTIFICATION]: false,
       },
     ];
     render(<ScenesPage />);

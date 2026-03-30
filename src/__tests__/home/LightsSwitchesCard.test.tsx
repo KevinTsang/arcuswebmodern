@@ -1,13 +1,15 @@
 import { render, screen } from '@testing-library/react';
 import LightsSwitchesCard from '@/components/home/LightsSwitchesCard';
+import { Base } from '@arcus/core';
+import type { SubsystemEntity, DeviceEntity } from '@/store/entityTypes';
 
 jest.mock('next/link', () => ({
   __esModule: true,
   default: ({ href, children, ...props }: any) => <a href={href} {...props}>{children}</a>,
 }));
 
-let mockSubsystems: Record<string, unknown>[] = [];
-let mockDevices: Record<string, unknown>[] = [];
+let mockSubsystems: SubsystemEntity[] = [];
+let mockDevices: DeviceEntity[] = [];
 
 jest.mock('@/store/hooks', () => ({
   useAppSelector: (sel: (s: any) => any) =>
@@ -50,12 +52,12 @@ describe('LightsSwitchesCard', () => {
 
   it('counts lights that are ON', () => {
     mockSubsystems = [
-      { 'base:address': 'SERV:sublightsnswitches:place-1', 'swit:state': ['DRIV:dev:sw1', 'DRIV:dev:sw2', 'DRIV:dev:sw3'] },
+      { id: 'SERV:sublightsnswitches:place-1', [Base.ATTR_ADDRESS]: 'SERV:sublightsnswitches:place-1', 'swit:state': ['DRIV:dev:sw1', 'DRIV:dev:sw2', 'DRIV:dev:sw3'] },
     ];
     mockDevices = [
-      { 'base:address': 'DRIV:dev:sw1', 'swit:state': 'ON' },
-      { 'base:address': 'DRIV:dev:sw2', 'swit:state': 'OFF' },
-      { 'base:address': 'DRIV:dev:sw3', 'swit:state': 'ON' },
+      { id: 'DRIV:dev:sw1', [Base.ATTR_ADDRESS]: 'DRIV:dev:sw1', 'swit:state': 'ON' },
+      { id: 'DRIV:dev:sw2', [Base.ATTR_ADDRESS]: 'DRIV:dev:sw2', 'swit:state': 'OFF' },
+      { id: 'DRIV:dev:sw3', [Base.ATTR_ADDRESS]: 'DRIV:dev:sw3', 'swit:state': 'ON' },
     ];
     render(<LightsSwitchesCard />);
     const onValue = screen.getByText('On').closest('div')!.querySelector('p')!;

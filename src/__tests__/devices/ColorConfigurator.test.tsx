@@ -1,10 +1,11 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { Base, Color, ColorTemperature } from '@arcus/core';
 import ColorConfigurator from '@/components/devices/ColorConfigurator';
+import type { DeviceEntity } from '@/store/entityTypes';
 
 const mockSetAttribute = jest.fn();
 const mockSetAttributes = jest.fn();
-let mockDevice: Record<string, unknown> = {};
+let mockDevice: DeviceEntity = { id: 'DRIV:dev:test', [Base.ATTR_ADDRESS]: 'DRIV:dev:test' };
 
 jest.mock('@/hooks/useDeviceCapability', () => ({
   useDevice: () => mockDevice,
@@ -25,20 +26,22 @@ beforeEach(() => {
 
 describe('ColorConfigurator', () => {
   it('renders hue and saturation sliders', () => {
-    mockDevice = { [Color.ATTR_HUE]: 180, [Color.ATTR_SATURATION]: 80 };
+    mockDevice = { id: 'DRIV:dev:test', [Base.ATTR_ADDRESS]: 'DRIV:dev:test', [Color.ATTR_HUE]: 180, [Color.ATTR_SATURATION]: 80 };
     render(<ColorConfigurator address="DRIV:dev:test" />);
     expect(screen.getByText('Hue: 180°')).toBeInTheDocument();
     expect(screen.getByText('Saturation: 80%')).toBeInTheDocument();
   });
 
   it('does not render color temperature slider when device lacks colortemp cap', () => {
-    mockDevice = { [Color.ATTR_HUE]: 0, [Color.ATTR_SATURATION]: 100, [Base.ATTR_CAPS]: ['color'] };
+    mockDevice = { id: 'DRIV:dev:test', [Base.ATTR_ADDRESS]: 'DRIV:dev:test', [Color.ATTR_HUE]: 0, [Color.ATTR_SATURATION]: 100, [Base.ATTR_CAPS]: ['color'] };
     render(<ColorConfigurator address="DRIV:dev:test" />);
     expect(screen.queryByText(/Color Temperature/)).not.toBeInTheDocument();
   });
 
   it('renders color temperature slider when device has colortemp cap', () => {
     mockDevice = {
+      id: 'DRIV:dev:test',
+      [Base.ATTR_ADDRESS]: 'DRIV:dev:test',
       [Color.ATTR_HUE]: 0,
       [Color.ATTR_SATURATION]: 100,
       [ColorTemperature.ATTR_COLORTEMP]: 4000,
@@ -49,7 +52,7 @@ describe('ColorConfigurator', () => {
   });
 
   it('sends setAttributes with hue and saturation on hue change', () => {
-    mockDevice = { [Color.ATTR_HUE]: 100, [Color.ATTR_SATURATION]: 80 };
+    mockDevice = { id: 'DRIV:dev:test', [Base.ATTR_ADDRESS]: 'DRIV:dev:test', [Color.ATTR_HUE]: 100, [Color.ATTR_SATURATION]: 80 };
     render(<ColorConfigurator address="DRIV:dev:test" />);
     const sliders = screen.getAllByRole('slider');
     fireEvent.change(sliders[0], { target: { value: '200' } });
@@ -57,7 +60,7 @@ describe('ColorConfigurator', () => {
   });
 
   it('sends setAttribute on saturation change', () => {
-    mockDevice = { [Color.ATTR_HUE]: 100, [Color.ATTR_SATURATION]: 80 };
+    mockDevice = { id: 'DRIV:dev:test', [Base.ATTR_ADDRESS]: 'DRIV:dev:test', [Color.ATTR_HUE]: 100, [Color.ATTR_SATURATION]: 80 };
     render(<ColorConfigurator address="DRIV:dev:test" />);
     const sliders = screen.getAllByRole('slider');
     fireEvent.change(sliders[1], { target: { value: '50' } });
@@ -66,6 +69,8 @@ describe('ColorConfigurator', () => {
 
   it('sends setAttribute on color temperature change', () => {
     mockDevice = {
+      id: 'DRIV:dev:test',
+      [Base.ATTR_ADDRESS]: 'DRIV:dev:test',
       [Color.ATTR_HUE]: 0,
       [Color.ATTR_SATURATION]: 100,
       [ColorTemperature.ATTR_COLORTEMP]: 3000,

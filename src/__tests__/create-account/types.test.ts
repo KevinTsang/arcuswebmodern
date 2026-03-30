@@ -1,3 +1,4 @@
+import { Person } from '@arcus/core';
 import { createAccountReducer, initialState } from '@/components/create-account/types';
 
 describe('createAccountReducer', () => {
@@ -39,7 +40,7 @@ describe('createAccountReducer', () => {
   });
 
   it('ACCOUNT_CREATED sets personData, placeId, and advances to address', () => {
-    const person = { 'person:firstName': 'Jane' };
+    const person = { [Person.ATTR_FIRSTNAME]: 'Jane' };
     const next = createAccountReducer(initialState, { type: 'ACCOUNT_CREATED', personData: person, placeId: 'p1' });
     expect(next.personData).toBe(person);
     expect(next.placeId).toBe('p1');

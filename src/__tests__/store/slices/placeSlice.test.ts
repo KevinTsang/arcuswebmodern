@@ -7,6 +7,7 @@ import reducer, {
   clearPlace,
   type PlaceState,
 } from '@/store/slices/placeSlice';
+import { Base, Place, Product } from '@arcus/core';
 
 const initial: PlaceState = {
   placeId: null,
@@ -29,7 +30,7 @@ describe('placeSlice', () => {
   });
 
   it('setPlace stores place record', () => {
-    const place = { 'place:name': 'Home', 'base:address': 'SERV:place:p1' };
+    const place = { [Place.ATTR_NAME]: 'Home', [Base.ATTR_ADDRESS]: 'SERV:place:p1' };
     const state = reducer(initial, setPlace(place));
     expect(state.place).toEqual(place);
   });
@@ -41,7 +42,7 @@ describe('placeSlice', () => {
   });
 
   it('setProducts stores products array', () => {
-    const products = [{ 'product:id': 'prod1' }];
+    const products = [{ [Product.ATTR_ID]: 'prod1' }];
     const state = reducer(initial, setProducts(products));
     expect(state.products).toEqual(products);
   });

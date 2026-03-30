@@ -1,6 +1,7 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { Base, Person } from '@arcus/core';
 import ContactInfoPanel from '@/components/settings/ContactInfoPanel';
+import type { PersonEntity } from '@/store/entityTypes';
 
 const mockCloseRight = jest.fn();
 const mockDispatch = jest.fn();
@@ -19,7 +20,7 @@ jest.mock('@/store/slices/uiSlice', () => ({
   addNotification: (payload: unknown) => ({ type: 'ui/addNotification', payload }),
 }));
 
-let mockPerson: Record<string, unknown> | null = null;
+let mockPerson: PersonEntity | null = null;
 
 jest.mock('@/store/hooks', () => ({
   useAppSelector: (sel: (s: any) => any) =>
@@ -30,6 +31,8 @@ jest.mock('@/store/hooks', () => ({
 beforeEach(() => {
   jest.clearAllMocks();
   mockPerson = {
+    id: 'SERV:person:p1',
+    [Base.ATTR_ADDRESS]: 'SERV:person:p1',
     [Person.ATTR_FIRSTNAME]: 'John',
     [Person.ATTR_LASTNAME]: 'Doe',
     [Person.ATTR_MOBILENUMBER]: '555-1234',

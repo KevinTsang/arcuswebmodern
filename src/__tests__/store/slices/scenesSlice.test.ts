@@ -5,9 +5,11 @@ import reducer, {
   scenesReceived,
   scenesClear,
 } from '@/store/slices/scenesSlice';
+import type { SceneEntity } from '@/store/entityTypes';
+import { Base, Scene } from '@arcus/core';
 
-function makeScene(address: string, extra: Record<string, unknown> = {}) {
-  return { id: address, 'base:address': address, ...extra };
+function makeScene(address: string, extra: Partial<SceneEntity> = {}) {
+  return { id: address, [Base.ATTR_ADDRESS]: address, ...extra };
 }
 
 describe('scenesSlice', () => {
@@ -18,15 +20,15 @@ describe('scenesSlice', () => {
   });
 
   it('sceneAdded adds one scene', () => {
-    const state = reducer(undefined, sceneAdded(makeScene('SERV:scene:s1', { 'scene:name': 'Good Night' })));
+    const state = reducer(undefined, sceneAdded(makeScene('SERV:scene:s1', { [Scene.ATTR_NAME]: 'Good Night' })));
     expect(state.ids).toEqual(['SERV:scene:s1']);
-    expect(state.entities['SERV:scene:s1']?.['scene:name']).toBe('Good Night');
+    expect(state.entities['SERV:scene:s1']?.[Scene.ATTR_NAME]).toBe('Good Night');
   });
 
   it('sceneUpdated updates an existing scene', () => {
-    let state = reducer(undefined, sceneAdded(makeScene('SERV:scene:s1', { 'scene:name': 'Old' })));
-    state = reducer(state, sceneUpdated({ 'base:address': 'SERV:scene:s1', 'scene:name': 'New' }));
-    expect(state.entities['SERV:scene:s1']?.['scene:name']).toBe('New');
+    let state = reducer(undefined, sceneAdded(makeScene('SERV:scene:s1', { [Scene.ATTR_NAME]: 'Old' })));
+    state = reducer(state, sceneUpdated({ [Base.ATTR_ADDRESS]: 'SERV:scene:s1', [Scene.ATTR_NAME]: 'New' }));
+    expect(state.entities['SERV:scene:s1']?.[Scene.ATTR_NAME]).toBe('New');
   });
 
   it('sceneRemoved removes a scene', () => {
@@ -41,13 +43,13 @@ describe('scenesSlice', () => {
     state = reducer(
       state,
       scenesReceived([
-        { 'base:address': 'SERV:scene:a', 'scene:name': 'A' },
-        { 'base:address': 'SERV:scene:b', 'scene:name': 'B' },
+        { [Base.ATTR_ADDRESS]: 'SERV:scene:a', [Scene.ATTR_NAME]: 'A' },
+        { [Base.ATTR_ADDRESS]: 'SERV:scene:b', [Scene.ATTR_NAME]: 'B' },
       ]),
     );
     expect(state.ids).toHaveLength(2);
     expect(state.entities['SERV:scene:old']).toBeUndefined();
-    expect(state.entities['SERV:scene:a']?.['scene:name']).toBe('A');
+    expect(state.entities['SERV:scene:a']?.[Scene.ATTR_NAME]).toBe('A');
   });
 
   it('scenesClear empties the store', () => {

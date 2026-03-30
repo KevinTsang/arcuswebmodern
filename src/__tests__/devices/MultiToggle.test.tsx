@@ -1,9 +1,10 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { Base, Device, DeviceConnection, Switch } from '@arcus/core';
 import MultiToggle from '@/components/devices/MultiToggle';
+import type { DeviceEntity } from '@/store/entityTypes';
 
 const mockSetAttribute = jest.fn().mockResolvedValue(undefined);
-let mockDevice: Record<string, unknown> = {};
+let mockDevice: DeviceEntity = { id: 'DRIV:dev:test', [Base.ATTR_ADDRESS]: 'DRIV:dev:test' };
 
 jest.mock('@/hooks/useDeviceCapability', () => ({
   useDevice: () => mockDevice,
@@ -23,6 +24,8 @@ beforeEach(() => {
 describe('MultiToggle', () => {
   beforeEach(() => {
     mockDevice = {
+      id: 'DRIV:dev:test',
+      [Base.ATTR_ADDRESS]: 'DRIV:dev:test',
       [Base.ATTR_CAPS]: ['base', 'swit', 'devconn'],
       [Base.ATTR_INSTANCES]: { relay1: ['swit'], relay2: ['swit'] },
       [Device.ATTR_DEVTYPEHINT]: 'Switch',
@@ -66,6 +69,8 @@ describe('MultiToggle', () => {
 
   it('renders nothing when device has no instances', () => {
     mockDevice = {
+      id: 'DRIV:dev:test',
+      [Base.ATTR_ADDRESS]: 'DRIV:dev:test',
       [Base.ATTR_CAPS]: ['base', 'swit'],
       [Device.ATTR_DEVTYPEHINT]: 'Switch',
       [Switch.ATTR_STATE]: Switch.STATE_ON,
@@ -78,6 +83,8 @@ describe('MultiToggle', () => {
 describe('MultiToggle with outlet names', () => {
   beforeEach(() => {
     mockDevice = {
+      id: 'DRIV:dev:test',
+      [Base.ATTR_ADDRESS]: 'DRIV:dev:test',
       [Base.ATTR_CAPS]: ['base', 'swit', 'devconn'],
       [Base.ATTR_INSTANCES]: { outlet1: ['swit'], outlet2: ['swit'] },
       [Device.ATTR_DEVTYPEHINT]: 'Switch',

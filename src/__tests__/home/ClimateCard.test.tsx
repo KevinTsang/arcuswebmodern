@@ -1,13 +1,15 @@
 import { render, screen } from '@testing-library/react';
 import ClimateCard from '@/components/home/ClimateCard';
+import { Base } from '@arcus/core';
+import type { SubsystemEntity, DeviceEntity } from '@/store/entityTypes';
 
 jest.mock('next/link', () => ({
   __esModule: true,
   default: ({ href, children, ...props }: any) => <a href={href} {...props}>{children}</a>,
 }));
 
-let mockSubsystems: Record<string, unknown>[] = [];
-let mockDevices: Record<string, unknown>[] = [];
+let mockSubsystems: SubsystemEntity[] = [];
+let mockDevices: DeviceEntity[] = [];
 
 jest.mock('@/store/hooks', () => ({
   useAppSelector: (sel: (s: any) => any) =>
@@ -55,13 +57,14 @@ describe('ClimateCard', () => {
   it('shows temperature when primary temp device has data', () => {
     mockSubsystems = [
       {
-        'base:address': 'SERV:subclimate:place-1',
+        id: 'SERV:subclimate:place-1',
+        [Base.ATTR_ADDRESS]: 'SERV:subclimate:place-1',
         'subclimate:primaryTemperatureDevice': 'DRIV:dev:therm1',
         'subclimate:temperatureDevices': ['DRIV:dev:therm1'],
       },
     ];
     mockDevices = [
-      { 'base:address': 'DRIV:dev:therm1', 'temp:temperature': 22 },
+      { id: 'DRIV:dev:therm1', [Base.ATTR_ADDRESS]: 'DRIV:dev:therm1', 'temp:temperature': 22 },
     ];
     render(<ClimateCard />);
     expect(screen.getByText('Temperature')).toBeInTheDocument();
@@ -70,13 +73,14 @@ describe('ClimateCard', () => {
   it('shows humidity when primary humidity device has data', () => {
     mockSubsystems = [
       {
-        'base:address': 'SERV:subclimate:place-1',
+        id: 'SERV:subclimate:place-1',
+        [Base.ATTR_ADDRESS]: 'SERV:subclimate:place-1',
         'subclimate:primaryHumidityDevice': 'DRIV:dev:hum1',
         'subclimate:humidityDevices': ['DRIV:dev:hum1'],
       },
     ];
     mockDevices = [
-      { 'base:address': 'DRIV:dev:hum1', 'humid:humidity': 55 },
+      { id: 'DRIV:dev:hum1', [Base.ATTR_ADDRESS]: 'DRIV:dev:hum1', 'humid:humidity': 55 },
     ];
     render(<ClimateCard />);
     expect(screen.getByText('Humidity')).toBeInTheDocument();

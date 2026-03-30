@@ -1,7 +1,9 @@
 import { render, screen } from '@testing-library/react';
+import { Base } from '@arcus/core';
 import { DeviceActions } from '@/components/devices/DeviceActions';
+import type { DeviceEntity } from '@/store/entityTypes';
 
-let mockDevice: Record<string, unknown> = {};
+let mockDevice: DeviceEntity = { id: 'DRIV:dev:test', [Base.ATTR_ADDRESS]: 'DRIV:dev:test' };
 
 jest.mock('@/hooks/useDeviceCapability', () => ({
   useDevice: () => mockDevice,
@@ -28,7 +30,7 @@ jest.mock('@/hooks/useDeviceConfig', () => ({
 }));
 
 beforeEach(() => {
-  mockDevice = {};
+  mockDevice = { id: 'DRIV:dev:test', [Base.ATTR_ADDRESS]: 'DRIV:dev:test' };
 });
 
 describe('DeviceActions', () => {

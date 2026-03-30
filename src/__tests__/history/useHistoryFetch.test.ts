@@ -1,4 +1,5 @@
 import { renderHook, act, waitFor } from '@testing-library/react';
+import { Place } from '@arcus/core';
 import useHistoryFetch from '@/components/history/useHistoryFetch';
 import Bridge from '@arcus/core/bridge';
 
@@ -29,7 +30,7 @@ describe('useHistoryFetch – initial fetch', () => {
 
     await waitFor(() => expect(result.current.loading).toBe(false));
 
-    expect(mockRequest).toHaveBeenCalledWith('place:ListHistoryEntries', 'SERV:place:place-1', {
+    expect(mockRequest).toHaveBeenCalledWith(Place.CMD_LISTHISTORYENTRIES, 'SERV:place:place-1', {
       limit: 20,
       token: undefined,
     });
@@ -95,7 +96,7 @@ describe('useHistoryFetch – pagination', () => {
     await waitFor(() => expect(result.current.loading).toBe(false));
 
     expect(result.current.entries).toEqual([...page1, ...page2]);
-    expect(mockRequest).toHaveBeenCalledWith('place:ListHistoryEntries', 'SERV:place:place-1', {
+    expect(mockRequest).toHaveBeenCalledWith(Place.CMD_LISTHISTORYENTRIES, 'SERV:place:place-1', {
       limit: 20,
       token: 'token-2',
     });
@@ -129,7 +130,7 @@ describe('useHistoryFetch – refresh', () => {
 
     expect(result.current.entries).toEqual(freshEntries);
     // Second call should not have a token (fresh fetch)
-    expect(mockRequest).toHaveBeenNthCalledWith(2, 'place:ListHistoryEntries', 'SERV:place:place-1', {
+    expect(mockRequest).toHaveBeenNthCalledWith(2, Place.CMD_LISTHISTORYENTRIES, 'SERV:place:place-1', {
       limit: 20,
       token: undefined,
     });
@@ -154,7 +155,7 @@ describe('useHistoryFetch – address change', () => {
     await waitFor(() => expect(result.current.loading).toBe(false));
 
     expect(result.current.entries).toEqual(deviceEntries);
-    expect(mockRequest).toHaveBeenCalledWith('place:ListHistoryEntries', 'DRIV:dev:dev-1', {
+    expect(mockRequest).toHaveBeenCalledWith(Place.CMD_LISTHISTORYENTRIES, 'DRIV:dev:dev-1', {
       limit: 20,
       token: undefined,
     });

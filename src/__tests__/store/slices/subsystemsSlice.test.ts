@@ -5,9 +5,11 @@ import reducer, {
   subsystemsReceived,
   subsystemsClear,
 } from '@/store/slices/subsystemsSlice';
+import type { SubsystemEntity } from '@/store/entityTypes';
+import { Base } from '@arcus/core';
 
-function makeSub(address: string, extra: Record<string, unknown> = {}) {
-  return { id: address, 'base:address': address, ...extra };
+function makeSub(address: string, extra: Partial<SubsystemEntity> = {}) {
+  return { id: address, [Base.ATTR_ADDRESS]: address, ...extra };
 }
 
 describe('subsystemsSlice', () => {
@@ -31,7 +33,7 @@ describe('subsystemsSlice', () => {
       subsystemAdded(makeSub('SERV:subsecurity:p1', { 'subsecurity:alarmMode': 'OFF' })),
     );
     state = reducer(state, subsystemUpdated({
-      'base:address': 'SERV:subsecurity:p1',
+      [Base.ATTR_ADDRESS]: 'SERV:subsecurity:p1',
       'subsecurity:alarmMode': 'ON',
     }));
     expect(state.entities['SERV:subsecurity:p1']?.['subsecurity:alarmMode']).toBe('ON');
@@ -46,8 +48,8 @@ describe('subsystemsSlice', () => {
   it('subsystemsReceived replaces all', () => {
     let state = reducer(undefined, subsystemAdded(makeSub('SERV:old:p1')));
     state = reducer(state, subsystemsReceived([
-      { 'base:address': 'SERV:subalarm:p1' },
-      { 'base:address': 'SERV:subclimate:p1' },
+      { [Base.ATTR_ADDRESS]: 'SERV:subalarm:p1' },
+      { [Base.ATTR_ADDRESS]: 'SERV:subclimate:p1' },
     ]));
     expect(state.ids).toHaveLength(2);
     expect(state.entities['SERV:old:p1']).toBeUndefined();

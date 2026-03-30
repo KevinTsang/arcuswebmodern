@@ -1,10 +1,12 @@
 import { render, screen } from '@testing-library/react';
+import { Base } from '@arcus/core';
 import DeviceSettingsConfigurator from '@/components/devices/DeviceSettingsConfigurator';
 import type { ParamDescriptor } from '@/components/devices/device-settings/types';
+import type { DeviceEntity } from '@/store/entityTypes';
 
 // ── Mocks ─────────────────────────────────────────────────────────────
 
-let mockDevice: Record<string, unknown> | undefined;
+let mockDevice: DeviceEntity | undefined;
 
 jest.mock('@/hooks/useDeviceCapability', () => ({
   useDevice: () => mockDevice,
@@ -36,7 +38,7 @@ beforeEach(() => {
 
 describe('DeviceSettingsConfigurator', () => {
   it('shows empty message when device has no params', () => {
-    mockDevice = { 'devsettings:params': [] };
+    mockDevice = { id: 'DRIV:dev:d1', [Base.ATTR_ADDRESS]: 'DRIV:dev:d1', 'devsettings:params': [] };
     render(<DeviceSettingsConfigurator address="DRIV:dev:d1" />);
     expect(screen.getByText('No advanced settings available.')).toBeInTheDocument();
   });
@@ -48,13 +50,15 @@ describe('DeviceSettingsConfigurator', () => {
   });
 
   it('renders the Advanced Settings heading', () => {
-    mockDevice = { 'devsettings:params': makeParams('LED indicator') };
+    mockDevice = { id: 'DRIV:dev:d1', [Base.ATTR_ADDRESS]: 'DRIV:dev:d1', 'devsettings:params': makeParams('LED indicator') };
     render(<DeviceSettingsConfigurator address="DRIV:dev:d1" />);
     expect(screen.getByText('Advanced Settings')).toBeInTheDocument();
   });
 
   it('renders a ParamControl for each param', () => {
     mockDevice = {
+      id: 'DRIV:dev:d1',
+      [Base.ATTR_ADDRESS]: 'DRIV:dev:d1',
       'devsettings:params': makeParams('LED indicator', 'Power failure', 'Auto timer'),
     };
     render(<DeviceSettingsConfigurator address="DRIV:dev:d1" />);
@@ -64,6 +68,8 @@ describe('DeviceSettingsConfigurator', () => {
 
   it('passes param descriptions through to ParamControl', () => {
     mockDevice = {
+      id: 'DRIV:dev:d1',
+      [Base.ATTR_ADDRESS]: 'DRIV:dev:d1',
       'devsettings:params': makeParams('Parameter 1: Power failure', 'Parameter 5: LED indicator'),
     };
     render(<DeviceSettingsConfigurator address="DRIV:dev:d1" />);

@@ -1,5 +1,7 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { RulesLibrary } from '@/components/rules/RulesLibrary';
+import { Base, RuleTemplate } from '@arcus/core';
+import type { RuleTemplateEntity } from '@/store/entityTypes';
 
 const mockOpenRight = jest.fn();
 
@@ -30,19 +32,21 @@ jest.mock('@/components/rules/RulePanel', () => ({
 import { useAppSelector } from '@/store/hooks';
 const mockUseAppSelector = useAppSelector as jest.Mock;
 
-const templates = [
+const templates: RuleTemplateEntity[] = [
   {
-    'base:address': 'SERV:ruletmpl:t1',
-    'base:id': 't1',
-    'ruletmpl:name': 'Chime on Button Press',
-    'ruletmpl:description': 'Play a chime when button pressed',
-    'ruletmpl:categories': ['Sounds & Alerts', 'Button Actions'],
+    id: 'SERV:ruletmpl:t1',
+    [Base.ATTR_ADDRESS]: 'SERV:ruletmpl:t1',
+    [Base.ATTR_ID]: 't1',
+    [RuleTemplate.ATTR_NAME]: 'Chime on Button Press',
+    [RuleTemplate.ATTR_DESCRIPTION]: 'Play a chime when button pressed',
+    [RuleTemplate.ATTR_CATEGORIES]: ['Sounds & Alerts', 'Button Actions'],
   },
   {
-    'base:address': 'SERV:ruletmpl:t2',
-    'base:id': 't2',
-    'ruletmpl:name': 'Lock Door at Night',
-    'ruletmpl:categories': ['Security'],
+    id: 'SERV:ruletmpl:t2',
+    [Base.ATTR_ADDRESS]: 'SERV:ruletmpl:t2',
+    [Base.ATTR_ID]: 't2',
+    [RuleTemplate.ATTR_NAME]: 'Lock Door at Night',
+    [RuleTemplate.ATTR_CATEGORIES]: ['Security'],
   },
 ];
 

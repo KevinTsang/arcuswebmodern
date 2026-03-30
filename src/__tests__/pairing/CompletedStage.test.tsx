@@ -1,4 +1,5 @@
 import { render, screen, fireEvent } from '@testing-library/react';
+import { Base, PairingDevice } from '@arcus/core';
 import CompletedStage from '@/components/pairing/CompletedStage';
 
 const mockFinish = jest.fn();
@@ -62,9 +63,9 @@ describe('CompletedStage – successful hub pairing', () => {
 
 describe('CompletedStage – mispaired device', () => {
   const mispairedDevice = {
-    'base:address': 'DRIV:dev:dev-1',
-    'pairdev:pairingState': 'MISPAIRED',
-    'pairdev:pairingPhase': 'FAILED',
+    [Base.ATTR_ADDRESS]: 'DRIV:dev:dev-1',
+    [PairingDevice.ATTR_PAIRINGSTATE]: 'MISPAIRED',
+    [PairingDevice.ATTR_PAIRINGPHASE]: 'FAILED',
   };
 
   it('shows "Improperly Paired" heading', () => {
@@ -85,9 +86,9 @@ describe('CompletedStage – mispaired device', () => {
 
 describe('CompletedStage – misconfigured device', () => {
   const misconfiguredDevice = {
-    'base:address': 'DRIV:dev:dev-1',
-    'pairdev:pairingState': 'MISCONFIGURED',
-    'pairdev:pairingPhase': 'FAILED',
+    [Base.ATTR_ADDRESS]: 'DRIV:dev:dev-1',
+    [PairingDevice.ATTR_PAIRINGSTATE]: 'MISCONFIGURED',
+    [PairingDevice.ATTR_PAIRINGPHASE]: 'FAILED',
   };
 
   it('shows "Improperly Paired" for MISCONFIGURED state', () => {

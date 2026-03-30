@@ -1,6 +1,8 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import { Base, Product, PairingDevice, PairingSubsystem } from '@arcus/core';
 import PairingPage from '@/app/(authenticated)/pairing/page';
+import type { ArcusEntity, SubsystemEntity } from '@/store/entityTypes';
+import type { PairingState } from '@/store/slices/pairingSlice';
 
 // ── Mocks ─────────────────────────────────────────────────────────────
 
@@ -63,10 +65,10 @@ jest.mock('@/components/pairing', () => ({
   },
 }));
 
-let mockPairingState: Record<string, unknown>;
-let mockHub: Record<string, unknown> | null = null;
+let mockPairingState: PairingState;
+let mockHub: ArcusEntity | null = null;
 let mockPlaceId: string | null = 'place-1';
-let mockSubsystems: Record<string, Record<string, unknown>> = {};
+let mockSubsystems: Record<string, SubsystemEntity> = {};
 
 jest.mock('@/store/hooks', () => ({
   useAppSelector: (sel: (s: any) => any) =>
@@ -211,7 +213,7 @@ describe('PairingPage – lifecycle', () => {
 
   it('calls StopSearching on unmount when pairing subsystem is available', () => {
     const pairingSubAddr = 'SERV:subpairing:place-1';
-    mockSubsystems = { [pairingSubAddr]: { [Base.ATTR_ADDRESS]: pairingSubAddr } };
+    mockSubsystems = { [pairingSubAddr]: { id: pairingSubAddr, [Base.ATTR_ADDRESS]: pairingSubAddr } };
     mockBridgeRequest.mockResolvedValue({});
 
     const { unmount } = render(<PairingPage />);
@@ -227,7 +229,7 @@ describe('PairingPage – lifecycle', () => {
 
   it('calls StopSearching on beforeunload when pairing subsystem is available', () => {
     const pairingSubAddr = 'SERV:subpairing:place-1';
-    mockSubsystems = { [pairingSubAddr]: { [Base.ATTR_ADDRESS]: pairingSubAddr } };
+    mockSubsystems = { [pairingSubAddr]: { id: pairingSubAddr, [Base.ATTR_ADDRESS]: pairingSubAddr } };
     mockBridgeRequest.mockResolvedValue({});
 
     render(<PairingPage />);
@@ -243,7 +245,7 @@ describe('PairingPage – lifecycle', () => {
 
   it('removes beforeunload listener on unmount', () => {
     const pairingSubAddr = 'SERV:subpairing:place-1';
-    mockSubsystems = { [pairingSubAddr]: { [Base.ATTR_ADDRESS]: pairingSubAddr } };
+    mockSubsystems = { [pairingSubAddr]: { id: pairingSubAddr, [Base.ATTR_ADDRESS]: pairingSubAddr } };
     mockBridgeRequest.mockResolvedValue({});
 
     const { unmount } = render(<PairingPage />);
@@ -264,7 +266,7 @@ describe('PairingPage – auto-start pairing', () => {
 
   beforeEach(() => {
     mockSubsystems = {
-      [pairingSubAddr]: { [Base.ATTR_ADDRESS]: pairingSubAddr },
+      [pairingSubAddr]: { id: pairingSubAddr, [Base.ATTR_ADDRESS]: pairingSubAddr },
     };
   });
 
@@ -372,7 +374,7 @@ describe('PairingPage – error handling', () => {
 
   beforeEach(() => {
     mockSubsystems = {
-      [pairingSubAddr]: { [Base.ATTR_ADDRESS]: pairingSubAddr },
+      [pairingSubAddr]: { id: pairingSubAddr, [Base.ATTR_ADDRESS]: pairingSubAddr },
     };
   });
 
@@ -439,7 +441,7 @@ describe('PairingPage – error handling', () => {
   });
 
   it('dispatches error notification when hub name customization fails', async () => {
-    mockHub = { [Base.ATTR_ADDRESS]: 'SERV:hub-1:hub' };
+    mockHub = { id: 'SERV:hub-1:hub', [Base.ATTR_ADDRESS]: 'SERV:hub-1:hub' };
     mockPairingState = {
       ...mockPairingState,
       stage: 'customize',

@@ -1,6 +1,8 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { RuleListItem } from '@/components/rules/RuleListItem';
 import Bridge from '@arcus/core/bridge';
+import { Base, Rule } from '@arcus/core';
+import type { RuleEntity } from '@/store/entityTypes';
 
 const mockDispatch = jest.fn();
 
@@ -19,17 +21,19 @@ jest.mock('@arcus/core/bridge', () => ({
 
 const mockBridge = Bridge.request as jest.Mock;
 
-const enabledRule: Record<string, unknown> = {
-  'base:address': 'SERV:rule:place-1.1',
-  'rule:name': 'My Rule',
-  'rule:description': 'A test rule description',
-  'rule:state': 'ENABLED',
+const enabledRule: RuleEntity = {
+  id: 'SERV:rule:place-1.1',
+  [Base.ATTR_ADDRESS]: 'SERV:rule:place-1.1',
+  [Rule.ATTR_NAME]: 'My Rule',
+  [Rule.ATTR_DESCRIPTION]: 'A test rule description',
+  [Rule.ATTR_STATE]: 'ENABLED',
 };
 
-const disabledRule: Record<string, unknown> = {
-  'base:address': 'SERV:rule:place-1.2',
-  'rule:name': 'Disabled Rule',
-  'rule:state': 'DISABLED',
+const disabledRule: RuleEntity = {
+  id: 'SERV:rule:place-1.2',
+  [Base.ATTR_ADDRESS]: 'SERV:rule:place-1.2',
+  [Rule.ATTR_NAME]: 'Disabled Rule',
+  [Rule.ATTR_STATE]: 'DISABLED',
 };
 
 beforeEach(() => {
@@ -45,7 +49,7 @@ describe('RuleListItem', () => {
   });
 
   it('renders fallback name for unnamed rules', () => {
-    render(<RuleListItem rule={{ 'base:address': 'x', 'rule:state': 'ENABLED' }} onEdit={jest.fn()} />);
+    render(<RuleListItem rule={{ [Base.ATTR_ADDRESS]: 'x', [Rule.ATTR_STATE]: 'ENABLED' }} onEdit={jest.fn()} />);
     expect(screen.getByText('Unnamed Rule')).toBeInTheDocument();
   });
 
@@ -65,7 +69,7 @@ describe('RuleListItem', () => {
     render(<RuleListItem rule={enabledRule} onEdit={jest.fn()} />);
     fireEvent.click(screen.getByRole('switch'));
     await waitFor(() => {
-      expect(mockBridge).toHaveBeenCalledWith('rule:Disable', 'SERV:rule:place-1.1', {});
+      expect(mockBridge).toHaveBeenCalledWith(Rule.CMD_DISABLE, 'SERV:rule:place-1.1', {});
     });
   });
 
@@ -73,7 +77,7 @@ describe('RuleListItem', () => {
     render(<RuleListItem rule={disabledRule} onEdit={jest.fn()} />);
     fireEvent.click(screen.getByRole('switch'));
     await waitFor(() => {
-      expect(mockBridge).toHaveBeenCalledWith('rule:Enable', 'SERV:rule:place-1.2', {});
+      expect(mockBridge).toHaveBeenCalledWith(Rule.CMD_ENABLE, 'SERV:rule:place-1.2', {});
     });
   });
 

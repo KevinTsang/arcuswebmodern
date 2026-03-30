@@ -1,13 +1,15 @@
 import { render, screen } from '@testing-library/react';
 import DoorsLocksCard from '@/components/home/DoorsLocksCard';
+import { Base } from '@arcus/core';
+import type { SubsystemEntity, DeviceEntity } from '@/store/entityTypes';
 
 jest.mock('next/link', () => ({
   __esModule: true,
   default: ({ href, children, ...props }: any) => <a href={href} {...props}>{children}</a>,
 }));
 
-let mockSubsystems: Record<string, unknown>[] = [];
-let mockDevices: Record<string, unknown>[] = [];
+let mockSubsystems: SubsystemEntity[] = [];
+let mockDevices: DeviceEntity[] = [];
 
 jest.mock('@/store/hooks', () => ({
   useAppSelector: (sel: (s: any) => any) =>
@@ -52,13 +54,14 @@ describe('DoorsLocksCard', () => {
   it('shows unlocked count for unlocked locks', () => {
     mockSubsystems = [
       {
-        'base:address': 'SERV:subdoorsnlocks:place-1',
+        id: 'SERV:subdoorsnlocks:place-1',
+        [Base.ATTR_ADDRESS]: 'SERV:subdoorsnlocks:place-1',
         'subdoorsnlocks:lockDevices': ['DRIV:dev:lock1', 'DRIV:dev:lock2'],
       },
     ];
     mockDevices = [
-      { 'base:address': 'DRIV:dev:lock1', 'doorlock:lockstate': 'UNLOCKED' },
-      { 'base:address': 'DRIV:dev:lock2', 'doorlock:lockstate': 'LOCKED' },
+      { id: 'DRIV:dev:lock1', [Base.ATTR_ADDRESS]: 'DRIV:dev:lock1', 'doorlock:lockstate': 'UNLOCKED' },
+      { id: 'DRIV:dev:lock2', [Base.ATTR_ADDRESS]: 'DRIV:dev:lock2', 'doorlock:lockstate': 'LOCKED' },
     ];
     render(<DoorsLocksCard />);
     // Total should be 2 (locks only, no contacts)

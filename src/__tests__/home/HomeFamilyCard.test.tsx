@@ -1,13 +1,15 @@
 import { render, screen } from '@testing-library/react';
 import HomeFamilyCard from '@/components/home/HomeFamilyCard';
+import { Base, Person } from '@arcus/core';
+import type { SubsystemEntity, PersonEntity } from '@/store/entityTypes';
 
 jest.mock('next/link', () => ({
   __esModule: true,
   default: ({ href, children, ...props }: any) => <a href={href} {...props}>{children}</a>,
 }));
 
-let mockSubsystems: Record<string, unknown>[] = [];
-let mockPeople: Record<string, unknown>[] = [];
+let mockSubsystems: SubsystemEntity[] = [];
+let mockPeople: PersonEntity[] = [];
 
 jest.mock('@/store/hooks', () => ({
   useAppSelector: (sel: (s: any) => any) =>
@@ -56,13 +58,14 @@ describe('HomeFamilyCard', () => {
   it('shows people at home count', () => {
     mockSubsystems = [
       {
-        'base:address': 'SERV:subspres:place-1',
+        id: 'SERV:subspres:place-1',
+        [Base.ATTR_ADDRESS]: 'SERV:subspres:place-1',
         'subspres:peopleAtHome': ['SERV:person:p1'],
         'subspres:peopleAway': [],
       },
     ];
     mockPeople = [
-      { 'base:address': 'SERV:person:p1', 'person:firstName': 'Alice' },
+      { id: 'SERV:person:p1', [Base.ATTR_ADDRESS]: 'SERV:person:p1', [Person.ATTR_FIRSTNAME]: 'Alice' },
     ];
     render(<HomeFamilyCard />);
     expect(screen.getByText('1')).toBeInTheDocument();

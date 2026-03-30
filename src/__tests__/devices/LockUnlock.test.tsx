@@ -1,9 +1,10 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { DoorLock } from '@arcus/core';
+import { Base, DoorLock } from '@arcus/core';
 import LockUnlock from '@/components/devices/LockUnlock';
+import type { DeviceEntity } from '@/store/entityTypes';
 
 const mockSetAttribute = jest.fn().mockResolvedValue(undefined);
-let mockDevice: Record<string, unknown> = {};
+let mockDevice: DeviceEntity = { id: 'DRIV:dev:test', [Base.ATTR_ADDRESS]: 'DRIV:dev:test' };
 
 jest.mock('@/hooks/useDeviceCapability', () => ({
   useDevice: () => mockDevice,
@@ -22,19 +23,19 @@ beforeEach(() => {
 
 describe('LockUnlock', () => {
   it('renders "Unlock" when locked', () => {
-    mockDevice = { [DoorLock.ATTR_LOCKSTATE]: DoorLock.LOCKSTATE_LOCKED };
+    mockDevice = { id: 'DRIV:dev:test', [Base.ATTR_ADDRESS]: 'DRIV:dev:test', [DoorLock.ATTR_LOCKSTATE]: DoorLock.LOCKSTATE_LOCKED };
     render(<LockUnlock address="DRIV:dev:test" />);
     expect(screen.getByText('Unlock')).toBeInTheDocument();
   });
 
   it('renders "Lock" when unlocked', () => {
-    mockDevice = { [DoorLock.ATTR_LOCKSTATE]: DoorLock.LOCKSTATE_UNLOCKED };
+    mockDevice = { id: 'DRIV:dev:test', [Base.ATTR_ADDRESS]: 'DRIV:dev:test', [DoorLock.ATTR_LOCKSTATE]: DoorLock.LOCKSTATE_UNLOCKED };
     render(<LockUnlock address="DRIV:dev:test" />);
     expect(screen.getByText('Lock')).toBeInTheDocument();
   });
 
   it('sends UNLOCKED when toggling a locked device', async () => {
-    mockDevice = { [DoorLock.ATTR_LOCKSTATE]: DoorLock.LOCKSTATE_LOCKED };
+    mockDevice = { id: 'DRIV:dev:test', [Base.ATTR_ADDRESS]: 'DRIV:dev:test', [DoorLock.ATTR_LOCKSTATE]: DoorLock.LOCKSTATE_LOCKED };
     render(<LockUnlock address="DRIV:dev:test" />);
     fireEvent.click(screen.getByText('Unlock'));
     await waitFor(() => {
@@ -43,7 +44,7 @@ describe('LockUnlock', () => {
   });
 
   it('sends LOCKED when toggling an unlocked device', async () => {
-    mockDevice = { [DoorLock.ATTR_LOCKSTATE]: DoorLock.LOCKSTATE_UNLOCKED };
+    mockDevice = { id: 'DRIV:dev:test', [Base.ATTR_ADDRESS]: 'DRIV:dev:test', [DoorLock.ATTR_LOCKSTATE]: DoorLock.LOCKSTATE_UNLOCKED };
     render(<LockUnlock address="DRIV:dev:test" />);
     fireEvent.click(screen.getByText('Lock'));
     await waitFor(() => {
@@ -53,7 +54,7 @@ describe('LockUnlock', () => {
 
   it('shows pending state while toggling', async () => {
     mockSetAttribute.mockReturnValue(new Promise(() => {})); // never resolves
-    mockDevice = { [DoorLock.ATTR_LOCKSTATE]: DoorLock.LOCKSTATE_LOCKED };
+    mockDevice = { id: 'DRIV:dev:test', [Base.ATTR_ADDRESS]: 'DRIV:dev:test', [DoorLock.ATTR_LOCKSTATE]: DoorLock.LOCKSTATE_LOCKED };
     render(<LockUnlock address="DRIV:dev:test" />);
     fireEvent.click(screen.getByText('Unlock'));
     await waitFor(() => {

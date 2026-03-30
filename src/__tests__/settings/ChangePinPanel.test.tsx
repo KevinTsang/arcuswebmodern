@@ -1,4 +1,5 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { Person } from '@arcus/core';
 import ChangePinPanel from '@/components/settings/ChangePinPanel';
 
 const mockCloseRight = jest.fn();
@@ -64,7 +65,7 @@ describe('ChangePinPanel', () => {
 
     await waitFor(() => {
       expect(mockBridgeRequest).toHaveBeenCalledWith(
-        'person:ChangePinV2',
+        Person.CMD_CHANGEPINV2,
         'SERV:person:person-1',
         { place: 'place-1', pin: '1234' },
       );

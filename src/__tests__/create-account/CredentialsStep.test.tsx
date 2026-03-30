@@ -1,4 +1,5 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { Base, Person } from '@arcus/core';
 import CredentialsStep from '@/components/create-account/CredentialsStep';
 import { CreateAccountProvider } from '@/components/create-account/CreateAccountContext';
 import { AccountService } from '@arcus/core/services';
@@ -81,7 +82,7 @@ describe('CredentialsStep', () => {
     (auth.authenticate as jest.Mock).mockResolvedValue(undefined);
     (auth.on as jest.Mock).mockImplementation((event: string, cb: (data?: any) => void) => {
       if (event === 'authentication:success') {
-        setTimeout(() => cb({ 'person:currPlace': 'p1', 'base:address': 'SERV:person:p1' }), 0);
+        setTimeout(() => cb({ [Person.ATTR_CURRPLACE]: 'p1', [Base.ATTR_ADDRESS]: 'SERV:person:p1' }), 0);
       }
     });
 

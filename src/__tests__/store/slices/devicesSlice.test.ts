@@ -5,9 +5,11 @@ import reducer, {
   devicesReceived,
   devicesClear,
 } from '@/store/slices/devicesSlice';
+import type { DeviceEntity } from '@/store/entityTypes';
+import { Base, Device } from '@arcus/core';
 
-function makeDevice(address: string, extra: Record<string, unknown> = {}) {
-  return { id: address, 'base:address': address, ...extra };
+function makeDevice(address: string, extra: Partial<DeviceEntity> = {}) {
+  return { id: address, [Base.ATTR_ADDRESS]: address, ...extra };
 }
 
 describe('devicesSlice', () => {
@@ -18,14 +20,14 @@ describe('devicesSlice', () => {
   });
 
   it('deviceAdded adds one device', () => {
-    const state = reducer(undefined, deviceAdded(makeDevice('DRIV:dev:d1', { 'dev:name': 'Switch' })));
+    const state = reducer(undefined, deviceAdded(makeDevice('DRIV:dev:d1', { [Device.ATTR_NAME]: 'Switch' })));
     expect(state.ids).toEqual(['DRIV:dev:d1']);
-    expect(state.entities['DRIV:dev:d1']?.['dev:name']).toBe('Switch');
+    expect(state.entities['DRIV:dev:d1']?.[Device.ATTR_NAME]).toBe('Switch');
   });
 
   it('deviceUpdated updates an existing device', () => {
     let state = reducer(undefined, deviceAdded(makeDevice('DRIV:dev:d1', { 'swit:state': 'OFF' })));
-    state = reducer(state, deviceUpdated({ 'base:address': 'DRIV:dev:d1', 'swit:state': 'ON' }));
+    state = reducer(state, deviceUpdated({ [Base.ATTR_ADDRESS]: 'DRIV:dev:d1', 'swit:state': 'ON' }));
     expect(state.entities['DRIV:dev:d1']?.['swit:state']).toBe('ON');
   });
 
@@ -41,13 +43,13 @@ describe('devicesSlice', () => {
     state = reducer(
       state,
       devicesReceived([
-        { 'base:address': 'DRIV:dev:a', 'dev:name': 'A' },
-        { 'base:address': 'DRIV:dev:b', 'dev:name': 'B' },
+        { [Base.ATTR_ADDRESS]: 'DRIV:dev:a', [Device.ATTR_NAME]: 'A' },
+        { [Base.ATTR_ADDRESS]: 'DRIV:dev:b', [Device.ATTR_NAME]: 'B' },
       ]),
     );
     expect(state.ids).toHaveLength(2);
     expect(state.entities['DRIV:dev:old']).toBeUndefined();
-    expect(state.entities['DRIV:dev:a']?.['dev:name']).toBe('A');
+    expect(state.entities['DRIV:dev:a']?.[Device.ATTR_NAME]).toBe('A');
   });
 
   it('devicesClear empties the store', () => {

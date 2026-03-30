@@ -1,3 +1,4 @@
+import { Base, Product, PairingDevice as PairingDeviceCap } from '@arcus/core';
 import reducer, {
   loadProduct,
   startSearch,
@@ -21,6 +22,7 @@ import reducer, {
   resetPairing,
 } from '@/store/slices/pairingSlice';
 import type { PairingState } from '@/store/slices/pairingSlice';
+import type { PairingProduct, PairingDevice } from '@/store/entityTypes';
 
 const initialState: PairingState = {
   stage: 'steps',
@@ -38,19 +40,19 @@ const initialState: PairingState = {
   activeDevice: null,
 };
 
-const mockProduct = {
-  'base:address': 'SERV:product:prod-1',
-  'product:name': 'Smart Plug',
-  'product:vendor': 'GE',
-  'product:hubRequired': true,
-  'product:id': 'abc123',
+const mockProduct: PairingProduct = {
+  [Base.ATTR_ADDRESS]: 'SERV:product:prod-1',
+  [Product.ATTR_NAME]: 'Smart Plug',
+  [Product.ATTR_VENDOR]: 'GE',
+  [Product.ATTR_HUBREQUIRED]: true,
+  [Product.ATTR_ID]: 'abc123',
 };
 
-const mockDevice = {
-  'base:address': 'DRIV:dev:dev-1',
-  'pairdev:pairingState': 'PAIRED',
-  'pairdev:pairingPhase': 'PAIRED',
-  'pairdev:deviceAddress': 'DRIV:dev:real-1',
+const mockDevice: PairingDevice = {
+  [Base.ATTR_ADDRESS]: 'DRIV:dev:dev-1',
+  [PairingDeviceCap.ATTR_PAIRINGSTATE]: 'PAIRED',
+  [PairingDeviceCap.ATTR_PAIRINGPHASE]: 'PAIRED',
+  [PairingDeviceCap.ATTR_DEVICEADDRESS]: 'DRIV:dev:real-1',
 };
 
 describe('pairingSlice', () => {
@@ -66,7 +68,7 @@ describe('pairingSlice', () => {
     });
 
     it('sets isHubPairing true for hub products', () => {
-      const hubProduct = { ...mockProduct, 'product:id': 'dee000' };
+      const hubProduct = { ...mockProduct, [Product.ATTR_ID]: 'dee000' };
       const state = reducer(initialState, loadProduct({ product: hubProduct, isHubPairing: true }));
       expect(state.isHubPairing).toBe(true);
     });
@@ -100,7 +102,7 @@ describe('pairingSlice', () => {
 
   describe('deviceMispaired', () => {
     it('sets activeDevice and stage to completed', () => {
-      const mispaired = { ...mockDevice, 'pairdev:pairingState': 'MISPAIRED' };
+      const mispaired = { ...mockDevice, [PairingDeviceCap.ATTR_PAIRINGSTATE]: 'MISPAIRED' };
       const state = reducer(initialState, deviceMispaired(mispaired));
       expect(state.activeDevice).toEqual(mispaired);
       expect(state.stage).toBe('completed');

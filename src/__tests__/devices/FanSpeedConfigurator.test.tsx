@@ -1,9 +1,10 @@
 import { render, screen, fireEvent } from '@testing-library/react';
-import { Fan } from '@arcus/core';
+import { Base, Fan } from '@arcus/core';
 import FanSpeedConfigurator from '@/components/devices/FanSpeedConfigurator';
+import type { DeviceEntity } from '@/store/entityTypes';
 
 const mockSetAttribute = jest.fn();
-let mockDevice: Record<string, unknown> = {};
+let mockDevice: DeviceEntity = { id: 'DRIV:dev:test', [Base.ATTR_ADDRESS]: 'DRIV:dev:test' };
 
 jest.mock('@/hooks/useDeviceCapability', () => ({
   useDevice: () => mockDevice,
@@ -23,7 +24,7 @@ beforeEach(() => {
 
 describe('FanSpeedConfigurator', () => {
   it('renders all speed buttons', () => {
-    mockDevice = { [Fan.ATTR_SPEED]: 0 };
+    mockDevice = { id: 'DRIV:dev:test', [Base.ATTR_ADDRESS]: 'DRIV:dev:test', [Fan.ATTR_SPEED]: 0 };
     render(<FanSpeedConfigurator address="DRIV:dev:test" />);
     expect(screen.getByText('Off')).toBeInTheDocument();
     expect(screen.getByText('Low')).toBeInTheDocument();
@@ -32,21 +33,21 @@ describe('FanSpeedConfigurator', () => {
   });
 
   it('sends setAttribute with correct speed value', () => {
-    mockDevice = { [Fan.ATTR_SPEED]: 0 };
+    mockDevice = { id: 'DRIV:dev:test', [Base.ATTR_ADDRESS]: 'DRIV:dev:test', [Fan.ATTR_SPEED]: 0 };
     render(<FanSpeedConfigurator address="DRIV:dev:test" />);
     fireEvent.click(screen.getByText('Medium'));
     expect(mockSetAttribute).toHaveBeenCalledWith(Fan.ATTR_SPEED, 66);
   });
 
   it('sends setAttribute for High speed', () => {
-    mockDevice = { [Fan.ATTR_SPEED]: 33 };
+    mockDevice = { id: 'DRIV:dev:test', [Base.ATTR_ADDRESS]: 'DRIV:dev:test', [Fan.ATTR_SPEED]: 33 };
     render(<FanSpeedConfigurator address="DRIV:dev:test" />);
     fireEvent.click(screen.getByText('High'));
     expect(mockSetAttribute).toHaveBeenCalledWith(Fan.ATTR_SPEED, 100);
   });
 
   it('sends setAttribute for Off', () => {
-    mockDevice = { [Fan.ATTR_SPEED]: 100 };
+    mockDevice = { id: 'DRIV:dev:test', [Base.ATTR_ADDRESS]: 'DRIV:dev:test', [Fan.ATTR_SPEED]: 100 };
     render(<FanSpeedConfigurator address="DRIV:dev:test" />);
     fireEvent.click(screen.getByText('Off'));
     expect(mockSetAttribute).toHaveBeenCalledWith(Fan.ATTR_SPEED, 0);

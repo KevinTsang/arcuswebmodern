@@ -133,7 +133,7 @@ npm run test:e2e:open     # Cypress E2E (interactive)
 
 ## Code Conventions
 
-- Prefer capability constants from `@arcus/core` over raw attribute strings (e.g., `Scene.ATTR_NAME` not `'scene:name'`).
+- Prefer capability constants from `@arcus/core` over raw strings for attribute keys, command names, and state values — in both source and test files. Use computed property syntax in object literals (e.g., `{ [Base.ATTR_ADDRESS]: addr }` not `{ 'base:address': addr }`). Use command constants in Bridge calls (e.g., `Bridge.request(Scene.CMD_FIRE, ...)` not `Bridge.request('scene:Fire', ...)`).
 - Use `useCallback` for event handlers passed to child components or used in dependency arrays.
 - Avoid `unknown` and `Record<string, unknown>` types. Define typed interfaces for data structures (props, API responses, platform objects) instead of passing untyped records. When interfacing with platform models, create interfaces that describe the expected attributes.
 - Error handling: wrap Bridge calls in try/catch, dispatch error notifications on failure.

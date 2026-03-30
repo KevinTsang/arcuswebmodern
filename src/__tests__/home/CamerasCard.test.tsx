@@ -1,13 +1,15 @@
 import { render, screen } from '@testing-library/react';
 import CamerasCard from '@/components/home/CamerasCard';
+import { Base } from '@arcus/core';
+import type { SubsystemEntity, DeviceEntity } from '@/store/entityTypes';
 
 jest.mock('next/link', () => ({
   __esModule: true,
   default: ({ href, children, ...props }: any) => <a href={href} {...props}>{children}</a>,
 }));
 
-let mockSubsystems: Record<string, unknown>[] = [];
-let mockDevices: Record<string, unknown>[] = [];
+let mockSubsystems: SubsystemEntity[] = [];
+let mockDevices: DeviceEntity[] = [];
 
 jest.mock('@/store/hooks', () => ({
   useAppSelector: (sel: (s: any) => any) =>
@@ -49,10 +51,10 @@ describe('CamerasCard', () => {
 
   it('shows singular "camera" for 1 camera', () => {
     mockSubsystems = [
-      { 'base:address': 'SERV:subcameras:place-1', 'subcameras:cameras': ['DRIV:dev:cam1'] },
+      { id: 'SERV:subcameras:place-1', [Base.ATTR_ADDRESS]: 'SERV:subcameras:place-1', 'subcameras:cameras': ['DRIV:dev:cam1'] },
     ];
     mockDevices = [
-      { 'base:address': 'DRIV:dev:cam1' },
+      { id: 'DRIV:dev:cam1', [Base.ATTR_ADDRESS]: 'DRIV:dev:cam1' },
     ];
     render(<CamerasCard />);
     expect(screen.getByText('1 camera')).toBeInTheDocument();
@@ -60,11 +62,11 @@ describe('CamerasCard', () => {
 
   it('shows plural "cameras" for multiple', () => {
     mockSubsystems = [
-      { 'base:address': 'SERV:subcameras:place-1', 'subcameras:cameras': ['DRIV:dev:cam1', 'DRIV:dev:cam2'] },
+      { id: 'SERV:subcameras:place-1', [Base.ATTR_ADDRESS]: 'SERV:subcameras:place-1', 'subcameras:cameras': ['DRIV:dev:cam1', 'DRIV:dev:cam2'] },
     ];
     mockDevices = [
-      { 'base:address': 'DRIV:dev:cam1' },
-      { 'base:address': 'DRIV:dev:cam2' },
+      { id: 'DRIV:dev:cam1', [Base.ATTR_ADDRESS]: 'DRIV:dev:cam1' },
+      { id: 'DRIV:dev:cam2', [Base.ATTR_ADDRESS]: 'DRIV:dev:cam2' },
     ];
     render(<CamerasCard />);
     expect(screen.getByText('2 cameras')).toBeInTheDocument();

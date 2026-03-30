@@ -1,5 +1,7 @@
 import { render, screen, fireEvent } from '@testing-library/react';
+import { Base, Device, Place } from '@arcus/core';
 import DevicesPage from '@/app/(authenticated)/devices/page';
+import type { ArcusEntity, DeviceEntity, SubsystemEntity } from '@/store/entityTypes';
 
 // ── Mocks ─────────────────────────────────────────────────────────────
 
@@ -16,15 +18,15 @@ jest.mock('next/link', () => ({
   default: ({ href, children, ...props }: any) => <a href={href} {...props}>{children}</a>,
 }));
 
-let mockHub: Record<string, unknown> | null = null;
-let mockDevices: Record<string, unknown>[] = [];
-let mockSubsystems: { entities: Record<string, Record<string, unknown>> } | null = null;
+let mockHub: ArcusEntity | null = null;
+let mockDevices: DeviceEntity[] = [];
+let mockSubsystems: { entities: Record<string, SubsystemEntity> } | null = null;
 
 jest.mock('@/store/hooks', () => ({
   useAppDispatch: () => mockDispatch,
   useAppSelector: (sel: (s: any) => any) =>
     sel({
-      place: { place: { 'place:name': 'Test Home' } },
+      place: { place: { [Place.ATTR_NAME]: 'Test Home' } },
       hub: { hub: mockHub },
       devices: { entities: Object.fromEntries(mockDevices.map((d, i) => [i, d])), ids: mockDevices.map((_, i) => i) },
       subsystems: mockSubsystems,
@@ -72,7 +74,7 @@ describe('DevicesPage – No Devices Paired state', () => {
   });
 
   it('does not show the empty state when hub exists', () => {
-    mockHub = { 'base:address': 'SERV:hub:hub-1' };
+    mockHub = { id: 'SERV:hub:hub-1', [Base.ATTR_ADDRESS]: 'SERV:hub:hub-1' };
     render(<DevicesPage />);
     expect(screen.queryByText('No Devices Paired')).not.toBeInTheDocument();
     expect(screen.queryByText('Add a Hub or Smart Kit')).not.toBeInTheDocument();
@@ -80,7 +82,7 @@ describe('DevicesPage – No Devices Paired state', () => {
   });
 
   it('does not show the empty state when devices exist', () => {
-    mockDevices = [{ 'base:address': 'DRIV:dev:dev-1', 'dev:name': 'Light' }];
+    mockDevices = [{ id: 'DRIV:dev:dev-1', [Base.ATTR_ADDRESS]: 'DRIV:dev:dev-1', [Device.ATTR_NAME]: 'Light' }];
     render(<DevicesPage />);
     expect(screen.queryByText('No Devices Paired')).not.toBeInTheDocument();
     expect(screen.getByText('DeviceList')).toBeInTheDocument();
@@ -92,13 +94,13 @@ describe('DevicesPage – No Devices Paired state', () => {
   });
 
   it('shows "+ Add Device" button when hub exists', () => {
-    mockHub = { 'base:address': 'SERV:hub:hub-1' };
+    mockHub = { id: 'SERV:hub:hub-1', [Base.ATTR_ADDRESS]: 'SERV:hub:hub-1' };
     render(<DevicesPage />);
     expect(screen.getByText('+ Add Device')).toBeInTheDocument();
   });
 
   it('"+ Add Device" links to /pairing', () => {
-    mockHub = { 'base:address': 'SERV:hub:hub-1' };
+    mockHub = { id: 'SERV:hub:hub-1', [Base.ATTR_ADDRESS]: 'SERV:hub:hub-1' };
     render(<DevicesPage />);
     const link = screen.getByText('+ Add Device').closest('a');
     expect(link).toHaveAttribute('href', '/pairing');
@@ -121,7 +123,7 @@ describe('DevicesPage – Add a Hub or Smart Kit button', () => {
 
   it('does not call Bridge.request since hub is absent from empty state', () => {
     mockSubsystems = {
-      entities: { sub1: { 'base:address': 'SERV:subpairing:place-1' } },
+      entities: { sub1: { id: 'SERV:subpairing:place-1', [Base.ATTR_ADDRESS]: 'SERV:subpairing:place-1' } },
     };
     render(<DevicesPage />);
     fireEvent.click(screen.getByText('Add a Hub or Smart Kit'));

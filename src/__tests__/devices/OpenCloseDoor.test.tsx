@@ -1,9 +1,10 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { MotorizedDoor } from '@arcus/core';
+import { Base, MotorizedDoor } from '@arcus/core';
 import OpenCloseDoor from '@/components/devices/OpenCloseDoor';
+import type { DeviceEntity } from '@/store/entityTypes';
 
 const mockSendCommand = jest.fn().mockResolvedValue(undefined);
-let mockDevice: Record<string, unknown> = {};
+let mockDevice: DeviceEntity = { id: 'DRIV:dev:test', [Base.ATTR_ADDRESS]: 'DRIV:dev:test' };
 
 jest.mock('@/hooks/useDeviceCapability', () => ({
   useDevice: () => mockDevice,
@@ -22,25 +23,25 @@ beforeEach(() => {
 
 describe('OpenCloseDoor', () => {
   it('renders "Open" when door is closed', () => {
-    mockDevice = { [MotorizedDoor.ATTR_DOORSTATE]: MotorizedDoor.DOORSTATE_CLOSED };
+    mockDevice = { id: 'DRIV:dev:test', [Base.ATTR_ADDRESS]: 'DRIV:dev:test', [MotorizedDoor.ATTR_DOORSTATE]: MotorizedDoor.DOORSTATE_CLOSED };
     render(<OpenCloseDoor address="DRIV:dev:test" />);
     expect(screen.getByText('Open')).toBeInTheDocument();
   });
 
   it('renders "Close" when door is open', () => {
-    mockDevice = { [MotorizedDoor.ATTR_DOORSTATE]: MotorizedDoor.DOORSTATE_OPEN };
+    mockDevice = { id: 'DRIV:dev:test', [Base.ATTR_ADDRESS]: 'DRIV:dev:test', [MotorizedDoor.ATTR_DOORSTATE]: MotorizedDoor.DOORSTATE_OPEN };
     render(<OpenCloseDoor address="DRIV:dev:test" />);
     expect(screen.getByText('Close')).toBeInTheDocument();
   });
 
   it('renders "Close" for obstruction state', () => {
-    mockDevice = { [MotorizedDoor.ATTR_DOORSTATE]: MotorizedDoor.DOORSTATE_OBSTRUCTION };
+    mockDevice = { id: 'DRIV:dev:test', [Base.ATTR_ADDRESS]: 'DRIV:dev:test', [MotorizedDoor.ATTR_DOORSTATE]: MotorizedDoor.DOORSTATE_OBSTRUCTION };
     render(<OpenCloseDoor address="DRIV:dev:test" />);
     expect(screen.getByText('Close')).toBeInTheDocument();
   });
 
   it('sends OpenGarageDoor command when opening', async () => {
-    mockDevice = { [MotorizedDoor.ATTR_DOORSTATE]: MotorizedDoor.DOORSTATE_CLOSED };
+    mockDevice = { id: 'DRIV:dev:test', [Base.ATTR_ADDRESS]: 'DRIV:dev:test', [MotorizedDoor.ATTR_DOORSTATE]: MotorizedDoor.DOORSTATE_CLOSED };
     render(<OpenCloseDoor address="DRIV:dev:test" />);
     fireEvent.click(screen.getByText('Open'));
     await waitFor(() => {
@@ -49,7 +50,7 @@ describe('OpenCloseDoor', () => {
   });
 
   it('sends CloseGarageDoor command when closing', async () => {
-    mockDevice = { [MotorizedDoor.ATTR_DOORSTATE]: MotorizedDoor.DOORSTATE_OPEN };
+    mockDevice = { id: 'DRIV:dev:test', [Base.ATTR_ADDRESS]: 'DRIV:dev:test', [MotorizedDoor.ATTR_DOORSTATE]: MotorizedDoor.DOORSTATE_OPEN };
     render(<OpenCloseDoor address="DRIV:dev:test" />);
     fireEvent.click(screen.getByText('Close'));
     await waitFor(() => {
@@ -58,7 +59,7 @@ describe('OpenCloseDoor', () => {
   });
 
   it('defaults to closed when no door state', () => {
-    mockDevice = {};
+    mockDevice = { id: 'DRIV:dev:test', [Base.ATTR_ADDRESS]: 'DRIV:dev:test' };
     render(<OpenCloseDoor address="DRIV:dev:test" />);
     expect(screen.getByText('Open')).toBeInTheDocument();
   });

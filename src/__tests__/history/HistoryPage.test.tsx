@@ -1,5 +1,7 @@
 import { render, screen, fireEvent, act } from '@testing-library/react';
+import { Base, Place, Device } from '@arcus/core';
 import HistoryPage from '@/app/(authenticated)/history/page';
+import type { PlaceData, DeviceEntity } from '@/store/entityTypes';
 
 // ── Mocks ─────────────────────────────────────────────────────────────
 
@@ -31,8 +33,8 @@ jest.mock('@/components/history', () => ({
 }));
 
 let mockPlaceId: string | null = 'place-1';
-let mockPlace: Record<string, unknown> | null = null;
-let mockDevices: Record<string, unknown>[] = [];
+let mockPlace: PlaceData | null = null;
+let mockDevices: DeviceEntity[] = [];
 
 jest.mock('@/store/hooks', () => ({
   useAppSelector: (sel: (s: any) => any) =>
@@ -144,8 +146,8 @@ describe('HistoryPage – refresh', () => {
 describe('HistoryPage – device filtering', () => {
   beforeEach(() => {
     mockDevices = [
-      { id: 'd1', 'base:id': 'dev-1', 'base:address': 'DRIV:dev:dev-1', 'dev:name': 'Front Door Lock' },
-      { id: 'd2', 'base:id': 'dev-2', 'base:address': 'DRIV:dev:dev-2', 'dev:name': 'Motion Sensor' },
+      { id: 'd1', [Base.ATTR_ID]: 'dev-1', [Base.ATTR_ADDRESS]: 'DRIV:dev:dev-1', [Device.ATTR_NAME]: 'Front Door Lock' },
+      { id: 'd2', [Base.ATTR_ID]: 'dev-2', [Base.ATTR_ADDRESS]: 'DRIV:dev:dev-2', [Device.ATTR_NAME]: 'Motion Sensor' },
     ];
   });
 
@@ -188,13 +190,13 @@ describe('HistoryPage – device filtering', () => {
 
 describe('HistoryPage – premium notice', () => {
   it('shows upgrade notice for non-premium users', () => {
-    mockPlace = { 'place:serviceLevel': 'BASIC' };
+    mockPlace = { [Base.ATTR_ADDRESS]: 'SERV:place:place-1', [Base.ATTR_ID]: 'place-1', [Place.ATTR_SERVICELEVEL]: 'BASIC' };
     render(<HistoryPage />);
     expect(screen.getByText(/Upgrade to Premium/)).toBeInTheDocument();
   });
 
   it('hides upgrade notice for premium users', () => {
-    mockPlace = { 'place:serviceLevel': 'PREMIUM' };
+    mockPlace = { [Base.ATTR_ADDRESS]: 'SERV:place:place-1', [Base.ATTR_ID]: 'place-1', [Place.ATTR_SERVICELEVEL]: 'PREMIUM' };
     render(<HistoryPage />);
     expect(screen.queryByText(/Upgrade to Premium/)).not.toBeInTheDocument();
   });

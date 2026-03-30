@@ -1,10 +1,12 @@
 import { render, screen, fireEvent } from '@testing-library/react';
+import { Base, Product } from '@arcus/core';
 import HubSetupPage from '@/app/(authenticated)/hub-setup/page';
+import type { PairingProduct } from '@/store/entityTypes';
 
 // ── Mocks ─────────────────────────────────────────────────────────────
 
 const mockPush = jest.fn();
-let mockProducts: Record<string, unknown>[] = [];
+let mockProducts: PairingProduct[] = [];
 
 jest.mock('next/navigation', () => ({
   useRouter: () => ({ push: mockPush }),
@@ -68,20 +70,20 @@ describe('HubSetupPage – product selection', () => {
   });
 
   it('stores product in sessionStorage when product exists in store', () => {
-    const product = { 'product:id': 'dee001', 'product:name': 'Wi-Fi Smart Hub' };
+    const product: PairingProduct = { [Base.ATTR_ADDRESS]: 'SERV:product:dee001', [Product.ATTR_ID]: 'dee001', [Product.ATTR_NAME]: 'Wi-Fi Smart Hub', [Product.ATTR_VENDOR]: 'Arcus', [Product.ATTR_HUBREQUIRED]: true };
     mockProducts = [product];
     render(<HubSetupPage />);
     fireEvent.click(screen.getByText('Arcus Wi-Fi Smart Hub'));
     const stored = JSON.parse(sessionStorage.getItem('pairing:product')!);
-    expect(stored['product:id']).toBe('dee001');
+    expect(stored[Product.ATTR_ID]).toBe('dee001');
   });
 
   it('stores fallback product when product not in store', () => {
     render(<HubSetupPage />);
     fireEvent.click(screen.getByText('Arcus Wi-Fi Smart Hub'));
     const stored = JSON.parse(sessionStorage.getItem('pairing:product')!);
-    expect(stored['product:id']).toBe('dee001');
-    expect(stored['product:name']).toBe('Wi-Fi Smart Hub');
+    expect(stored[Product.ATTR_ID]).toBe('dee001');
+    expect(stored[Product.ATTR_NAME]).toBe('Wi-Fi Smart Hub');
   });
 
   it('stores kit info when a kit is selected', () => {
@@ -95,7 +97,7 @@ describe('HubSetupPage – product selection', () => {
     fireEvent.click(screen.getByText('Safe & Secure Starter Kit'));
     const stored = JSON.parse(sessionStorage.getItem('pairing:product')!);
     // kitsafesec maps to dee001
-    expect(stored['product:id']).toBe('dee001');
+    expect(stored[Product.ATTR_ID]).toBe('dee001');
   });
 
   it('does not store kit info when a hub (non-kit) is selected', () => {

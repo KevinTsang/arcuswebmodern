@@ -1,29 +1,34 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { RulePanel, parseTemplateString } from '@/components/rules/RulePanel';
 import Bridge from '@arcus/core/bridge';
+import { Base, Rule, RuleTemplate } from '@arcus/core';
+import type { RuleEntity, RuleTemplateEntity } from '@/store/entityTypes';
 
 // ── Mocks ─────────────────────────────────────────────────────────────
 
 const mockCloseRight = jest.fn();
 const mockDispatch = jest.fn();
 
-jest.mock('@/store/hooks', () => ({
-  useAppSelector: (selector: (s: unknown) => unknown) =>
-    selector({
-      place: { placeId: 'place-1' },
-      rules: {
-        ruleTemplates: [
-          {
-            'base:address': 'SERV:ruletmpl:button-chime',
-            'base:id': 'button-chime',
-            'ruletmpl:name': 'Chime on Button Press',
-            'ruletmpl:template': 'When ${button} is pressed, play ${chime}',
-          },
-        ],
-      },
-    }),
-  useAppDispatch: () => mockDispatch,
-}));
+jest.mock('@/store/hooks', () => {
+  const { Base: BaseCapability, RuleTemplate: RuleTemplateCapability } = jest.requireActual('@arcus/core');
+  return {
+    useAppSelector: (selector: (s: unknown) => unknown) =>
+      selector({
+        place: { placeId: 'place-1' },
+        rules: {
+          ruleTemplates: [
+            {
+              [BaseCapability.ATTR_ADDRESS]: 'SERV:ruletmpl:button-chime',
+              [BaseCapability.ATTR_ID]: 'button-chime',
+              [RuleTemplateCapability.ATTR_NAME]: 'Chime on Button Press',
+              [RuleTemplateCapability.ATTR_TEMPLATE]: 'When ${button} is pressed, play ${chime}',
+            },
+          ],
+        },
+      }),
+    useAppDispatch: () => mockDispatch,
+  };
+});
 
 jest.mock('@/components/SidePanel', () => ({
   useSidePanel: () => ({ closeRight: mockCloseRight }),
@@ -40,19 +45,21 @@ jest.mock('@arcus/core/bridge', () => ({
 
 const mockBridge = Bridge.request as jest.Mock;
 
-const mockTemplate: Record<string, unknown> = {
-  'base:address': 'SERV:ruletmpl:button-chime',
-  'base:id': 'button-chime',
-  'ruletmpl:name': 'Chime on Button Press',
-  'ruletmpl:template': 'When ${button} is pressed, play ${chime}',
+const mockTemplate: RuleTemplateEntity = {
+  id: 'SERV:ruletmpl:button-chime',
+  [Base.ATTR_ADDRESS]: 'SERV:ruletmpl:button-chime',
+  [Base.ATTR_ID]: 'button-chime',
+  [RuleTemplate.ATTR_NAME]: 'Chime on Button Press',
+  [RuleTemplate.ATTR_TEMPLATE]: 'When ${button} is pressed, play ${chime}',
 };
 
-const mockRule: Record<string, unknown> = {
-  'base:address': 'SERV:rule:place-1.1',
-  'rule:name': 'Door Bell Button',
-  'rule:template': 'button-chime',
-  'rule:state': 'ENABLED',
-  'rule:context': {
+const mockRule: RuleEntity = {
+  id: 'SERV:rule:place-1.1',
+  [Base.ATTR_ADDRESS]: 'SERV:rule:place-1.1',
+  [Rule.ATTR_NAME]: 'Door Bell Button',
+  [Rule.ATTR_TEMPLATE]: 'button-chime',
+  [Rule.ATTR_STATE]: 'ENABLED',
+  [Rule.ATTR_CONTEXT]: {
     button: 'DRIV:dev:btn-1',
     chime: 'DING_DONG',
     _accountId: 'acct-1',
@@ -137,7 +144,7 @@ describe('RulePanel (create mode)', () => {
     render(<RulePanel template={mockTemplate} placeId="place-1" />);
     await waitFor(() => {
       expect(mockBridge).toHaveBeenCalledWith(
-        'ruletmpl:Resolve',
+        RuleTemplate.CMD_RESOLVE,
         'SERV:ruletmpl:button-chime',
         { placeId: 'place-1' },
       );
@@ -212,7 +219,7 @@ describe('RulePanel (create mode)', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Create Rule' }));
     await waitFor(() => {
       expect(mockBridge).toHaveBeenCalledWith(
-        'ruletmpl:CreateRule',
+        RuleTemplate.CMD_CREATERULE,
         'SERV:ruletmpl:button-chime',
         expect.objectContaining({
           placeId: 'place-1',
@@ -292,7 +299,7 @@ describe('RulePanel (edit mode)', () => {
     render(<RulePanel rule={mockRule} placeId="place-1" />);
     await waitFor(() => {
       expect(mockBridge).toHaveBeenCalledWith(
-        'ruletmpl:Resolve',
+        RuleTemplate.CMD_RESOLVE,
         'SERV:ruletmpl:button-chime',
         { placeId: 'place-1' },
       );
@@ -307,12 +314,12 @@ describe('RulePanel (edit mode)', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Save' }));
     await waitFor(() => {
       expect(mockBridge).toHaveBeenCalledWith(
-        'base:SetAttributes',
+        Base.CMD_SETATTRIBUTES,
         'SERV:rule:place-1.1',
-        { 'rule:name': 'Door Bell Button' },
+        { [Rule.ATTR_NAME]: 'Door Bell Button' },
       );
       expect(mockBridge).toHaveBeenCalledWith(
-        'rule:UpdateContext',
+        Rule.CMD_UPDATECONTEXT,
         'SERV:rule:place-1.1',
         expect.objectContaining({
           context: expect.objectContaining({ button: 'DRIV:dev:btn-1', chime: 'DING_DONG' }),
@@ -348,7 +355,7 @@ describe('RulePanel (edit mode)', () => {
     fireEvent.click(screen.getByText('Delete Rule'));
     fireEvent.click(screen.getByText('Yes, Delete'));
     await waitFor(() => {
-      expect(mockBridge).toHaveBeenCalledWith('rule:Delete', 'SERV:rule:place-1.1', {});
+      expect(mockBridge).toHaveBeenCalledWith(Rule.CMD_DELETE, 'SERV:rule:place-1.1', {});
     });
   });
 

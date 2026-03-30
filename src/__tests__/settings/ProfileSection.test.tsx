@@ -1,5 +1,7 @@
 import { render, screen, fireEvent } from '@testing-library/react';
+import { Base, Person, Place, Account } from '@arcus/core';
 import ProfileSection from '@/components/settings/ProfileSection';
+import type { PersonEntity, AccountData, PlaceData } from '@/store/entityTypes';
 
 const mockOpenRight = jest.fn();
 
@@ -7,9 +9,9 @@ jest.mock('@/components/SidePanel', () => ({
   useSidePanel: () => ({ openRight: mockOpenRight }),
 }));
 
-let mockPerson: Record<string, unknown> | null = null;
-let mockAccount: Record<string, unknown> | null = null;
-let mockPlace: Record<string, unknown> | null = null;
+let mockPerson: PersonEntity | null = null;
+let mockAccount: AccountData | null = null;
+let mockPlace: PlaceData | null = null;
 
 jest.mock('@/store/hooks', () => ({
   useAppSelector: (sel: (s: any) => any) =>
@@ -23,14 +25,15 @@ jest.mock('@/store/hooks', () => ({
 beforeEach(() => {
   jest.clearAllMocks();
   mockPerson = {
-    'person:firstName': 'John',
-    'person:lastName': 'Doe',
-    'person:email': 'john@test.com',
-    'person:mobileNumber': '555-1234',
-    'base:address': 'SERV:person:p1',
+    id: 'SERV:person:p1',
+    [Person.ATTR_FIRSTNAME]: 'John',
+    [Person.ATTR_LASTNAME]: 'Doe',
+    [Person.ATTR_EMAIL]: 'john@test.com',
+    [Person.ATTR_MOBILENUMBER]: '555-1234',
+    [Base.ATTR_ADDRESS]: 'SERV:person:p1',
   };
-  mockAccount = { 'account:state': 'ACTIVE', 'base:address': 'SERV:account:a1' };
-  mockPlace = { 'place:serviceLevel': 'PREMIUM' };
+  mockAccount = { [Account.ATTR_STATE]: 'ACTIVE', [Account.ATTR_OWNER]: 'SERV:person:p1', [Base.ATTR_ADDRESS]: 'SERV:account:a1' };
+  mockPlace = { [Base.ATTR_ADDRESS]: 'SERV:place:place-1', [Base.ATTR_ID]: 'place-1', [Place.ATTR_SERVICELEVEL]: 'PREMIUM' };
 });
 
 describe('ProfileSection', () => {

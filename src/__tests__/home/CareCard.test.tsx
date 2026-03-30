@@ -1,12 +1,14 @@
 import { render, screen } from '@testing-library/react';
 import CareCard from '@/components/home/CareCard';
+import { Base } from '@arcus/core';
+import type { SubsystemEntity } from '@/store/entityTypes';
 
 jest.mock('next/link', () => ({
   __esModule: true,
   default: ({ href, children, ...props }: any) => <a href={href} {...props}>{children}</a>,
 }));
 
-let mockSubsystems: Record<string, unknown>[] = [];
+let mockSubsystems: SubsystemEntity[] = [];
 
 jest.mock('@/store/hooks', () => ({
   useAppSelector: (sel: (s: any) => any) =>
@@ -44,7 +46,7 @@ describe('CareCard', () => {
 
   it('shows Alert when alarm state is ALERT', () => {
     mockSubsystems = [
-      { 'base:address': 'SERV:subcare:place-1', 'subcare:alarmState': 'ALERT' },
+      { id: 'SERV:subcare:place-1', [Base.ATTR_ADDRESS]: 'SERV:subcare:place-1', 'subcare:alarmState': 'ALERT' },
     ];
     render(<CareCard />);
     expect(screen.getByText('Alert')).toBeInTheDocument();
@@ -53,7 +55,8 @@ describe('CareCard', () => {
   it('shows behavior count', () => {
     mockSubsystems = [
       {
-        'base:address': 'SERV:subcare:place-1',
+        id: 'SERV:subcare:place-1',
+        [Base.ATTR_ADDRESS]: 'SERV:subcare:place-1',
         'subcare:behaviors': [{ name: 'b1' }, { name: 'b2' }],
       },
     ];

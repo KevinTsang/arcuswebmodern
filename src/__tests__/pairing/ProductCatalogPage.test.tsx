@@ -1,5 +1,7 @@
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
+import { Base, Product } from '@arcus/core';
 import ProductCatalogPage from '@/app/(authenticated)/product-catalog/page';
+import type { ArcusEntity, PairingProduct } from '@/store/entityTypes';
 
 // ── Mocks ─────────────────────────────────────────────────────────────
 
@@ -9,7 +11,7 @@ jest.mock('next/navigation', () => ({
 }));
 
 let mockPlaceId: string | null = 'place-1';
-let mockHub: Record<string, unknown> | null = null;
+let mockHub: ArcusEntity | null = null;
 
 jest.mock('@/store/hooks', () => ({
   useAppSelector: (sel: (s: any) => any) =>
@@ -33,8 +35,8 @@ jest.mock('@arcus/core/services', () => ({
 
 jest.mock('@/components/products', () => ({
   ProductCard: ({ product, onSelect }: any) => (
-    <button data-testid={`product-${product['product:id']}`} onClick={() => onSelect(product)}>
-      {product['product:name']}
+    <button data-testid={`product-${product[Product.ATTR_ID]}`} onClick={() => onSelect(product)}>
+      {product[Product.ATTR_NAME]}
     </button>
   ),
 }));
@@ -44,10 +46,10 @@ const mockBrands = [
   { name: 'Philips', count: 1 },
 ];
 
-const mockProducts = [
-  { 'base:address': 'SERV:product:1', 'product:name': 'Smart Plug', 'product:vendor': 'GE', 'product:id': 'p1', 'product:hubRequired': true },
-  { 'base:address': 'SERV:product:2', 'product:name': 'Dimmer Switch', 'product:vendor': 'GE', 'product:id': 'p2', 'product:hubRequired': false },
-  { 'base:address': 'SERV:product:3', 'product:name': 'Hue Bulb', 'product:vendor': 'Philips', 'product:id': 'p3', 'product:hubRequired': true },
+const mockProducts: PairingProduct[] = [
+  { [Base.ATTR_ADDRESS]: 'SERV:product:1', [Product.ATTR_NAME]: 'Smart Plug', [Product.ATTR_VENDOR]: 'GE', [Product.ATTR_ID]: 'p1', [Product.ATTR_HUBREQUIRED]: true },
+  { [Base.ATTR_ADDRESS]: 'SERV:product:2', [Product.ATTR_NAME]: 'Dimmer Switch', [Product.ATTR_VENDOR]: 'GE', [Product.ATTR_ID]: 'p2', [Product.ATTR_HUBREQUIRED]: false },
+  { [Base.ATTR_ADDRESS]: 'SERV:product:3', [Product.ATTR_NAME]: 'Hue Bulb', [Product.ATTR_VENDOR]: 'Philips', [Product.ATTR_ID]: 'p3', [Product.ATTR_HUBREQUIRED]: true },
 ];
 
 // ── Helpers ───────────────────────────────────────────────────────────
@@ -237,7 +239,7 @@ describe('ProductCatalogPage – search', () => {
 describe('ProductCatalogPage – product selection', () => {
   it('stores product in sessionStorage and navigates to /pairing', async () => {
     setupSuccessfulLoad();
-    mockHub = { 'base:address': 'SERV:hub:hub-1' };
+    mockHub = { id: 'SERV:hub:hub-1', [Base.ATTR_ADDRESS]: 'SERV:hub:hub-1' };
     await act(async () => { render(<ProductCatalogPage />); });
 
     fireEvent.click(screen.getByTestId('product-p1'));
@@ -261,7 +263,7 @@ describe('ProductCatalogPage – product selection', () => {
 
   it('alerts when hub is offline', async () => {
     setupSuccessfulLoad();
-    mockHub = { 'base:address': 'SERV:hub:hub-1', 'hub:state': 'DOWN' };
+    mockHub = { id: 'SERV:hub:hub-1', [Base.ATTR_ADDRESS]: 'SERV:hub:hub-1', 'hub:state': 'DOWN' };
     const alertSpy = jest.spyOn(window, 'alert').mockImplementation(() => {});
     await act(async () => { render(<ProductCatalogPage />); });
 
@@ -273,8 +275,8 @@ describe('ProductCatalogPage – product selection', () => {
 
   it('alerts when product requires mobile app', async () => {
     setupSuccessfulLoad();
-    mockHub = { 'base:address': 'SERV:hub:hub-1' };
-    const appProduct = { ...mockProducts[1], 'product:appRequired': true };
+    mockHub = { id: 'SERV:hub:hub-1', [Base.ATTR_ADDRESS]: 'SERV:hub:hub-1' };
+    const appProduct = { ...mockProducts[1], [Product.ATTR_APPREQUIRED]: true };
     mockGetProducts.mockResolvedValue({ products: [appProduct] });
     const alertSpy = jest.spyOn(window, 'alert').mockImplementation(() => {});
     await act(async () => { render(<ProductCatalogPage />); });

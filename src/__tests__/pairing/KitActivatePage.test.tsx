@@ -1,5 +1,7 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { Base, Product, PairingDevice } from '@arcus/core';
 import KitActivatePage from '@/app/(authenticated)/kit-activate/page';
+import type { DeviceEntity, PairingProduct, SubsystemEntity } from '@/store/entityTypes';
 
 // ── Mocks ─────────────────────────────────────────────────────────────
 
@@ -20,9 +22,9 @@ jest.mock('@/store/slices/uiSlice', () => ({
   addNotification: (payload: unknown) => ({ type: 'ui/addNotification', payload }),
 }));
 
-let mockDevices: Record<string, unknown>[] = [];
-let mockProducts: Record<string, unknown>[] = [];
-let mockSubsystems: Record<string, Record<string, unknown>> = {};
+let mockDevices: DeviceEntity[] = [];
+let mockProducts: PairingProduct[] = [];
+let mockSubsystems: Record<string, SubsystemEntity> = {};
 
 jest.mock('@/store/hooks', () => ({
   useAppSelector: (sel: (s: any) => any) =>
@@ -63,7 +65,7 @@ describe('KitActivatePage – no pairing subsystem', () => {
 describe('KitActivatePage – empty kit', () => {
   it('shows no kit devices message when kit is empty', async () => {
     mockSubsystems = {
-      sub1: { 'base:address': 'SERV:subpairing:place-1' },
+      sub1: { id: 'sub1', [Base.ATTR_ADDRESS]: 'SERV:subpairing:place-1' },
     };
     mockBridgeRequest.mockResolvedValue({ kitInfo: [], devices: [] });
     render(<KitActivatePage />);
@@ -72,7 +74,7 @@ describe('KitActivatePage – empty kit', () => {
 
   it('shows Go to Devices link when no kit devices', async () => {
     mockSubsystems = {
-      sub1: { 'base:address': 'SERV:subpairing:place-1' },
+      sub1: { id: 'sub1', [Base.ATTR_ADDRESS]: 'SERV:subpairing:place-1' },
     };
     mockBridgeRequest.mockResolvedValue({ kitInfo: [], devices: [] });
     render(<KitActivatePage />);
@@ -81,7 +83,7 @@ describe('KitActivatePage – empty kit', () => {
 
   it('navigates to devices when Go to Devices is clicked', async () => {
     mockSubsystems = {
-      sub1: { 'base:address': 'SERV:subpairing:place-1' },
+      sub1: { id: 'sub1', [Base.ATTR_ADDRESS]: 'SERV:subpairing:place-1' },
     };
     mockBridgeRequest.mockResolvedValue({ kitInfo: [], devices: [] });
     render(<KitActivatePage />);
@@ -94,10 +96,10 @@ describe('KitActivatePage – empty kit', () => {
 describe('KitActivatePage – with kit devices', () => {
   beforeEach(() => {
     mockSubsystems = {
-      sub1: { 'base:address': 'SERV:subpairing:place-1' },
+      sub1: { id: 'sub1', [Base.ATTR_ADDRESS]: 'SERV:subpairing:place-1' },
     };
     mockProducts = [
-      { 'product:id': 'sensor1', 'base:address': 'SERV:product:sensor1', 'product:name': 'Motion Sensor' },
+      { [Product.ATTR_ID]: 'sensor1', [Base.ATTR_ADDRESS]: 'SERV:product:sensor1', [Product.ATTR_NAME]: 'Motion Sensor', [Product.ATTR_VENDOR]: 'Arcus', [Product.ATTR_HUBREQUIRED]: true },
     ];
     mockBridgeRequest.mockResolvedValue({
       kitInfo: [
@@ -106,8 +108,8 @@ describe('KitActivatePage – with kit devices', () => {
       ],
       devices: [
         {
-          'base:address': 'DRIV:dev:pd1',
-          'pairdev:pairingState': 'PAIRING',
+          [Base.ATTR_ADDRESS]: 'DRIV:dev:pd1',
+          [PairingDevice.ATTR_PAIRINGSTATE]: 'PAIRING',
           'pairdev:protocolAddress': 'ZIGB:proto1',
         },
       ],
@@ -140,7 +142,7 @@ describe('KitActivatePage – with kit devices', () => {
 describe('KitActivatePage – error handling', () => {
   it('dispatches error notification on load failure', async () => {
     mockSubsystems = {
-      sub1: { 'base:address': 'SERV:subpairing:place-1' },
+      sub1: { id: 'sub1', [Base.ATTR_ADDRESS]: 'SERV:subpairing:place-1' },
     };
     mockBridgeRequest.mockRejectedValue(new Error('fail'));
     render(<KitActivatePage />);

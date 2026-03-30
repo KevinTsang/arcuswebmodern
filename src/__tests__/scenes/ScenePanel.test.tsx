@@ -1,6 +1,8 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { ScenePanel } from '@/components/scenes/ScenePanel';
+import { Base, Scene } from '@arcus/core';
 import Bridge from '@arcus/core/bridge';
+import type { SceneEntity } from '@/store/entityTypes';
 
 // ── Mocks ─────────────────────────────────────────────────────────────
 
@@ -42,7 +44,7 @@ jest.mock('@/components/scenes/ActionCategoryList', () => ({
     onCancel,
     satisfiableActions,
     saving,
-  }: Record<string, unknown>) => (
+  }: any) => (
     <div data-testid="category-list">
       <span data-testid="heading">{heading as string}</span>
       <span data-testid="scene-name">{name as string}</span>
@@ -67,11 +69,12 @@ jest.mock('@/components/scenes/ActionDeviceConfigurator', () => ({
 
 const mockBridge = Bridge.request as jest.Mock;
 
-const mockScene: Record<string, unknown> = {
-  'base:address': 'SERV:scene:abc-123',
-  'scene:name': 'Morning Routine',
-  'scene:template': 'custom',
-  'scene:actions': [
+const mockScene: SceneEntity = {
+  id: 'SERV:scene:abc-123',
+  [Base.ATTR_ADDRESS]: 'SERV:scene:abc-123',
+  [Scene.ATTR_NAME]: 'Morning Routine',
+  [Scene.ATTR_TEMPLATE]: 'custom',
+  [Scene.ATTR_ACTIONS]: [
     {
       name: 'Turn Lights On or Off',
       template: 'action1',
@@ -233,11 +236,11 @@ describe('ScenePanel (edit mode)', () => {
 
     await waitFor(() => {
       expect(mockBridge).toHaveBeenCalledWith(
-        'base:SetAttributes',
+        Base.CMD_SETATTRIBUTES,
         'SERV:scene:abc-123',
         expect.objectContaining({
-          'scene:name': 'Morning Routine',
-          'scene:actions': expect.arrayContaining([
+          [Scene.ATTR_NAME]: 'Morning Routine',
+          [Scene.ATTR_ACTIONS]: expect.arrayContaining([
             expect.objectContaining({ template: 'action1' }),
           ]),
         }),
@@ -273,7 +276,7 @@ describe('ScenePanel (edit mode)', () => {
     fireEvent.click(screen.getByText('Yes, Delete'));
 
     await waitFor(() => {
-      expect(mockBridge).toHaveBeenCalledWith('scene:Delete', 'SERV:scene:abc-123', {});
+      expect(mockBridge).toHaveBeenCalledWith(Scene.CMD_DELETE, 'SERV:scene:abc-123', {});
     });
   });
 

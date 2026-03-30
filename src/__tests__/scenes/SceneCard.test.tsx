@@ -1,5 +1,6 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { SceneCard } from '@/components/scenes/SceneCard';
+import { Base, Scene } from '@arcus/core';
 import type { SceneEntity } from '@/store/entityTypes';
 
 // ── Mocks ─────────────────────────────────────────────────────────────
@@ -24,11 +25,11 @@ jest.mock('@/store/slices/uiSlice', () => ({
 
 const baseScene = (overrides: Partial<SceneEntity> = {}): SceneEntity => ({
   id: 'SERV:scene:s1',
-  'base:address': 'SERV:scene:s1',
-  'scene:name': 'Good Morning',
-  'scene:enabled': true,
-  'scene:actions': [{}, {}],
-  'scene:notification': false,
+  [Base.ATTR_ADDRESS]: 'SERV:scene:s1',
+  [Scene.ATTR_NAME]: 'Good Morning',
+  [Scene.ATTR_ENABLED]: true,
+  [Scene.ATTR_ACTIONS]: [{}, {}],
+  [Scene.ATTR_NOTIFICATION]: false,
   ...overrides,
 });
 
@@ -46,27 +47,27 @@ describe('SceneCard – rendering', () => {
   });
 
   it('shows "Unnamed Scene" when name is missing', () => {
-    render(<SceneCard scene={baseScene({ 'scene:name': undefined })} onEdit={jest.fn()} />);
+    render(<SceneCard scene={baseScene({ [Scene.ATTR_NAME]: undefined })} onEdit={jest.fn()} />);
     expect(screen.getByText('Unnamed Scene')).toBeInTheDocument();
   });
 
   it('shows action count with plural', () => {
-    render(<SceneCard scene={baseScene({ 'scene:actions': [{}, {}] })} onEdit={jest.fn()} />);
+    render(<SceneCard scene={baseScene({ [Scene.ATTR_ACTIONS]: [{}, {}] })} onEdit={jest.fn()} />);
     expect(screen.getByText('2 actions')).toBeInTheDocument();
   });
 
   it('shows singular action for 1 action', () => {
-    render(<SceneCard scene={baseScene({ 'scene:actions': [{}] })} onEdit={jest.fn()} />);
+    render(<SceneCard scene={baseScene({ [Scene.ATTR_ACTIONS]: [{}] })} onEdit={jest.fn()} />);
     expect(screen.getByText(/1 action(?!s)/)).toBeInTheDocument();
   });
 
   it('shows 0 actions when actions is not an array', () => {
-    render(<SceneCard scene={baseScene({ 'scene:actions': undefined })} onEdit={jest.fn()} />);
+    render(<SceneCard scene={baseScene({ [Scene.ATTR_ACTIONS]: undefined })} onEdit={jest.fn()} />);
     expect(screen.getByText('0 actions')).toBeInTheDocument();
   });
 
   it('shows Scheduled indicator when scheduler is present', () => {
-    render(<SceneCard scene={baseScene({ 'scene:scheduler': 'sched1' })} onEdit={jest.fn()} />);
+    render(<SceneCard scene={baseScene({ [Scene.ATTR_SCHEDULER]: 'sched1' })} onEdit={jest.fn()} />);
     expect(screen.getByText(/Scheduled/)).toBeInTheDocument();
   });
 
@@ -86,49 +87,49 @@ describe('SceneCard – rendering', () => {
   });
 
   it('disables Run Scene when scene is not enabled', () => {
-    render(<SceneCard scene={baseScene({ 'scene:enabled': false })} onEdit={jest.fn()} />);
+    render(<SceneCard scene={baseScene({ [Scene.ATTR_ENABLED]: false })} onEdit={jest.fn()} />);
     expect(screen.getByText('Run Scene')).toBeDisabled();
   });
 });
 
 describe('SceneCard – notification toggle', () => {
   it('shows "Notifications off" title when notifications are off', () => {
-    render(<SceneCard scene={baseScene({ 'scene:notification': false })} onEdit={jest.fn()} />);
+    render(<SceneCard scene={baseScene({ [Scene.ATTR_NOTIFICATION]: false })} onEdit={jest.fn()} />);
     expect(screen.getByTitle('Notifications off')).toBeInTheDocument();
   });
 
   it('shows "Notifications on" title when notifications are on', () => {
-    render(<SceneCard scene={baseScene({ 'scene:notification': true })} onEdit={jest.fn()} />);
+    render(<SceneCard scene={baseScene({ [Scene.ATTR_NOTIFICATION]: true })} onEdit={jest.fn()} />);
     expect(screen.getByTitle('Notifications on')).toBeInTheDocument();
   });
 
   it('calls Bridge to toggle notification on', async () => {
-    render(<SceneCard scene={baseScene({ 'scene:notification': false })} onEdit={jest.fn()} />);
+    render(<SceneCard scene={baseScene({ [Scene.ATTR_NOTIFICATION]: false })} onEdit={jest.fn()} />);
     fireEvent.click(screen.getByTitle('Notifications off'));
     await waitFor(() => {
       expect(mockBridgeRequest).toHaveBeenCalledWith(
-        'base:SetAttributes',
+        Base.CMD_SETATTRIBUTES,
         'SERV:scene:s1',
-        { 'scene:notification': true },
+        { [Scene.ATTR_NOTIFICATION]: true },
       );
     });
   });
 
   it('calls Bridge to toggle notification off', async () => {
-    render(<SceneCard scene={baseScene({ 'scene:notification': true })} onEdit={jest.fn()} />);
+    render(<SceneCard scene={baseScene({ [Scene.ATTR_NOTIFICATION]: true })} onEdit={jest.fn()} />);
     fireEvent.click(screen.getByTitle('Notifications on'));
     await waitFor(() => {
       expect(mockBridgeRequest).toHaveBeenCalledWith(
-        'base:SetAttributes',
+        Base.CMD_SETATTRIBUTES,
         'SERV:scene:s1',
-        { 'scene:notification': false },
+        { [Scene.ATTR_NOTIFICATION]: false },
       );
     });
   });
 
   it('dispatches error notification when toggle fails', async () => {
     mockBridgeRequest.mockRejectedValue(new Error('fail'));
-    render(<SceneCard scene={baseScene({ 'scene:notification': false })} onEdit={jest.fn()} />);
+    render(<SceneCard scene={baseScene({ [Scene.ATTR_NOTIFICATION]: false })} onEdit={jest.fn()} />);
     fireEvent.click(screen.getByTitle('Notifications off'));
     await waitFor(() => {
       expect(mockDispatch).toHaveBeenCalledWith(
@@ -145,7 +146,7 @@ describe('SceneCard – fire scene', () => {
     render(<SceneCard scene={baseScene()} onEdit={jest.fn()} />);
     fireEvent.click(screen.getByText('Run Scene'));
     await waitFor(() => {
-      expect(mockBridgeRequest).toHaveBeenCalledWith('scene:Fire', 'SERV:scene:s1', {});
+      expect(mockBridgeRequest).toHaveBeenCalledWith(Scene.CMD_FIRE, 'SERV:scene:s1', {});
     });
   });
 
@@ -182,7 +183,7 @@ describe('SceneCard – fire scene', () => {
   });
 
   it('does not fire when scene is disabled', () => {
-    render(<SceneCard scene={baseScene({ 'scene:enabled': false })} onEdit={jest.fn()} />);
+    render(<SceneCard scene={baseScene({ [Scene.ATTR_ENABLED]: false })} onEdit={jest.fn()} />);
     fireEvent.click(screen.getByText('Run Scene'));
     expect(mockBridgeRequest).not.toHaveBeenCalled();
   });
@@ -196,28 +197,28 @@ describe('SceneCard – force device state toggle', () => {
   });
 
   it('renders Force Device State toggle checked when filterUnchanged is undefined', () => {
-    render(<SceneCard scene={baseScene({ 'scene:filterUnchanged': undefined })} onEdit={jest.fn()} />);
+    render(<SceneCard scene={baseScene({ [Scene.ATTR_FILTERUNCHANGED]: undefined })} onEdit={jest.fn()} />);
     expect(screen.getByRole('switch')).toHaveAttribute('aria-checked', 'true');
   });
 
   it('renders Force Device State toggle checked when filterUnchanged is false', () => {
-    render(<SceneCard scene={baseScene({ 'scene:filterUnchanged': false })} onEdit={jest.fn()} />);
+    render(<SceneCard scene={baseScene({ [Scene.ATTR_FILTERUNCHANGED]: false })} onEdit={jest.fn()} />);
     expect(screen.getByRole('switch')).toHaveAttribute('aria-checked', 'true');
   });
 
   it('renders Force Device State toggle unchecked when filterUnchanged is true', () => {
-    render(<SceneCard scene={baseScene({ 'scene:filterUnchanged': true })} onEdit={jest.fn()} />);
+    render(<SceneCard scene={baseScene({ [Scene.ATTR_FILTERUNCHANGED]: true })} onEdit={jest.fn()} />);
     expect(screen.getByRole('switch')).toHaveAttribute('aria-checked', 'false');
   });
 
   it('calls Bridge to set filterUnchanged to false when toggling force on', async () => {
-    render(<SceneCard scene={baseScene({ 'scene:filterUnchanged': true })} onEdit={jest.fn()} />);
+    render(<SceneCard scene={baseScene({ [Scene.ATTR_FILTERUNCHANGED]: true })} onEdit={jest.fn()} />);
     fireEvent.click(screen.getByRole('switch'));
     await waitFor(() => {
       expect(mockBridgeRequest).toHaveBeenCalledWith(
-        'base:SetAttributes',
+        Base.CMD_SETATTRIBUTES,
         'SERV:scene:s1',
-        { 'scene:filterUnchanged': false },
+        { [Scene.ATTR_FILTERUNCHANGED]: false },
       );
     });
   });
@@ -227,9 +228,9 @@ describe('SceneCard – force device state toggle', () => {
     fireEvent.click(screen.getByRole('switch'));
     await waitFor(() => {
       expect(mockBridgeRequest).toHaveBeenCalledWith(
-        'base:SetAttributes',
+        Base.CMD_SETATTRIBUTES,
         'SERV:scene:s1',
-        { 'scene:filterUnchanged': true },
+        { [Scene.ATTR_FILTERUNCHANGED]: true },
       );
     });
   });

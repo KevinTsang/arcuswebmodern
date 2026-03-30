@@ -1,6 +1,8 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { Base, Person } from '@arcus/core';
 import AcceptInvitationPanel from '@/components/AcceptInvitationPanel';
 import type { Invitation } from '@/store/slices/invitationsSlice';
+import type { PersonEntity } from '@/store/entityTypes';
 
 // ── Mocks ─────────────────────────────────────────────────────────────
 
@@ -44,7 +46,7 @@ const mockInvitation: Invitation = {
 };
 
 let mockInvitations: Invitation[] = [];
-let mockPerson: Record<string, unknown> | null = null;
+let mockPerson: PersonEntity | null = null;
 
 jest.mock('@/store/hooks', () => ({
   useAppSelector: (sel: (s: any) => any) =>
@@ -55,16 +57,28 @@ jest.mock('@/store/hooks', () => ({
   useAppDispatch: () => mockDispatch,
 }));
 
+// ── Helpers ───────────────────────────────────────────────────────────
+
+/** Command → response handler. Tests override entries to control per-command behavior. */
+const commandHandlers = new Map<string, () => Promise<unknown>>();
+
 beforeEach(() => {
   jest.clearAllMocks();
-  mockPerson = { personId: 'person-1' };
+  commandHandlers.clear();
+  mockPerson = {
+    id: 'SERV:person:person-1',
+    [Base.ATTR_ADDRESS]: 'SERV:person:person-1',
+    personId: 'person-1',
+  };
   mockInvitations = [mockInvitation];
-  // Default: PendingInvitations returns the current mock list
+
+  commandHandlers.set(Person.CMD_PENDINGINVITATIONS, () =>
+    Promise.resolve({ invitations: mockInvitations }),
+  );
+
   mockBridgeRequest.mockImplementation((type: string) => {
-    if (type === 'person:PendingInvitations') {
-      return Promise.resolve({ invitations: mockInvitations });
-    }
-    return Promise.resolve({});
+    const handler = commandHandlers.get(type);
+    return handler ? handler() : Promise.resolve({});
   });
 });
 
@@ -103,22 +117,12 @@ describe('AcceptInvitationPanel – rendering', () => {
 
 describe('AcceptInvitationPanel – accept flow', () => {
   it('calls person:AcceptInvitation with code and email on Accept', async () => {
-    mockBridgeRequest.mockImplementation((type: string) => {
-      if (type === 'person:PendingInvitations') {
-        return Promise.resolve({ invitations: mockInvitations });
-      }
-      if (type === 'person:AcceptInvitation') {
-        return Promise.resolve({});
-      }
-      return Promise.resolve({});
-    });
-
     render(<AcceptInvitationPanel />);
     fireEvent.click(screen.getByText('Accept'));
 
     await waitFor(() => {
       expect(mockBridgeRequest).toHaveBeenCalledWith(
-        'person:AcceptInvitation',
+        Person.CMD_ACCEPTINVITATION,
         'SERV:person:person-1',
         { code: 'abc123', inviteeEmail: 'jane@test.com' },
       );
@@ -126,13 +130,6 @@ describe('AcceptInvitationPanel – accept flow', () => {
   });
 
   it('shows PIN creation form after accepting', async () => {
-    mockBridgeRequest.mockImplementation((type: string) => {
-      if (type === 'person:PendingInvitations') {
-        return Promise.resolve({ invitations: mockInvitations });
-      }
-      return Promise.resolve({});
-    });
-
     render(<AcceptInvitationPanel />);
     fireEvent.click(screen.getByText('Accept'));
 
@@ -145,7 +142,6 @@ describe('AcceptInvitationPanel – accept flow', () => {
   });
 
   it('validates PIN is 4-8 digits', async () => {
-    mockBridgeRequest.mockResolvedValue({});
     render(<AcceptInvitationPanel />);
     fireEvent.click(screen.getByText('Accept'));
 
@@ -161,7 +157,6 @@ describe('AcceptInvitationPanel – accept flow', () => {
   });
 
   it('validates PIN codes match', async () => {
-    mockBridgeRequest.mockResolvedValue({});
     render(<AcceptInvitationPanel />);
     fireEvent.click(screen.getByText('Accept'));
 
@@ -180,7 +175,6 @@ describe('AcceptInvitationPanel – accept flow', () => {
   });
 
   it('calls person:ChangePinV2 with matching PIN', async () => {
-    mockBridgeRequest.mockResolvedValue({});
     render(<AcceptInvitationPanel />);
     fireEvent.click(screen.getByText('Accept'));
 
@@ -195,7 +189,7 @@ describe('AcceptInvitationPanel – accept flow', () => {
 
     await waitFor(() => {
       expect(mockBridgeRequest).toHaveBeenCalledWith(
-        'person:ChangePinV2',
+        Person.CMD_CHANGEPINV2,
         'SERV:person:person-1',
         { place: 'place-1', pin: '1234' },
       );
@@ -203,7 +197,6 @@ describe('AcceptInvitationPanel – accept flow', () => {
   });
 
   it('dispatches success notification after PIN saved', async () => {
-    mockBridgeRequest.mockResolvedValue({});
     render(<AcceptInvitationPanel />);
     fireEvent.click(screen.getByText('Accept'));
 
@@ -225,7 +218,6 @@ describe('AcceptInvitationPanel – accept flow', () => {
   });
 
   it('skips PIN and shows success notification', async () => {
-    mockBridgeRequest.mockResolvedValue({});
     render(<AcceptInvitationPanel />);
     fireEvent.click(screen.getByText('Accept'));
 
@@ -246,19 +238,12 @@ describe('AcceptInvitationPanel – accept flow', () => {
 
 describe('AcceptInvitationPanel – decline flow', () => {
   it('calls person:RejectInvitation on Decline', async () => {
-    mockBridgeRequest.mockImplementation((type: string) => {
-      if (type === 'person:PendingInvitations') {
-        return Promise.resolve({ invitations: [] });
-      }
-      return Promise.resolve({});
-    });
-
     render(<AcceptInvitationPanel />);
     fireEvent.click(screen.getByText('Decline'));
 
     await waitFor(() => {
       expect(mockBridgeRequest).toHaveBeenCalledWith(
-        'person:RejectInvitation',
+        Person.CMD_REJECTINVITATION,
         'SERV:person:person-1',
         { code: 'abc123', inviteeEmail: 'jane@test.com' },
       );
@@ -266,15 +251,9 @@ describe('AcceptInvitationPanel – decline flow', () => {
   });
 
   it('shows error message on accept failure', async () => {
-    mockBridgeRequest.mockImplementation((type: string) => {
-      if (type === 'person:PendingInvitations') {
-        return Promise.resolve({ invitations: mockInvitations });
-      }
-      if (type === 'person:AcceptInvitation') {
-        return Promise.reject(new Error('failed'));
-      }
-      return Promise.resolve({});
-    });
+    commandHandlers.set(Person.CMD_ACCEPTINVITATION, () =>
+      Promise.reject(new Error('failed')),
+    );
 
     render(<AcceptInvitationPanel />);
     fireEvent.click(screen.getByText('Accept'));

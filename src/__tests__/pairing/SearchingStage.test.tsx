@@ -1,5 +1,7 @@
 import { render, screen, fireEvent } from '@testing-library/react';
+import { Base, Product, PairingDevice } from '@arcus/core';
 import SearchingStage from '@/components/pairing/SearchingStage';
+import type { PairingProduct } from '@/store/entityTypes';
 
 const mockDispatch = jest.fn();
 const mockStartSearch = jest.fn();
@@ -16,12 +18,12 @@ const defaultProps = {
   onCancel: mockCancel,
 };
 
-const mockProduct = {
-  'base:address': 'SERV:product:prod-1',
-  'product:name': 'Smart Plug',
-  'product:vendor': 'GE',
-  'product:hubRequired': true,
-  'product:id': 'abc123',
+const mockProduct: PairingProduct = {
+  [Base.ATTR_ADDRESS]: 'SERV:product:prod-1',
+  [Product.ATTR_NAME]: 'Smart Plug',
+  [Product.ATTR_VENDOR]: 'GE',
+  [Product.ATTR_HUBREQUIRED]: true,
+  [Product.ATTR_ID]: 'abc123',
 };
 
 beforeEach(() => jest.clearAllMocks());
@@ -44,7 +46,7 @@ describe('SearchingStage – device search', () => {
 
   it('renders device rows when devices are found', () => {
     const devices = [
-      { 'base:address': 'DRIV:dev:d1', 'pairdev:pairingState': 'PAIRING', 'pairdev:pairingPhase': 'JOIN' },
+      { [Base.ATTR_ADDRESS]: 'DRIV:dev:d1', [PairingDevice.ATTR_PAIRINGSTATE]: 'PAIRING', [PairingDevice.ATTR_PAIRINGPHASE]: 'JOIN' },
     ];
     render(<SearchingStage {...defaultProps} devices={devices} />);
     expect(screen.getByText('Device Found')).toBeInTheDocument();

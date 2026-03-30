@@ -1,3 +1,4 @@
+import { Device, DeviceConnection } from '@arcus/core';
 import {
   cToF,
   formatTemp,
@@ -71,11 +72,11 @@ describe('formatTemp', () => {
 
 describe('isDeviceOffline', () => {
   it('returns true when connState is OFFLINE', () => {
-    expect(isDeviceOffline({ 'devconn:state': 'OFFLINE' })).toBe(true);
+    expect(isDeviceOffline({ [DeviceConnection.ATTR_STATE]: 'OFFLINE' })).toBe(true);
   });
 
   it('returns false when connState is ONLINE', () => {
-    expect(isDeviceOffline({ 'devconn:state': 'ONLINE' })).toBe(false);
+    expect(isDeviceOffline({ [DeviceConnection.ATTR_STATE]: 'ONLINE' })).toBe(false);
   });
 
   it('returns false when connState is undefined', () => {
@@ -111,8 +112,8 @@ describe('isDeviceOn', () => {
 
   it('uses isOnUnlessOffline when configured', () => {
     const config = { ...BASE_CONFIG, 'web:isOnUnlessOffline': true };
-    expect(isDeviceOn({ 'devconn:state': 'ONLINE' }, config)).toBe(true);
-    expect(isDeviceOn({ 'devconn:state': 'OFFLINE' }, config)).toBe(false);
+    expect(isDeviceOn({ [DeviceConnection.ATTR_STATE]: 'ONLINE' }, config)).toBe(true);
+    expect(isDeviceOn({ [DeviceConnection.ATTR_STATE]: 'OFFLINE' }, config)).toBe(false);
   });
 });
 
@@ -149,34 +150,34 @@ describe('isDeviceOpen', () => {
 
 describe('getDeviceStatusText', () => {
   it('returns On/Off for switch', () => {
-    expect(getDeviceStatusText({ 'dev:devtypehint': 'Switch', 'swit:state': 'ON' }, BASE_CONFIG)).toBe('On');
-    expect(getDeviceStatusText({ 'dev:devtypehint': 'Switch', 'swit:state': 'OFF' }, BASE_CONFIG)).toBe('Off');
+    expect(getDeviceStatusText({ [Device.ATTR_DEVTYPEHINT]: 'Switch', 'swit:state': 'ON' }, BASE_CONFIG)).toBe('On');
+    expect(getDeviceStatusText({ [Device.ATTR_DEVTYPEHINT]: 'Switch', 'swit:state': 'OFF' }, BASE_CONFIG)).toBe('Off');
   });
 
   it('returns brightness for dimmer', () => {
     expect(
-      getDeviceStatusText({ 'dev:devtypehint': 'Dimmer', 'swit:state': 'ON', 'dim:brightness': 75 }, BASE_CONFIG),
+      getDeviceStatusText({ [Device.ATTR_DEVTYPEHINT]: 'Dimmer', 'swit:state': 'ON', 'dim:brightness': 75 }, BASE_CONFIG),
     ).toBe('75% Brightness');
   });
 
   it('returns Open/Closed for contact', () => {
-    expect(getDeviceStatusText({ 'dev:devtypehint': 'Contact', 'cont:contact': 'OPENED' }, BASE_CONFIG)).toBe('Open');
-    expect(getDeviceStatusText({ 'dev:devtypehint': 'Contact', 'cont:contact': 'CLOSED' }, BASE_CONFIG)).toBe('Closed');
+    expect(getDeviceStatusText({ [Device.ATTR_DEVTYPEHINT]: 'Contact', 'cont:contact': 'OPENED' }, BASE_CONFIG)).toBe('Open');
+    expect(getDeviceStatusText({ [Device.ATTR_DEVTYPEHINT]: 'Contact', 'cont:contact': 'CLOSED' }, BASE_CONFIG)).toBe('Closed');
   });
 
   it('returns Locked/Unlocked for lock', () => {
     expect(
-      getDeviceStatusText({ 'dev:devtypehint': 'Lock', 'doorlock:lockstate': 'LOCKED' }, BASE_CONFIG),
+      getDeviceStatusText({ [Device.ATTR_DEVTYPEHINT]: 'Lock', 'doorlock:lockstate': 'LOCKED' }, BASE_CONFIG),
     ).toBe('Locked');
     expect(
-      getDeviceStatusText({ 'dev:devtypehint': 'Lock', 'doorlock:lockstate': 'UNLOCKED' }, BASE_CONFIG),
+      getDeviceStatusText({ [Device.ATTR_DEVTYPEHINT]: 'Lock', 'doorlock:lockstate': 'UNLOCKED' }, BASE_CONFIG),
     ).toBe('Unlocked');
   });
 
   it('returns thermostat mode and setpoint', () => {
     expect(
       getDeviceStatusText(
-        { 'dev:devtypehint': 'Thermostat', 'therm:hvacmode': 'HEAT', 'therm:heatsetpoint': 22 },
+        { [Device.ATTR_DEVTYPEHINT]: 'Thermostat', 'therm:hvacmode': 'HEAT', 'therm:heatsetpoint': 22 },
         BASE_CONFIG,
       ),
     ).toBe('Heat to 72\u00B0');
@@ -184,12 +185,12 @@ describe('getDeviceStatusText', () => {
 
   it('returns Off for thermostat in OFF mode', () => {
     expect(
-      getDeviceStatusText({ 'dev:devtypehint': 'Thermostat', 'therm:hvacmode': 'OFF' }, BASE_CONFIG),
+      getDeviceStatusText({ [Device.ATTR_DEVTYPEHINT]: 'Thermostat', 'therm:hvacmode': 'OFF' }, BASE_CONFIG),
     ).toBe('Off');
   });
 
   it('returns Ok for motion sensor', () => {
-    expect(getDeviceStatusText({ 'dev:devtypehint': 'Motion' }, BASE_CONFIG)).toBe('Ok');
+    expect(getDeviceStatusText({ [Device.ATTR_DEVTYPEHINT]: 'Motion' }, BASE_CONFIG)).toBe('Ok');
   });
 });
 
@@ -207,7 +208,7 @@ describe('resolveDeviceIcon', () => {
   });
 
   it('adds is-offline class when offline', () => {
-    const result = resolveDeviceIcon({ 'devconn:state': 'OFFLINE' }, BASE_CONFIG);
+    const result = resolveDeviceIcon({ [DeviceConnection.ATTR_STATE]: 'OFFLINE' }, BASE_CONFIG);
     expect(result.stateClass).toContain('is-offline');
   });
 

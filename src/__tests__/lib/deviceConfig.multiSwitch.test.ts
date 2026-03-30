@@ -1,3 +1,4 @@
+import { Device } from '@arcus/core';
 import { resolveDeviceConfig } from '@/lib/deviceConfig';
 
 describe('resolveDeviceConfig – multi-switch auto-detection', () => {
@@ -5,7 +6,7 @@ describe('resolveDeviceConfig – multi-switch auto-detection', () => {
     const device = {
       'base:caps': ['base', 'swit', 'devconn'],
       'base:instances': { relay1: ['swit'], relay2: ['swit'] },
-      'dev:devtypehint': 'Switch',
+      [Device.ATTR_DEVTYPEHINT]: 'Switch',
     };
     const config = resolveDeviceConfig(device);
     expect(config['web:panel:action']).toBe('multi-toggle');
@@ -16,7 +17,7 @@ describe('resolveDeviceConfig – multi-switch auto-detection', () => {
     const device = {
       'base:caps': ['base', 'swit', 'devconn'],
       'base:instances': { outlet1: ['swit'], outlet2: ['swit'] },
-      'dev:devtypehint': 'Switch',
+      [Device.ATTR_DEVTYPEHINT]: 'Switch',
     };
     const config = resolveDeviceConfig(device);
     expect(config['web:panel:action']).toBe('multi-toggle');
@@ -27,7 +28,7 @@ describe('resolveDeviceConfig – multi-switch auto-detection', () => {
     const device = {
       'base:caps': ['base', 'swit', 'devconn'],
       'base:instances': { relay1: ['swit'] },
-      'dev:devtypehint': 'Switch',
+      [Device.ATTR_DEVTYPEHINT]: 'Switch',
     };
     const config = resolveDeviceConfig(device);
     expect(config['web:panel:action']).toBe('toggle-on-off');
@@ -37,7 +38,7 @@ describe('resolveDeviceConfig – multi-switch auto-detection', () => {
   it('does not override action when no base:instances', () => {
     const device = {
       'base:caps': ['base', 'swit', 'devconn'],
-      'dev:devtypehint': 'Switch',
+      [Device.ATTR_DEVTYPEHINT]: 'Switch',
       'swit:state': 'ON',
     };
     const config = resolveDeviceConfig(device);
@@ -49,7 +50,7 @@ describe('resolveDeviceConfig – multi-switch auto-detection', () => {
     const device = {
       'base:caps': ['base', 'temp'],
       'base:instances': { sensor1: ['temp'], sensor2: ['temp'] },
-      'dev:devtypehint': 'Switch',
+      [Device.ATTR_DEVTYPEHINT]: 'Switch',
     };
     const config = resolveDeviceConfig(device);
     expect(config['web:panel:action']).not.toBe('multi-toggle');
@@ -60,8 +61,8 @@ describe('resolveDeviceConfig – multi-switch auto-detection', () => {
     const device = {
       'base:caps': ['base', 'swit', 'devconn'],
       'base:instances': { relay1: ['swit'], relay2: ['swit'] },
-      'dev:devtypehint': 'Switch',
-      'dev:productId': '0c9a66',
+      [Device.ATTR_DEVTYPEHINT]: 'Switch',
+      [Device.ATTR_PRODUCTID]: '0c9a66',
     };
     const config = resolveDeviceConfig(device);
     expect(config['web:panel:action']).toBe('multi-toggle');

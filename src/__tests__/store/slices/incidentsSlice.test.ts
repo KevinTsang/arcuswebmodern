@@ -6,9 +6,11 @@ import reducer, {
   incidentsClear,
   setCurrentIncident,
 } from '@/store/slices/incidentsSlice';
+import type { IncidentEntity } from '@/store/entityTypes';
+import { Base } from '@arcus/core';
 
-function makeIncident(address: string, extra: Record<string, unknown> = {}) {
-  return { id: address, 'base:address': address, ...extra };
+function makeIncident(address: string, extra: Partial<IncidentEntity> = {}) {
+  return { id: address, [Base.ATTR_ADDRESS]: address, ...extra };
 }
 
 describe('incidentsSlice', () => {
@@ -35,7 +37,7 @@ describe('incidentsSlice', () => {
     );
     state = reducer(
       state,
-      incidentUpdated({ 'base:address': 'SERV:incident:i1', 'incident:alertState': 'COMPLETE' }),
+      incidentUpdated({ [Base.ATTR_ADDRESS]: 'SERV:incident:i1', 'incident:alertState': 'COMPLETE' }),
     );
     expect(state.entities['SERV:incident:i1']?.['incident:alertState']).toBe('COMPLETE');
   });
@@ -52,8 +54,8 @@ describe('incidentsSlice', () => {
     state = reducer(
       state,
       incidentsReceived([
-        { 'base:address': 'SERV:incident:a' },
-        { 'base:address': 'SERV:incident:b' },
+        { [Base.ATTR_ADDRESS]: 'SERV:incident:a' },
+        { [Base.ATTR_ADDRESS]: 'SERV:incident:b' },
       ]),
     );
     expect(state.ids).toHaveLength(2);

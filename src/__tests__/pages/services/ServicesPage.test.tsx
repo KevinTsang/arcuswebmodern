@@ -1,4 +1,5 @@
 import { render, screen, fireEvent } from '@testing-library/react';
+import { Place } from '@arcus/core';
 import ServicesPage from '@/app/(authenticated)/services/page';
 
 // ── Mocks ─────────────────────────────────────────────────────────────
@@ -8,7 +9,7 @@ let mockPlaceName: string = 'Your Home';
 jest.mock('@/store/hooks', () => ({
   useAppSelector: (sel: (s: any) => any) =>
     sel({
-      place: { place: { 'place:name': mockPlaceName } },
+      place: { place: { [Place.ATTR_NAME]: mockPlaceName } },
     }),
   useAppDispatch: () => jest.fn(),
 }));

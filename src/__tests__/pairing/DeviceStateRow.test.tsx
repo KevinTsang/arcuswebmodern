@@ -1,10 +1,11 @@
 import { render, screen } from '@testing-library/react';
+import { Base, PairingDevice } from '@arcus/core';
 import DeviceStateRow from '@/components/pairing/DeviceStateRow';
 
 const makeDevice = (state: string, phase: string) => ({
-  'base:address': 'DRIV:dev:dev-1',
-  'pairdev:pairingState': state,
-  'pairdev:pairingPhase': phase,
+  [Base.ATTR_ADDRESS]: 'DRIV:dev:dev-1',
+  [PairingDevice.ATTR_PAIRINGSTATE]: state,
+  [PairingDevice.ATTR_PAIRINGPHASE]: phase,
 });
 
 describe('DeviceStateRow', () => {

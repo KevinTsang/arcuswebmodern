@@ -1,5 +1,7 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { Base, Device, DeviceConnection } from '@arcus/core';
 import { DeviceDetailPanel } from '@/components/devices/DeviceDetailPanel';
+import type { DeviceEntity } from '@/store/entityTypes';
 
 // ── Mocks ─────────────────────────────────────────────────────────────
 
@@ -7,7 +9,7 @@ const mockSendCommand = jest.fn().mockResolvedValue(undefined);
 const mockCloseRight = jest.fn();
 const mockDispatch = jest.fn();
 
-let mockDevice: Record<string, unknown> | undefined = {};
+let mockDevice: DeviceEntity | undefined = { id: 'DRIV:dev:test', [Base.ATTR_ADDRESS]: 'DRIV:dev:test' };
 
 jest.mock('@/hooks/useDeviceCapability', () => ({
   useDevice: () => mockDevice,
@@ -47,10 +49,12 @@ beforeEach(() => {
 describe('DeviceDetailPanel – Identify button', () => {
   it('shows Identify button when device has ident capability', () => {
     mockDevice = {
-      'base:caps': ['base', 'swit', 'ident'],
-      'dev:name': 'Kitchen Light',
-      'dev:devtypehint': 'Light',
-      'devconn:state': 'ONLINE',
+      id: 'DRIV:dev:test',
+      [Base.ATTR_ADDRESS]: 'DRIV:dev:test',
+      [Base.ATTR_CAPS]: ['base', 'swit', 'ident'],
+      [Device.ATTR_NAME]: 'Kitchen Light',
+      [Device.ATTR_DEVTYPEHINT]: 'Light',
+      [DeviceConnection.ATTR_STATE]: 'ONLINE',
     };
     render(<DeviceDetailPanel address="DRIV:dev:test" />);
     expect(screen.getByText('Identify')).toBeInTheDocument();
@@ -58,10 +62,12 @@ describe('DeviceDetailPanel – Identify button', () => {
 
   it('does not show Identify button when device lacks ident capability', () => {
     mockDevice = {
-      'base:caps': ['base', 'swit'],
-      'dev:name': 'Door Sensor',
-      'dev:devtypehint': 'Contact',
-      'devconn:state': 'ONLINE',
+      id: 'DRIV:dev:test',
+      [Base.ATTR_ADDRESS]: 'DRIV:dev:test',
+      [Base.ATTR_CAPS]: ['base', 'swit'],
+      [Device.ATTR_NAME]: 'Door Sensor',
+      [Device.ATTR_DEVTYPEHINT]: 'Contact',
+      [DeviceConnection.ATTR_STATE]: 'ONLINE',
     };
     render(<DeviceDetailPanel address="DRIV:dev:test" />);
     expect(screen.queryByText('Identify')).not.toBeInTheDocument();
@@ -69,8 +75,10 @@ describe('DeviceDetailPanel – Identify button', () => {
 
   it('does not show Identify button when base:caps is missing', () => {
     mockDevice = {
-      'dev:name': 'Unknown Device',
-      'devconn:state': 'ONLINE',
+      id: 'DRIV:dev:test',
+      [Base.ATTR_ADDRESS]: 'DRIV:dev:test',
+      [Device.ATTR_NAME]: 'Unknown Device',
+      [DeviceConnection.ATTR_STATE]: 'ONLINE',
     };
     render(<DeviceDetailPanel address="DRIV:dev:test" />);
     expect(screen.queryByText('Identify')).not.toBeInTheDocument();
@@ -78,9 +86,11 @@ describe('DeviceDetailPanel – Identify button', () => {
 
   it('sends ident:Identify command when clicked', async () => {
     mockDevice = {
-      'base:caps': ['base', 'ident'],
-      'dev:name': 'Z-Wave Switch',
-      'devconn:state': 'ONLINE',
+      id: 'DRIV:dev:test',
+      [Base.ATTR_ADDRESS]: 'DRIV:dev:test',
+      [Base.ATTR_CAPS]: ['base', 'ident'],
+      [Device.ATTR_NAME]: 'Z-Wave Switch',
+      [DeviceConnection.ATTR_STATE]: 'ONLINE',
     };
     render(<DeviceDetailPanel address="DRIV:dev:test" />);
     fireEvent.click(screen.getByText('Identify'));
@@ -95,9 +105,11 @@ describe('DeviceDetailPanel – Identify button', () => {
       () => new Promise<void>((resolve) => { resolveIdentify = resolve; }),
     );
     mockDevice = {
-      'base:caps': ['base', 'ident'],
-      'dev:name': 'Test Device',
-      'devconn:state': 'ONLINE',
+      id: 'DRIV:dev:test',
+      [Base.ATTR_ADDRESS]: 'DRIV:dev:test',
+      [Base.ATTR_CAPS]: ['base', 'ident'],
+      [Device.ATTR_NAME]: 'Test Device',
+      [DeviceConnection.ATTR_STATE]: 'ONLINE',
     };
     render(<DeviceDetailPanel address="DRIV:dev:test" />);
     fireEvent.click(screen.getByText('Identify'));
@@ -116,9 +128,11 @@ describe('DeviceDetailPanel – Identify button', () => {
   it('dispatches error notification when identify fails', async () => {
     mockSendCommand.mockRejectedValueOnce(new Error('timeout'));
     mockDevice = {
-      'base:caps': ['base', 'ident'],
-      'dev:name': 'Flaky Device',
-      'devconn:state': 'ONLINE',
+      id: 'DRIV:dev:test',
+      [Base.ATTR_ADDRESS]: 'DRIV:dev:test',
+      [Base.ATTR_CAPS]: ['base', 'ident'],
+      [Device.ATTR_NAME]: 'Flaky Device',
+      [DeviceConnection.ATTR_STATE]: 'ONLINE',
     };
     render(<DeviceDetailPanel address="DRIV:dev:test" />);
     fireEvent.click(screen.getByText('Identify'));

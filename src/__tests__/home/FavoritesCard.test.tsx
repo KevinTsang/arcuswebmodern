@@ -1,13 +1,15 @@
 import { render, screen } from '@testing-library/react';
 import FavoritesCard from '@/components/home/FavoritesCard';
+import { Base, Device, Scene } from '@arcus/core';
+import type { DeviceEntity, SceneEntity } from '@/store/entityTypes';
 
 jest.mock('next/link', () => ({
   __esModule: true,
   default: ({ href, children, ...props }: any) => <a href={href} {...props}>{children}</a>,
 }));
 
-let mockDevices: Record<string, unknown>[] = [];
-let mockScenes: Record<string, unknown>[] = [];
+let mockDevices: DeviceEntity[] = [];
+let mockScenes: SceneEntity[] = [];
 
 jest.mock('@/store/hooks', () => ({
   useAppSelector: (sel: (s: any) => any) =>
@@ -44,7 +46,7 @@ describe('FavoritesCard', () => {
 
   it('renders favorite device names', () => {
     mockDevices = [
-      { id: 'd1', 'base:address': 'DRIV:dev:d1', 'dev:name': 'Lamp', 'dev:favorite': true },
+      { id: 'd1', [Base.ATTR_ADDRESS]: 'DRIV:dev:d1', [Device.ATTR_NAME]: 'Lamp', 'dev:favorite': true },
     ];
     render(<FavoritesCard />);
     expect(screen.getByText('Lamp')).toBeInTheDocument();
@@ -52,7 +54,7 @@ describe('FavoritesCard', () => {
 
   it('renders favorite scene names', () => {
     mockScenes = [
-      { id: 's1', 'base:address': 'SERV:scene:s1', 'scene:name': 'Movie Time', 'scene:favorite': true },
+      { id: 's1', [Base.ATTR_ADDRESS]: 'SERV:scene:s1', [Scene.ATTR_NAME]: 'Movie Time', 'scene:favorite': true },
     ];
     render(<FavoritesCard />);
     expect(screen.getByText('Movie Time')).toBeInTheDocument();
@@ -60,7 +62,7 @@ describe('FavoritesCard', () => {
 
   it('shows singular "favorite" for count of 1', () => {
     mockDevices = [
-      { id: 'd1', 'base:address': 'DRIV:dev:d1', 'dev:name': 'Lamp', 'dev:favorite': true },
+      { id: 'd1', [Base.ATTR_ADDRESS]: 'DRIV:dev:d1', [Device.ATTR_NAME]: 'Lamp', 'dev:favorite': true },
     ];
     render(<FavoritesCard />);
     expect(screen.getByText('1 favorite')).toBeInTheDocument();
@@ -68,8 +70,8 @@ describe('FavoritesCard', () => {
 
   it('shows plural "favorites" for count > 1', () => {
     mockDevices = [
-      { id: 'd1', 'base:address': 'DRIV:dev:d1', 'dev:name': 'Lamp', 'dev:favorite': true },
-      { id: 'd2', 'base:address': 'DRIV:dev:d2', 'dev:name': 'Fan', 'isFavorite': true },
+      { id: 'd1', [Base.ATTR_ADDRESS]: 'DRIV:dev:d1', [Device.ATTR_NAME]: 'Lamp', 'dev:favorite': true },
+      { id: 'd2', [Base.ATTR_ADDRESS]: 'DRIV:dev:d2', [Device.ATTR_NAME]: 'Fan', 'isFavorite': true },
     ];
     render(<FavoritesCard />);
     expect(screen.getByText('2 favorites')).toBeInTheDocument();
@@ -77,7 +79,7 @@ describe('FavoritesCard', () => {
 
   it('excludes non-favorite devices', () => {
     mockDevices = [
-      { id: 'd1', 'base:address': 'DRIV:dev:d1', 'dev:name': 'Lamp', 'dev:favorite': false },
+      { id: 'd1', [Base.ATTR_ADDRESS]: 'DRIV:dev:d1', [Device.ATTR_NAME]: 'Lamp', 'dev:favorite': false },
     ];
     render(<FavoritesCard />);
     expect(screen.queryByText('Lamp')).not.toBeInTheDocument();
@@ -85,8 +87,8 @@ describe('FavoritesCard', () => {
 
   it('recognizes both isFavorite and dev:favorite flags', () => {
     mockDevices = [
-      { id: 'd1', 'base:address': 'DRIV:dev:d1', 'dev:name': 'A', 'dev:favorite': true },
-      { id: 'd2', 'base:address': 'DRIV:dev:d2', 'dev:name': 'B', 'isFavorite': true },
+      { id: 'd1', [Base.ATTR_ADDRESS]: 'DRIV:dev:d1', [Device.ATTR_NAME]: 'A', 'dev:favorite': true },
+      { id: 'd2', [Base.ATTR_ADDRESS]: 'DRIV:dev:d2', [Device.ATTR_NAME]: 'B', 'isFavorite': true },
     ];
     render(<FavoritesCard />);
     expect(screen.getByText('A')).toBeInTheDocument();

@@ -6,9 +6,11 @@ import reducer, {
   rulesClear,
   setRuleTemplates,
 } from '@/store/slices/rulesSlice';
+import type { RuleEntity } from '@/store/entityTypes';
+import { Base, Rule } from '@arcus/core';
 
-function makeRule(address: string, extra: Record<string, unknown> = {}) {
-  return { id: address, 'base:address': address, ...extra };
+function makeRule(address: string, extra: Partial<RuleEntity> = {}) {
+  return { id: address, [Base.ATTR_ADDRESS]: address, ...extra };
 }
 
 describe('rulesSlice', () => {
@@ -20,15 +22,15 @@ describe('rulesSlice', () => {
   });
 
   it('ruleAdded adds one rule', () => {
-    const state = reducer(undefined, ruleAdded(makeRule('SERV:rule:r1', { 'rule:name': 'Night Lock' })));
+    const state = reducer(undefined, ruleAdded(makeRule('SERV:rule:r1', { [Rule.ATTR_NAME]: 'Night Lock' })));
     expect(state.ids).toEqual(['SERV:rule:r1']);
-    expect(state.entities['SERV:rule:r1']?.['rule:name']).toBe('Night Lock');
+    expect(state.entities['SERV:rule:r1']?.[Rule.ATTR_NAME]).toBe('Night Lock');
   });
 
   it('ruleUpdated updates an existing rule', () => {
-    let state = reducer(undefined, ruleAdded(makeRule('SERV:rule:r1', { 'rule:name': 'Old' })));
-    state = reducer(state, ruleUpdated({ 'base:address': 'SERV:rule:r1', 'rule:name': 'Updated' }));
-    expect(state.entities['SERV:rule:r1']?.['rule:name']).toBe('Updated');
+    let state = reducer(undefined, ruleAdded(makeRule('SERV:rule:r1', { [Rule.ATTR_NAME]: 'Old' })));
+    state = reducer(state, ruleUpdated({ [Base.ATTR_ADDRESS]: 'SERV:rule:r1', [Rule.ATTR_NAME]: 'Updated' }));
+    expect(state.entities['SERV:rule:r1']?.[Rule.ATTR_NAME]).toBe('Updated');
   });
 
   it('ruleRemoved removes a rule', () => {
@@ -43,8 +45,8 @@ describe('rulesSlice', () => {
     state = reducer(
       state,
       rulesReceived([
-        { 'base:address': 'SERV:rule:a', 'rule:name': 'A' },
-        { 'base:address': 'SERV:rule:b', 'rule:name': 'B' },
+        { [Base.ATTR_ADDRESS]: 'SERV:rule:a', [Rule.ATTR_NAME]: 'A' },
+        { [Base.ATTR_ADDRESS]: 'SERV:rule:b', [Rule.ATTR_NAME]: 'B' },
       ]),
     );
     expect(state.ids).toHaveLength(2);

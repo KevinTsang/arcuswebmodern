@@ -1,10 +1,12 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { DeviceRow } from '@/components/scenes/DeviceRow';
+import { Base, Device } from '@arcus/core';
 import { SelectorType } from '@/components/scenes/types';
 import type { SelectorDef } from '@/components/scenes/types';
+import type { DeviceEntity } from '@/store/entityTypes';
 
 // Mock Redux selector
-let mockDevice: Record<string, unknown> | undefined;
+let mockDevice: DeviceEntity | undefined;
 
 jest.mock('@/store/hooks', () => ({
   useAppSelector: (selector: (s: unknown) => unknown) =>
@@ -16,7 +18,7 @@ jest.mock('@/store/hooks', () => ({
 }));
 
 jest.mock('@/store/slices/devicesSlice', () => ({
-  selectDeviceByAddress: (state: { devices: { devices: Record<string, unknown> } }, addr: string) =>
+  selectDeviceByAddress: (state: { devices: { devices: Record<string, DeviceEntity> } }, addr: string) =>
     state.devices.devices[addr],
 }));
 
@@ -33,7 +35,7 @@ let mockOnValueChange: jest.Mock;
 beforeEach(() => {
   mockOnToggle = jest.fn();
   mockOnValueChange = jest.fn();
-  mockDevice = { 'dev:name': 'Living Room Light' };
+  mockDevice = { id: 'DRIV:dev:abc', [Base.ATTR_ADDRESS]: 'DRIV:dev:abc', [Device.ATTR_NAME]: 'Living Room Light' };
 });
 
 const selectors: SelectorDef[] = [

@@ -1,9 +1,10 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { Switch } from '@arcus/core';
+import { Base, Switch } from '@arcus/core';
 import ToggleOnOff from '@/components/devices/ToggleOnOff';
+import type { DeviceEntity } from '@/store/entityTypes';
 
 const mockSetAttribute = jest.fn().mockResolvedValue(undefined);
-let mockDevice: Record<string, unknown> = {};
+let mockDevice: DeviceEntity = { id: 'DRIV:dev:test', [Base.ATTR_ADDRESS]: 'DRIV:dev:test' };
 
 jest.mock('@/hooks/useDeviceCapability', () => ({
   useDevice: () => mockDevice,
@@ -25,7 +26,7 @@ jest.mock('@/lib/deviceConfig', () => ({
 }));
 
 jest.mock('@/hooks/useDeviceConfig', () => ({
-  isDeviceOn: (device: Record<string, unknown>) => device[Switch.ATTR_STATE] === Switch.STATE_ON,
+  isDeviceOn: (device: DeviceEntity) => device[Switch.ATTR_STATE] === Switch.STATE_ON,
 }));
 
 beforeEach(() => {
@@ -34,7 +35,7 @@ beforeEach(() => {
 
 describe('ToggleOnOff', () => {
   it('renders as off when device is off', () => {
-    mockDevice = { [Switch.ATTR_STATE]: Switch.STATE_OFF };
+    mockDevice = { id: 'DRIV:dev:test', [Base.ATTR_ADDRESS]: 'DRIV:dev:test', [Switch.ATTR_STATE]: Switch.STATE_OFF };
     render(<ToggleOnOff address="DRIV:dev:test" />);
     const toggle = screen.getByRole('switch');
     expect(toggle).toHaveAttribute('aria-checked', 'false');
@@ -42,7 +43,7 @@ describe('ToggleOnOff', () => {
   });
 
   it('renders as on when device is on', () => {
-    mockDevice = { [Switch.ATTR_STATE]: Switch.STATE_ON };
+    mockDevice = { id: 'DRIV:dev:test', [Base.ATTR_ADDRESS]: 'DRIV:dev:test', [Switch.ATTR_STATE]: Switch.STATE_ON };
     render(<ToggleOnOff address="DRIV:dev:test" />);
     const toggle = screen.getByRole('switch');
     expect(toggle).toHaveAttribute('aria-checked', 'true');
@@ -50,7 +51,7 @@ describe('ToggleOnOff', () => {
   });
 
   it('sends OFF when toggling an on device', async () => {
-    mockDevice = { [Switch.ATTR_STATE]: Switch.STATE_ON };
+    mockDevice = { id: 'DRIV:dev:test', [Base.ATTR_ADDRESS]: 'DRIV:dev:test', [Switch.ATTR_STATE]: Switch.STATE_ON };
     render(<ToggleOnOff address="DRIV:dev:test" />);
     fireEvent.click(screen.getByRole('switch'));
     await waitFor(() => {
@@ -59,7 +60,7 @@ describe('ToggleOnOff', () => {
   });
 
   it('sends ON when toggling an off device', async () => {
-    mockDevice = { [Switch.ATTR_STATE]: Switch.STATE_OFF };
+    mockDevice = { id: 'DRIV:dev:test', [Base.ATTR_ADDRESS]: 'DRIV:dev:test', [Switch.ATTR_STATE]: Switch.STATE_OFF };
     render(<ToggleOnOff address="DRIV:dev:test" />);
     fireEvent.click(screen.getByRole('switch'));
     await waitFor(() => {

@@ -1,5 +1,7 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { Base, Place } from '@arcus/core';
 import AddPersonPanel from '@/components/settings/AddPersonPanel';
+import type { PlaceData } from '@/store/entityTypes';
 
 // ── Mocks ─────────────────────────────────────────────────────────────
 
@@ -20,7 +22,7 @@ jest.mock('@/store/slices/uiSlice', () => ({
   addNotification: (payload: unknown) => ({ type: 'ui/addNotification', payload }),
 }));
 
-let mockPlace: Record<string, unknown> | null = null;
+let mockPlace: PlaceData | null = null;
 
 jest.mock('@/store/hooks', () => ({
   useAppSelector: (sel: (s: any) => any) =>
@@ -30,13 +32,10 @@ jest.mock('@/store/hooks', () => ({
   useAppDispatch: () => mockDispatch,
 }));
 
-beforeEach(() => {
-  jest.clearAllMocks();
-  mockPlace = {
-    'base:address': 'SERV:place:place-1',
-    'place:name': 'My Home',
-  };
-});
+// ── Helpers ───────────────────────────────────────────────────────────
+
+/** Command → response handler. Tests override entries to control per-command behavior. */
+const commandHandlers = new Map<string, () => Promise<unknown>>();
 
 function fillAndSubmit(relationship?: string, pleaseDescribe?: string) {
   const inputs = screen.getAllByRole('textbox');
@@ -53,6 +52,25 @@ function fillAndSubmit(relationship?: string, pleaseDescribe?: string) {
 
   fireEvent.click(screen.getByText('Send Invitation'));
 }
+
+beforeEach(() => {
+  jest.clearAllMocks();
+  commandHandlers.clear();
+  mockPlace = {
+    [Base.ATTR_ADDRESS]: 'SERV:place:place-1',
+    [Base.ATTR_ID]: 'place-1',
+    [Place.ATTR_NAME]: 'My Home',
+  };
+
+  commandHandlers.set(Place.CMD_CREATEINVITATION, () =>
+    Promise.resolve({ invitation: { code: 'abc', inviteeEmail: 'jane@test.com' } }),
+  );
+
+  mockBridgeRequest.mockImplementation((type: string) => {
+    const handler = commandHandlers.get(type);
+    return handler ? handler() : Promise.resolve({});
+  });
+});
 
 // ── Tests ─────────────────────────────────────────────────────────────
 
@@ -93,22 +111,13 @@ describe('AddPersonPanel – rendering', () => {
 });
 
 describe('AddPersonPanel – relationship', () => {
-  beforeEach(() => {
-    mockBridgeRequest.mockImplementation((type: string) => {
-      if (type === 'place:CreateInvitation') {
-        return Promise.resolve({ invitation: { code: 'abc' } });
-      }
-      return Promise.resolve({});
-    });
-  });
-
   it('defaults to OTHER when no relationship selected', async () => {
     render(<AddPersonPanel />);
     fillAndSubmit();
 
     await waitFor(() => {
       expect(mockBridgeRequest).toHaveBeenCalledWith(
-        'place:CreateInvitation',
+        Place.CMD_CREATEINVITATION,
         'SERV:place:place-1',
         expect.objectContaining({ relationship: 'OTHER' }),
       );
@@ -121,7 +130,7 @@ describe('AddPersonPanel – relationship', () => {
 
     await waitFor(() => {
       expect(mockBridgeRequest).toHaveBeenCalledWith(
-        'place:CreateInvitation',
+        Place.CMD_CREATEINVITATION,
         'SERV:place:place-1',
         expect.objectContaining({ relationship: 'people_family_spouse' }),
       );
@@ -142,7 +151,7 @@ describe('AddPersonPanel – relationship', () => {
 
     await waitFor(() => {
       expect(mockBridgeRequest).toHaveBeenCalledWith(
-        'place:CreateInvitation',
+        Place.CMD_CREATEINVITATION,
         'SERV:place:place-1',
         expect.objectContaining({ relationship: 'Property Manager' }),
       );
@@ -159,38 +168,24 @@ describe('AddPersonPanel – interactions', () => {
   });
 
   it('calls CreateInvitation then SendInvitation on submit', async () => {
-    const fakeInvitation = { code: 'abc', inviteeEmail: 'jane@test.com' };
-    mockBridgeRequest.mockImplementation((type: string) => {
-      if (type === 'place:CreateInvitation') {
-        return Promise.resolve({ invitation: fakeInvitation });
-      }
-      return Promise.resolve({});
-    });
-
     render(<AddPersonPanel />);
     fillAndSubmit();
 
     await waitFor(() => {
       expect(mockBridgeRequest).toHaveBeenCalledWith(
-        'place:CreateInvitation',
+        Place.CMD_CREATEINVITATION,
         'SERV:place:place-1',
         { firstName: 'Jane', lastName: 'Smith', email: 'jane@test.com', relationship: 'OTHER' },
       );
       expect(mockBridgeRequest).toHaveBeenCalledWith(
-        'place:SendInvitation',
+        Place.CMD_SENDINVITATION,
         'SERV:place:place-1',
-        { invitation: fakeInvitation },
+        { invitation: { code: 'abc', inviteeEmail: 'jane@test.com' } },
       );
     });
   });
 
   it('dispatches success notification and closes panel on success', async () => {
-    mockBridgeRequest.mockImplementation((type: string) => {
-      if (type === 'place:CreateInvitation') {
-        return Promise.resolve({ invitation: { code: 'x' } });
-      }
-      return Promise.resolve({});
-    });
     render(<AddPersonPanel />);
 
     fireEvent.change(screen.getByPlaceholderText('person@example.com'), { target: { value: 'jane@test.com' } });
@@ -206,7 +201,10 @@ describe('AddPersonPanel – interactions', () => {
   });
 
   it('dispatches error notification on failure', async () => {
-    mockBridgeRequest.mockRejectedValue(new Error('fail'));
+    commandHandlers.set(Place.CMD_CREATEINVITATION, () =>
+      Promise.reject(new Error('fail')),
+    );
+
     render(<AddPersonPanel />);
 
     fireEvent.change(screen.getByPlaceholderText('person@example.com'), { target: { value: 'jane@test.com' } });
@@ -228,12 +226,6 @@ describe('AddPersonPanel – interactions', () => {
 
   it('calls onSent callback after successful send', async () => {
     const onSent = jest.fn();
-    mockBridgeRequest.mockImplementation((type: string) => {
-      if (type === 'place:CreateInvitation') {
-        return Promise.resolve({ invitation: { code: 'x' } });
-      }
-      return Promise.resolve({});
-    });
 
     render(<AddPersonPanel onSent={onSent} />);
     fireEvent.change(screen.getByPlaceholderText('person@example.com'), { target: { value: 'jane@test.com' } });

@@ -1,5 +1,7 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { Base, Account, Place } from '@arcus/core';
 import AddPlacePanel from '@/components/settings/AddPlacePanel';
+import type { AccountData } from '@/store/entityTypes';
 
 // ── Mocks ─────────────────────────────────────────────────────────────
 
@@ -24,7 +26,7 @@ jest.mock('@/store/slices/placeSlice', () => ({
   setPlace: (payload: unknown) => ({ type: 'place/setPlace', payload }),
 }));
 
-let mockAccount: Record<string, unknown> | null = null;
+let mockAccount: AccountData | null = null;
 
 jest.mock('@/store/hooks', () => ({
   useAppSelector: (sel: (s: any) => any) =>
@@ -37,7 +39,9 @@ jest.mock('@/store/hooks', () => ({
 beforeEach(() => {
   jest.clearAllMocks();
   mockAccount = {
-    'base:address': 'SERV:account:acct-1',
+    [Base.ATTR_ADDRESS]: 'SERV:account:acct-1',
+    [Account.ATTR_STATE]: 'ACTIVE',
+    [Account.ATTR_OWNER]: 'SERV:person:p1',
   };
 });
 
@@ -79,7 +83,7 @@ describe('AddPlacePanel – interactions', () => {
   });
 
   it('calls account:AddPlace with form data on submit', async () => {
-    mockBridgeRequest.mockResolvedValue({ place: { 'place:name': 'Beach House' } });
+    mockBridgeRequest.mockResolvedValue({ place: { [Place.ATTR_NAME]: 'Beach House' } });
     render(<AddPlacePanel />);
 
     const inputs = screen.getAllByRole('textbox');
@@ -93,15 +97,15 @@ describe('AddPlacePanel – interactions', () => {
 
     await waitFor(() =>
       expect(mockBridgeRequest).toHaveBeenCalledWith(
-        'account:AddPlace',
+        Account.CMD_ADDPLACE,
         'SERV:account:acct-1',
         {
           place: {
-            'place:name': 'Beach House',
-            'place:streetAddress1': '456 Ocean Ave',
-            'place:city': 'Malibu',
-            'place:stateProv': 'CA',
-            'place:zipCode': '90265',
+            [Place.ATTR_NAME]: 'Beach House',
+            [Place.ATTR_STREETADDRESS1]: '456 Ocean Ave',
+            [Place.ATTR_CITY]: 'Malibu',
+            [Place.ATTR_STATEPROV]: 'CA',
+            [Place.ATTR_ZIPCODE]: '90265',
           },
           serviceLevel: 'BASIC',
         },
@@ -110,7 +114,7 @@ describe('AddPlacePanel – interactions', () => {
   });
 
   it('dispatches setPlace and success notification on success', async () => {
-    const newPlace = { 'place:name': 'Beach House' };
+    const newPlace = { [Place.ATTR_NAME]: 'Beach House' };
     mockBridgeRequest.mockResolvedValue({ place: newPlace });
     render(<AddPlacePanel />);
 

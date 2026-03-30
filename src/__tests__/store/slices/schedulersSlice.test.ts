@@ -5,9 +5,11 @@ import reducer, {
   schedulersReceived,
   schedulersClear,
 } from '@/store/slices/schedulersSlice';
+import type { SchedulerEntity } from '@/store/entityTypes';
+import { Base } from '@arcus/core';
 
-function makeScheduler(address: string, extra: Record<string, unknown> = {}) {
-  return { id: address, 'base:address': address, ...extra };
+function makeScheduler(address: string, extra: Partial<SchedulerEntity> = {}) {
+  return { id: address, [Base.ATTR_ADDRESS]: address, ...extra };
 }
 
 describe('schedulersSlice', () => {
@@ -28,7 +30,7 @@ describe('schedulersSlice', () => {
 
   it('schedulerUpdated updates an existing scheduler', () => {
     let state = reducer(undefined, schedulerAdded(makeScheduler('SERV:sched:s1', { 'sched:group': 'old' })));
-    state = reducer(state, schedulerUpdated({ 'base:address': 'SERV:sched:s1', 'sched:group': 'new' }));
+    state = reducer(state, schedulerUpdated({ [Base.ATTR_ADDRESS]: 'SERV:sched:s1', 'sched:group': 'new' }));
     expect(state.entities['SERV:sched:s1']?.['sched:group']).toBe('new');
   });
 
@@ -44,8 +46,8 @@ describe('schedulersSlice', () => {
     state = reducer(
       state,
       schedulersReceived([
-        { 'base:address': 'SERV:sched:a' },
-        { 'base:address': 'SERV:sched:b' },
+        { [Base.ATTR_ADDRESS]: 'SERV:sched:a' },
+        { [Base.ATTR_ADDRESS]: 'SERV:sched:b' },
       ]),
     );
     expect(state.ids).toHaveLength(2);

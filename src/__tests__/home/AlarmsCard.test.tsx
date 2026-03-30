@@ -1,15 +1,17 @@
 import { render, screen } from '@testing-library/react';
 import AlarmsCard from '@/components/home/AlarmsCard';
+import { Base, Place } from '@arcus/core';
+import type { SubsystemEntity, DeviceEntity, IncidentEntity, PlaceData } from '@/store/entityTypes';
 
 jest.mock('next/link', () => ({
   __esModule: true,
   default: ({ href, children, ...props }: any) => <a href={href} {...props}>{children}</a>,
 }));
 
-let mockPlace: Record<string, unknown> | null = null;
-let mockSubsystems: Record<string, unknown>[] = [];
-let mockDevices: Record<string, unknown>[] = [];
-let mockIncidents: Record<string, unknown>[] = [];
+let mockPlace: Partial<PlaceData> | null = null;
+let mockSubsystems: SubsystemEntity[] = [];
+let mockDevices: DeviceEntity[] = [];
+let mockIncidents: IncidentEntity[] = [];
 
 jest.mock('@/store/hooks', () => ({
   useAppSelector: (sel: (s: any) => any) =>
@@ -47,7 +49,7 @@ jest.mock('@/store/slices/peopleSlice', () => ({
 }));
 
 beforeEach(() => {
-  mockPlace = { 'place:name': 'Home' };
+  mockPlace = { [Place.ATTR_NAME]: 'Home' };
   mockSubsystems = [];
   mockDevices = [];
   mockIncidents = [];
@@ -71,7 +73,7 @@ describe('AlarmsCard', () => {
 
   it('shows security mode when armed', () => {
     mockSubsystems = [
-      { 'base:address': 'SERV:subsecurity:place-1', 'subsecurity:alarmMode': 'ON' },
+      { id: 'SERV:subsecurity:place-1', [Base.ATTR_ADDRESS]: 'SERV:subsecurity:place-1', 'subsecurity:alarmMode': 'ON' },
     ];
     render(<AlarmsCard />);
     expect(screen.getByText('ON')).toBeInTheDocument();
@@ -79,7 +81,7 @@ describe('AlarmsCard', () => {
 
   it('shows Alarm Active when incident is ALERT', () => {
     mockIncidents = [
-      { 'incident:alertState': 'ALERT', 'incident:alert': 'Smoke detected' },
+      { id: 'inc-1', [Base.ATTR_ADDRESS]: 'SERV:incident:inc-1', 'incident:alertState': 'ALERT', 'incident:alert': 'Smoke detected' },
     ];
     render(<AlarmsCard />);
     expect(screen.getByText('Alarm Active')).toBeInTheDocument();
@@ -87,13 +89,13 @@ describe('AlarmsCard', () => {
   });
 
   it('shows Pro badge when service level includes PROMON', () => {
-    mockPlace = { 'place:name': 'Home', 'place:serviceLevel': 'PREMIUM_PROMON' };
+    mockPlace = { [Place.ATTR_NAME]: 'Home', [Place.ATTR_SERVICELEVEL]: 'PREMIUM_PROMON' };
     render(<AlarmsCard />);
     expect(screen.getByText('Pro')).toBeInTheDocument();
   });
 
   it('does not show Pro badge without PROMON', () => {
-    mockPlace = { 'place:name': 'Home', 'place:serviceLevel': 'PREMIUM' };
+    mockPlace = { [Place.ATTR_NAME]: 'Home', [Place.ATTR_SERVICELEVEL]: 'PREMIUM' };
     render(<AlarmsCard />);
     expect(screen.queryByText('Pro')).not.toBeInTheDocument();
   });
@@ -101,7 +103,8 @@ describe('AlarmsCard', () => {
   it('shows offline device count', () => {
     mockSubsystems = [
       {
-        'base:address': 'SERV:subsecurity:place-1',
+        id: 'SERV:subsecurity:place-1',
+        [Base.ATTR_ADDRESS]: 'SERV:subsecurity:place-1',
         'subsecurity:alarmMode': 'OFF',
         'subsecurity:offlineDevices': ['dev-1', 'dev-2'],
       },

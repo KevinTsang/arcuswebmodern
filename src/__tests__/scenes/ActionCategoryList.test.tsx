@@ -1,4 +1,5 @@
 import { render, screen, fireEvent } from '@testing-library/react';
+import type { ComponentProps } from 'react';
 import { ActionCategoryList } from '@/components/scenes/ActionCategoryList';
 import type { ResolvedAction } from '@/components/scenes/ScenePanel';
 
@@ -24,7 +25,7 @@ beforeEach(() => {
   mockGetConfiguredDeviceCount = jest.fn().mockReturnValue(0);
 });
 
-const renderList = (overrides: Record<string, unknown> = {}) =>
+const renderList = (overrides: Partial<ComponentProps<typeof ActionCategoryList>> = {}) =>
   render(
     <ActionCategoryList
       name="My Scene"

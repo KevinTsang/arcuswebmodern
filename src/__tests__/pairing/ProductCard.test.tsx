@@ -1,14 +1,15 @@
 import { render, screen, fireEvent } from '@testing-library/react';
+import { Base, Product } from '@arcus/core';
 import ProductCard from '@/components/products/ProductCard';
 
 const mockSelect = jest.fn();
 
 const baseProduct = {
-  'base:address': 'SERV:product:prod-1',
-  'product:name': 'Smart Plug',
-  'product:vendor': 'GE',
-  'product:id': 'abc123',
-  'product:hubRequired': false,
+  [Base.ATTR_ADDRESS]: 'SERV:product:prod-1',
+  [Product.ATTR_NAME]: 'Smart Plug',
+  [Product.ATTR_VENDOR]: 'GE',
+  [Product.ATTR_ID]: 'abc123',
+  [Product.ATTR_HUBREQUIRED]: false,
 };
 
 beforeEach(() => jest.clearAllMocks());
@@ -25,21 +26,21 @@ describe('ProductCard', () => {
   });
 
   it('does not render vendor when empty', () => {
-    const product = { ...baseProduct, 'product:vendor': '' };
+    const product = { ...baseProduct, [Product.ATTR_VENDOR]: '' };
     const { container } = render(<ProductCard product={product} onSelect={mockSelect} />);
     const vendorElements = container.querySelectorAll('.text-grouse.mt-0\\.5');
     expect(vendorElements).toHaveLength(0);
   });
 
   it('falls back to shortName when name is undefined', () => {
-    const { 'product:name': _, ...rest } = baseProduct;
-    const product = { ...rest, 'product:name': undefined as any, 'product:shortName': 'Plug' };
+    const { [Product.ATTR_NAME]: _, ...rest } = baseProduct;
+    const product = { ...rest, [Product.ATTR_NAME]: undefined as any, 'product:shortName': 'Plug' };
     render(<ProductCard product={product} onSelect={mockSelect} />);
     expect(screen.getByText('Plug')).toBeInTheDocument();
   });
 
   it('shows "Hub Required" badge when hubRequired is true', () => {
-    const product = { ...baseProduct, 'product:hubRequired': true };
+    const product = { ...baseProduct, [Product.ATTR_HUBREQUIRED]: true };
     render(<ProductCard product={product} onSelect={mockSelect} />);
     expect(screen.getByText('Hub Required')).toBeInTheDocument();
   });

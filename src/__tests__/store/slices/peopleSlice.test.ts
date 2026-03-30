@@ -5,9 +5,11 @@ import reducer, {
   peopleReceived,
   peopleClear,
 } from '@/store/slices/peopleSlice';
+import type { PersonEntity } from '@/store/entityTypes';
+import { Base, Person } from '@arcus/core';
 
-function makePerson(address: string, extra: Record<string, unknown> = {}) {
-  return { id: address, 'base:address': address, ...extra };
+function makePerson(address: string, extra: Partial<PersonEntity> = {}) {
+  return { id: address, [Base.ATTR_ADDRESS]: address, ...extra };
 }
 
 describe('peopleSlice', () => {
@@ -18,15 +20,15 @@ describe('peopleSlice', () => {
   });
 
   it('personAdded adds one person', () => {
-    const state = reducer(undefined, personAdded(makePerson('SERV:person:p1', { 'person:firstName': 'Alice' })));
+    const state = reducer(undefined, personAdded(makePerson('SERV:person:p1', { [Person.ATTR_FIRSTNAME]: 'Alice' })));
     expect(state.ids).toEqual(['SERV:person:p1']);
-    expect(state.entities['SERV:person:p1']?.['person:firstName']).toBe('Alice');
+    expect(state.entities['SERV:person:p1']?.[Person.ATTR_FIRSTNAME]).toBe('Alice');
   });
 
   it('personUpdated updates an existing person', () => {
-    let state = reducer(undefined, personAdded(makePerson('SERV:person:p1', { 'person:firstName': 'Alice' })));
-    state = reducer(state, personUpdated({ 'base:address': 'SERV:person:p1', 'person:firstName': 'Bob' }));
-    expect(state.entities['SERV:person:p1']?.['person:firstName']).toBe('Bob');
+    let state = reducer(undefined, personAdded(makePerson('SERV:person:p1', { [Person.ATTR_FIRSTNAME]: 'Alice' })));
+    state = reducer(state, personUpdated({ [Base.ATTR_ADDRESS]: 'SERV:person:p1', [Person.ATTR_FIRSTNAME]: 'Bob' }));
+    expect(state.entities['SERV:person:p1']?.[Person.ATTR_FIRSTNAME]).toBe('Bob');
   });
 
   it('personRemoved removes a person', () => {
@@ -41,8 +43,8 @@ describe('peopleSlice', () => {
     state = reducer(
       state,
       peopleReceived([
-        { 'base:address': 'SERV:person:a', 'person:firstName': 'A' },
-        { 'base:address': 'SERV:person:b', 'person:firstName': 'B' },
+        { [Base.ATTR_ADDRESS]: 'SERV:person:a', [Person.ATTR_FIRSTNAME]: 'A' },
+        { [Base.ATTR_ADDRESS]: 'SERV:person:b', [Person.ATTR_FIRSTNAME]: 'B' },
       ]),
     );
     expect(state.ids).toHaveLength(2);

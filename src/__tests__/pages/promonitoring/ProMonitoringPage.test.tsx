@@ -1,5 +1,7 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { Base, Place, Person } from '@arcus/core';
 import ProMonitoringPage from '@/app/(authenticated)/promonitoring/page';
+import type { PlaceData, PersonEntity } from '@/store/entityTypes';
 
 // ── Mocks ─────────────────────────────────────────────────────────────
 
@@ -27,8 +29,8 @@ jest.mock('@/store/slices/uiSlice', () => ({
   addNotification: (payload: unknown) => ({ type: 'ui/addNotification', payload }),
 }));
 
-let mockPlace: Record<string, unknown> | null = null;
-let mockPerson: Record<string, unknown> | null = null;
+let mockPlace: PlaceData | null = null;
+let mockPerson: PersonEntity | null = null;
 
 jest.mock('@/store/hooks', () => ({
   useAppSelector: (sel: (s: any) => any) =>
@@ -42,21 +44,22 @@ jest.mock('@/store/hooks', () => ({
 beforeEach(() => {
   jest.clearAllMocks();
   mockPlace = {
-    'base:address': 'SERV:place:place-1',
-    'base:id': 'place-1',
-    'place:name': 'My Home',
-    'place:streetAddress1': '123 Main St',
-    'place:city': 'Springfield',
-    'place:stateProv': 'IL',
-    'place:zipCode': '62701',
-    'place:serviceLevel': 'PREMIUM',
+    [Base.ATTR_ADDRESS]: 'SERV:place:place-1',
+    [Base.ATTR_ID]: 'place-1',
+    [Place.ATTR_NAME]: 'My Home',
+    [Place.ATTR_STREETADDRESS1]: '123 Main St',
+    [Place.ATTR_CITY]: 'Springfield',
+    [Place.ATTR_STATEPROV]: 'IL',
+    [Place.ATTR_ZIPCODE]: '62701',
+    [Place.ATTR_SERVICELEVEL]: 'PREMIUM',
   };
   mockPerson = {
-    'base:address': 'SERV:person:person-1',
-    'person:email': 'user@test.com',
+    id: 'SERV:person:person-1',
+    [Base.ATTR_ADDRESS]: 'SERV:person:person-1',
+    [Person.ATTR_EMAIL]: 'user@test.com',
   };
   mockGetSettings.mockResolvedValue({
-    'base:address': 'SERV:promon:settings-1',
+    [Base.ATTR_ADDRESS]: 'SERV:promon:settings-1',
   });
 });
 
@@ -96,7 +99,7 @@ describe('ProMonitoringPage – rendering', () => {
   });
 
   it('shows "Continue" when no address', () => {
-    mockPlace = { ...mockPlace!, 'place:streetAddress1': undefined, 'place:city': undefined, 'place:stateProv': undefined, 'place:zipCode': undefined };
+    mockPlace = { ...mockPlace!, [Place.ATTR_STREETADDRESS1]: undefined, [Place.ATTR_CITY]: undefined, [Place.ATTR_STATEPROV]: undefined, [Place.ATTR_ZIPCODE]: undefined };
     render(<ProMonitoringPage />);
     expect(screen.getByText('Continue')).toBeInTheDocument();
   });

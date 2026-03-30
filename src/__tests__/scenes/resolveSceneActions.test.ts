@@ -1,4 +1,5 @@
 import { resolveSceneActions } from '@/components/scenes/resolveSceneActions';
+import { Base } from '@arcus/core';
 import Bridge from '@arcus/core/bridge';
 import { SceneService } from '@arcus/core/services';
 
@@ -15,8 +16,8 @@ const mockListTemplates = SceneService.ListSceneTemplates as jest.Mock;
 const mockBridge = Bridge.request as jest.Mock;
 
 const templates = [
-  { 'base:address': 'SERV:scenetmpl:home', 'base:id': 'home', 'scenetmpl:custom': false },
-  { 'base:address': 'SERV:scenetmpl:custom', 'base:id': 'custom', 'scenetmpl:custom': true },
+  { [Base.ATTR_ADDRESS]: 'SERV:scenetmpl:home', [Base.ATTR_ID]: 'home', 'scenetmpl:custom': false },
+  { [Base.ATTR_ADDRESS]: 'SERV:scenetmpl:custom', [Base.ATTR_ID]: 'custom', 'scenetmpl:custom': true },
 ];
 
 beforeEach(() => {
@@ -89,7 +90,7 @@ describe('resolveSceneActions', () => {
 
   it('throws if custom template not found', async () => {
     mockListTemplates.mockResolvedValue({
-      sceneTemplates: [{ 'base:address': 'SERV:scenetmpl:home', 'base:id': 'home', 'scenetmpl:custom': false }],
+      sceneTemplates: [{ [Base.ATTR_ADDRESS]: 'SERV:scenetmpl:home', [Base.ATTR_ID]: 'home', 'scenetmpl:custom': false }],
     });
     await expect(resolveSceneActions('place-1')).rejects.toThrow('Custom scene template not found');
   });

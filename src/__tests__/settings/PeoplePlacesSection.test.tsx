@@ -1,6 +1,7 @@
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { Base, Person, Place } from '@arcus/core';
 import PeoplePlacesSection from '@/components/settings/PeoplePlacesSection';
+import type { PlaceData, PersonData } from '@/store/entityTypes';
 
 const mockOpenRight = jest.fn();
 const mockBridgeRequest = jest.fn();
@@ -50,7 +51,7 @@ const guestPlace = {
   role: 'FULL_ACCESS',
 };
 
-const ownerPlaceData: Record<string, unknown> = {
+const ownerPlaceData: PlaceData = {
   [Base.ATTR_ADDRESS]: 'SERV:place:place-1',
   [Base.ATTR_ID]: 'place-1',
   [Place.ATTR_NAME]: 'My Home',
@@ -61,7 +62,7 @@ const ownerPlaceData: Record<string, unknown> = {
   [Place.ATTR_SERVICELEVEL]: 'PREMIUM',
 };
 
-const guestPlaceData: Record<string, unknown> = {
+const guestPlaceData: PlaceData = {
   [Base.ATTR_ADDRESS]: 'SERV:place:place-2',
   [Base.ATTR_ID]: 'place-2',
   [Place.ATTR_NAME]: 'Beach House',
@@ -72,7 +73,7 @@ const guestPlaceData: Record<string, unknown> = {
   [Place.ATTR_SERVICELEVEL]: 'BASIC',
 };
 
-const person1 = {
+const person1: PersonData = {
   [Base.ATTR_ADDRESS]: 'SERV:person:p1',
   [Base.ATTR_ID]: 'p1',
   [Person.ATTR_FIRSTNAME]: 'Me',
@@ -80,14 +81,14 @@ const person1 = {
   [Person.ATTR_EMAIL]: 'me@test.com',
 };
 
-const person2 = {
+const person2: PersonData = {
   [Base.ATTR_ADDRESS]: 'SERV:person:p2',
   [Person.ATTR_FIRSTNAME]: 'Jane',
   [Person.ATTR_LASTNAME]: 'Smith',
   [Person.ATTR_EMAIL]: 'jane@test.com',
 };
 
-const person3 = {
+const person3: PersonData = {
   [Base.ATTR_ADDRESS]: 'SERV:person:p3',
   [Person.ATTR_FIRSTNAME]: 'Bob',
   [Person.ATTR_LASTNAME]: 'Jones',
