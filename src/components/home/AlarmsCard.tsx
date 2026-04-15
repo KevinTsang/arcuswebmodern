@@ -1,7 +1,7 @@
 import { Place, AlarmIncident, SecuritySubsystem } from '@arcus/core';
 import { useAppSelector } from '@/store/hooks';
 import { selectAllIncidents } from '@/store/slices/incidentsSlice';
-import { useAlarmSubsystem } from '@/hooks/useSubsystem';
+import { useAlarmSubsystem } from '@/hooks/useAlarmSubsystem';
 import CardShell from './CardShell';
 import StatusBadge from './StatusBadge';
 

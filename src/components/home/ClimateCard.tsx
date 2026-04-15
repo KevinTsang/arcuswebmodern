@@ -1,4 +1,4 @@
-import { useClimateSubsystem } from '@/hooks/useSubsystem';
+import { useClimateSubsystem } from '@/hooks/useClimateSubsystem';
 import { formatTemp } from '@/hooks/useDeviceConfig';
 import CardShell from './CardShell';
 

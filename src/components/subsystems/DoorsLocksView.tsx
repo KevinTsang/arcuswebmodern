@@ -8,7 +8,7 @@
  */
 
 import { Base } from '@arcus/core';
-import { useDoorsLocksSubsystem } from '@/hooks/useSubsystem';
+import { useDoorsLocksSubsystem } from '@/hooks/useDoorsLocksSubsystem';
 import { DevicePanel } from '@/components/devices';
 import type { DeviceEntity } from '@/store/entityTypes';
 

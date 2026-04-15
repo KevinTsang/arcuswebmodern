@@ -5,12 +5,8 @@ import reducer, {
   peopleReceived,
   peopleClear,
 } from '@/store/slices/peopleSlice';
-import type { PersonEntity } from '@/store/entityTypes';
 import { Base, Person } from '@arcus/core';
-
-function makePerson(address: string, extra: Partial<PersonEntity> = {}) {
-  return { id: address, [Base.ATTR_ADDRESS]: address, ...extra };
-}
+import { makePerson } from '../../helpers/factories';
 
 describe('peopleSlice', () => {
   it('returns empty initial state', () => {

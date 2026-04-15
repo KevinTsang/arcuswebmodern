@@ -5,12 +5,8 @@ import reducer, {
   scenesReceived,
   scenesClear,
 } from '@/store/slices/scenesSlice';
-import type { SceneEntity } from '@/store/entityTypes';
 import { Base, Scene } from '@arcus/core';
-
-function makeScene(address: string, extra: Partial<SceneEntity> = {}) {
-  return { id: address, [Base.ATTR_ADDRESS]: address, ...extra };
-}
+import { makeScene } from '../../helpers/factories';
 
 describe('scenesSlice', () => {
   it('returns empty initial state', () => {

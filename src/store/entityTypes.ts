@@ -106,6 +106,12 @@ export interface CareBehavior {
   type?: string;
 }
 
+/** Alarm call tree entry from AlarmSubsystem / SecuritySubsystem. */
+export interface AlarmCallEntry {
+  person?: string;
+  enabled?: boolean;
+}
+
 /** Care call tree entry from CareSubsystem. */
 export interface CareCallEntry {
   person?: string;

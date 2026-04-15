@@ -1,5 +1,5 @@
 import { CareSubsystem } from '@arcus/core';
-import { useCareSubsystem } from '@/hooks/useSubsystem';
+import { useCareSubsystem } from '@/hooks/useCareSubsystem';
 import CardShell from './CardShell';
 import StatusBadge from './StatusBadge';
 

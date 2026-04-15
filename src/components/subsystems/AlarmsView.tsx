@@ -8,7 +8,7 @@
  */
 
 import { useState, useCallback } from 'react';
-import { useAlarmSubsystem } from '@/hooks/useSubsystem';
+import { useAlarmSubsystem } from '@/hooks/useAlarmSubsystem';
 import { AlarmSettings } from './AlarmSettings';
 import { AlarmStatus } from './AlarmStatus';
 

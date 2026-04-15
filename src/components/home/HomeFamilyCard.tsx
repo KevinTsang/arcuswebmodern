@@ -1,4 +1,4 @@
-import { useHomeFamilySubsystem } from '@/hooks/useSubsystem';
+import { useHomeFamilySubsystem } from '@/hooks/useHomeFamilySubsystem';
 import CardShell from './CardShell';
 import StatusBadge from './StatusBadge';
 

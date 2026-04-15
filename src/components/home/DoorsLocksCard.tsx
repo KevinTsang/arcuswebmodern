@@ -1,4 +1,4 @@
-import { useDoorsLocksSubsystem } from '@/hooks/useSubsystem';
+import { useDoorsLocksSubsystem } from '@/hooks/useDoorsLocksSubsystem';
 import CardShell from './CardShell';
 import StatusBadge from './StatusBadge';
 

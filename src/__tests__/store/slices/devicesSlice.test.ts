@@ -5,12 +5,8 @@ import reducer, {
   devicesReceived,
   devicesClear,
 } from '@/store/slices/devicesSlice';
-import type { DeviceEntity } from '@/store/entityTypes';
 import { Base, Device } from '@arcus/core';
-
-function makeDevice(address: string, extra: Partial<DeviceEntity> = {}) {
-  return { id: address, [Base.ATTR_ADDRESS]: address, ...extra };
-}
+import { makeDevice } from '../../helpers/factories';
 
 describe('devicesSlice', () => {
   it('returns empty initial state', () => {

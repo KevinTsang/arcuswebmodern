@@ -8,7 +8,7 @@
  */
 
 import { Base } from '@arcus/core';
-import { useClimateSubsystem } from '@/hooks/useSubsystem';
+import { useClimateSubsystem } from '@/hooks/useClimateSubsystem';
 import { cToF, formatTemp } from '@/hooks/useDeviceConfig';
 import { DevicePanel } from '@/components/devices';
 

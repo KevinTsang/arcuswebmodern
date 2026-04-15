@@ -1,7 +1,7 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { Base, AlarmIncident } from '@arcus/core';
+import { AlarmIncident } from '@arcus/core';
 import IncidentTracker from '@/components/subsystems/IncidentTracker';
-import type { IncidentEntity } from '@/store/entityTypes';
+import { makeIncident } from '../helpers/factories';
 
 const mockDispatch = jest.fn();
 const mockBridgeRequest = jest.fn();
@@ -23,15 +23,11 @@ jest.mock('@/store/slices/uiSlice', () => ({
   addNotification: (payload: unknown) => ({ type: 'ui/addNotification', payload }),
 }));
 
-function makeIncident(overrides: Partial<IncidentEntity> = {}): IncidentEntity {
-  return {
-    id: 'SERV:incident:i1',
-    [Base.ATTR_ADDRESS]: 'SERV:incident:i1',
-    [AlarmIncident.ATTR_ALERTSTATE]: AlarmIncident.ALERTSTATE_ALERT,
-    [AlarmIncident.ATTR_ALERT]: AlarmIncident.ALERT_SECURITY,
-    ...overrides,
-  };
-}
+const INCIDENT_ADDR = 'SERV:incident:i1';
+const defaultIncidentAttrs = {
+  [AlarmIncident.ATTR_ALERTSTATE]: AlarmIncident.ALERTSTATE_ALERT,
+  [AlarmIncident.ATTR_ALERT]: AlarmIncident.ALERT_SECURITY,
+};
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -39,39 +35,39 @@ beforeEach(() => {
 
 describe('IncidentTracker', () => {
   it('shows Cancel button for active security alarm', () => {
-    render(<IncidentTracker incident={makeIncident()} />);
+    render(<IncidentTracker incident={makeIncident(INCIDENT_ADDR, defaultIncidentAttrs)} />);
     expect(screen.getByText('Security Alarm')).toBeInTheDocument();
     expect(screen.getByText('Cancel Alarm')).toBeInTheDocument();
     expect(screen.getByText('Alarm is active')).toBeInTheDocument();
   });
 
   it('shows tracker for water leak alarm', () => {
-    render(<IncidentTracker incident={makeIncident({ [AlarmIncident.ATTR_ALERT]: AlarmIncident.ALERT_WATER })} />);
+    render(<IncidentTracker incident={makeIncident(INCIDENT_ADDR, { ...defaultIncidentAttrs, [AlarmIncident.ATTR_ALERT]: AlarmIncident.ALERT_WATER })} />);
     expect(screen.getByText('Water Leak Alarm')).toBeInTheDocument();
   });
 
   it('shows tracker for CO alarm', () => {
-    render(<IncidentTracker incident={makeIncident({ [AlarmIncident.ATTR_ALERT]: AlarmIncident.ALERT_CO })} />);
+    render(<IncidentTracker incident={makeIncident(INCIDENT_ADDR, { ...defaultIncidentAttrs, [AlarmIncident.ATTR_ALERT]: AlarmIncident.ALERT_CO })} />);
     expect(screen.getByText('Carbon Monoxide Alarm')).toBeInTheDocument();
   });
 
   it('shows tracker for smoke alarm', () => {
-    render(<IncidentTracker incident={makeIncident({ [AlarmIncident.ATTR_ALERT]: AlarmIncident.ALERT_SMOKE })} />);
+    render(<IncidentTracker incident={makeIncident(INCIDENT_ADDR, { ...defaultIncidentAttrs, [AlarmIncident.ATTR_ALERT]: AlarmIncident.ALERT_SMOKE })} />);
     expect(screen.getByText('Smoke Alarm')).toBeInTheDocument();
   });
 
   it('shows tracker for panic alarm', () => {
-    render(<IncidentTracker incident={makeIncident({ [AlarmIncident.ATTR_ALERT]: AlarmIncident.ALERT_PANIC })} />);
+    render(<IncidentTracker incident={makeIncident(INCIDENT_ADDR, { ...defaultIncidentAttrs, [AlarmIncident.ATTR_ALERT]: AlarmIncident.ALERT_PANIC })} />);
     expect(screen.getByText('Panic Alarm')).toBeInTheDocument();
   });
 
   it('shows pre-alert message for PREALERT state', () => {
-    render(<IncidentTracker incident={makeIncident({ [AlarmIncident.ATTR_ALERTSTATE]: AlarmIncident.ALERTSTATE_PREALERT })} />);
+    render(<IncidentTracker incident={makeIncident(INCIDENT_ADDR, { ...defaultIncidentAttrs, [AlarmIncident.ATTR_ALERTSTATE]: AlarmIncident.ALERTSTATE_PREALERT })} />);
     expect(screen.getByText('Pre-alert — alarm will sound shortly')).toBeInTheDocument();
   });
 
   it('shows fallback label when alert type is unknown', () => {
-    const incident = makeIncident();
+    const incident = makeIncident(INCIDENT_ADDR, defaultIncidentAttrs);
     delete (incident as Record<string, unknown>)[AlarmIncident.ATTR_ALERT];
     render(<IncidentTracker incident={incident} />);
     expect(screen.getByText('Alarm Active')).toBeInTheDocument();
@@ -79,7 +75,7 @@ describe('IncidentTracker', () => {
 
   it('sends incident:Cancel on Cancel Alarm click', async () => {
     mockBridgeRequest.mockResolvedValue({});
-    render(<IncidentTracker incident={makeIncident()} />);
+    render(<IncidentTracker incident={makeIncident(INCIDENT_ADDR, defaultIncidentAttrs)} />);
 
     fireEvent.click(screen.getByText('Cancel Alarm'));
 
@@ -94,7 +90,7 @@ describe('IncidentTracker', () => {
 
   it('dispatches success notification after cancel', async () => {
     mockBridgeRequest.mockResolvedValue({});
-    render(<IncidentTracker incident={makeIncident({ [AlarmIncident.ATTR_ALERT]: AlarmIncident.ALERT_WATER })} />);
+    render(<IncidentTracker incident={makeIncident(INCIDENT_ADDR, { [AlarmIncident.ATTR_ALERT]: AlarmIncident.ALERT_WATER })} />);
 
     fireEvent.click(screen.getByText('Cancel Alarm'));
 
@@ -108,7 +104,7 @@ describe('IncidentTracker', () => {
 
   it('clears current incident after cancel', async () => {
     mockBridgeRequest.mockResolvedValue({});
-    render(<IncidentTracker incident={makeIncident()} />);
+    render(<IncidentTracker incident={makeIncident(INCIDENT_ADDR, defaultIncidentAttrs)} />);
 
     fireEvent.click(screen.getByText('Cancel Alarm'));
 
@@ -125,7 +121,7 @@ describe('IncidentTracker', () => {
       warningTitle: 'Hub Offline',
       warningMessage: 'The hub is not responding',
     });
-    render(<IncidentTracker incident={makeIncident()} />);
+    render(<IncidentTracker incident={makeIncident(INCIDENT_ADDR, defaultIncidentAttrs)} />);
 
     fireEvent.click(screen.getByText('Cancel Alarm'));
 
@@ -139,7 +135,7 @@ describe('IncidentTracker', () => {
 
   it('shows error notification on cancel failure', async () => {
     mockBridgeRequest.mockRejectedValue(new Error('network'));
-    render(<IncidentTracker incident={makeIncident()} />);
+    render(<IncidentTracker incident={makeIncident(INCIDENT_ADDR, defaultIncidentAttrs)} />);
 
     fireEvent.click(screen.getByText('Cancel Alarm'));
 
@@ -153,7 +149,7 @@ describe('IncidentTracker', () => {
 
   it('shows hub offline message on UnknownDevice error', async () => {
     mockBridgeRequest.mockRejectedValue({ code: 'UnknownDevice' });
-    render(<IncidentTracker incident={makeIncident()} />);
+    render(<IncidentTracker incident={makeIncident(INCIDENT_ADDR, defaultIncidentAttrs)} />);
 
     fireEvent.click(screen.getByText('Cancel Alarm'));
 

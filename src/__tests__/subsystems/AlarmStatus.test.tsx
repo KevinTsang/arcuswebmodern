@@ -1,7 +1,8 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { Base, Device, DeviceConnection, SecuritySubsystem, AlarmIncident } from '@arcus/core';
+import { Base, Device, DeviceConnection, SecuritySubsystem, AlarmIncident, AlarmSubsystem } from '@arcus/core';
 import { AlarmStatus } from '@/components/subsystems/AlarmStatus';
 import type { DeviceEntity, IncidentEntity, SubsystemEntity } from '@/store/entityTypes';
+import { makeDevice, makeIncident } from '../helpers/factories';
 
 const mockDispatch = jest.fn();
 const mockBridgeRequest = jest.fn();
@@ -37,26 +38,11 @@ jest.mock('@/components/subsystems/IncidentTracker', () => ({
   ),
 }));
 
-function makeDevice(overrides: Partial<DeviceEntity> = {}): DeviceEntity {
-  const id = overrides.id ?? 'DRIV:dev:d1';
-  return {
-    id,
-    [Base.ATTR_ADDRESS]: id,
-    [Device.ATTR_NAME]: 'Front Door',
-    [DeviceConnection.ATTR_STATE]: DeviceConnection.STATE_ONLINE,
-    ...overrides,
-  };
-}
 
-function makeIncident(overrides: Partial<IncidentEntity> = {}): IncidentEntity {
-  return {
-    id: 'SERV:incident:i1',
-    [Base.ATTR_ADDRESS]: 'SERV:incident:i1',
-    [AlarmIncident.ATTR_ALERTSTATE]: AlarmIncident.ALERTSTATE_ALERT,
-    [AlarmIncident.ATTR_ALERT]: AlarmIncident.ALERT_SECURITY,
-    ...overrides,
-  };
-}
+const defaultModeSettings = {
+  ON: { devices: [], entranceDelaySec: 30, exitDelaySec: 30, soundsEnabled: true, silent: false, alarmSensitivityDeviceCount: 1 },
+  PARTIAL: { devices: [], entranceDelaySec: 30, exitDelaySec: 30, soundsEnabled: true, silent: false, alarmSensitivityDeviceCount: 1 },
+};
 
 const defaultAlarm = {
   securityMode: SecuritySubsystem.ALARMMODE_OFF,
@@ -65,18 +51,20 @@ const defaultAlarm = {
   securityDevices: [] as string[],
   triggeredDevices: [] as string[],
   offlineDevices: [] as string[],
+  callTree: [] as { person: string; enabled: boolean }[],
+  modeSettings: defaultModeSettings,
   recordOnSecurity: false,
   fanShutoffOnSmoke: false,
   fanShutoffOnCO: false,
   securitySubsystem: { id: 'SERV:subsecurity:abc', [Base.ATTR_ADDRESS]: 'SERV:subsecurity:abc' } as SubsystemEntity,
   safetySubsystem: undefined,
-  alarmSubsystem: undefined,
+  alarmSubsystem: { id: 'SERV:subalarm:abc', [Base.ATTR_ADDRESS]: 'SERV:subalarm:abc' } as SubsystemEntity,
 };
 
 let mockAlarm = { ...defaultAlarm };
 let mockState: { devices: DeviceEntity[]; incidents: IncidentEntity[] } = { devices: [], incidents: [] };
 
-jest.mock('@/hooks/useSubsystem', () => ({
+jest.mock('@/hooks/useAlarmSubsystem', () => ({
   useAlarmSubsystem: () => mockAlarm,
 }));
 
@@ -265,7 +253,7 @@ describe('AlarmStatus', () => {
 
   // ── Device list ─────────────────────────────────────────────────────
   it('shows security devices', () => {
-    const dev = makeDevice();
+    const dev = makeDevice('DRIV:dev:d1', { [Device.ATTR_NAME]: 'Front Door', [DeviceConnection.ATTR_STATE]: DeviceConnection.STATE_ONLINE });
     mockAlarm = { ...defaultAlarm, securityDevices: [dev[Base.ATTR_ADDRESS]] };
     mockState = { devices: [dev], incidents: [] };
     render(<AlarmStatus />);
@@ -276,7 +264,7 @@ describe('AlarmStatus', () => {
   });
 
   it('shows device count in status', () => {
-    const dev = makeDevice();
+    const dev = makeDevice('DRIV:dev:d1', { [Device.ATTR_NAME]: 'Front Door', [DeviceConnection.ATTR_STATE]: DeviceConnection.STATE_ONLINE });
     mockAlarm = { ...defaultAlarm, securityDevices: [dev[Base.ATTR_ADDRESS]] };
     mockState = { devices: [dev], incidents: [] };
     render(<AlarmStatus />);
@@ -285,8 +273,8 @@ describe('AlarmStatus', () => {
   });
 
   it('pluralizes device count', () => {
-    const dev1 = makeDevice({ id: 'DRIV:dev:d1', [Base.ATTR_ADDRESS]: 'DRIV:dev:d1' });
-    const dev2 = makeDevice({ id: 'DRIV:dev:d2', [Base.ATTR_ADDRESS]: 'DRIV:dev:d2', [Device.ATTR_NAME]: 'Back Door' });
+    const dev1 = makeDevice('DRIV:dev:d1', { [Device.ATTR_NAME]: 'Front Door', [DeviceConnection.ATTR_STATE]: DeviceConnection.STATE_ONLINE });
+    const dev2 = makeDevice('DRIV:dev:d2', { [Device.ATTR_NAME]: 'Back Door', [DeviceConnection.ATTR_STATE]: DeviceConnection.STATE_ONLINE });
     mockAlarm = { ...defaultAlarm, securityDevices: ['DRIV:dev:d1', 'DRIV:dev:d2'] };
     mockState = { devices: [dev1, dev2], incidents: [] };
     render(<AlarmStatus />);
@@ -295,7 +283,7 @@ describe('AlarmStatus', () => {
   });
 
   it('shows triggered device status', () => {
-    const dev = makeDevice();
+    const dev = makeDevice('DRIV:dev:d1', { [Device.ATTR_NAME]: 'Front Door', [DeviceConnection.ATTR_STATE]: DeviceConnection.STATE_ONLINE });
     mockAlarm = {
       ...defaultAlarm,
       securityState: SecuritySubsystem.ALARMSTATE_ALERT,
@@ -309,7 +297,7 @@ describe('AlarmStatus', () => {
   });
 
   it('shows triggered device names in status area', () => {
-    const dev = makeDevice();
+    const dev = makeDevice('DRIV:dev:d1', { [Device.ATTR_NAME]: 'Front Door', [DeviceConnection.ATTR_STATE]: DeviceConnection.STATE_ONLINE });
     mockAlarm = {
       ...defaultAlarm,
       securityState: SecuritySubsystem.ALARMSTATE_ALERT,
@@ -323,7 +311,7 @@ describe('AlarmStatus', () => {
   });
 
   it('shows offline device status', () => {
-    const dev = makeDevice({ [DeviceConnection.ATTR_STATE]: DeviceConnection.STATE_OFFLINE });
+    const dev = makeDevice('DRIV:dev:d1', { [Device.ATTR_NAME]: 'Front Door', [DeviceConnection.ATTR_STATE]: DeviceConnection.STATE_OFFLINE });
     mockAlarm = { ...defaultAlarm, securityDevices: [dev[Base.ATTR_ADDRESS]] };
     mockState = { devices: [dev], incidents: [] };
     render(<AlarmStatus />);
@@ -338,7 +326,7 @@ describe('AlarmStatus', () => {
 
   // ── Incident tracker ────────────────────────────────────────────────
   it('shows IncidentTracker for active incident', () => {
-    const incident = makeIncident();
+    const incident = makeIncident('SERV:incident:i1', { [AlarmIncident.ATTR_ALERTSTATE]: AlarmIncident.ALERTSTATE_ALERT, [AlarmIncident.ATTR_ALERT]: AlarmIncident.ALERT_SECURITY });
     mockState = { devices: [], incidents: [incident] };
     render(<AlarmStatus />);
 
@@ -346,7 +334,7 @@ describe('AlarmStatus', () => {
   });
 
   it('shows IncidentTracker for pre-alert incident', () => {
-    const incident = makeIncident({ [AlarmIncident.ATTR_ALERTSTATE]: AlarmIncident.ALERTSTATE_PREALERT });
+    const incident = makeIncident('SERV:incident:i1', { [AlarmIncident.ATTR_ALERTSTATE]: AlarmIncident.ALERTSTATE_PREALERT, [AlarmIncident.ATTR_ALERT]: AlarmIncident.ALERT_SECURITY });
     mockState = { devices: [], incidents: [incident] };
     render(<AlarmStatus />);
 
@@ -356,5 +344,46 @@ describe('AlarmStatus', () => {
   it('hides IncidentTracker when no active incidents', () => {
     render(<AlarmStatus />);
     expect(screen.queryByTestId('incident-tracker')).not.toBeInTheDocument();
+  });
+
+  // ── Panic button ────────────────────────────────────────────────────
+  it('shows Panic button when disarmed', () => {
+    render(<AlarmStatus />);
+    expect(screen.getByText('Panic')).toBeInTheDocument();
+  });
+
+  it('calls AlarmSubsystem.CMD_PANIC on Panic click', async () => {
+    mockBridgeRequest.mockResolvedValue({});
+    render(<AlarmStatus />);
+
+    fireEvent.click(screen.getByText('Panic'));
+
+    await waitFor(() => {
+      expect(mockBridgeRequest).toHaveBeenCalledWith(
+        AlarmSubsystem.CMD_PANIC,
+        'SERV:subalarm:abc',
+        {},
+      );
+    });
+  });
+
+  it('hides Panic button during active alert', () => {
+    mockAlarm = { ...defaultAlarm, securityState: SecuritySubsystem.ALARMSTATE_ALERT };
+    render(<AlarmStatus />);
+    expect(screen.queryByText('Panic')).not.toBeInTheDocument();
+  });
+
+  it('dispatches error notification on panic failure', async () => {
+    mockBridgeRequest.mockRejectedValue(new Error('network'));
+    render(<AlarmStatus />);
+
+    fireEvent.click(screen.getByText('Panic'));
+
+    await waitFor(() => {
+      expect(mockDispatch).toHaveBeenCalledWith({
+        type: 'ui/addNotification',
+        payload: { type: 'error', message: 'Failed to trigger panic alarm' },
+      });
+    });
   });
 });

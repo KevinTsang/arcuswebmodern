@@ -6,12 +6,8 @@ import reducer, {
   incidentsClear,
   setCurrentIncident,
 } from '@/store/slices/incidentsSlice';
-import type { IncidentEntity } from '@/store/entityTypes';
 import { Base } from '@arcus/core';
-
-function makeIncident(address: string, extra: Partial<IncidentEntity> = {}) {
-  return { id: address, [Base.ATTR_ADDRESS]: address, ...extra };
-}
+import { makeIncident } from '../../helpers/factories';
 
 describe('incidentsSlice', () => {
   it('returns empty initial state with null currentIncident', () => {

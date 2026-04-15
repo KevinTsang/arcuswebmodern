@@ -7,7 +7,7 @@
  */
 
 import { Base } from '@arcus/core';
-import { useLawnGardenSubsystem } from '@/hooks/useSubsystem';
+import { useLawnGardenSubsystem } from '@/hooks/useLawnGardenSubsystem';
 import { DevicePanel } from '@/components/devices';
 
 export function LawnGardenView() {

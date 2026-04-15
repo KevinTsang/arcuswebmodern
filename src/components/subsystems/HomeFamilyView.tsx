@@ -8,7 +8,7 @@
  */
 
 import { Person } from '@arcus/core';
-import { useHomeFamilySubsystem } from '@/hooks/useSubsystem';
+import { useHomeFamilySubsystem } from '@/hooks/useHomeFamilySubsystem';
 import type { PersonEntity } from '@/store/entityTypes';
 
 export function HomeFamilyView() {

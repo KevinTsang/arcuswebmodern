@@ -13,18 +13,36 @@ jest.mock('@arcus/core/bridge', () => ({
 
 jest.mock('@/store/hooks', () => ({
   useAppDispatch: () => mockDispatch,
+  useAppSelector: (sel: (s: any) => any) => sel({
+    people: { ids: [], entities: {} },
+    devices: { ids: [], entities: {} },
+  }),
 }));
 
 jest.mock('@/store/slices/uiSlice', () => ({
   addNotification: (payload: unknown) => ({ type: 'ui/addNotification', payload }),
 }));
 
+const defaultModeSettings = {
+  devices: [] as string[],
+  entranceDelaySec: 30,
+  exitDelaySec: 30,
+  soundsEnabled: true,
+  silent: false,
+  alarmSensitivityDeviceCount: 1,
+};
+
 const defaultAlarm = {
   recordOnSecurity: false,
   fanShutoffOnSmoke: false,
   fanShutoffOnCO: false,
+  callTree: [],
+  modeSettings: { ON: { ...defaultModeSettings }, PARTIAL: { ...defaultModeSettings } },
   alarmSubsystem: { id: 'SERV:subalarm:abc', [Base.ATTR_ADDRESS]: 'SERV:subalarm:abc' } as SubsystemEntity,
-  securitySubsystem: undefined,
+  securitySubsystem: {
+    id: 'SERV:subsecurity:abc',
+    [Base.ATTR_ADDRESS]: 'SERV:subsecurity:abc',
+  } as SubsystemEntity,
   safetySubsystem: undefined,
   securityMode: SecuritySubsystem.ALARMMODE_OFF,
   securityState: SecuritySubsystem.ALARMSTATE_DISARMED,
@@ -36,7 +54,7 @@ const defaultAlarm = {
 
 let mockAlarm = { ...defaultAlarm };
 
-jest.mock('@/hooks/useSubsystem', () => ({
+jest.mock('@/hooks/useAlarmSubsystem', () => ({
   useAlarmSubsystem: () => mockAlarm,
 }));
 
@@ -53,9 +71,12 @@ describe('AlarmSettings', () => {
     expect(screen.getByText('Fan Shutoff on CO')).toBeInTheDocument();
   });
 
-  it('renders heading', () => {
+  it('renders section headings', () => {
     render(<AlarmSettings />);
-    expect(screen.getByText('Alarm Settings')).toBeInTheDocument();
+    expect(screen.getByText('General')).toBeInTheDocument();
+    expect(screen.getByText('Notification List')).toBeInTheDocument();
+    expect(screen.getByText('Security Mode Settings')).toBeInTheDocument();
+    expect(screen.getByText('Device Participation')).toBeInTheDocument();
   });
 
   it('toggles recordOnSecurity from off to on', async () => {

@@ -1,0 +1,187 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`ModeDelaySettings matches snapshot 1`] = `
+<div
+  class="p-4 rounded-[var(--border-radius-base)] border border-heron"
+>
+  <h4
+    class="text-sm font-medium text-swift mb-3"
+  >
+    Full (ON)
+  </h4>
+  <div
+    class="space-y-3"
+  >
+    <div
+      class="flex items-center justify-between gap-3"
+    >
+      <div>
+        <p
+          class="text-sm text-swift"
+        >
+          Exit Delay
+        </p>
+        <p
+          class="text-xs text-grouse"
+        >
+          Time to exit before alarm arms.
+        </p>
+      </div>
+      <select
+        class="text-sm border border-heron rounded px-2 py-1 bg-crane text-swift disabled:opacity-50"
+      >
+        <option
+          value="0"
+        >
+          None
+        </option>
+        <option
+          value="15"
+        >
+          15s
+        </option>
+        <option
+          value="30"
+        >
+          30s
+        </option>
+        <option
+          value="45"
+        >
+          45s
+        </option>
+        <option
+          value="60"
+        >
+          1m
+        </option>
+        <option
+          value="90"
+        >
+          1m 30s
+        </option>
+        <option
+          value="120"
+        >
+          2m
+        </option>
+        <option
+          value="180"
+        >
+          3m
+        </option>
+      </select>
+    </div>
+    <div
+      class="flex items-center justify-between gap-3"
+    >
+      <div>
+        <p
+          class="text-sm text-swift"
+        >
+          Entrance Delay
+        </p>
+        <p
+          class="text-xs text-grouse"
+        >
+          Grace period to disarm after entering.
+        </p>
+      </div>
+      <select
+        class="text-sm border border-heron rounded px-2 py-1 bg-crane text-swift disabled:opacity-50"
+      >
+        <option
+          value="0"
+        >
+          None
+        </option>
+        <option
+          value="15"
+        >
+          15s
+        </option>
+        <option
+          value="30"
+        >
+          30s
+        </option>
+        <option
+          value="45"
+        >
+          45s
+        </option>
+        <option
+          value="60"
+        >
+          1m
+        </option>
+        <option
+          value="90"
+        >
+          1m 30s
+        </option>
+        <option
+          value="120"
+        >
+          2m
+        </option>
+        <option
+          value="180"
+        >
+          3m
+        </option>
+      </select>
+    </div>
+    <div
+      class="flex items-start justify-between gap-4 py-3 border-b border-heron"
+    >
+      <div>
+        <p
+          class="text-sm font-medium text-swift"
+        >
+          Arming Sounds
+        </p>
+        <p
+          class="text-xs text-grouse mt-0.5"
+        >
+          Play sounds on hub/keypad during arming countdown.
+        </p>
+      </div>
+      <button
+        aria-checked="true"
+        class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 bg-peacock"
+        role="switch"
+      >
+        <span
+          class="inline-block h-4 w-4 rounded-full bg-crane shadow transition-transform translate-x-6"
+        />
+      </button>
+    </div>
+    <div
+      class="flex items-start justify-between gap-4 py-3 border-b border-heron"
+    >
+      <div>
+        <p
+          class="text-sm font-medium text-swift"
+        >
+          Silent Alarm
+        </p>
+        <p
+          class="text-xs text-grouse mt-0.5"
+        >
+          Suppress siren when alarm triggers in this mode.
+        </p>
+      </div>
+      <button
+        aria-checked="false"
+        class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 bg-heron"
+        role="switch"
+      >
+        <span
+          class="inline-block h-4 w-4 rounded-full bg-crane shadow transition-transform translate-x-1"
+        />
+      </button>
+    </div>
+  </div>
+</div>
+`;

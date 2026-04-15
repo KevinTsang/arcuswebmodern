@@ -1,4 +1,4 @@
-import { useCamerasSubsystem } from '@/hooks/useSubsystem';
+import { useCamerasSubsystem } from '@/hooks/useCamerasSubsystem';
 import CardShell from './CardShell';
 
 export default function CamerasCard() {

@@ -191,20 +191,17 @@ None.
 | Offline device count display | Yes | Yes | **Done** |
 | Professional monitoring badge | Yes | Yes | **Done** |
 | Alarm banner on active incidents | Yes | Yes | **Done** |
-| Device participation list | Yes | No | **Missing** |
-| Participation editing per device | Yes | No | **Missing** |
-| Notification / call tree management | Yes (ordered, up to 6 people) | No | **Missing** |
-| Alarm delays / grace period configuration | Yes | No | **Missing** |
-| Strobe / siren settings | Yes | No | **Missing** |
-| Silent / audible mode toggle | Yes | No | **Missing** |
-| Panic button | Yes | No | **Missing** |
+| Device participation list | Yes | Yes | **Done** |
+| Participation editing per device | Yes | Yes (ON, PARTIAL, both, none) | **Done** |
+| Notification / call tree management | Yes (ordered, up to 6 people) | Yes (ordered, enable/disable, reorder) | **Done** |
+| Alarm delays / grace period configuration | Yes | Yes (exit/entrance delay per mode) | **Done** |
+| Strobe / siren settings | Yes | Yes (silent alarm toggle per mode) | **Done** |
+| Silent / audible mode toggle | Yes | Yes (per mode) | **Done** |
+| Panic button | Yes | Yes | **Done** |
 
 ### Gaps
 
-- Alarm device participation management (which sensors participate in alarm).
-- Notification call tree (ordered contact escalation).
-- Alarm settings (delays, grace periods, strobe, silent mode).
-- Panic button.
+None.
 
 ---
 
@@ -598,9 +595,9 @@ This is a new feature in the modern client with no legacy equivalent.
 These are commonly used features that users will expect:
 
 1. **Camera streaming & recording** — Live HLS streaming, recording playback, clips browser, camera settings. This is the single largest gap.
-2. **Alarm device participation & settings** — Which sensors are in the alarm, call tree escalation, delays/grace periods, panic button.
+2. ~~**Alarm device participation & settings**~~ — **DONE.** Device participation (ON/PARTIAL/both/none), notification call tree (ordered, enable/disable, reorder), delay settings (exit/entrance per mode), silent alarm, arming sounds, panic button.
 3. **Thermostat scheduling** — Temperature programs by time-of-day and day-of-week.
-4. **Notification call tree** — Ordered contact escalation for alarm and care events.
+4. **Notification call tree (Care)** — Ordered contact escalation for care events (alarm call tree is done).
 5. **Billing & subscription management** — Service plan display, payment methods, invoicing.
 
 ### Tier 2 — Important Gaps (Full Feature Parity)

@@ -10,7 +10,7 @@
 import { useState, useCallback } from 'react';
 import Bridge from '@arcus/core/bridge';
 import { Base, CareSubsystem } from '@arcus/core';
-import { useCareSubsystem } from '@/hooks/useSubsystem';
+import { useCareSubsystem } from '@/hooks/useCareSubsystem';
 import { useAppDispatch } from '@/store/hooks';
 import { addNotification } from '@/store/slices/uiSlice';
 

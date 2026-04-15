@@ -17,6 +17,7 @@ Next.js 16 + React 19 smart-home web client. Uses Redux Toolkit for state, Tailw
 - **`src/store/slices/`** — Feature slices (devices, scenes, rules, people, etc.)
 - **`packages/arcus-core/`** — Shared core library: capability constants, Bridge WebSocket client
 - **`src/__tests__/`** — Unit tests mirroring source structure (`devices/`, `scenes/`, `shared/`, `store/slices/`, `hooks/`, `pages/`, etc.)
+- **`src__tests__/helpers/factories.ts`** - Store entity creation helper methods for testing purposes
 - **`cypress/`** — E2E tests
 
 ### Path Aliases

@@ -8,7 +8,7 @@
  */
 
 import { Base } from '@arcus/core';
-import { useCamerasSubsystem } from '@/hooks/useSubsystem';
+import { useCamerasSubsystem } from '@/hooks/useCamerasSubsystem';
 import { DevicePanel } from '@/components/devices';
 
 export function CamerasView() {

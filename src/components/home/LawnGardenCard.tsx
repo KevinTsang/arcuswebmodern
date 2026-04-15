@@ -1,4 +1,4 @@
-import { useLawnGardenSubsystem } from '@/hooks/useSubsystem';
+import { useLawnGardenSubsystem } from '@/hooks/useLawnGardenSubsystem';
 import CardShell from './CardShell';
 import StatusBadge from './StatusBadge';
 

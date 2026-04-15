@@ -6,12 +6,8 @@ import reducer, {
   rulesClear,
   setRuleTemplates,
 } from '@/store/slices/rulesSlice';
-import type { RuleEntity } from '@/store/entityTypes';
 import { Base, Rule } from '@arcus/core';
-
-function makeRule(address: string, extra: Partial<RuleEntity> = {}) {
-  return { id: address, [Base.ATTR_ADDRESS]: address, ...extra };
-}
+import { makeRule } from '../../helpers/factories';
 
 describe('rulesSlice', () => {
   it('returns empty initial state with empty ruleTemplates', () => {
