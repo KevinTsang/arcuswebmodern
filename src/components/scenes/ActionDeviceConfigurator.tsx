@@ -35,7 +35,7 @@ export function ActionDeviceConfigurator({
           const selectors = action.selectors[addr] ?? [];
           const config = configuredActions.get(action.id);
           const enabled = !!config?.context[addr];
-          const values = config?.context[addr] ?? {};
+          const values = (config?.context[addr] ?? {}) as Record<string, SelectorValue>;
 
           return (
             <DeviceRow

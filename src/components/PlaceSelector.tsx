@@ -26,7 +26,7 @@ export default function PlaceSelector() {
 
   useEffect(() => {
     SessionService.ListAvailablePlaces()
-      .then((res: any) => {
+      .then((res) => {
         const sorted = (res.places ?? []).sort(
           (a: AvailablePlace, b: AvailablePlace) =>
             (a.name ?? '').localeCompare(b.name ?? ''),

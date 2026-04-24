@@ -34,8 +34,7 @@ import type {
   ListSubsystemsResponse, ListSchedulersResponse, ListScenesResponse,
   ListRulesResponse, ListRuleTemplatesResponse,
 } from '@/arcus/types';
-import type { PlaceData } from '@/components/settings/types';
-import type { ArcusPayload } from '../entityTypes';
+import type { PlaceData, PairingProduct, SubsystemData, IncidentData } from '../entityTypes';
 
 export const loadPlaceDataThunk = createAsyncThunk<string, string, { state: RootState }>(
   'place/loadData',
@@ -112,13 +111,13 @@ export const loadPlaceDataThunk = createAsyncThunk<string, string, { state: Root
     // Also fetch hub generation 2 and 3 product definitions
     const hubProductPromises = ['dee000', 'dee001'].map((productId) =>
       ProductCatalogService.GetProduct(placeAddress, productId)
-        .then((res): ArcusPayload | null => (res['product'] as ArcusPayload) ?? null)
+        .then((res): PairingProduct | null => (res['product'] as PairingProduct) ?? null)
         .catch((): null => null),
     );
     const hubProducts = await Promise.all(hubProductPromises);
-    const allProducts: ArcusPayload[] = [
+    const allProducts: PairingProduct[] = [
       ...products,
-      ...hubProducts.filter((p): p is ArcusPayload => p !== null),
+      ...hubProducts.filter((p): p is PairingProduct => p !== null),
     ];
     dispatch(setProducts(allProducts));
 
@@ -127,7 +126,7 @@ export const loadPlaceDataThunk = createAsyncThunk<string, string, { state: Root
     dispatch(subsystemsReceived(subsystems));
 
     // Load existing incidents from the alarm subsystem (mirrors app.js lines 842-846)
-    const alarmSub = subsystems.find((s: ArcusPayload) => {
+    const alarmSub = subsystems.find((s: SubsystemData) => {
       const addr = s[Base.ATTR_ADDRESS];
       return addr?.startsWith('SERV:subalarm:');
     });
@@ -140,7 +139,7 @@ export const loadPlaceDataThunk = createAsyncThunk<string, string, { state: Root
             dispatch(incidentsReceived(incidents));
             // Set current incident if one is in ALERT state
             const active = incidents.find(
-              (i: ArcusPayload) => i[AlarmIncident.ATTR_ALERTSTATE] === AlarmIncident.ALERTSTATE_ALERT,
+              (i: IncidentData) => i[AlarmIncident.ATTR_ALERTSTATE] === AlarmIncident.ALERTSTATE_ALERT,
             );
             if (active) {
               dispatch(setCurrentIncident(active[Base.ATTR_ADDRESS]));

@@ -58,7 +58,7 @@ export default function CredentialsStep() {
           auth.authenticate().catch(reject);
         });
 
-        const pId: string = sessionData[Person.ATTR_CURRPLACE] ?? result['placeId'];
+        const pId = (sessionData[Person.ATTR_CURRPLACE] as string) ?? (result['placeId'] as string);
 
         reduxDispatch(loginSuccess({ person: sessionData, account: (result['account'] as Account) ?? ({} as Account) }));
         dispatch({ type: 'ACCOUNT_CREATED', personData: sessionData, placeId: pId });

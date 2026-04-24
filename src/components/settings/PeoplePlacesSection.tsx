@@ -19,7 +19,7 @@ import { useAppSelector } from '@/store/hooks';
 import { useSidePanel } from '@/components/SidePanel';
 import PlaceCard from './PlaceCard';
 import { type PlaceWithPeople, type PlaceData } from './types';
-import type { ListPersonsResponse, ListAvailablePlacesResponse } from '@/arcus/types';
+import type { ListPersonsResponse } from '@/arcus/types';
 import AddPlacePanel from './AddPlacePanel';
 
 export default function PeoplePlacesSection() {
@@ -39,7 +39,7 @@ export default function PeoplePlacesSection() {
     async function fetchAll() {
       setLoading(true);
       try {
-        const res = await SessionService.ListAvailablePlaces() as ListAvailablePlacesResponse;
+        const res = await SessionService.ListAvailablePlaces();
         const available = res.places ?? [];
 
         // Fetch full attributes + people for each place in parallel

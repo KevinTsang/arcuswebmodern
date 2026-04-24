@@ -1,7 +1,7 @@
 import { createSlice, createEntityAdapter, PayloadAction } from '@reduxjs/toolkit';
 import type { RootState } from '../store';
 import { Base } from '@arcus/core';
-import type { DeviceEntity, ArcusPayload } from '../entityTypes';
+import type { DeviceEntity, DeviceData, ArcusPayload } from '../entityTypes';
 
 export type { DeviceEntity } from '../entityTypes';
 
@@ -18,8 +18,8 @@ const devicesSlice = createSlice({
       devicesAdapter.updateOne(state, { id: address, changes });
     },
     deviceRemoved: devicesAdapter.removeOne,
-    devicesReceived(state, action: PayloadAction<ArcusPayload[]>) {
-      const entities = action.payload.map((d) => ({ ...d, id: d[Base.ATTR_ADDRESS] }));
+    devicesReceived(state, action: PayloadAction<DeviceData[]>) {
+      const entities = action.payload.map((d) => ({ ...d, id: d[Base.ATTR_ADDRESS] as string }));
       devicesAdapter.setAll(state, entities);
     },
     devicesClear: devicesAdapter.removeAll,

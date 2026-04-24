@@ -98,6 +98,68 @@ export type IncidentEntity = ArcusEntity & Partial<
 /** Subsystem entity — properties vary by subsystem type. */
 export type SubsystemEntity = ArcusEntity;
 
+// ── Payload types (API response / event shapes without `id`) ─────
+// These mirror entity types but extend ArcusPayload instead of
+// ArcusEntity, so they don't require an `id` field. The Redux
+// middleware adds `id` when storing entities.
+
+/** Device payload from API responses. */
+export type DeviceData = ArcusPayload & Partial<
+  Record<typeof Base.ATTR_ID, string> &
+  Record<typeof Base.ATTR_CAPS, string[]> &
+  Record<typeof Base.ATTR_INSTANCES, Record<string, string[]>> &
+  Record<typeof Device.ATTR_NAME, string> &
+  Record<typeof Device.ATTR_DEVTYPEHINT, string> &
+  Record<typeof Device.ATTR_PRODUCTID, string> &
+  Record<typeof Device.ATTR_VENDOR, string> &
+  Record<typeof Device.ATTR_MODEL, string> &
+  Record<typeof DeviceConnection.ATTR_STATE, string> &
+  Record<typeof DeviceAdvanced.ATTR_ERRORS, Record<string, string>> &
+  Record<typeof DevicePower.ATTR_BATTERY, number> &
+  Record<typeof DevicePower.ATTR_SOURCE, string>
+>;
+
+/** Scene payload from API responses. */
+export type SceneData = ArcusPayload & Partial<
+  Record<typeof Scene.ATTR_NAME, string> &
+  Record<typeof Scene.ATTR_ENABLED, boolean> &
+  Record<typeof Scene.ATTR_ACTIONS, Array<Record<string, unknown>>> &
+  Record<typeof Scene.ATTR_NOTIFICATION, boolean> &
+  Record<typeof Scene.ATTR_TEMPLATE, string>
+>;
+
+/** Rule payload from API responses. */
+export type RuleData = ArcusPayload & Partial<
+  Record<typeof Rule.ATTR_NAME, string> &
+  Record<typeof Rule.ATTR_DESCRIPTION, string> &
+  Record<typeof Rule.ATTR_STATE, string> &
+  Record<typeof Rule.ATTR_TEMPLATE, string> &
+  Record<typeof Rule.ATTR_CONTEXT, Record<string, unknown>>
+>;
+
+/** Rule template payload from API responses. */
+export type RuleTemplateData = ArcusPayload & Partial<
+  Record<typeof RuleTemplate.ATTR_NAME, string> &
+  Record<typeof RuleTemplate.ATTR_DESCRIPTION, string> &
+  Record<typeof RuleTemplate.ATTR_TEMPLATE, string> &
+  Record<typeof RuleTemplate.ATTR_CATEGORIES, string[]>
+>;
+
+/** Incident payload from API responses. */
+export type IncidentData = ArcusPayload & Partial<
+  Record<typeof AlarmIncident.ATTR_ALERTSTATE, string> &
+  Record<typeof AlarmIncident.ATTR_ALERT, string>
+>;
+
+/** Subsystem payload from API responses. */
+export type SubsystemData = ArcusPayload;
+
+/** Scheduler payload from API responses. */
+export type SchedulerData = ArcusPayload;
+
+/** Hub payload from API responses. */
+export type HubData = ArcusPayload;
+
 /** Care behavior from CareSubsystem. */
 export interface CareBehavior {
   name?: string;

@@ -11,12 +11,12 @@ import { useEffect, useRef } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import { loadPlaceDataThunk } from '@/store/thunks/loadPlaceDataThunk';
-import { getDefaultPlaceId, type SessionPlace } from '@/store/thunks/placeSelection';
-import { setCurrentIncident } from '@/store/slices/incidentsSlice';
+import { getDefaultPlaceId } from '@/store/thunks/placeSelection';
 import Header from '@/components/Header';
 import AlarmBanner from '@/components/AlarmBanner';
 import InvitationBanner from '@/components/InvitationBanner';
 import { SidePanelProvider } from '@/components/SidePanel';
+import { SessionPlace } from '@/arcus/types';
 
 export default function AuthenticatedLayout({
   children,

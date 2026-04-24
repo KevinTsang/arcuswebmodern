@@ -2,7 +2,7 @@ import Bridge from '@arcus/core/bridge';
 import { Base, SceneTemplate as SceneTemplateCap } from '@arcus/core';
 import { SceneService } from '@arcus/core/services';
 import { SelectorType } from './types';
-import type { SelectorDef } from './types';
+import type { SelectorDef, SelectorValue } from './types';
 import type { ResolveActionsResponse, ActionSelector } from '@/arcus/types';
 
 export interface ResolvedAction {
@@ -66,7 +66,7 @@ function transformSelector(raw: ActionSelector): SelectorDef {
     });
   } else {
     // PERCENT, RANGE, BOOLEAN, TEMPERATURE, THERMOSTAT, DURATION, etc.
-    base.value = value;
+    base.value = value as SelectorValue;
   }
 
   return base;

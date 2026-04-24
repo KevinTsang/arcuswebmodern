@@ -28,10 +28,10 @@ export function getDeviceValue(
   // Multi-switch instance keys: "switch:relay1" → "swit:state:relay1"
   if (selName.startsWith('switch:')) {
     const instanceKey = selName.slice('switch:'.length);
-    return device[`swit:state:${instanceKey}`];
+    return device[`swit:state:${instanceKey}`] as SelectorValue | undefined;
   }
   const attr = DeviceAttr[selName as keyof typeof DeviceAttr];
-  if (attr && device[attr] !== undefined) return device[attr];
+  if (attr && device[attr] !== undefined) return device[attr] as SelectorValue;
   return undefined;
 }
 

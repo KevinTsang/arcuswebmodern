@@ -9,7 +9,12 @@
  */
 
 import type { Invitation } from '@/store/slices/invitationsSlice';
-import type { ArcusPayload, PersonData, PlaceData, AccountData, PairingDevice, PairingProduct } from '@/store/entityTypes';
+import type {
+  PersonData, PlaceData, AccountData,
+  DeviceData, SceneData, RuleData, RuleTemplateData,
+  IncidentData, SubsystemData, SchedulerData, HubData,
+  PairingDevice, PairingProduct,
+} from '@/store/entityTypes';
 import type { PairingStep } from '@/components/pairing/types';
 import type { HistoryEntry } from '@/components/history/HistoryList';
 
@@ -59,7 +64,7 @@ export type Account = AccountData;
 // ── Place capability responses ────────────────────────────────────
 
 export interface ListDevicesResponse {
-  devices: ArcusPayload[];
+  devices: DeviceData[];
 }
 
 export interface ListPersonsResponse {
@@ -67,7 +72,7 @@ export interface ListPersonsResponse {
 }
 
 export interface GetHubResponse {
-  hub: ArcusPayload;
+  hub: HubData;
 }
 
 export interface ListHistoryEntriesResponse {
@@ -86,7 +91,7 @@ type HubRegistrationError = typeof HUB_REGISTRATION_ERRORS[keyof typeof HUB_REGI
 export interface RegisterHubV2Response {
   state: 'ONLINE' | 'OFFLINE' | 'DOWNLOADING' | 'APPLYING' | 'REGISTERED' | HubRegistrationError;
   progress: number;
-  hub?: ArcusPayload;
+  hub?: HubData;
 }
 
 export interface CreateInvitationResponse {
@@ -96,7 +101,7 @@ export interface CreateInvitationResponse {
 // ── Alarm subsystem responses ────────────────────────────────────
 
 export interface ListIncidentsResponse {
-  incidents: ArcusPayload[];
+  incidents: IncidentData[];
 }
 
 export interface CancelIncidentResponse {
@@ -107,31 +112,31 @@ export interface CancelIncidentResponse {
 // ── Service list responses ────────────────────────────────────────
 
 export interface GetProductsResponse {
-  products: ArcusPayload[];
+  products: PairingProduct[];
 }
 
 export interface GetProductResponse {
-  product: ArcusPayload;
+  product: PairingProduct;
 }
 
 export interface ListSubsystemsResponse {
-  subsystems: ArcusPayload[];
+  subsystems: SubsystemData[];
 }
 
 export interface ListSchedulersResponse {
-  schedulers: ArcusPayload[];
+  schedulers: SchedulerData[];
 }
 
 export interface ListScenesResponse {
-  scenes: ArcusPayload[];
+  scenes: SceneData[];
 }
 
 export interface ListRulesResponse {
-  rules: ArcusPayload[];
+  rules: RuleData[];
 }
 
 export interface ListRuleTemplatesResponse {
-  ruleTemplates: ArcusPayload[];
+  ruleTemplates: RuleTemplateData[];
 }
 
 // ── Session service responses ─────────────────────────────────────
@@ -144,6 +149,32 @@ export interface AvailablePlace {
   placeId: string;
   name: string;
   role: string;
+}
+
+/** CardPreference from the platform Preferences type. */
+export interface CardPreference {
+  serviceName: string;
+  hideCard: boolean;
+}
+
+/**
+ * Preferences stored per-person per-place.
+ *
+ * The platform allows arbitrary keys but these are the known fields
+ * used by the web and mobile clients.
+ */
+export interface Preferences {
+  hideTutorials?: boolean;
+  dashboardCards?: CardPreference[];
+  /** Web client: ordered card keys for the dashboard. */
+  'dashboard:cards'?: string[];
+  /** Web client: card keys hidden from the dashboard. */
+  'dashboard:hidden'?: string[];
+  [key: string]: unknown;
+}
+
+export interface GetPreferencesResponse {
+  prefs: Preferences;
 }
 
 // ── Account capability responses ──────────────────────────────────

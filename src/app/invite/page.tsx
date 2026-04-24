@@ -15,16 +15,19 @@
 import { useState, useCallback, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Person } from '@arcus/core';
+import { Base, Person } from '@arcus/core';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { InvitationService } from '@arcus/core/services';
+import { InvitationService, SessionService } from '@arcus/core/services';
 import auth from '@arcus/core/auth';
 import Bridge from '@arcus/core/bridge';
 import { loginSuccess } from '@/store/slices/authSlice';
 import { loadPlaceDataThunk } from '@/store/thunks/loadPlaceDataThunk';
 import { initializeCoreConfig } from '@/store/thunks/initConfig';
+import { getDefaultPlaceId } from '@/store/thunks/placeSelection';
 import { useFormValidation, type ValidationConstraints } from '@/hooks/useFormValidation';
 import ChangePinForm from '@/components/ChangePinForm';
+import { SessionCreatedEvent } from '@/arcus/types';
+import { AccountData } from '@/store/entityTypes';
 
 type InviteStep = 'code' | 'confirm' | 'create-login' | 'pin' | 'welcome';
 
@@ -133,8 +136,8 @@ export default function InvitePage() {
       );
 
       // Authenticate after invitation acceptance
-      const sessionData = await new Promise<Record<string, unknown>>((resolve, reject) => {
-        const onSuccess = (data: Record<string, unknown>) => {
+      const sessionData = await new Promise<SessionCreatedEvent>((resolve, reject) => {
+        const onSuccess = (data: SessionCreatedEvent) => {
           auth.off('authentication:success', onSuccess);
           auth.off('authentication:fail', onFail);
           resolve(data);
@@ -150,10 +153,27 @@ export default function InvitePage() {
       });
 
       setPersonData(sessionData);
-      const pId = (sessionData[Person.ATTR_CURRPLACE] as string) ?? null;
+
+      // Determine and activate the place, then fetch the account
+      const { places = [], personId } = sessionData;
+      const pId = getDefaultPlaceId(places, personId) ?? null;
       setPlaceId(pId);
 
-      dispatch(loginSuccess({ person: sessionData, account: {} }));
+      let accountData: AccountData = {} as AccountData;
+      if (pId) {
+        await SessionService.SetActivePlace(pId);
+        localStorage.setItem('arcus:placeId', pId);
+        const selectedPlace = places.find((p) => p.placeId === pId);
+        if (selectedPlace?.accountId) {
+          accountData = await Bridge.request<AccountData>(
+            Base.CMD_GETATTRIBUTES,
+            `SERV:account:${selectedPlace.accountId}`,
+            {},
+          );
+        }
+      }
+
+      dispatch(loginSuccess({ person: sessionData, account: accountData }));
       setStep('pin');
     } catch {
       setError('Failed to accept invitation. Please try again.');

@@ -57,9 +57,11 @@ describe('rulesSlice', () => {
     expect(state.ruleTemplates).toEqual([]);
   });
 
-  it('setRuleTemplates stores templates', () => {
-    const templates = [{ id: 'tmpl1', name: 'Template 1' }];
-    const state = reducer(undefined, setRuleTemplates(templates));
-    expect(state.ruleTemplates).toEqual(templates);
+  it('setRuleTemplates stores templates with id from address', () => {
+    const templates = [{ [Base.ATTR_ADDRESS]: 'SERV:ruletmpl:tmpl1', name: 'Template 1' }];
+    const state = reducer(undefined, setRuleTemplates(templates as any));
+    expect(state.ruleTemplates).toEqual([
+      { id: 'SERV:ruletmpl:tmpl1', [Base.ATTR_ADDRESS]: 'SERV:ruletmpl:tmpl1', name: 'Template 1' },
+    ]);
   });
 });

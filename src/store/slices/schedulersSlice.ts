@@ -1,7 +1,7 @@
 import { createSlice, createEntityAdapter, PayloadAction } from '@reduxjs/toolkit';
 import type { RootState } from '../store';
 import { Base } from '@arcus/core';
-import type { SchedulerEntity, ArcusPayload } from '../entityTypes';
+import type { SchedulerEntity, SchedulerData, ArcusPayload } from '../entityTypes';
 
 export type { SchedulerEntity } from '../entityTypes';
 
@@ -18,8 +18,8 @@ const schedulersSlice = createSlice({
       schedulersAdapter.updateOne(state, { id: address, changes });
     },
     schedulerRemoved: schedulersAdapter.removeOne,
-    schedulersReceived(state, action: PayloadAction<ArcusPayload[]>) {
-      const entities = action.payload.map((s) => ({ ...s, id: s[Base.ATTR_ADDRESS] }));
+    schedulersReceived(state, action: PayloadAction<SchedulerData[]>) {
+      const entities = action.payload.map((s) => ({ ...s, id: s[Base.ATTR_ADDRESS] as string }));
       schedulersAdapter.setAll(state, entities);
     },
     schedulersClear: schedulersAdapter.removeAll,

@@ -41,10 +41,10 @@ export default function PreferencesPage() {
   // Load preferences
   useEffect(() => {
     SessionService.GetPreferences()
-      .then((res: any) => {
+      .then((res) => {
         const prefs = res.prefs ?? {};
-        const dashOrder = prefs['dashboard:cards'] as string[] | undefined;
-        const dashHidden = prefs['dashboard:hidden'] as string[] | undefined;
+        const dashOrder = prefs['dashboard:cards'];
+        const dashHidden = prefs['dashboard:hidden'];
 
         if (dashOrder) {
           const ordered: DashboardCard[] = dashOrder.map((key: string) => {

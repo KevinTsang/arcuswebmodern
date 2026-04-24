@@ -1,7 +1,7 @@
 import { createSlice, createEntityAdapter, PayloadAction } from '@reduxjs/toolkit';
 import type { RootState } from '../store';
 import { Base } from '@arcus/core';
-import type { RuleEntity, RuleTemplateEntity, ArcusPayload } from '../entityTypes';
+import type { RuleEntity, RuleTemplateEntity, RuleData, RuleTemplateData, ArcusPayload } from '../entityTypes';
 
 export type { RuleEntity, RuleTemplateEntity } from '../entityTypes';
 
@@ -20,16 +20,16 @@ const rulesSlice = createSlice({
       rulesAdapter.updateOne(state, { id: address, changes });
     },
     ruleRemoved: rulesAdapter.removeOne,
-    rulesReceived(state, action: PayloadAction<ArcusPayload[]>) {
-      const entities = action.payload.map((r) => ({ ...r, id: r[Base.ATTR_ADDRESS] }));
+    rulesReceived(state, action: PayloadAction<RuleData[]>) {
+      const entities = action.payload.map((r) => ({ ...r, id: r[Base.ATTR_ADDRESS] as string }));
       rulesAdapter.setAll(state, entities);
     },
     rulesClear(state) {
       rulesAdapter.removeAll(state);
       state.ruleTemplates = [];
     },
-    setRuleTemplates(state, action: PayloadAction<RuleTemplateEntity[]>) {
-      state.ruleTemplates = action.payload;
+    setRuleTemplates(state, action: PayloadAction<RuleTemplateData[]>) {
+      state.ruleTemplates = action.payload.map((t) => ({ ...t, id: t[Base.ATTR_ADDRESS] as string }));
     },
   },
 });
