@@ -55,7 +55,11 @@ describe('LawnGardenCard', () => {
       {
         id: 'SERV:sublawnngarden:place-1',
         [Base.ATTR_ADDRESS]: 'SERV:sublawnngarden:place-1',
-        'sublawnngarden:zonesWatering': [{ zone: 1 }, { zone: 2 }],
+        // Platform sends zonesWatering as a map keyed by controller address.
+        'sublawnngarden:zonesWatering': {
+          'DRIV:dev:ctrl1': { controller: 'DRIV:dev:ctrl1', zone: 'z1' },
+          'DRIV:dev:ctrl2': { controller: 'DRIV:dev:ctrl2', zone: 'z2' },
+        },
         'sublawnngarden:controllers': ['DRIV:dev:ctrl1'],
       },
     ];
@@ -64,6 +68,26 @@ describe('LawnGardenCard', () => {
     ];
     render(<LawnGardenCard />);
     expect(screen.getByText('2')).toBeInTheDocument();
+  });
+
+  it('shows 0 rather than "undefined" when no zones are watering', () => {
+    // Regression: the platform sends an empty map `{}` when nothing is
+    // watering; the card used to render "undefined" for the count.
+    mockSubsystems = [
+      {
+        id: 'SERV:sublawnngarden:place-1',
+        [Base.ATTR_ADDRESS]: 'SERV:sublawnngarden:place-1',
+        'sublawnngarden:zonesWatering': {},
+        'sublawnngarden:controllers': ['DRIV:dev:ctrl1'],
+      },
+    ];
+    mockDevices = [
+      { id: 'DRIV:dev:ctrl1', [Base.ATTR_ADDRESS]: 'DRIV:dev:ctrl1' },
+    ];
+    render(<LawnGardenCard />);
+    expect(screen.queryByText('undefined')).not.toBeInTheDocument();
+    // Watering badge shows 0
+    expect(screen.getByText('0')).toBeInTheDocument();
   });
 
   it('links to /services', () => {

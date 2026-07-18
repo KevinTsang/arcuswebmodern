@@ -12,7 +12,12 @@ export function useLawnGardenSubsystem() {
   return useMemo(() => {
     const controllerAddrs = (sub?.[LawnNGardenSubsystem.ATTR_CONTROLLERS] as string[]) ?? [];
     const controllers = allDevices.filter((d) => controllerAddrs.includes(d[Base.ATTR_ADDRESS]));
-    const zonesWatering = (sub?.[LawnNGardenSubsystem.ATTR_ZONESWATERING] as ZoneWateringEntry[]) ?? [];
+    // `zonesWatering` is a map keyed by controller address, not an array, so it
+    // has no `.length` — convert its values to a list (mirrors legacy `values(...)`).
+    // Casting it as an array made `zonesWatering.length` render as "undefined".
+    const zonesWateringMap =
+      (sub?.[LawnNGardenSubsystem.ATTR_ZONESWATERING] as Record<string, ZoneWateringEntry> | undefined) ?? {};
+    const zonesWatering = Object.values(zonesWateringMap);
     const nextEvent = sub?.[LawnNGardenSubsystem.ATTR_NEXTEVENT] as LawnGardenEvent | undefined;
 
     return {

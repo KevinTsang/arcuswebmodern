@@ -86,18 +86,33 @@ describe('useLawnGardenSubsystem', () => {
   });
 
   describe('zonesWatering', () => {
-    it('returns zonesWatering from the subsystem', () => {
-      const zones: ZoneWateringEntry[] = [
-        { zoneName: 'Front Yard', zoneNumber: 1, duration: 15 },
-        { zoneName: 'Back Yard', zoneNumber: 2, duration: 20 },
-      ];
+    it('returns the values of the zonesWatering map as an array', () => {
+      // The platform sends zonesWatering as a map keyed by controller address.
+      const zonesMap: Record<string, ZoneWateringEntry> = {
+        'DRIV:dev:ctrl1': { controller: 'DRIV:dev:ctrl1', zone: 'z1', duration: 15, startTime: 1711900800000, trigger: 'MANUAL' },
+        'DRIV:dev:ctrl2': { controller: 'DRIV:dev:ctrl2', zone: 'z2', duration: 20, startTime: 1711900900000, trigger: 'SCHEDULED' },
+      };
       mockUseSubsystem.mockReturnValue(makeSubsystem('SERV:sublawnngarden:abc', {
-        [LawnNGardenSubsystem.ATTR_ZONESWATERING]: zones,
+        [LawnNGardenSubsystem.ATTR_ZONESWATERING]: zonesMap,
       }));
 
       const { result } = renderHook(() => useLawnGardenSubsystem());
 
-      expect(result.current.zonesWatering).toEqual(zones);
+      expect(result.current.zonesWatering).toEqual(Object.values(zonesMap));
+      expect(result.current.zonesWatering).toHaveLength(2);
+    });
+
+    it('returns an empty array when the zonesWatering map is empty', () => {
+      // Regression: an empty map `{}` previously left `.length` undefined,
+      // rendering "undefined" in the card instead of 0.
+      mockUseSubsystem.mockReturnValue(makeSubsystem('SERV:sublawnngarden:abc', {
+        [LawnNGardenSubsystem.ATTR_ZONESWATERING]: {},
+      }));
+
+      const { result } = renderHook(() => useLawnGardenSubsystem());
+
+      expect(result.current.zonesWatering).toEqual([]);
+      expect(result.current.zonesWatering).toHaveLength(0);
     });
 
     it('defaults zonesWatering to empty array when absent', () => {

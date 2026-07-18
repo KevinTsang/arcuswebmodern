@@ -183,11 +183,16 @@ export interface CareCallEntry {
 /** Chime configuration from DoorsNLocksSubsystem. */
 export type ChimeConfig = Record<string, boolean>;
 
-/** Zone watering entry from LawnNGardenSubsystem. */
+/**
+ * Zone watering entry from the LawnNGardenSubsystem `zonesWatering` map,
+ * which is keyed by controller address. Each value has this shape.
+ */
 export interface ZoneWateringEntry {
-  zoneName?: string;
-  zoneNumber?: number;
+  controller?: string;
+  zone?: string;
   duration?: number;
+  startTime?: number;
+  trigger?: string;
 }
 
 /** Next scheduled event from LawnNGardenSubsystem. */
