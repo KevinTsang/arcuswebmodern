@@ -23,9 +23,9 @@ function getConfig(): ArcusConfig {
   const version = process.env.NEXT_PUBLIC_APP_VERSION || '2018.10.2';
 
   return {
-    apiUrl: process.env.NEXT_PUBLIC_API_URL || 'https://dev.arcus.wl-net.net',
-    wsUrl: process.env.NEXT_PUBLIC_WS_URL || 'wss://dev.arcus.wl-net.net',
-    redirectUrl: process.env.NEXT_PUBLIC_REDIRECT_URL || 'https://dev.arcus.wl-net.net',
+    apiUrl: process.env.NEXT_PUBLIC_API_URL || 'https://dev.myDevUrl.com',
+    wsUrl: process.env.NEXT_PUBLIC_WS_URL || 'wss://dev.myDevUrl.com',
+    redirectUrl: process.env.NEXT_PUBLIC_REDIRECT_URL || 'https://dev.myDevUrl.com',
     version: isProduction ? version : `${version}-preprod`,
     isProduction,
     iosDownloadUrl: process.env.NEXT_PUBLIC_IOS_DOWNLOAD_URL || 'https://itunes.apple.com',

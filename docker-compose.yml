@@ -1,0 +1,37 @@
+# Local containerized dev instance for testing against the dev platform.
+#
+# Auth flow (scripted-login): browse to https://localdev.myDevUrl.com:8443/login
+# and sign in. The app POSTs credentials to ${NEXT_PUBLIC_API_URL}/login; the
+# platform sets the irisAuthToken cookie scoped to .myDevUrl.com. Because
+# Caddy serves the app over HTTPS at the same-site hostname, the browser attaches
+# that cookie to the direct wss:// handshake and the session restores.
+#
+# Prereq: /etc/hosts must map  127.0.0.1  localdev.myDevUrl.com  (already set).
+#
+#   docker compose up --build
+
+services:
+  web:
+    build:
+      context: .
+      target: runner
+      args:
+        # Inlined into the browser bundle at build time — change here, not at runtime.
+        NEXT_PUBLIC_API_URL: https://client.dev.myDevUrl.com
+        NEXT_PUBLIC_WS_URL: wss://client.dev.myDevUrl.com
+        NEXT_PUBLIC_REDIRECT_URL: https://client.dev.myDevUrl.com
+        NEXT_PUBLIC_APP_VERSION: 2018.10.2
+    expose:
+      - "3000"
+    restart: unless-stopped
+
+  proxy:
+    image: caddy:2-alpine
+    depends_on:
+      - web
+    ports:
+      - "8443:8443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./certs:/certs:ro
+    restart: unless-stopped

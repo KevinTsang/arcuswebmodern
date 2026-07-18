@@ -1,0 +1,9 @@
+node_modules
+.next
+.git
+certs
+cypress
+coverage
+*.log
+.env*.local
+.DS_Store

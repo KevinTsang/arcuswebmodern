@@ -623,3 +623,77 @@ These are commonly used features that users will expect:
 21. **Mobile device presence tracking** — Phone location for home/away detection.
 22. **Ownership transfer, place deletion, cancel invitations** — Account and place lifecycle.
 23. **Pro monitoring trial & plan selection** — Trial activation, monthly vs annual.
+
+---
+
+## Appendix: Containerized Testing
+
+Runs a production build of the app in Docker against the dev platform, mirroring
+`npm run dev`'s hostname/HTTPS setup so the platform session cookie keeps working.
+
+### Prerequisites
+
+- A container engine with a `docker` + `docker compose` CLI. **Rancher Desktop**
+  (dockerd/moby backend) works; so does Docker Engine. Rancher installs its CLI to
+  `~/.rd/bin` and adds it to your shell PATH.
+- An `/etc/hosts` entry so the same-site hostname resolves locally:
+
+  ```
+  127.0.0.1  localdev.myDevUrl.com
+  ```
+
+- TLS certs at `certs/cert.pem` / `certs/key.pem` covering `localdev.myDevUrl.com`
+  (the same certs `npm run dev` uses; gitignored, kept locally).
+
+### Run it
+
+```bash
+docker compose up --build -d     # build image + start app (web) and TLS proxy (proxy)
+docker compose logs -f           # tail both services
+docker compose down              # stop and remove containers
+```
+
+Then open **https://localdev.myDevUrl.com:8443** (accept the self-signed cert once)
+and sign in on **/login**.
+
+### How it fits together
+
+| Piece | Role |
+|-------|------|
+| `Dockerfile` | Multi-stage build → Next.js `standalone` server on HTTP `:3000` |
+| `docker-compose.yml` | `web` (the app) + `proxy` (Caddy) on one network |
+| `Caddyfile` | Terminates HTTPS at `localdev.myDevUrl.com:8443`, reverse-proxies to `web:3000` |
+
+The browser loads the app over HTTPS from the same-site hostname; platform API/WebSocket
+traffic goes **directly** from the browser to `client.dev.myDevUrl.com` (there are no
+rewrites in `next.config.ts`), so Caddy only serves the app itself.
+
+### Authentication
+
+The client talks to the platform over a **browser WebSocket**, which can't carry a custom
+auth header — the only credential it can send is the `irisAuthToken` cookie. That cookie is
+scoped to `.myDevUrl.com` and `SameSite`, so it is attached to the WebSocket handshake
+**only** when the page is loaded over HTTPS from a same-site host. That is why both
+`npm run dev` and this container serve from `localdev.myDevUrl.com` rather than
+`localhost` — loading from `localhost` (e.g. plain `next start`) is cross-site and the cookie
+is silently withheld, bouncing you to `/login`.
+
+To authenticate, use the **/login** page: it POSTs credentials to the platform, which sets
+`irisAuthToken` for you. (You can also paste a still-valid token onto the `.myDevUrl.com`
+domain in DevTools, but scripted login is more robust.)
+
+### Pointing at a different backend
+
+`NEXT_PUBLIC_*` values are **inlined into the browser bundle at build time**, not read at
+runtime — so `docker run -e ...` won't change them. Override them as build args and rebuild:
+
+```bash
+docker compose build \
+  --build-arg NEXT_PUBLIC_API_URL=https://client.dev.myDevUrl.com \
+  --build-arg NEXT_PUBLIC_WS_URL=wss://client.dev.myDevUrl.com \
+  --build-arg NEXT_PUBLIC_REDIRECT_URL=https://client.dev.myDevUrl.com
+docker compose up -d
+```
+
+Defaults are set in both `docker-compose.yml` (`web.build.args`) and the `Dockerfile`
+(`ARG` lines). A plain `docker compose restart` will **not** pick up new URLs — you must rebuild.

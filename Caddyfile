@@ -1,0 +1,8 @@
+# Terminates TLS at the same-site hostname so the platform's irisAuthToken
+# cookie (set by POST /login) is sent on the browser's direct wss:// handshake
+# to the platform. Uses the repo's self-signed certs; the app itself is plain
+# HTTP on :3000 inside the compose network.
+localdev.myDevUrl.com:8443 {
+	tls /certs/cert.pem /certs/key.pem
+	reverse_proxy web:3000
+}
