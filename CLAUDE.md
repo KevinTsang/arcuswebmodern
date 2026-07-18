@@ -3,6 +3,7 @@
 ## Arcus Web Modern - Claude instructions
 The project has the following key documents:
 - [PRD](PRD.md): The goal of the project and the planned features
+- [Testing](testing.md): Containerized testing setup and unit-test conventions (coverage, mocking, snapshots)
 
 Always start by reading PRD.md to understand the scope of work remaining. Update the PRD after a feature is complete.
 
@@ -57,74 +58,7 @@ Each component function lives in its own file. Do not define multiple exported c
 
 ## Testing
 
-### Framework & Config
-
-- Jest 30 with jsdom environment, ts-jest transform.
-- React Testing Library (`@testing-library/react`) + `@testing-library/jest-dom` matchers.
-- Tests live in `src/__tests__/<domain>/ComponentName.test.tsx`.
-- Run tests: `npm test` (all), `npm run test:watch` (watch mode).
-
-### Test Structure
-
-Every test file follows this structure:
-
-```tsx
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { ComponentName } from '@/components/domain/ComponentName';
-
-// ── Mocks ─────────────────────────────────────────────────────────────
-
-// Mock external dependencies (Bridge, hooks, slices)
-
-// ── Helpers ───────────────────────────────────────────────────────────
-
-// Factory functions for test data
-
-beforeEach(() => {
-  jest.clearAllMocks();
-});
-
-// ── Tests ─────────────────────────────────────────────────────────────
-
-describe('ComponentName', () => {
-  // tests grouped by concern
-});
-```
-
-### Required Test Coverage
-
-Every component test file must include:
-
-1. **Snapshot test** — Verify visual rendering with `toMatchSnapshot()`:
-   ```tsx
-   it('matches snapshot', () => {
-     const { container } = render(<Component {...defaultProps} />);
-     expect(container.firstChild).toMatchSnapshot();
-   });
-   ```
-
-2. **Rendering tests** — Verify key elements appear in the DOM (text, roles, attributes).
-
-3. **Interaction tests** — For every user interaction (click, change, blur, keydown):
-   - **Success path** — Verify the expected callback/dispatch/Bridge call is made with correct arguments.
-   - **Failure path** — Verify error handling (e.g., error notification dispatched, UI reverts).
-
-4. **Edge cases** — Missing data, disabled states, boundary values.
-
-### Mocking Patterns
-
-- **Bridge**: `jest.mock('@arcus/core/bridge', () => ({ __esModule: true, default: { request: (...args: any[]) => mockBridgeRequest(...args) } }));`
-- **Redux dispatch**: `jest.mock('@/store/hooks', () => ({ useAppDispatch: () => mockDispatch }));`
-- **Notifications**: `jest.mock('@/store/slices/uiSlice', () => ({ addNotification: (payload: unknown) => ({ type: 'ui/addNotification', payload }) }));`
-- **Device hooks**: `jest.mock('@/hooks/useDeviceCapability', () => ({ useDevice: () => mockDevice }));`
-- Use `waitFor()` for assertions on async operations (Bridge calls, dispatches after promises).
-
-### Snapshot Best Practices
-
-- One snapshot per component for the default/primary render state.
-- Additional snapshots for significantly different visual states (disabled, loading, error, empty).
-- Keep snapshots focused — snapshot `container.firstChild` not the full container.
-- Review snapshot changes carefully on update; they are a safety net against unintended visual regressions.
+All testing conventions — framework/config, test-file structure, required coverage, mocking patterns, and snapshot best practices — live in [`testing.md`](testing.md).
 
 ## Commands
 

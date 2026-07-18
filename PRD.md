@@ -4,7 +4,7 @@
 
 This document catalogs the full feature set of the legacy Arcus web client (`~/arcusweb`, DoneJS/CanJS) and maps it against the modern client (`~/arcuswebmodern`, Next.js 16 / React 19) to identify gaps that must be closed for feature parity.
 
-Status legend: **Done** = fully implemented, **Partial** = core flow works but missing sub-features, **Missing** = not yet built.
+Status legend: **Done** = fully implemented, **Partial** = core flow works but missing sub-features, **Missing** = not yet built, **Broken** = built but not functioning correctly (regression / bug to fix).
 
 ---
 
@@ -18,10 +18,12 @@ Status legend: **Done** = fully implemented, **Partial** = core flow works but m
 | Create account wizard | Yes (multi-step) | Yes (4-step: credentials, address, PIN, welcome) | **Done** |
 | Accept invitation wizard | Yes | Yes (5-step: code, confirm, login, PIN, welcome) | **Done** |
 | Kit activation flow | Yes | Yes (device grid with per-device customization) | **Done** |
+| Automatic logout on expired / stale session | Yes | No | **Missing** |
 
 ### Gaps
 
-None.
+- **Bug:** No automatic logout when the platform session is too old. The app should detect a stale or closed WebSocket connection and force a logout + redirect to `/login` instead of continuing to appear authenticated.
+- Session / WebSocket persistence between the deployed dev client and the locally running `arcuswebmodern` instance, so switching between them reuses the same platform session instead of forcing re-authentication.
 
 ---
 
@@ -313,6 +315,9 @@ None.
 - Individual zone controls.
 - Irrigation scheduling with all modes (even, odd, interval, weekly).
 - Water saver and seasonal adjustment features.
+- **Bug:** The Lawn & Garden card on the home screen shows an "undefined" watering device.
+- **Bug:** Clicking the Lawn & Garden subsystem navigates to the Alarms page instead of the Lawn & Garden section.
+- **Testing:** Create a mock irrigation controller so zone control, scheduling, and the fixes above can be exercised without physical hardware.
 
 ---
 
@@ -373,6 +378,7 @@ None.
 - Cancel pending outgoing invitations.
 - Full-access vs partial-access (PIN-only) person roles.
 - Ownership transfer.
+- **Bug:** Contact info does not load on the person detail view.
 
 ---
 
@@ -496,14 +502,14 @@ None.
 |---------|--------|--------|--------|
 | Chronological activity feed | Yes | Yes | **Done** |
 | Infinite scroll / load more | Yes | Yes (Load More button) | **Done** |
-| Filter by device | Yes | Yes | **Done** |
+| Filter by device | Yes | Yes (not functional) | **Broken** |
 | Date-based grouping | Yes | Yes | **Done** |
 | Refresh button | Yes | Yes | **Done** |
 | Premium history (14+ days) | Yes | Yes (tier-based limits) | **Done** |
 
 ### Gaps
 
-None.
+- **Bug:** The device filter on the History page does not actually filter activity by the selected device.
 
 ---
 
@@ -548,14 +554,15 @@ None.
 
 | Feature | Legacy | Modern | Status |
 |---------|--------|--------|--------|
-| Favorite devices | Yes | Yes | **Done** |
-| Favorite scenes | Yes | Yes | **Done** |
+| Favorite devices | Yes | Yes (starring does not persist) | **Broken** |
+| Favorite scenes | Yes | Yes (starring does not persist) | **Broken** |
+| Favorite rules | Yes | Yes (starring does not persist) | **Broken** |
 | Dashboard favorites card | Yes | Yes | **Done** |
-| Toggle favorite from device detail | Yes | Yes | **Done** |
+| Toggle favorite from device detail | Yes | Yes (starring does not persist) | **Broken** |
 
 ### Gaps
 
-None.
+- **Bug:** Starring a device, scene, or rule does not actually add it to favorites — the toggle does not persist, so favorited items never appear on the dashboard favorites card.
 
 ---
 
@@ -626,74 +633,7 @@ These are commonly used features that users will expect:
 
 ---
 
-## Appendix: Containerized Testing
+## Testing
 
-Runs a production build of the app in Docker against the dev platform, mirroring
-`npm run dev`'s hostname/HTTPS setup so the platform session cookie keeps working.
-
-### Prerequisites
-
-- A container engine with a `docker` + `docker compose` CLI. **Rancher Desktop**
-  (dockerd/moby backend) works; so does Docker Engine. Rancher installs its CLI to
-  `~/.rd/bin` and adds it to your shell PATH.
-- An `/etc/hosts` entry so the same-site hostname resolves locally:
-
-  ```
-  127.0.0.1  localdev.myDevUrl.com
-  ```
-
-- TLS certs at `certs/cert.pem` / `certs/key.pem` covering `localdev.myDevUrl.com`
-  (the same certs `npm run dev` uses; gitignored, kept locally).
-
-### Run it
-
-```bash
-docker compose up --build -d     # build image + start app (web) and TLS proxy (proxy)
-docker compose logs -f           # tail both services
-docker compose down              # stop and remove containers
-```
-
-Then open **https://localdev.myDevUrl.com:8443** (accept the self-signed cert once)
-and sign in on **/login**.
-
-### How it fits together
-
-| Piece | Role |
-|-------|------|
-| `Dockerfile` | Multi-stage build → Next.js `standalone` server on HTTP `:3000` |
-| `docker-compose.yml` | `web` (the app) + `proxy` (Caddy) on one network |
-| `Caddyfile` | Terminates HTTPS at `localdev.myDevUrl.com:8443`, reverse-proxies to `web:3000` |
-
-The browser loads the app over HTTPS from the same-site hostname; platform API/WebSocket
-traffic goes **directly** from the browser to `client.dev.myDevUrl.com` (there are no
-rewrites in `next.config.ts`), so Caddy only serves the app itself.
-
-### Authentication
-
-The client talks to the platform over a **browser WebSocket**, which can't carry a custom
-auth header — the only credential it can send is the `irisAuthToken` cookie. That cookie is
-scoped to `.myDevUrl.com` and `SameSite`, so it is attached to the WebSocket handshake
-**only** when the page is loaded over HTTPS from a same-site host. That is why both
-`npm run dev` and this container serve from `localdev.myDevUrl.com` rather than
-`localhost` — loading from `localhost` (e.g. plain `next start`) is cross-site and the cookie
-is silently withheld, bouncing you to `/login`.
-
-To authenticate, use the **/login** page: it POSTs credentials to the platform, which sets
-`irisAuthToken` for you. (You can also paste a still-valid token onto the `.myDevUrl.com`
-domain in DevTools, but scripted login is more robust.)
-
-### Pointing at a different backend
-
-`NEXT_PUBLIC_*` values are **inlined into the browser bundle at build time**, not read at
-runtime — so `docker run -e ...` won't change them. Override them as build args and rebuild:
-
-```bash
-docker compose build \
-  --build-arg NEXT_PUBLIC_API_URL=https://client.dev.myDevUrl.com \
-  --build-arg NEXT_PUBLIC_WS_URL=wss://client.dev.myDevUrl.com \
-  --build-arg NEXT_PUBLIC_REDIRECT_URL=https://client.dev.myDevUrl.com
-docker compose up -d
-```
-
-Defaults are set in both `docker-compose.yml` (`web.build.args`) and the `Dockerfile`
-(`ARG` lines). A plain `docker compose restart` will **not** pick up new URLs — you must rebuild.
+Containerized testing (running a production build in Docker against the dev platform),
+authentication setup, and related workflows are documented in [`testing.md`](./testing.md).
