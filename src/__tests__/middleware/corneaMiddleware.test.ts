@@ -21,6 +21,13 @@ jest.mock('@arcus/core/cornea', () => ({
   },
 }));
 
+const mockAuthLogout = jest.fn().mockResolvedValue(undefined);
+
+jest.mock('@arcus/core/auth', () => ({
+  __esModule: true,
+  default: { logout: (...args: any[]) => mockAuthLogout(...args) },
+}));
+
 jest.mock('@arcus/core/property-aliases', () => ({
   __esModule: true,
   default: {
@@ -83,6 +90,7 @@ function emit(event: string, data?: any) {
 describe('corneaMiddleware', () => {
   beforeEach(() => {
     listeners.clear();
+    mockAuthLogout.mockClear();
   });
 
   it('subscribes to Cornea events after loginSuccess', () => {
@@ -100,6 +108,7 @@ describe('corneaMiddleware', () => {
     expect(listeners.has(`hub ${Base.EVENT_VALUECHANGE}`)).toBe(true);
     expect(listeners.has(`place ${Base.EVENT_VALUECHANGE}`)).toBe(true);
     expect(listeners.has('sess unauthorized')).toBe(true);
+    expect(listeners.has('sess sess:SessionExpired')).toBe(true);
   });
 
   it('dispatches deviceUpdated on dev base:ValueChange', () => {
@@ -142,6 +151,33 @@ describe('corneaMiddleware', () => {
 
     emit('sess unauthorized');
     expect(store.getState().auth.authenticated).toBe(false);
+  });
+
+  it('expires the session and tears down the socket on sess:SessionExpired', () => {
+    const store = createTestStore();
+    store.dispatch(loginSuccess({ person: { n: 1 }, account: { n: 1 } }));
+    expect(store.getState().auth.authenticated).toBe(true);
+
+    emit('sess sess:SessionExpired');
+
+    // Session flagged expired (AuthProvider redirects to /login?expired=1)
+    expect(store.getState().auth.authenticated).toBe(false);
+    expect(store.getState().auth.sessionExpired).toBe(true);
+    // Socket torn down without a server request (session is already gone)
+    expect(mockAuthLogout).toHaveBeenCalledWith(false);
+  });
+
+  it('unsubscribes the SessionExpired listener after session expiry', () => {
+    const store = createTestStore();
+    store.dispatch(loginSuccess({ person: {}, account: {} }));
+    expect(listeners.has('sess sess:SessionExpired')).toBe(true);
+
+    emit('sess sess:SessionExpired');
+
+    // off() leaves an (empty) Set behind rather than removing the key
+    const fns = listeners.get('sess sess:SessionExpired');
+    expect(fns).toBeDefined();
+    expect(fns?.size).toBe(0);
   });
 
   it('unsubscribes from Cornea events after logout', () => {

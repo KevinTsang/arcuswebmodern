@@ -9,6 +9,7 @@
 import type { Middleware } from '@reduxjs/toolkit';
 import type { RootState } from '../store';
 import cornea from '@arcus/core/cornea';
+import auth from '@arcus/core/auth';
 import propertyAliases from '@arcus/core/property-aliases';
 import { Base, Person, AlarmIncident } from '@arcus/core';
 import type { ArcusPayload, PlaceData } from '../entityTypes';
@@ -223,7 +224,8 @@ function subscribeToCorneaEvents(dispatch: (action: { type: string }) => void, g
     () => cornea.off(`place ${Person.EVENT_INVITATIONCANCELLED}`, onInvitationCancelled),
   );
 
-  // Session unauthorized — marks session as expired and clears auth state
+  // Session unauthorized — marks session as expired and clears auth state.
+  // Fired by Cornea on a 4001 close code or an `error.unauthorized` response.
   const onUnauthorized = () => {
     dispatch(sessionExpired());
   };
@@ -231,6 +233,26 @@ function subscribeToCorneaEvents(dispatch: (action: { type: string }) => void, g
   cornea.on('sess unauthorized', onUnauthorized);
   cleanupListeners.push(
     () => cornea.off('sess unauthorized', onUnauthorized),
+  );
+
+  // Platform session expiry — the server pushes `sess:SessionExpired` when the
+  // session is too old / has ended while the socket is still healthy (no 4001
+  // close, so `sess unauthorized` never fires). Without this bridge the app
+  // keeps appearing authenticated. Mark the session expired (AuthProvider then
+  // redirects to /login?expired=1) and tear the socket down so partysocket
+  // stops reconnecting with a dead session. Mirrors legacy app.js
+  // SessionService.onSessionExpired handling.
+  const onSessionExpiredEvent = () => {
+    dispatch(sessionExpired());
+    // logout(false) skips the server request — the session is already gone —
+    // and cleans up Cornea. Dispatching sessionExpired() first unsubscribes
+    // these listeners, so the resulting close event is not re-interpreted.
+    auth.logout(false).catch(() => {});
+  };
+
+  cornea.on('sess sess:SessionExpired', onSessionExpiredEvent);
+  cleanupListeners.push(
+    () => cornea.off('sess sess:SessionExpired', onSessionExpiredEvent),
   );
 }
 
