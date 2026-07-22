@@ -63,7 +63,7 @@ describe('AlarmsCard', () => {
 
   it('links to /services', () => {
     render(<AlarmsCard />);
-    expect(screen.getByText('View →').closest('a')).toHaveAttribute('href', '/services');
+    expect(screen.getByTestId('card-view-link-alarms')).toHaveAttribute('href', '/services/alarms/status');
   });
 
   it('shows Disarmed when no security subsystem', () => {

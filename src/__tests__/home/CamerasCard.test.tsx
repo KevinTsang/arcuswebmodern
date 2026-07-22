@@ -74,6 +74,6 @@ describe('CamerasCard', () => {
 
   it('links to /services', () => {
     render(<CamerasCard />);
-    expect(screen.getByText('View →').closest('a')).toHaveAttribute('href', '/services');
+    expect(screen.getByTestId('card-view-link-cameras')).toHaveAttribute('href', '/services/cameras/status');
   });
 });

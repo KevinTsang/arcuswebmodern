@@ -19,7 +19,7 @@ export default function AlarmsCard() {
     <CardShell
       title="Alarms"
       icon="icon-app-alarm-1"
-      href="/services"
+      href="/services/alarms/status"
       badge={isPromon ? (
         <span className="text-[10px] bg-peacock/10 text-peacock rounded-full px-2 py-0.5 font-medium">
           Pro

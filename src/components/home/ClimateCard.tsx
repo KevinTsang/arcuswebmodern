@@ -6,7 +6,7 @@ export default function ClimateCard() {
   const climate = useClimateSubsystem();
 
   return (
-    <CardShell title="Climate" icon="icon-app-thermometer" href="/services">
+    <CardShell title="Climate" icon="icon-app-thermometer" href="/services/climate/status">
       <div className="flex gap-6">
         {climate.temperature != null && (
           <div>

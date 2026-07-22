@@ -13,6 +13,9 @@ export default function CardShell({
   badge?: React.ReactNode;
   children: React.ReactNode;
 }) {
+  // transforms title into a slug for test ids, e.g. "Alarm Status" -> "alarm-status"
+  const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+
   const header = (
     <div className="flex items-center gap-2">
       <span className={`${icon} text-base text-peacock`} />
@@ -22,7 +25,10 @@ export default function CardShell({
   );
 
   return (
-    <div className="border border-heron rounded-[var(--border-radius-base)] overflow-hidden">
+    <div
+      data-testid={`card-${slug}`}
+      className="border border-heron rounded-[var(--border-radius-base)] overflow-hidden"
+    >
       <div className="flex items-center justify-between px-4 py-3 bg-pigeon/20">
         {href ? (
           <Link href={href} className="hover:underline">
@@ -32,7 +38,11 @@ export default function CardShell({
           header
         )}
         {href && (
-          <Link href={href} className="text-xs text-peacock hover:underline">
+          <Link
+            href={href}
+            data-testid={`card-view-link-${slug}`}
+            className="text-xs text-peacock hover:underline"
+          >
             View &rarr;
           </Link>
         )}

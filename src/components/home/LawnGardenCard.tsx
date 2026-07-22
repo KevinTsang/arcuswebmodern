@@ -6,7 +6,7 @@ export default function LawnGardenCard() {
   const lg = useLawnGardenSubsystem();
 
   return (
-    <CardShell title="Lawn & Garden" icon="icon-app-water-1" href="/services">
+    <CardShell title="Lawn & Garden" icon="icon-app-water-1" href="/services/lawn-garden/status">
       <div className="flex gap-4">
         <StatusBadge
           label="Watering"

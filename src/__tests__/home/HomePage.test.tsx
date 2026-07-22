@@ -121,8 +121,7 @@ describe('HomePage – layout', () => {
 
   it('renders the More link to /history', () => {
     render(<HomePage />);
-    const moreLink = screen.getByText('More');
-    expect(moreLink.closest('a')).toHaveAttribute('href', '/history');
+    expect(screen.getByTestId('history-more-link')).toHaveAttribute('href', '/history');
   });
 
   it('shows "No recent activity." when no history events', () => {
@@ -237,11 +236,7 @@ describe('HomePage – Alarms card', () => {
 
   it('links to /services', () => {
     render(<HomePage />);
-    const viewLink = screen.getAllByText('View →').find((el) => {
-      const card = el.closest('[class*="border"]');
-      return card?.textContent?.includes('Alarms');
-    });
-    expect(viewLink?.closest('a')).toHaveAttribute('href', '/services');
+    expect(screen.getByTestId('card-view-link-alarms')).toHaveAttribute('href', '/services/alarms/status');
   });
 });
 

@@ -5,43 +5,42 @@
  *
  * Replaces src/components/subsystem/alarms/. Shows security alarm
  * state, arm/disarm controls, and device participation.
+ *
+ * The status/settings tabs are route-driven: /services/alarms/<action>.
  */
 
-import { useState, useCallback } from 'react';
-import { useAlarmSubsystem } from '@/hooks/useAlarmSubsystem';
+import Link from 'next/link';
 import { AlarmSettings } from './AlarmSettings';
 import { AlarmStatus } from './AlarmStatus';
 
-type AlarmView = 'status' | 'settings';
+const TABS = [
+  { action: 'status', label: 'Status' },
+  { action: 'settings', label: 'Settings' },
+] as const;
 
-export function AlarmsView() {
-  const [view, setView] = useState<AlarmView>('status');
-  const alarm = useAlarmSubsystem();
+export function AlarmsView({ action = 'status' }: { action?: string }) {
+  const activeAction = action === 'settings' ? 'settings' : 'status';
 
   return (
     <div>
-      {/* Sub-navigation */}
+      {/* Sub-navigation (route-driven tabs) */}
       <div className="flex gap-1 bg-pigeon rounded-[var(--border-radius-base)] p-1 mb-6 w-fit">
-        <button
-          onClick={() => setView('status')}
-          className={`px-4 py-1.5 rounded text-sm font-medium transition-colors ${
-            view === 'status' ? 'bg-crane text-swift shadow-sm' : 'text-grouse hover:text-coot'
-          }`}
-        >
-          Status
-        </button>
-        <button
-          onClick={() => setView('settings')}
-          className={`px-4 py-1.5 rounded text-sm font-medium transition-colors ${
-            view === 'settings' ? 'bg-crane text-swift shadow-sm' : 'text-grouse hover:text-coot'
-          }`}
-        >
-          Settings
-        </button>
+        {TABS.map((tab) => (
+          <Link
+            key={tab.action}
+            href={`/services/alarms/${tab.action}`}
+            className={`px-4 py-1.5 rounded text-sm font-medium transition-colors ${
+              activeAction === tab.action
+                ? 'bg-crane text-swift shadow-sm'
+                : 'text-grouse hover:text-coot'
+            }`}
+          >
+            {tab.label}
+          </Link>
+        ))}
       </div>
 
-      {view === 'status' ? <AlarmStatus /> : <AlarmSettings />}
+      {activeAction === 'status' ? <AlarmStatus /> : <AlarmSettings />}
     </div>
   );
 }
-

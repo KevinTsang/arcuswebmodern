@@ -18,11 +18,11 @@ Status legend: **Done** = fully implemented, **Partial** = core flow works but m
 | Create account wizard | Yes (multi-step) | Yes (4-step: credentials, address, PIN, welcome) | **Done** |
 | Accept invitation wizard | Yes | Yes (5-step: code, confirm, login, PIN, welcome) | **Done** |
 | Kit activation flow | Yes | Yes (device grid with per-device customization) | **Done** |
-| Automatic logout on expired / stale session | Yes | No | **Missing** |
+| Automatic logout on expired / stale session | Yes | Yes | **Done** |
 
 ### Gaps
 
-- **Bug:** No automatic logout when the platform session is too old. The app should detect a stale or closed WebSocket connection and force a logout + redirect to `/login` instead of continuing to appear authenticated.
+- ~~**Bug:** No automatic logout when the platform session is too old.~~ **DONE.** `corneaMiddleware` now bridges the platform `sess:SessionExpired` event to `sessionExpired()` and tears down the socket, so AuthProvider redirects to `/login?expired=1` (4001 close / `error.unauthorized` responses were already handled via `sess unauthorized`).
 - Session / WebSocket persistence between the deployed dev client and the locally running `arcuswebmodern` instance, so switching between them reuses the same platform session instead of forcing re-authentication.
 
 ---
@@ -315,8 +315,8 @@ None.
 - Individual zone controls.
 - Irrigation scheduling with all modes (even, odd, interval, weekly).
 - Water saver and seasonal adjustment features.
-- **Bug:** The Lawn & Garden card on the home screen shows an "undefined" watering device.
-- **Bug:** Clicking the Lawn & Garden subsystem navigates to the Alarms page instead of the Lawn & Garden section.
+- ~~**Bug:** The Lawn & Garden card on the home screen shows an "undefined" watering device.~~ **DONE.** `sublawnngarden:zonesWatering` is a map keyed by controller address, not an array; `useLawnGardenSubsystem` now converts it with `Object.values(...)` so the watering count renders correctly (was `undefined` because the map has no `.length`).
+- ~~**Bug:** Clicking the Lawn & Garden subsystem navigates to the Alarms page instead of the Lawn & Garden section.~~ **DONE.** The Services page is now a path-based route matching arcusweb — `/services/<subsystem>/<action>` (e.g. `/services/lawn-garden/status`) via an optional catch-all `[[...slug]]`. Previously it read no route info and always defaulted to the first subsystem (Alarms). Home dashboard cards, the sidebar, and the incident redirect all use the `/services/<slug>/status` form; the alarm view's status/settings tabs are route-driven.
 - **Testing:** Create a mock irrigation controller so zone control, scheduling, and the fixes above can be exercised without physical hardware.
 
 ---

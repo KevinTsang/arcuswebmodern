@@ -73,6 +73,6 @@ describe('HomeFamilyCard', () => {
 
   it('links to /services', () => {
     render(<HomeFamilyCard />);
-    expect(screen.getByText('View →').closest('a')).toHaveAttribute('href', '/services');
+    expect(screen.getByTestId('card-view-link-home-family')).toHaveAttribute('href', '/services/home-family/status');
   });
 });

@@ -67,6 +67,6 @@ describe('CareCard', () => {
 
   it('links to /services', () => {
     render(<CareCard />);
-    expect(screen.getByText('View →').closest('a')).toHaveAttribute('href', '/services');
+    expect(screen.getByTestId('card-view-link-care')).toHaveAttribute('href', '/services/care/status');
   });
 });

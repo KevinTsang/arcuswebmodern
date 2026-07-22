@@ -199,6 +199,7 @@ export default function HomePage() {
           <div className="flex justify-center py-4">
             <Link
               href="/history"
+              data-testid="history-more-link"
               className="bg-peacock text-crane px-6 py-2 rounded-[var(--border-radius-base)] hover:opacity-90 transition-opacity text-sm"
             >
               More

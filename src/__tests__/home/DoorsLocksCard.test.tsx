@@ -70,6 +70,6 @@ describe('DoorsLocksCard', () => {
 
   it('links to /services', () => {
     render(<DoorsLocksCard />);
-    expect(screen.getByText('View →').closest('a')).toHaveAttribute('href', '/services');
+    expect(screen.getByTestId('card-view-link-doors-locks')).toHaveAttribute('href', '/services/doors-locks/status');
   });
 });

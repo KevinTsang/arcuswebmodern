@@ -92,6 +92,6 @@ describe('LawnGardenCard', () => {
 
   it('links to /services', () => {
     render(<LawnGardenCard />);
-    expect(screen.getByText('View →').closest('a')).toHaveAttribute('href', '/services');
+    expect(screen.getByTestId('card-view-link-lawn-garden')).toHaveAttribute('href', '/services/lawn-garden/status');
   });
 });

@@ -57,9 +57,9 @@ export default function AuthenticatedLayout({
     if (
       currentIncident &&
       currentIncident !== prevIncidentRef.current &&
-      pathname !== '/services'
+      pathname !== '/services/alarms/status'
     ) {
-      router.push('/services');
+      router.push('/services/alarms/status');
     }
     prevIncidentRef.current = currentIncident;
   }, [currentIncident, pathname, router]);

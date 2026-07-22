@@ -88,6 +88,6 @@ describe('ClimateCard', () => {
 
   it('links to /services', () => {
     render(<ClimateCard />);
-    expect(screen.getByText('View →').closest('a')).toHaveAttribute('href', '/services');
+    expect(screen.getByTestId('card-view-link-climate')).toHaveAttribute('href', '/services/climate/status');
   });
 });

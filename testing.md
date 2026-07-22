@@ -54,6 +54,30 @@ Every component test file must include:
 
 4. **Edge cases** — Missing data, disabled states, boundary values.
 
+## Querying Elements
+
+Prefer accessible, semantic queries — `getByRole`, `getByText`, `getByLabelText`. When a
+test needs a *specific* element that has no accessible name (a link, a computed value, a
+nav item), select it with a `data-testid` rather than reaching through the DOM.
+
+- **Do not** use `container.querySelector`, `.closest(...)`, or `.parentElement` to walk the
+  DOM. These couple tests to markup structure (wrapper `<div>`s, class names) and break on
+  refactors that don't change behavior.
+- **Do** add a stable `data-testid` to the component and query it with `screen.getByTestId(...)`.
+- Derive test IDs from a stable identifier (title, label, slug) so repeated components stay
+  distinguishable — e.g. `CardShell` renders `card-view-link-${slug}` and `StatusBadge`
+  renders `status-value-${slug}`, letting a page with many cards target one without DOM walking.
+
+```tsx
+// ❌ Avoid — brittle, depends on markup structure
+expect(screen.getByText('View →').closest('a')).toHaveAttribute('href', '/services/alarms/status');
+const onValue = screen.getByText('On').closest('div')!.querySelector('p')!;
+
+// ✅ Prefer — stable, intent-revealing
+expect(screen.getByTestId('card-view-link-alarms')).toHaveAttribute('href', '/services/alarms/status');
+expect(screen.getByTestId('status-value-on')).toHaveTextContent('2');
+```
+
 ## Mocking Patterns
 
 - **Bridge**: `jest.mock('@arcus/core/bridge', () => ({ __esModule: true, default: { request: (...args: any[]) => mockBridgeRequest(...args) } }));`

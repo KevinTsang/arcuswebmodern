@@ -60,14 +60,12 @@ describe('LightsSwitchesCard', () => {
       { id: 'DRIV:dev:sw3', [Base.ATTR_ADDRESS]: 'DRIV:dev:sw3', 'swit:state': 'ON' },
     ];
     render(<LightsSwitchesCard />);
-    const onValue = screen.getByText('On').closest('div')!.querySelector('p')!;
-    expect(onValue.textContent).toBe('2');
-    const totalValue = screen.getByText('Total').closest('div')!.querySelector('p')!;
-    expect(totalValue.textContent).toBe('3');
+    expect(screen.getByTestId('status-value-on')).toHaveTextContent('2');
+    expect(screen.getByTestId('status-value-total')).toHaveTextContent('3');
   });
 
   it('links to /services', () => {
     render(<LightsSwitchesCard />);
-    expect(screen.getByText('View →').closest('a')).toHaveAttribute('href', '/services');
+    expect(screen.getByTestId('card-view-link-lights-switches')).toHaveAttribute('href', '/services/lights-switches/status');
   });
 });

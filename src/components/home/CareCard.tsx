@@ -7,7 +7,7 @@ export default function CareCard() {
   const care = useCareSubsystem();
 
   return (
-    <CardShell title="Care" icon="icon-app-heart-1" href="/services">
+    <CardShell title="Care" icon="icon-app-heart-1" href="/services/care/status">
       <div className="flex gap-4">
         <StatusBadge
           label="Status"
