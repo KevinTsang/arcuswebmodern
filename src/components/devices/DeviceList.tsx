@@ -5,15 +5,21 @@
  *
  * Replaces src/components/device/list/. Renders all devices
  * as individual panels with optional filtering.
+ *
+ * Supports deep-linking: a `?device=<address>` query param (e.g. from the
+ * dashboard favorites card) scrolls to and briefly highlights that device,
+ * via the shared useDeepLinkHighlight hook.
  */
 
 import { Base } from '@arcus/core';
 import { useAppSelector } from '@/store/hooks';
 import { selectAllDevices } from '@/store/slices/devicesSlice';
+import { useDeepLinkHighlight } from '@/hooks/useDeepLinkHighlight';
 import { DevicePanel } from './DevicePanel';
 
 export function DeviceList() {
   const devices = useAppSelector(selectAllDevices);
+  const { highlighted, registerItem } = useDeepLinkHighlight('device', devices.length);
 
   if (devices.length === 0) {
     return (
@@ -28,9 +34,21 @@ export function DeviceList() {
 
   return (
     <div>
-      {devices.map((device) => (
-        <DevicePanel key={device.id} address={device[Base.ATTR_ADDRESS]} />
-      ))}
+      {devices.map((device) => {
+        const address = device[Base.ATTR_ADDRESS];
+        return (
+          <div
+            key={device.id}
+            data-device-address={address}
+            ref={registerItem(address)}
+            className={`rounded-[var(--border-radius-base)] transition-shadow ${
+              highlighted === address ? 'ring-2 ring-peacock' : ''
+            }`}
+          >
+            <DevicePanel address={address} />
+          </div>
+        );
+      })}
     </div>
   );
 }

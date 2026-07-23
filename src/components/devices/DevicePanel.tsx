@@ -20,6 +20,7 @@ import {
 } from '@/hooks/useDeviceConfig';
 import { useAppDispatch } from '@/store/hooks';
 import { addNotification } from '@/store/slices/uiSlice';
+import { isFavorite, setFavorite } from '@/lib/favorites';
 import { useSidePanel } from '@/components/SidePanel';
 import { DeviceIcon } from './DeviceIcon';
 import { DeviceActions } from './DeviceActions';
@@ -47,7 +48,7 @@ function DevicePanelInner({ address }: DevicePanelProps) {
   const offline = isDeviceOffline(device);
   const on = isDeviceOn(device, config);
   const panelAction = config['web:panel:action'];
-  const isFavorite = device['dev:favorite'] === true;
+  const isFav = isFavorite(device);
   const hasErrors = !!(device[DeviceAdvanced.ATTR_ERRORS] as Record<string, string> | undefined);
 
   const handleStartRename = () => {
@@ -68,7 +69,7 @@ function DevicePanelInner({ address }: DevicePanelProps) {
 
   const handleToggleFavorite = async () => {
     try {
-      await setAttribute('dev:favorite', !isFavorite);
+      await setFavorite(address, !isFav);
     } catch {
       dispatch(addNotification({ type: 'error', message: 'Failed to update favorite' }));
     }
@@ -135,12 +136,12 @@ function DevicePanelInner({ address }: DevicePanelProps) {
           <button
             onClick={handleToggleFavorite}
             className={`p-1.5 rounded transition-colors ${
-              isFavorite ? 'text-canary' : 'text-heron hover:text-grouse'
+              isFav ? 'text-canary' : 'text-heron hover:text-grouse'
             }`}
-            title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+            title={isFav ? 'Remove from favorites' : 'Add to favorites'}
           >
             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-              {isFavorite ? (
+              {isFav ? (
                 <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
               ) : (
                 <path fillRule="evenodd" d="M10 1l2.39 6.35H18l-4.95 3.6L14.82 18 10 14.27 5.18 18l1.77-7.05L2 7.35h5.61L10 1z" clipRule="evenodd" />

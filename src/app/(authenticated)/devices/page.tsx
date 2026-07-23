@@ -7,7 +7,7 @@
  * (network rebuild and device removal guidance).
  */
 
-import { useState, useCallback, useMemo } from 'react';
+import { Suspense, useState, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Bridge from '@arcus/core/bridge';
@@ -158,7 +158,9 @@ export default function DevicesPage() {
         ) : (
           <div>
             <HubPanel />
-            <DeviceList />
+            <Suspense fallback={null}>
+              <DeviceList />
+            </Suspense>
           </div>
         )
       ) : (

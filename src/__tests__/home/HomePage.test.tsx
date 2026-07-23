@@ -184,7 +184,7 @@ describe('HomePage – Favorites card', () => {
 
   it('shows favorite devices', () => {
     mockDevices = [
-      { [Base.ATTR_ADDRESS]: 'DRIV:dev:d1', [Device.ATTR_NAME]: 'Bedroom Light', 'dev:favorite': true, id: 'd1' },
+      { [Base.ATTR_ADDRESS]: 'DRIV:dev:d1', [Device.ATTR_NAME]: 'Bedroom Light', [Base.ATTR_TAGS]: ['FAVORITE'], id: 'd1' },
     ];
     render(<HomePage />);
     expect(screen.getByText('Bedroom Light')).toBeInTheDocument();
@@ -193,7 +193,7 @@ describe('HomePage – Favorites card', () => {
 
   it('shows favorite scenes', () => {
     mockScenes = [
-      { [Base.ATTR_ADDRESS]: 'SERV:scene:s1', [Scene.ATTR_NAME]: 'Goodnight', 'scene:favorite': true, id: 's1' },
+      { [Base.ATTR_ADDRESS]: 'SERV:scene:s1', [Scene.ATTR_NAME]: 'Goodnight', [Base.ATTR_TAGS]: ['FAVORITE'], id: 's1' },
     ];
     render(<HomePage />);
     expect(screen.getByText('Goodnight')).toBeInTheDocument();
@@ -201,8 +201,8 @@ describe('HomePage – Favorites card', () => {
 
   it('shows plural count for multiple favorites', () => {
     mockDevices = [
-      { [Base.ATTR_ADDRESS]: 'DRIV:dev:d1', [Device.ATTR_NAME]: 'Light 1', 'dev:favorite': true, id: 'd1' },
-      { [Base.ATTR_ADDRESS]: 'DRIV:dev:d2', [Device.ATTR_NAME]: 'Light 2', 'dev:favorite': true, id: 'd2' },
+      { [Base.ATTR_ADDRESS]: 'DRIV:dev:d1', [Device.ATTR_NAME]: 'Light 1', [Base.ATTR_TAGS]: ['FAVORITE'], id: 'd1' },
+      { [Base.ATTR_ADDRESS]: 'DRIV:dev:d2', [Device.ATTR_NAME]: 'Light 2', [Base.ATTR_TAGS]: ['FAVORITE'], id: 'd2' },
     ];
     render(<HomePage />);
     expect(screen.getByText('2 favorites')).toBeInTheDocument();

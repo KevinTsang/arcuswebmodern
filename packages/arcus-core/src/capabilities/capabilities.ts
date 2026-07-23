@@ -13,6 +13,8 @@ export const Base = {
   ATTR_TYPE: 'base:type',
   CMD_GETATTRIBUTES: 'base:GetAttributes',
   CMD_SETATTRIBUTES: 'base:SetAttributes',
+  CMD_ADDTAGS: 'base:AddTags',
+  CMD_REMOVETAGS: 'base:RemoveTags',
   EVENT_ADDED: 'base:Added',
   EVENT_VALUECHANGE: 'base:ValueChange',
   EVENT_DELETED: 'base:Deleted',

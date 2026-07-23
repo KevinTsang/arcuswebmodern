@@ -1,22 +1,23 @@
 import { useMemo } from 'react';
-import { Device, Scene } from '@arcus/core';
 import { useAppSelector } from '@/store/hooks';
 import { selectAllDevices } from '@/store/slices/devicesSlice';
 import { selectAllScenes } from '@/store/slices/scenesSlice';
-import type { DeviceEntity, SceneEntity } from '@/store/entityTypes';
+import { isFavorite } from '@/lib/favorites';
 import CardShell from './CardShell';
+import FavoriteDeviceChip from './FavoriteDeviceChip';
+import FavoriteSceneChip from './FavoriteSceneChip';
 
 export default function FavoritesCard() {
   const devices = useAppSelector(selectAllDevices);
   const scenes = useAppSelector(selectAllScenes);
 
   const favoriteDevices = useMemo(
-    () => devices.filter((d) => d['isFavorite'] === true || d['dev:favorite'] === true),
+    () => devices.filter(isFavorite),
     [devices],
   );
 
   const favoriteScenes = useMemo(
-    () => scenes.filter((s) => s['scene:favorite'] === true),
+    () => scenes.filter(isFavorite),
     [scenes],
   );
 
@@ -28,11 +29,11 @@ export default function FavoritesCard() {
         <>
           <p className="text-xs text-grouse mb-3">{count} favorite{count !== 1 ? 's' : ''}</p>
           <div className="flex gap-3 overflow-x-auto pb-2">
-            {favoriteDevices.map((device) => (
-              <FavoriteDeviceChip key={device.id} device={device} />
-            ))}
             {favoriteScenes.map((scene) => (
               <FavoriteSceneChip key={scene.id} scene={scene} />
+            ))}
+            {favoriteDevices.map((device) => (
+              <FavoriteDeviceChip key={device.id} device={device} />
             ))}
           </div>
         </>
@@ -42,29 +43,5 @@ export default function FavoritesCard() {
         </p>
       )}
     </CardShell>
-  );
-}
-
-function FavoriteDeviceChip({ device }: { device: DeviceEntity }) {
-  const name = device[Device.ATTR_NAME] ?? 'Device';
-  return (
-    <div className="flex-shrink-0 w-28 text-center p-2 border border-heron rounded-[var(--border-radius-base)]">
-      <div className="w-10 h-10 bg-pigeon/50 rounded-full flex items-center justify-center mx-auto mb-1">
-        <span className="icon-app-devices text-sm text-grouse" />
-      </div>
-      <p className="text-xs text-swift truncate">{name}</p>
-    </div>
-  );
-}
-
-function FavoriteSceneChip({ scene }: { scene: SceneEntity }) {
-  const name = scene[Scene.ATTR_NAME] ?? 'Scene';
-  return (
-    <div className="flex-shrink-0 w-28 text-center p-2 border border-heron rounded-[var(--border-radius-base)]">
-      <div className="w-10 h-10 bg-peacock/10 rounded-full flex items-center justify-center mx-auto mb-1">
-        <span className="icon-app-scene text-sm text-peacock" />
-      </div>
-      <p className="text-xs text-swift truncate">{name}</p>
-    </div>
   );
 }

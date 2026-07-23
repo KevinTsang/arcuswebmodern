@@ -554,15 +554,26 @@ None.
 
 | Feature | Legacy | Modern | Status |
 |---------|--------|--------|--------|
-| Favorite devices | Yes | Yes (starring does not persist) | **Broken** |
-| Favorite scenes | Yes | Yes (starring does not persist) | **Broken** |
-| Favorite rules | Yes | Yes (starring does not persist) | **Broken** |
+| Favorite devices | Yes | Yes | **Done** |
+| Favorite scenes | Yes | No toggle UI yet (card reads tag) | **Partial** |
+| Favorite rules | Yes | No toggle UI yet | **Missing** |
 | Dashboard favorites card | Yes | Yes | **Done** |
-| Toggle favorite from device detail | Yes | Yes (starring does not persist) | **Broken** |
+| Toggle favorite from device detail | Yes | Yes | **Done** |
 
 ### Gaps
 
-- **Bug:** Starring a device, scene, or rule does not actually add it to favorites — the toggle does not persist, so favorited items never appear on the dashboard favorites card.
+- Scene and rule favorite **toggles** are not yet exposed in the UI. The
+  underlying mechanism now works — the dashboard favorites card recognizes any
+  object tagged `FAVORITE` — so adding a star control to the scene/rule lists
+  that calls `setFavorite()` (`@/lib/favorites`) is all that remains.
+
+### Notes
+
+- **Fixed:** Favoriting now persists. It is stored as the `FAVORITE` tag in
+  `base:tags` and toggled via `base:AddTags` / `base:RemoveTags` (matching the
+  legacy client), replacing the made-up `dev:favorite` / `scene:favorite`
+  attributes the platform silently ignored. Shared helpers live in
+  `@/lib/favorites` (`isFavorite`, `setFavorite`, `FAVORITE_TAG`).
 
 ---
 
