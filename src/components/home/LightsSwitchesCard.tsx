@@ -11,7 +11,7 @@ export default function LightsSwitchesCard() {
   ).length;
 
   return (
-    <CardShell title="Lights & Switches" icon="icon-app-light-1" href="/services/lights-switches/status">
+    <CardShell title="Lights & Switches" icon="icon-platform-light-1" href="/services/lights-switches/status">
       <div className="flex gap-4">
         <StatusBadge
           label="On"

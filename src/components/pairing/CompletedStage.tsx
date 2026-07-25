@@ -25,7 +25,7 @@ export default function CompletedStage({
       {isMispaired ? (
         <>
           <div className="w-16 h-16 bg-canary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-            <span className="icon-app-warning text-2xl text-canary" />
+            <span className="icon-platform-warning-1 text-2xl text-canary" />
           </div>
           <h3 className="text-lg font-semibold text-swift mb-2">Improperly Paired</h3>
           <p className="text-sm text-grouse mb-4">

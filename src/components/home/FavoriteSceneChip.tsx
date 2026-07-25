@@ -28,7 +28,7 @@ export default function FavoriteSceneChip({ scene }: { scene: SceneEntity }) {
   return (
     <button type="button" onClick={handleFire} className={CHIP_CLASS} title={`Run ${name}`}>
       <div className="w-10 h-10 bg-peacock/10 rounded-full flex items-center justify-center mx-auto mb-1">
-        <span className="icon-app-scene text-sm text-peacock" />
+        <span className="icon-app-scene-1 text-sm text-peacock" />
       </div>
       <p className="text-xs text-swift truncate">{name}</p>
     </button>

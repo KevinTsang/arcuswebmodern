@@ -22,7 +22,7 @@ const ALERT_CONFIG: Record<string, { label: string; icon: string }> = {
   [AlarmIncident.ALERT_CO]: { label: 'Carbon Monoxide Alarm', icon: 'icon-platform-co-1' },
   [AlarmIncident.ALERT_WATER]: { label: 'Water Leak Alarm', icon: 'icon-platform-water-leak-2' },
   [AlarmIncident.ALERT_CARE]: { label: 'Care Alarm', icon: 'icon-platform-care-1' },
-  [AlarmIncident.ALERT_WEATHER]: { label: 'Weather Alert', icon: 'icon-platform-weather-1' },
+  [AlarmIncident.ALERT_WEATHER]: { label: 'Weather Alert', icon: 'icon-platform-weather-alert' },
 };
 
 export default function IncidentTracker({ incident }: { incident: IncidentEntity }) {

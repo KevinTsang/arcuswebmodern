@@ -38,9 +38,9 @@ const STEP_LABELS: Record<ProMonStep, string> = {
 };
 
 const ALARM_TYPES = [
-  { key: 'SECURITY', label: 'Security', icon: 'icon-app-lock-1', description: 'Intruder detection' },
-  { key: 'SMOKE', label: 'Smoke', icon: 'icon-app-fire', description: 'Smoke detector alerts' },
-  { key: 'CO', label: 'Carbon Monoxide', icon: 'icon-app-warning', description: 'CO detector alerts' },
+  { key: 'SECURITY', label: 'Security', icon: 'icon-platform-lock-1', description: 'Intruder detection' },
+  { key: 'SMOKE', label: 'Smoke', icon: 'icon-app-flame', description: 'Smoke detector alerts' },
+  { key: 'CO', label: 'Carbon Monoxide', icon: 'icon-platform-warning-1', description: 'CO detector alerts' },
   { key: 'PANIC', label: 'Panic', icon: 'icon-app-alarm-1', description: 'Emergency panic button' },
 ];
 
@@ -394,7 +394,7 @@ export default function ProMonitoringPage() {
                 <>
                   <div className="animate-pulse">
                     <div className="w-16 h-16 bg-peacock/10 rounded-full flex items-center justify-center mx-auto">
-                      <span className="icon-app-phone text-2xl text-peacock" />
+                      <span className="icon-app-phone-1 text-2xl text-peacock" />
                     </div>
                   </div>
                   <p className="text-sm text-grouse">Waiting for test call…</p>

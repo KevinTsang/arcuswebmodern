@@ -6,7 +6,7 @@ export default function HomeFamilyCard() {
   const hf = useHomeFamilySubsystem();
 
   return (
-    <CardShell title="Home & Family" icon="icon-app-people" href="/services/home-family/status">
+    <CardShell title="Home & Family" icon="icon-app-family-1" href="/services/home-family/status">
       <div className="flex gap-4">
         <StatusBadge
           label="Home"

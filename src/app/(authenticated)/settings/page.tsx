@@ -18,8 +18,8 @@ export default function SettingsPage() {
 
   const sections: { key: SettingsSection; label: string; icon: string }[] = [
     { key: 'profile', label: 'Profile', icon: 'icon-app-user-1' },
-    { key: 'people-places', label: 'People & Places', icon: 'icon-app-people' },
-    { key: 'invitation', label: 'Invitation Code', icon: 'icon-app-mail' },
+    { key: 'people-places', label: 'People & Places', icon: 'icon-app-family-1' },
+    { key: 'invitation', label: 'Invitation Code', icon: 'icon-app-envelope-1' },
   ];
 
   return (

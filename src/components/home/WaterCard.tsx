@@ -11,7 +11,7 @@ export default function WaterCard() {
   ).length;
 
   return (
-    <CardShell title="Water" icon="icon-app-water-1" href="/services/water/status">
+    <CardShell title="Water" icon="icon-platform-water-1" href="/services/water/status">
       <div className="flex gap-4">
         <StatusBadge
           label="Valves Closed"

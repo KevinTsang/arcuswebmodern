@@ -8,7 +8,7 @@ export default function DoorsLocksCard() {
   const openCount = dl.openCount;
 
   return (
-    <CardShell title="Doors & Locks" icon="icon-app-lock-1" href="/services/doors-locks/status">
+    <CardShell title="Doors & Locks" icon="icon-platform-lock-1" href="/services/doors-locks/status">
       <div className="flex gap-4">
         <StatusBadge
           label="Unlocked"
