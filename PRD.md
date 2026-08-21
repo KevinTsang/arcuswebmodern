@@ -133,11 +133,19 @@ None.
 | Scene favorite toggle | Yes | Yes | **Done** |
 | Notification toggle per scene | Yes | Yes | **Done** |
 | Action selectors (boolean, percent, temperature, range, list, group) | Yes | Yes (all types) | **Done** |
-| Scene scheduling | Yes | No (scheduling exists but not wired to scenes) | **Missing** |
+| Scene scheduling | Yes | Yes | **Done** |
 
 ### Gaps
 
-- Scene scheduling (fire scene on a time-based schedule).
+- None.
+
+### Notes
+
+- **Scene scheduling** is wired via the Schedule button on each scene card: it
+  opens the shared `ScheduleEditPanel` targeting the scene, firing `scene:Fire`
+  on the platform `FIRE` schedule group. This also fixed the panel's scheduler
+  lookup (`selectSchedulerByTarget` — schedulers are keyed by their own address,
+  not the target's), which unblocks device/rule scheduling reuse too.
 
 ---
 
@@ -169,7 +177,7 @@ None.
 | Device scheduling | Yes | Yes | **Done** |
 | Thermostat schedule programs | Yes (full HVAC calendar) | No | **Missing** |
 | Irrigation scheduling (even/odd/interval modes) | Yes | No | **Missing** |
-| Scene scheduling | Yes | No | **Missing** |
+| Scene scheduling | Yes | Yes | **Done** |
 | Rule enable/disable scheduling | Yes | No | **Missing** |
 | Timezone conversion (place vs device) | Yes | No | **Missing** |
 
@@ -177,7 +185,7 @@ None.
 
 - Thermostat schedule management (temperature programs).
 - Irrigation schedule management (zone durations, watering modes).
-- Scene and rule scheduling.
+- Rule scheduling (enable/disable rules on a time-based schedule).
 - Timezone-aware scheduling.
 
 ---
@@ -625,7 +633,7 @@ These are commonly used features that users will expect:
 8. **Hub firmware updates** — Firmware version display and update workflow.
 9. **Hub WiFi configuration** — WiFi SSID/password setup, network scanning.
 10. **Irrigation scheduling & zone control** — Per-zone start/stop, schedule modes (even/odd/interval).
-11. **Scene & rule scheduling** — Fire scenes and enable/disable rules on time-based schedules.
+11. **Rule scheduling** — Enable/disable rules on time-based schedules. (Scene scheduling is done.)
 12. **Account management** — Account deletion, email management, security questions.
 
 ### Tier 3 — Completeness Gaps (Niche Device Types & Polish)

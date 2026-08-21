@@ -5,8 +5,13 @@ import Bridge from '@arcus/core/bridge';
 import { Base, Scene } from '@arcus/core';
 import { useAppDispatch } from '@/store/hooks';
 import { addNotification } from '@/store/slices/uiSlice';
+import { useSidePanel } from '@/components/SidePanel';
+import { ScheduleEditPanel } from '@/components/schedules';
 import { ControlSwitch } from '@/components/shared/ControlSwitch';
 import type { SceneEntity } from '@/store/entityTypes';
+
+/** Scenes are scheduled by firing `scene:Fire` on the platform "FIRE" schedule group. */
+const SCENE_FIRE_SCHEDULE = 'FIRE';
 
 export function SceneCard({
   scene,
@@ -16,6 +21,7 @@ export function SceneCard({
   onEdit: (scene: SceneEntity) => void;
 }) {
   const dispatch = useAppDispatch();
+  const { openRight } = useSidePanel();
   const [firing, setFiring] = useState(false);
 
   const name = scene[Scene.ATTR_NAME] ?? 'Unnamed Scene';
@@ -53,6 +59,17 @@ export function SceneCard({
     }
   }, [address, hasNotification, dispatch]);
 
+  const handleOpenSchedule = useCallback(() => {
+    openRight(
+      <ScheduleEditPanel
+        targetAddress={address}
+        targetName={name}
+        scheduleId={SCENE_FIRE_SCHEDULE}
+        messageType={Scene.CMD_FIRE}
+      />,
+    );
+  }, [openRight, address, name]);
+
   const handleToggleForce = useCallback(async (checked: boolean) => {
     setForceDeviceState(checked);
     try {
@@ -81,6 +98,17 @@ export function SceneCard({
           </p>
         </div>
         <div className="flex items-center gap-2 ml-3">
+          <button
+            onClick={handleOpenSchedule}
+            className={`p-1.5 rounded transition-colors ${
+              hasSchedule ? 'text-peacock' : 'text-heron hover:text-grouse'
+            }`}
+            title="Schedule"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6l4 2m6-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </button>
           <button
             onClick={handleToggleNotification}
             className={`p-1.5 rounded transition-colors ${

@@ -4,9 +4,11 @@ import reducer, {
   schedulerRemoved,
   schedulersReceived,
   schedulersClear,
+  selectSchedulerByTarget,
 } from '@/store/slices/schedulersSlice';
 import type { SchedulerEntity } from '@/store/entityTypes';
-import { Base } from '@arcus/core';
+import type { RootState } from '@/store/store';
+import { Base, Scheduler } from '@arcus/core';
 
 function makeScheduler(address: string, extra: Partial<SchedulerEntity> = {}) {
   return { id: address, [Base.ATTR_ADDRESS]: address, ...extra };
@@ -58,5 +60,24 @@ describe('schedulersSlice', () => {
     let state = reducer(undefined, schedulerAdded(makeScheduler('SERV:sched:s1')));
     state = reducer(state, schedulersClear());
     expect(state.ids).toEqual([]);
+  });
+
+  describe('selectSchedulerByTarget', () => {
+    const state = reducer(
+      undefined,
+      schedulersReceived([
+        { [Base.ATTR_ADDRESS]: 'SERV:scheduler:a', [Scheduler.ATTR_TARGET]: 'SERV:scene:s1' },
+        { [Base.ATTR_ADDRESS]: 'SERV:scheduler:b', [Scheduler.ATTR_TARGET]: 'SERV:scene:s2' },
+      ]),
+    );
+    const root = { schedulers: state } as unknown as RootState;
+
+    it('finds the scheduler whose scheduler:target matches', () => {
+      expect(selectSchedulerByTarget(root, 'SERV:scene:s2')?.[Base.ATTR_ADDRESS]).toBe('SERV:scheduler:b');
+    });
+
+    it('returns undefined when no scheduler targets the address', () => {
+      expect(selectSchedulerByTarget(root, 'SERV:scene:missing')).toBeUndefined();
+    });
   });
 });

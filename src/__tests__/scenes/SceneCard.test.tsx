@@ -7,6 +7,7 @@ import type { SceneEntity } from '@/store/entityTypes';
 
 const mockDispatch = jest.fn();
 const mockBridgeRequest = jest.fn();
+const mockOpenRight = jest.fn();
 
 jest.mock('@arcus/core/bridge', () => ({
   __esModule: true,
@@ -19,6 +20,16 @@ jest.mock('@/store/hooks', () => ({
 
 jest.mock('@/store/slices/uiSlice', () => ({
   addNotification: (payload: unknown) => ({ type: 'ui/addNotification', payload }),
+}));
+
+jest.mock('@/components/SidePanel', () => ({
+  useSidePanel: () => ({ openRight: mockOpenRight }),
+}));
+
+// Stub the schedule panel so we can assert what SceneCard opens without
+// pulling in the real scheduling module graph.
+jest.mock('@/components/schedules', () => ({
+  ScheduleEditPanel: (props: any) => <div data-testid="schedule-panel">{JSON.stringify(props)}</div>,
 }));
 
 // ── Helpers ───────────────────────────────────────────────────────────
@@ -260,5 +271,30 @@ describe('SceneCard – edit', () => {
     render(<SceneCard scene={scene} onEdit={onEdit} />);
     fireEvent.click(screen.getByText('Edit'));
     expect(onEdit).toHaveBeenCalledWith(scene);
+  });
+});
+
+describe('SceneCard – schedule', () => {
+  it('renders a Schedule button', () => {
+    render(<SceneCard scene={baseScene()} onEdit={jest.fn()} />);
+    expect(screen.getByTitle('Schedule')).toBeInTheDocument();
+  });
+
+  it('highlights the schedule button when the scene has a scheduler', () => {
+    render(<SceneCard scene={baseScene({ [Scene.ATTR_SCHEDULER]: 'SERV:scheduler:x' })} onEdit={jest.fn()} />);
+    expect(screen.getByTitle('Schedule').className).toContain('text-peacock');
+  });
+
+  it('opens the schedule panel targeting the scene with scene:Fire on the FIRE group', () => {
+    render(<SceneCard scene={baseScene()} onEdit={jest.fn()} />);
+    fireEvent.click(screen.getByTitle('Schedule'));
+    expect(mockOpenRight).toHaveBeenCalledTimes(1);
+    const element = mockOpenRight.mock.calls[0][0];
+    expect(element.props).toMatchObject({
+      targetAddress: 'SERV:scene:s1',
+      targetName: 'Good Morning',
+      scheduleId: 'FIRE',
+      messageType: Scene.CMD_FIRE,
+    });
   });
 });

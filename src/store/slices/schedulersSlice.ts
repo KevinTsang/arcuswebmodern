@@ -1,6 +1,6 @@
 import { createSlice, createEntityAdapter, PayloadAction } from '@reduxjs/toolkit';
 import type { RootState } from '../store';
-import { Base } from '@arcus/core';
+import { Base, Scheduler } from '@arcus/core';
 import type { SchedulerEntity, SchedulerData, ArcusPayload } from '../entityTypes';
 
 export type { SchedulerEntity } from '../entityTypes';
@@ -38,5 +38,16 @@ export const {
   selectAll: selectAllSchedulers,
   selectById: selectSchedulerByAddress,
 } = schedulersAdapter.getSelectors((state: RootState) => state.schedulers);
+
+/**
+ * Find the scheduler for a scheduled object (device/scene/rule). Schedulers are
+ * keyed by their own address, so a target's scheduler must be looked up via its
+ * `scheduler:target` — not by the target address directly.
+ */
+export const selectSchedulerByTarget = (
+  state: RootState,
+  targetAddress: string,
+): SchedulerEntity | undefined =>
+  selectAllSchedulers(state).find((s) => s[Scheduler.ATTR_TARGET] === targetAddress);
 
 export default schedulersSlice.reducer;

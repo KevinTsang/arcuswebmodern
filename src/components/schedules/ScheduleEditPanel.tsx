@@ -11,8 +11,7 @@ import { useState, useCallback, useEffect, useMemo } from 'react';
 import { Thermostat } from '@arcus/core';
 import { SchedulerService } from '@arcus/core/services';
 import { useAppSelector } from '@/store/hooks';
-import { selectSchedulerByAddress } from '@/store/slices/schedulersSlice';
-import { useSidePanel } from '@/components/SidePanel';
+import { selectSchedulerByTarget } from '@/store/slices/schedulersSlice';
 import {
   ScheduleCalendar,
   type ScheduleEvent,
@@ -39,8 +38,7 @@ export function ScheduleEditPanel({
   modes,
   attributeEditor,
 }: ScheduleEditPanelProps) {
-  const { closeRight } = useSidePanel();
-  const scheduler = useAppSelector((s) => selectSchedulerByAddress(s, targetAddress));
+  const scheduler = useAppSelector((s) => selectSchedulerByTarget(s, targetAddress));
 
   const [view, setView] = useState<'calendar' | 'edit'>('calendar');
   const [editingEvent, setEditingEvent] = useState<ScheduleEventData | undefined>();
@@ -97,14 +95,8 @@ export function ScheduleEditPanel({
   }, []);
 
   return (
-    <div className="p-4">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-swift">Schedule</h3>
-        <button onClick={closeRight} className="text-sm text-grouse hover:text-coot">
-          &times;
-        </button>
-      </div>
-
+    <div>
+      <h3 className="text-lg font-semibold text-swift mb-1">Schedule</h3>
       <p className="text-sm text-grouse mb-4">{targetName}</p>
 
       {/* Mode selector (for multi-mode devices like thermostats) */}
