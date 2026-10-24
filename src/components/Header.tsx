@@ -14,6 +14,7 @@ import { Person } from '@arcus/core';
 import { useAppSelector } from '@/store/hooks';
 import { useSidePanel } from '@/components/SidePanel';
 import PlaceSelector from '@/components/PlaceSelector';
+import { ArcusLogo } from '@/components/shared/ArcusLogo';
 
 const NAV_LINKS = [
   { href: '/home', label: 'Dashboard', matchPrefix: '/home' },
@@ -65,7 +66,8 @@ export default function Header() {
         </button>
 
         {/* Logo */}
-        <Link href="/home" className="font-bold text-lg text-peacock mr-8 flex-shrink-0">
+        <Link href="/home" className="flex items-center gap-2 font-bold text-lg text-peacock mr-8 flex-shrink-0">
+          <ArcusLogo className="w-7 h-7" />
           Arcus
         </Link>
 
