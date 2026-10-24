@@ -1,5 +1,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { Base } from '@arcus/core';
 import type { SessionCreatedEvent, Account } from '@/arcus/types';
+import { personUpdated } from './peopleSlice';
 
 export interface AuthState {
   authenticating: boolean;
@@ -51,6 +53,15 @@ const authSlice = createSlice({
       state.person = null;
       state.account = null;
     },
+  },
+  extraReducers: (builder) => {
+    // Keep the signed-in person current when the platform reports a change
+    // to them (e.g. after editing contact info).
+    builder.addCase(personUpdated, (state, action) => {
+      if (state.person && state.person[Base.ATTR_ADDRESS] === action.payload[Base.ATTR_ADDRESS]) {
+        Object.assign(state.person, action.payload);
+      }
+    });
   },
 });
 

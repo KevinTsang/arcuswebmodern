@@ -3,7 +3,7 @@
  */
 
 import { setAuthenticating, loginSuccess, loginFailed } from '@/store/slices/authSlice';
-import { Base, Account } from '@arcus/core';
+import { Base, Account, Person } from '@arcus/core';
 
 // ── Mocks ─────────────────────────────────────────────────────────────
 
@@ -65,6 +65,7 @@ beforeEach(() => {
   jest.clearAllMocks();
   authListeners = {};
   dispatched.length = 0;
+  mockBridgeRequest.mockResolvedValue({});
   mockAuthenticate.mockResolvedValue(undefined);
 });
 
@@ -183,6 +184,31 @@ describe('authenticateThunk', () => {
     );
     const success = dispatched.find((a) => a.type === loginSuccess.type);
     expect(success.payload.account).toEqual(accountData);
+  });
+
+  it('fetches the person and merges their attributes into the session', async () => {
+    const personData = {
+      [Base.ATTR_ADDRESS]: 'SERV:person:person-1',
+      [Person.ATTR_FIRSTNAME]: 'Alice',
+      [Person.ATTR_EMAIL]: 'alice@test.com',
+    };
+    mockBridgeRequest.mockImplementation((_cmd: string, address: string) =>
+      Promise.resolve(address.startsWith('SERV:person:') ? personData : {}),
+    );
+    mockAuthenticate.mockImplementation(() => {
+      emitAuth('authentication:success', sessionPayload);
+      return Promise.resolve();
+    });
+
+    await authenticateThunk()(dispatch, () => ({}), undefined);
+
+    expect(mockBridgeRequest).toHaveBeenCalledWith(
+      Base.CMD_GETATTRIBUTES,
+      'SERV:person:person-1',
+      {},
+    );
+    const success = dispatched.find((a) => a.type === loginSuccess.type);
+    expect(success.payload.person).toEqual({ ...sessionPayload, ...personData });
   });
 
   it('dispatches loginFailed when account fetch fails', async () => {
