@@ -1,0 +1,29 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`OpenCloseValve snapshots matches snapshot 1`] = `
+<button
+  class="
+        px-4 py-1.5 rounded-[var(--border-radius-base)] text-sm font-medium
+        bg-peacock text-crane
+        disabled:opacity-50
+      "
+  data-testid="device-valve-toggle-DRIV:dev:valve"
+>
+  Close
+</button>
+`;
+
+exports[`OpenCloseValve snapshots matches snapshot when obstructed 1`] = `
+<button
+  class="
+        px-4 py-1.5 rounded-[var(--border-radius-base)] text-sm font-medium
+        bg-cardinal/10 text-cardinal border border-cardinal/30
+        disabled:opacity-50
+      "
+  data-testid="device-valve-toggle-DRIV:dev:valve"
+  disabled=""
+  title="Obstruction detected. Open and close the valve manually to resolve."
+>
+  Obstructed
+</button>
+`;

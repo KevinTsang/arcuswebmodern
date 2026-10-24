@@ -17,6 +17,10 @@ jest.mock('@/hooks/useDeviceActions', () => ({
   }),
 }));
 
+jest.mock('@/store/hooks', () => ({
+  useAppDispatch: () => jest.fn(),
+}));
+
 jest.mock('@/lib/deviceConfig', () => ({
   resolveDeviceConfig: () => ({
     'web:panel:action': 'toggle-on-off',

@@ -1,0 +1,42 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`LockUnlock snapshots matches snapshot 1`] = `
+<div
+  class="flex items-center gap-2"
+>
+  <button
+    class="
+          px-4 py-1.5 rounded-[var(--border-radius-base)] text-sm font-medium transition-colors
+          bg-peacock text-crane
+          disabled:opacity-50
+        "
+    data-testid="device-lock-toggle-DRIV:dev:lock"
+  >
+    Unlock
+  </button>
+</div>
+`;
+
+exports[`LockUnlock snapshots matches snapshot when jammed 1`] = `
+<div
+  class="flex items-center gap-2"
+>
+  <span
+    class="text-xs font-medium text-cardinal"
+    data-testid="device-lock-jammed-DRIV:dev:lock"
+    title="Door lock may be jammed"
+  >
+    Jammed
+  </span>
+  <button
+    class="
+          px-4 py-1.5 rounded-[var(--border-radius-base)] text-sm font-medium transition-colors
+          bg-cardinal/10 text-cardinal border border-cardinal/30
+          disabled:opacity-50
+        "
+    data-testid="device-lock-toggle-DRIV:dev:lock"
+  >
+    Unlock
+  </button>
+</div>
+`;
