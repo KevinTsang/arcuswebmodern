@@ -1,9 +1,14 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { Base, DeviceAdvanced, DoorLock } from '@arcus/core';
+import { DeviceAdvanced, DoorLock } from '@arcus/core';
 import LockUnlock from '@/components/devices/LockUnlock';
+import { WARN_JAM } from '@/lib/lockStatus';
 import type { DeviceEntity } from '@/store/entityTypes';
+import { makeDevice } from '../helpers/factories';
 
 // ── Mocks ─────────────────────────────────────────────────────────────
+
+/** base:SetAttributes answers with an empty object. */
+type SetAttributesResponse = Record<string, never>;
 
 const mockSetAttribute = jest.fn();
 const mockDispatch = jest.fn();
@@ -31,19 +36,25 @@ jest.mock('@/store/slices/uiSlice', () => ({
 // ── Helpers ───────────────────────────────────────────────────────────
 
 const ADDRESS = 'DRIV:dev:lock';
-const JAM = { WARN_JAM: 'Door lock may be jammed' };
+const JAM = { [WARN_JAM]: 'Door lock may be jammed' };
 
 function makeLock(lockState?: string, errors?: Record<string, string>): DeviceEntity {
-  return {
-    id: ADDRESS,
-    [Base.ATTR_ADDRESS]: ADDRESS,
+  return makeDevice(ADDRESS, {
     ...(lockState !== undefined && { [DoorLock.ATTR_LOCKSTATE]: lockState }),
     ...(errors && { [DeviceAdvanced.ATTR_ERRORS]: errors }),
-  };
+  });
 }
 
 function getButton() {
   return screen.getByTestId(`device-lock-toggle-${ADDRESS}`);
+}
+
+function queryStateText() {
+  return screen.queryByTestId(`device-lock-state-${ADDRESS}`);
+}
+
+function queryHint() {
+  return screen.queryByTestId(`device-lock-hint-${ADDRESS}`);
 }
 
 beforeEach(() => {
@@ -73,7 +84,8 @@ describe('LockUnlock', () => {
       render(<LockUnlock address={ADDRESS} />);
       expect(getButton()).toHaveTextContent('Unlock');
       expect(getButton()).toBeEnabled();
-      expect(screen.queryByTestId(`device-lock-jammed-${ADDRESS}`)).not.toBeInTheDocument();
+      expect(queryStateText()).not.toBeInTheDocument();
+      expect(queryHint()).not.toBeInTheDocument();
     });
 
     it('offers "Lock" when unlocked', () => {
@@ -81,43 +93,69 @@ describe('LockUnlock', () => {
       render(<LockUnlock address={ADDRESS} />);
       expect(getButton()).toHaveTextContent('Lock');
       expect(getButton()).toBeEnabled();
+      expect(queryStateText()).not.toBeInTheDocument();
     });
 
-    it('shows "Locking" and disables the button while locking', () => {
+    it('shows "Locking" and offers "Lock" again, never "Unlock", while locking', () => {
       mockDevice = makeLock(DoorLock.LOCKSTATE_LOCKING);
       render(<LockUnlock address={ADDRESS} />);
-      expect(getButton()).toHaveTextContent('Locking');
-      expect(getButton()).toBeDisabled();
-    });
-
-    it('shows "Unlocking" and disables the button while unlocking', () => {
-      mockDevice = makeLock(DoorLock.LOCKSTATE_UNLOCKING);
-      render(<LockUnlock address={ADDRESS} />);
-      expect(getButton()).toHaveTextContent('Unlocking');
-      expect(getButton()).toBeDisabled();
-    });
-
-    it('shows a jammed indicator and keeps "Unlock" available when the lock is jammed mid-transition', () => {
-      mockDevice = makeLock(DoorLock.LOCKSTATE_LOCKING, JAM);
-      render(<LockUnlock address={ADDRESS} />);
-      expect(screen.getByTestId(`device-lock-jammed-${ADDRESS}`)).toHaveTextContent('Jammed');
-      expect(screen.getByTestId(`device-lock-jammed-${ADDRESS}`)).toHaveAttribute('title', JAM.WARN_JAM);
-      expect(getButton()).toHaveTextContent('Unlock');
+      expect(queryStateText()).toHaveTextContent('Locking');
+      expect(getButton()).toHaveTextContent('Lock');
+      expect(getButton()).not.toHaveTextContent('Unlock');
       expect(getButton()).toBeEnabled();
     });
 
-    it('offers "Unlock" for a jammed lock that reports unlocked', () => {
-      mockDevice = makeLock(DoorLock.LOCKSTATE_UNLOCKED, JAM);
+    it('shows "Unlocking" and keeps "Lock" available while unlocking', () => {
+      mockDevice = makeLock(DoorLock.LOCKSTATE_UNLOCKING);
       render(<LockUnlock address={ADDRESS} />);
-      expect(screen.getByTestId(`device-lock-jammed-${ADDRESS}`)).toBeInTheDocument();
+      expect(queryStateText()).toHaveTextContent('Unlocking');
+      expect(getButton()).toHaveTextContent('Lock');
+      expect(getButton()).toBeEnabled();
+    });
+
+    it('shows "Jammed" with a visible explanation and offers "Lock" when jammed mid-lock', () => {
+      mockDevice = makeLock(DoorLock.LOCKSTATE_LOCKING, JAM);
+      render(<LockUnlock address={ADDRESS} />);
+      expect(queryStateText()).toHaveTextContent('Jammed');
+      expect(queryHint()).toBeVisible();
+      expect(queryHint()).toHaveTextContent('may be jammed');
+      expect(getButton()).toHaveAccessibleDescription(/may be jammed/);
+      expect(getButton()).toHaveTextContent('Lock');
+      expect(getButton()).not.toHaveTextContent('Unlock');
+      expect(getButton()).toBeEnabled();
+    });
+
+    it.each([
+      DoorLock.LOCKSTATE_UNLOCKED,
+      DoorLock.LOCKSTATE_UNLOCKING,
+    ])('offers "Lock" for a jammed lock that reports %s', (state) => {
+      mockDevice = makeLock(state, JAM);
+      render(<LockUnlock address={ADDRESS} />);
+      expect(queryStateText()).toHaveTextContent('Jammed');
+      expect(getButton()).toHaveTextContent('Lock');
+      expect(getButton()).not.toHaveTextContent('Unlock');
+    });
+
+    it('offers "Unlock" for a jammed lock that reports LOCKED', () => {
+      mockDevice = makeLock(DoorLock.LOCKSTATE_LOCKED, JAM);
+      render(<LockUnlock address={ADDRESS} />);
+      expect(queryStateText()).toHaveTextContent('Jammed');
       expect(getButton()).toHaveTextContent('Unlock');
     });
 
-    it('ignores unrelated device errors', () => {
-      mockDevice = makeLock(DoorLock.LOCKSTATE_UNLOCKING, { WARN_BATTERY: 'Low battery' });
+    it('detects WARN_JAM by key, even with an empty message', () => {
+      mockDevice = makeLock(DoorLock.LOCKSTATE_UNLOCKED, { [WARN_JAM]: '' });
       render(<LockUnlock address={ADDRESS} />);
-      expect(screen.queryByTestId(`device-lock-jammed-${ADDRESS}`)).not.toBeInTheDocument();
-      expect(getButton()).toBeDisabled();
+      expect(queryStateText()).toHaveTextContent('Jammed');
+      expect(queryHint()).toBeInTheDocument();
+    });
+
+    it('ignores unrelated device errors', () => {
+      mockDevice = makeLock(DoorLock.LOCKSTATE_UNLOCKED, { WARN_BATTERY: 'Low battery' });
+      render(<LockUnlock address={ADDRESS} />);
+      expect(queryStateText()).not.toBeInTheDocument();
+      expect(queryHint()).not.toBeInTheDocument();
+      expect(getButton()).toHaveTextContent('Lock');
     });
   });
 
@@ -139,23 +177,28 @@ describe('LockUnlock', () => {
       });
     });
 
-    it('sends UNLOCKED for a jammed lock', async () => {
-      mockDevice = makeLock(DoorLock.LOCKSTATE_LOCKING, JAM);
+    it.each([
+      ['LOCKING', makeLock(DoorLock.LOCKSTATE_LOCKING)],
+      ['UNLOCKING', makeLock(DoorLock.LOCKSTATE_UNLOCKING)],
+      ['jammed LOCKING', makeLock(DoorLock.LOCKSTATE_LOCKING, JAM)],
+      ['jammed UNLOCKED', makeLock(DoorLock.LOCKSTATE_UNLOCKED, JAM)],
+      ['unknown', makeLock('BOLT_OUT')],
+    ])('sends LOCKED when clicked in the %s state', async (_name, device) => {
+      mockDevice = device;
       render(<LockUnlock address={ADDRESS} />);
       fireEvent.click(getButton());
       await waitFor(() => {
-        expect(mockSetAttribute).toHaveBeenCalledWith(DoorLock.ATTR_LOCKSTATE, DoorLock.LOCKSTATE_UNLOCKED);
+        expect(mockSetAttribute).toHaveBeenCalledWith(DoorLock.ATTR_LOCKSTATE, DoorLock.LOCKSTATE_LOCKED);
       });
+      expect(mockSetAttribute).toHaveBeenCalledTimes(1);
     });
 
     it('disables the button while the request is in flight and re-enables it afterwards', async () => {
-      let resolve: (value: unknown) => void = () => {};
-      mockSetAttribute.mockReturnValue(new Promise((r) => { resolve = r; }));
+      let resolve: (value: SetAttributesResponse) => void = () => {};
+      mockSetAttribute.mockReturnValue(new Promise<SetAttributesResponse>((r) => { resolve = r; }));
       render(<LockUnlock address={ADDRESS} />);
       fireEvent.click(getButton());
-      await waitFor(() => {
-        expect(getButton()).toHaveTextContent('...');
-      });
+      expect(getButton()).toHaveTextContent('...');
       expect(getButton()).toBeDisabled();
 
       resolve({});
@@ -191,24 +234,22 @@ describe('LockUnlock', () => {
         });
       });
     });
-
-    it.each([
-      DoorLock.LOCKSTATE_LOCKING,
-      DoorLock.LOCKSTATE_UNLOCKING,
-    ])('does not send anything when clicked in the %s state', (state) => {
-      mockDevice = makeLock(state);
-      render(<LockUnlock address={ADDRESS} />);
-      fireEvent.click(getButton());
-      expect(mockSetAttribute).not.toHaveBeenCalled();
-    });
   });
 
   describe('edge cases', () => {
-    it('disables the control when the lock state is unknown', () => {
+    it('offers "Lock" when the lock state is unknown', () => {
       mockDevice = makeLock();
       render(<LockUnlock address={ADDRESS} />);
-      expect(getButton()).toHaveTextContent('Unknown');
-      expect(getButton()).toBeDisabled();
+      expect(queryStateText()).toHaveTextContent('Unknown');
+      expect(getButton()).toHaveTextContent('Lock');
+      expect(getButton()).toBeEnabled();
+    });
+
+    it('treats an inherited property name as an unknown state', () => {
+      mockDevice = makeLock('constructor');
+      render(<LockUnlock address={ADDRESS} />);
+      expect(queryStateText()).toHaveTextContent('Unknown');
+      expect(getButton()).toHaveTextContent('Lock');
     });
 
     it('disables the control when the device is not in the store', () => {

@@ -6,33 +6,27 @@ import { useDevice } from '@/hooks/useDeviceCapability';
 import { useDeviceActions } from '@/hooks/useDeviceActions';
 import { useAppDispatch } from '@/store/hooks';
 import { addNotification } from '@/store/slices/uiSlice';
+import { getValveStatus } from '@/lib/valveStatus';
 
-const STATE_LABELS: Record<string, string> = {
-  [Valve.VALVESTATE_OPENING]: 'Opening',
-  [Valve.VALVESTATE_CLOSING]: 'Closing',
-  [Valve.VALVESTATE_OBSTRUCTION]: 'Obstructed',
-};
+const OBSTRUCTED_HINT = 'The valve reported an obstruction. Try Close again, or operate the valve manually.';
 
 /**
- * Water shut-off valve control. Only a settled OPEN or CLOSED valve can be
- * toggled; while it is OPENING/CLOSING (e.g. a leak-triggered shutoff in
- * progress) or OBSTRUCTION the control is disabled.
+ * Water shut-off valve control. Close stays available unless the valve is
+ * settled CLOSED, so a leak shutoff can always be (re-)sent, even while the
+ * valve is OPENING/CLOSING or reports OBSTRUCTION. Open is offered only from
+ * CLOSED, so a tap can never reverse a shutoff in progress.
  */
 export default function OpenCloseValve({ address }: { address: string }) {
   const device = useDevice(address);
   const { setAttribute } = useDeviceActions(address);
   const dispatch = useAppDispatch();
   const [pending, setPending] = useState(false);
-
-  const valveState = device?.[Valve.ATTR_VALVESTATE] as string | undefined;
-  const obstructed = valveState === Valve.VALVESTATE_OBSTRUCTION;
-
-  let target: string | null = null;
-  if (valveState === Valve.VALVESTATE_CLOSED) target = Valve.VALVESTATE_OPEN;
-  if (valveState === Valve.VALVESTATE_OPEN) target = Valve.VALVESTATE_CLOSED;
+  const { state, label: stateLabel, target } = getValveStatus(device);
+  const obstructed = state === Valve.VALVESTATE_OBSTRUCTION;
+  const settled = state === Valve.VALVESTATE_OPEN || state === Valve.VALVESTATE_CLOSED;
+  const hintId = `device-valve-hint-${address}`;
 
   const handleToggle = useCallback(async () => {
-    if (!target) return;
     setPending(true);
     try {
       await setAttribute(Valve.ATTR_VALVESTATE, target);
@@ -48,21 +42,34 @@ export default function OpenCloseValve({ address }: { address: string }) {
   if (pending) label = '...';
   else if (target === Valve.VALVESTATE_OPEN) label = 'Open';
   else if (target === Valve.VALVESTATE_CLOSED) label = 'Close';
-  else label = STATE_LABELS[valveState ?? ''] ?? 'Unknown';
+  else label = stateLabel;
 
   return (
-    <button
-      onClick={handleToggle}
-      disabled={pending || !target}
-      title={obstructed ? 'Obstruction detected. Open and close the valve manually to resolve.' : undefined}
-      data-testid={`device-valve-toggle-${address}`}
-      className={`
-        px-4 py-1.5 rounded-[var(--border-radius-base)] text-sm font-medium
-        ${obstructed ? 'bg-cardinal/10 text-cardinal border border-cardinal/30' : 'bg-peacock text-crane'}
-        disabled:opacity-50
-      `}
-    >
-      {label}
-    </button>
+    <div className="flex flex-col items-end gap-1">
+      <div className="flex items-center gap-2">
+        {!settled && target !== null && (
+          <span
+            data-testid={`device-valve-state-${address}`}
+            className={`text-xs font-medium ${obstructed ? 'text-cardinal' : 'text-grouse'}`}
+          >
+            {stateLabel}
+          </span>
+        )}
+        <button
+          onClick={handleToggle}
+          disabled={pending || target === null}
+          aria-describedby={obstructed ? hintId : undefined}
+          data-testid={`device-valve-toggle-${address}`}
+          className="px-4 py-1.5 rounded-[var(--border-radius-base)] text-sm font-medium bg-peacock text-crane disabled:opacity-50"
+        >
+          {label}
+        </button>
+      </div>
+      {obstructed && (
+        <p id={hintId} data-testid={hintId} className="max-w-48 text-right text-xs text-cardinal">
+          {OBSTRUCTED_HINT}
+        </p>
+      )}
+    </div>
   );
 }

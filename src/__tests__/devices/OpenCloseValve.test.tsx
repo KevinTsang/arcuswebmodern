@@ -1,9 +1,13 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { Base, Valve } from '@arcus/core';
+import { Valve } from '@arcus/core';
 import OpenCloseValve from '@/components/devices/OpenCloseValve';
 import type { DeviceEntity } from '@/store/entityTypes';
+import { makeDevice } from '../helpers/factories';
 
 // ── Mocks ─────────────────────────────────────────────────────────────
+
+/** base:SetAttributes answers with an empty object. */
+type SetAttributesResponse = Record<string, never>;
 
 const mockSetAttribute = jest.fn();
 const mockDispatch = jest.fn();
@@ -33,15 +37,21 @@ jest.mock('@/store/slices/uiSlice', () => ({
 const ADDRESS = 'DRIV:dev:valve';
 
 function makeValve(valveState?: string): DeviceEntity {
-  return {
-    id: ADDRESS,
-    [Base.ATTR_ADDRESS]: ADDRESS,
+  return makeDevice(ADDRESS, {
     ...(valveState !== undefined && { [Valve.ATTR_VALVESTATE]: valveState }),
-  };
+  });
 }
 
 function getButton() {
   return screen.getByTestId(`device-valve-toggle-${ADDRESS}`);
+}
+
+function queryStateText() {
+  return screen.queryByTestId(`device-valve-state-${ADDRESS}`);
+}
+
+function queryHint() {
+  return screen.queryByTestId(`device-valve-hint-${ADDRESS}`);
 }
 
 beforeEach(() => {
@@ -71,6 +81,8 @@ describe('OpenCloseValve', () => {
       render(<OpenCloseValve address={ADDRESS} />);
       expect(getButton()).toHaveTextContent('Close');
       expect(getButton()).toBeEnabled();
+      expect(queryStateText()).not.toBeInTheDocument();
+      expect(queryHint()).not.toBeInTheDocument();
     });
 
     it('offers "Open" when the valve is closed', () => {
@@ -78,28 +90,34 @@ describe('OpenCloseValve', () => {
       render(<OpenCloseValve address={ADDRESS} />);
       expect(getButton()).toHaveTextContent('Open');
       expect(getButton()).toBeEnabled();
+      expect(queryStateText()).not.toBeInTheDocument();
     });
 
-    it('shows "Closing" and disables the button while the valve is closing', () => {
+    it('shows "Closing" and offers "Close" again, never "Open", while the valve is closing', () => {
       mockDevice = makeValve(Valve.VALVESTATE_CLOSING);
       render(<OpenCloseValve address={ADDRESS} />);
-      expect(getButton()).toHaveTextContent('Closing');
-      expect(getButton()).toBeDisabled();
+      expect(queryStateText()).toHaveTextContent('Closing');
+      expect(getButton()).toHaveTextContent('Close');
+      expect(getButton()).toBeEnabled();
     });
 
-    it('shows "Opening" and disables the button while the valve is opening', () => {
+    it('shows "Opening" and keeps "Close" available while the valve is opening', () => {
       mockDevice = makeValve(Valve.VALVESTATE_OPENING);
       render(<OpenCloseValve address={ADDRESS} />);
-      expect(getButton()).toHaveTextContent('Opening');
-      expect(getButton()).toBeDisabled();
+      expect(queryStateText()).toHaveTextContent('Opening');
+      expect(getButton()).toHaveTextContent('Close');
+      expect(getButton()).toBeEnabled();
     });
 
-    it('shows "Obstructed" and disables the button when the valve is obstructed', () => {
+    it('shows "Obstructed" with a visible explanation and keeps "Close" available', () => {
       mockDevice = makeValve(Valve.VALVESTATE_OBSTRUCTION);
       render(<OpenCloseValve address={ADDRESS} />);
-      expect(getButton()).toHaveTextContent('Obstructed');
-      expect(getButton()).toBeDisabled();
-      expect(getButton()).toHaveAttribute('title', expect.stringContaining('Obstruction detected'));
+      expect(queryStateText()).toHaveTextContent('Obstructed');
+      expect(getButton()).toHaveTextContent('Close');
+      expect(getButton()).toBeEnabled();
+      expect(queryHint()).toBeVisible();
+      expect(queryHint()).toHaveTextContent('Try Close again');
+      expect(getButton()).toHaveAccessibleDescription(/Try Close again/);
     });
   });
 
@@ -121,14 +139,27 @@ describe('OpenCloseValve', () => {
       });
     });
 
-    it('disables the button while the request is in flight and re-enables it afterwards', async () => {
-      let resolve: (value: unknown) => void = () => {};
-      mockSetAttribute.mockReturnValue(new Promise((r) => { resolve = r; }));
+    it.each([
+      Valve.VALVESTATE_CLOSING,
+      Valve.VALVESTATE_OPENING,
+      Valve.VALVESTATE_OBSTRUCTION,
+      'STUCK',
+    ])('sends CLOSED when clicked in the %s state', async (state) => {
+      mockDevice = makeValve(state);
       render(<OpenCloseValve address={ADDRESS} />);
       fireEvent.click(getButton());
       await waitFor(() => {
-        expect(getButton()).toHaveTextContent('...');
+        expect(mockSetAttribute).toHaveBeenCalledWith(Valve.ATTR_VALVESTATE, Valve.VALVESTATE_CLOSED);
       });
+      expect(mockSetAttribute).toHaveBeenCalledTimes(1);
+    });
+
+    it('disables the button while the request is in flight and re-enables it afterwards', async () => {
+      let resolve: (value: SetAttributesResponse) => void = () => {};
+      mockSetAttribute.mockReturnValue(new Promise<SetAttributesResponse>((r) => { resolve = r; }));
+      render(<OpenCloseValve address={ADDRESS} />);
+      fireEvent.click(getButton());
+      expect(getButton()).toHaveTextContent('...');
       expect(getButton()).toBeDisabled();
 
       resolve({});
@@ -164,25 +195,22 @@ describe('OpenCloseValve', () => {
         });
       });
     });
-
-    it.each([
-      Valve.VALVESTATE_CLOSING,
-      Valve.VALVESTATE_OPENING,
-      Valve.VALVESTATE_OBSTRUCTION,
-    ])('does not send anything when clicked in the %s state', (state) => {
-      mockDevice = makeValve(state);
-      render(<OpenCloseValve address={ADDRESS} />);
-      fireEvent.click(getButton());
-      expect(mockSetAttribute).not.toHaveBeenCalled();
-    });
   });
 
   describe('edge cases', () => {
-    it('disables the control when the valve state is unknown', () => {
+    it('offers "Close" when the valve state is unknown', () => {
       mockDevice = makeValve();
       render(<OpenCloseValve address={ADDRESS} />);
-      expect(getButton()).toHaveTextContent('Unknown');
-      expect(getButton()).toBeDisabled();
+      expect(queryStateText()).toHaveTextContent('Unknown');
+      expect(getButton()).toHaveTextContent('Close');
+      expect(getButton()).toBeEnabled();
+    });
+
+    it('treats an inherited property name as an unknown state', () => {
+      mockDevice = makeValve('toString');
+      render(<OpenCloseValve address={ADDRESS} />);
+      expect(queryStateText()).toHaveTextContent('Unknown');
+      expect(getButton()).toHaveTextContent('Close');
     });
 
     it('disables the control when the device is not in the store', () => {
