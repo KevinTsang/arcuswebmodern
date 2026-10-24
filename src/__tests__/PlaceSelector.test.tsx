@@ -106,16 +106,19 @@ describe('PlaceSelector', () => {
     });
   });
 
-  it('displays role for each place', async () => {
+  it('displays a readable role label for each place', async () => {
     mockListAvailablePlaces.mockResolvedValue({
       places: [
         { placeId: 'place-1', name: 'Home', role: 'OWNER' },
+        { placeId: 'place-2', name: 'Cabin', role: 'FULL_ACCESS' },
       ],
     });
     render(<PlaceSelector />);
     await waitFor(() => {
-      expect(screen.getByText('OWNER')).toBeInTheDocument();
+      expect(screen.getByText('Owner')).toBeInTheDocument();
+      expect(screen.getByText('Full Access')).toBeInTheDocument();
     });
+    expect(screen.queryByText('FULL_ACCESS')).not.toBeInTheDocument();
   });
 
   it('dispatches switchPlaceThunk when a different place is clicked', async () => {

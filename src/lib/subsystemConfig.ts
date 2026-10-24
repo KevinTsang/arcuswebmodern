@@ -6,7 +6,7 @@
  */
 
 import {
-  AlarmSubsystem, CamerasSubsystem, CareSubsystem, ClimateSubsystem, DoorsNLocksSubsystem,
+  Alarm, AlarmIncident, AlarmSubsystem, CamerasSubsystem, CareSubsystem, ClimateSubsystem, DoorsNLocksSubsystem,
   LawnNGardenSubsystem, LightsNSwitchesSubsystem, PairingSubsystem, PresenceSubsystem,
   SafetySubsystem, SecuritySubsystem, WaterSubsystem,
 } from '@arcus/core';
@@ -36,6 +36,17 @@ export interface SubsystemConfigEntry {
   deviceAttributes: readonly string[];
 }
 
+/** Alert types whose `Alarm` instances on the alarm subsystem list participating devices. */
+const ALARM_ALERT_TYPES = [
+  AlarmIncident.ALERT_SECURITY,
+  AlarmIncident.ALERT_PANIC,
+  AlarmIncident.ALERT_SMOKE,
+  AlarmIncident.ALERT_CO,
+  AlarmIncident.ALERT_WATER,
+] as const;
+
+const ALARM_DEVICE_ATTRIBUTES = ALARM_ALERT_TYPES.map((alert) => `${Alarm.ATTR_DEVICES}:${alert}`);
+
 /**
  * Ordered list of visible subsystems for the services page sidebar.
  */
@@ -47,7 +58,9 @@ export const subsystemConfigs: SubsystemConfigEntry[] = [
     namespace: AlarmSubsystem.NAMESPACE,
     visible: true,
     hasCustomView: true,
-    deviceAttributes: [SecuritySubsystem.ATTR_SECURITYDEVICES, SafetySubsystem.ATTR_TOTALDEVICES],
+    // The alarm subsystem carries one `Alarm` capability instance per alert type;
+    // each instance's `alarm:devices:<ALERT>` lists the devices that can raise it.
+    deviceAttributes: ALARM_DEVICE_ATTRIBUTES,
   },
   {
     name: 'Cameras',

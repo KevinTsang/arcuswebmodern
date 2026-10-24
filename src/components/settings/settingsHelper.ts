@@ -16,3 +16,16 @@ export function formatServiceLevel(level: string | undefined | null): string {
       return level ?? '—';
   }
 }
+
+export function formatRole(role: string): string {
+  switch (role) {
+    case 'OWNER':
+      return 'Owner';
+    case 'FULL_ACCESS':
+      return 'Full Access';
+    case 'HOBBIT':
+      return 'Partial Access';
+    default:
+      return role || '—';
+  }
+}

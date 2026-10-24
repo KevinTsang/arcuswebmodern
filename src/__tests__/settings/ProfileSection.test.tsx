@@ -63,10 +63,10 @@ describe('ProfileSection', () => {
     expect(screen.getByText('Premium')).toBeInTheDocument();
   });
 
-  it('shows account state', () => {
+  it('does not show the account sign-up state', () => {
     render(<ProfileSection />);
-    expect(screen.getByText('Account')).toBeInTheDocument();
-    expect(screen.getByText('ACTIVE')).toBeInTheDocument();
+    expect(screen.queryByText('Account State')).not.toBeInTheDocument();
+    expect(screen.queryByText('ACTIVE')).not.toBeInTheDocument();
   });
 
   it('opens ContactInfoPanel on Edit click', () => {

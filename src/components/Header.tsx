@@ -14,6 +14,8 @@ import { Person } from '@arcus/core';
 import { useAppSelector } from '@/store/hooks';
 import { useSidePanel } from '@/components/SidePanel';
 import PlaceSelector from '@/components/PlaceSelector';
+import { ArcusLogo } from '@/components/shared/ArcusLogo';
+import { testIdSlug } from '@/lib/testId';
 
 const NAV_LINKS = [
   { href: '/home', label: 'Dashboard', matchPrefix: '/home' },
@@ -65,7 +67,8 @@ export default function Header() {
         </button>
 
         {/* Logo */}
-        <Link href="/home" className="font-bold text-lg text-peacock mr-8 flex-shrink-0">
+        <Link href="/home" data-testid="header-home-link" className="flex items-center gap-2 font-bold text-lg text-peacock mr-8 flex-shrink-0">
+          <ArcusLogo className="w-7 h-7" />
           Arcus
         </Link>
 
@@ -77,6 +80,8 @@ export default function Header() {
               <Link
                 key={link.href}
                 href={link.href}
+                data-testid={`header-nav-${testIdSlug(link.label)}`}
+                aria-current={isActive ? 'page' : undefined}
                 className={`
                   px-3 py-1.5 rounded-[var(--border-radius-base)] text-sm font-medium
                   transition-colors
@@ -116,10 +121,11 @@ export default function Header() {
       {mobileNavOpen && (
         <>
           <div
+            data-testid="header-mobile-backdrop"
             className="fixed inset-0 bg-raven/30 z-[calc(var(--z-navbar)-1)] md:hidden"
             onClick={closeMobileNav}
           />
-          <nav className="fixed top-0 left-0 h-full w-64 bg-crane shadow-xl z-[var(--z-navbar)] md:hidden">
+          <nav data-testid="header-mobile-nav" className="fixed top-0 left-0 h-full w-64 bg-crane shadow-xl z-[var(--z-navbar)] md:hidden">
             <div className="flex items-center justify-between p-4 border-b border-heron">
               <span className="font-bold text-lg text-peacock">Arcus</span>
               <button
@@ -138,6 +144,8 @@ export default function Header() {
                     <Link
                       href={link.href}
                       onClick={closeMobileNav}
+                      data-testid={`header-mobile-nav-${testIdSlug(link.label)}`}
+                      aria-current={isActive ? 'page' : undefined}
                       className={`
                         block px-3 py-2.5 rounded-[var(--border-radius-base)] text-sm font-medium
                         transition-colors

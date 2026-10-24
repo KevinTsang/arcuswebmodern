@@ -49,7 +49,9 @@ function DevicePanelInner({ address }: DevicePanelProps) {
   const on = isDeviceOn(device, config);
   const panelAction = config['web:panel:action'];
   const isFav = isFavorite(device);
-  const hasErrors = !!(device[DeviceAdvanced.ATTR_ERRORS] as Record<string, string> | undefined);
+  // Z-Wave drivers report devadv:errors as an empty map when there are no errors.
+  const errors = device[DeviceAdvanced.ATTR_ERRORS] as Record<string, string> | undefined;
+  const hasErrors = !!errors && Object.keys(errors).length > 0;
 
   const handleStartRename = () => {
     setNameValue(name);
