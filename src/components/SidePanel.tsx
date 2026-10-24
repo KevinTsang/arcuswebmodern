@@ -32,6 +32,9 @@ interface SidePanelState {
   rightContent: ReactNode | null;
   leftExpanded: boolean;
   rightExpanded: boolean;
+  /** Changes on every open, so the overlay remounts the content. */
+  leftKey: number;
+  rightKey: number;
 }
 
 interface SidePanelActions {
@@ -65,6 +68,12 @@ export function SidePanelProvider({ children }: { children: ReactNode }) {
   const [rightContent, setRightContent] = useState<ReactNode | null>(null);
   const [leftExpanded, setLeftExpanded] = useState(false);
   const [rightExpanded, setRightExpanded] = useState(false);
+  // Bumped on every open so each open mounts fresh content. Without it,
+  // opening a panel of the same type (e.g. Edit on a second place card)
+  // reuses the first instance and keeps its form state, so Save writes the
+  // first item's values onto the second.
+  const [leftKey, setLeftKey] = useState(0);
+  const [rightKey, setRightKey] = useState(0);
   const pathname = usePathname();
 
   // Close panels on route change (matches original behavior in app.js page setter)
@@ -77,10 +86,12 @@ export function SidePanelProvider({ children }: { children: ReactNode }) {
 
   const openLeft = useCallback((content: ReactNode) => {
     setLeftContent(content);
+    setLeftKey((k) => k + 1);
   }, []);
 
   const openRight = useCallback((content: ReactNode) => {
     setRightContent(content);
+    setRightKey((k) => k + 1);
   }, []);
 
   const closeLeft = useCallback(() => {
@@ -111,6 +122,8 @@ export function SidePanelProvider({ children }: { children: ReactNode }) {
       rightContent,
       leftExpanded,
       rightExpanded,
+      leftKey,
+      rightKey,
       openLeft,
       openRight,
       closeLeft,
@@ -126,6 +139,8 @@ export function SidePanelProvider({ children }: { children: ReactNode }) {
       rightContent,
       leftExpanded,
       rightExpanded,
+      leftKey,
+      rightKey,
       openLeft,
       openRight,
       closeLeft,
@@ -154,6 +169,8 @@ function SidePanelOverlay() {
     rightContent,
     leftExpanded,
     rightExpanded,
+    leftKey,
+    rightKey,
     closeLeft,
     closeRight,
   } = useSidePanel();
@@ -194,7 +211,7 @@ function SidePanelOverlay() {
             >
               &times;
             </button>
-            <div className="p-6 pt-14">{leftContent}</div>
+            <div key={leftKey} className="p-6 pt-14">{leftContent}</div>
           </div>
         )}
       </div>
@@ -218,7 +235,7 @@ function SidePanelOverlay() {
             >
               &times;
             </button>
-            <div data-testid="side-panel-right" className="p-6 pt-14">{rightContent}</div>
+            <div key={rightKey} data-testid="side-panel-right" className="p-6 pt-14">{rightContent}</div>
           </div>
         )}
       </div>
