@@ -58,7 +58,8 @@ const authSlice = createSlice({
     // Keep the signed-in person current when the platform reports a change
     // to them (e.g. after editing contact info).
     builder.addCase(personUpdated, (state, action) => {
-      if (state.person && state.person[Base.ATTR_ADDRESS] === action.payload[Base.ATTR_ADDRESS]) {
+      // Match on personId: base:address is missing if the person fetch failed.
+      if (state.person && action.payload[Base.ATTR_ADDRESS] === `SERV:person:${state.person.personId}`) {
         Object.assign(state.person, action.payload);
       }
     });

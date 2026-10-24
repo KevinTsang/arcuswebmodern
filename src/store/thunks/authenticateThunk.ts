@@ -46,15 +46,6 @@ export const authenticateThunk = createAsyncThunk(
 
       const { personId, places = [] } = session;
 
-      // SessionCreated only carries personId, not name/email/phone. Start the
-      // person fetch now (it doesn't need the active place, as in arcusweb's
-      // app.js); it's optional, so a failure falls back to the session payload.
-      const personRequest = Bridge.request<PersonData>(Base.CMD_GETATTRIBUTES, `SERV:person:${personId}`, {})
-        .catch((e) => {
-          console.error('Failed to load person attributes:', e);
-          return null;
-        });
-
       // Determine default place (same logic as arcusweb PlaceManager)
       const placeId = getDefaultPlaceId(places, personId);
 
@@ -62,6 +53,16 @@ export const authenticateThunk = createAsyncThunk(
         // Scope the platform session to this place
         await SessionService.SetActivePlace(placeId);
       }
+
+      // SessionCreated only carries personId, not name/email/phone. The person
+      // request can fail if it reaches the platform before the session has an
+      // active place, so fetch it now, alongside the account. It's optional:
+      // a failure falls back to the session payload.
+      const personRequest = Bridge.request<PersonData>(Base.CMD_GETATTRIBUTES, `SERV:person:${personId}`, {})
+        .catch((e) => {
+          console.error('Failed to load person attributes:', e);
+          return null;
+        });
 
       // Fetch the account object for the selected place
       const selectedPlace = places.find((p) => p.placeId === placeId);

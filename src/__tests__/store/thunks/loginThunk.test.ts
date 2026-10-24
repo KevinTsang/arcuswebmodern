@@ -233,6 +233,26 @@ describe('loginThunk', () => {
     expect(success.payload.person).toEqual({ ...sessionPayload, ...personData });
   });
 
+  it('requests the person only after the active place is set', async () => {
+    const calls: string[] = [];
+    mockSetActivePlace.mockImplementationOnce((placeId: string) => {
+      calls.push(`SetActivePlace ${placeId}`);
+      return Promise.resolve({});
+    });
+    mockBridgeRequest.mockImplementation((_cmd: string, address: string) => {
+      calls.push(address);
+      return Promise.resolve({});
+    });
+    mockLogin.mockImplementation(() => {
+      emitAuth('authentication:success', sessionPayload);
+      return Promise.resolve();
+    });
+
+    await loginThunk(creds)(dispatch, () => ({}), undefined);
+
+    expect(calls).toEqual(['SetActivePlace place-1', 'SERV:person:person-1', 'SERV:account:acc-1']);
+  });
+
   it('still succeeds with the session data when the person fetch fails', async () => {
     const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
     mockAttributes({ person: new Error('fail') });
