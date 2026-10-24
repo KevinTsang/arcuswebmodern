@@ -668,6 +668,13 @@ These are commonly used features that users will expect:
     `src/components/login/` (sharing the validation constraints from a
     `constraints.ts`), keep `page.tsx` as the thin `?view=` router + layout, and
     give each component its own test file.
+26. ~~**Fix the Alarms `deviceAttributes` in `subsystemConfig`**~~ — **DONE.**
+    The Alarms entry listed `subsecurity:securityDevices` / `subsafety:totalDevices`
+    under the `subalarm` namespace, so `useSubsystemDevices('subalarm')` found no
+    devices. Fixed the same way as Lights & Switches and Water: it now points at
+    device lists that live on the alarm subsystem itself — the per-alert `Alarm`
+    capability instances, `alarm:devices:<SECURITY|PANIC|SMOKE|CO|WATER>`.
+    Covered by `src/__tests__/hooks/useSubsystem.test.ts`.
 
 ---
 

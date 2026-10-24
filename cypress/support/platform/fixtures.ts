@@ -10,7 +10,7 @@
  */
 
 import {
-  Account, AlarmSubsystem, Base, CamerasSubsystem, CareSubsystem, ClimateSubsystem, Contact,
+  Account, Alarm, AlarmSubsystem, Base, CamerasSubsystem, CareSubsystem, ClimateSubsystem, Contact,
   Device, DeviceAdvanced, DeviceConnection, DevicePower, Dimmer, DoorLock, DoorsNLocksSubsystem,
   Hub, HubAdvanced, HubConnection, HubZwave, IrrigationController, LawnNGardenSubsystem, LeakH2O,
   LightsNSwitchesSubsystem, Motion, PairingSubsystem, Person, Place, PresenceSubsystem, Product,
@@ -224,6 +224,8 @@ export function createFixture(): PlatformData {
         { person: addr.guest, enabled: false },
       ],
       [AlarmSubsystem.ATTR_AVAILABLEALERTS]: ['SECURITY', 'SMOKE', 'CO', 'WATER', 'PANIC'],
+      [`${Alarm.ATTR_DEVICES}:SECURITY`]: [DEVICE.frontDoor, DEVICE.motion],
+      [`${Alarm.ATTR_DEVICES}:WATER`]: [DEVICE.leak],
       [AlarmSubsystem.ATTR_ACTIVEALERTS]: [],
       [AlarmSubsystem.ATTR_RECORDONSECURITY]: false,
       [AlarmSubsystem.ATTR_FANSHUTOFFONSMOKE]: true,
