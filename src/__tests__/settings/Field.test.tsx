@@ -29,6 +29,25 @@ describe('Field', () => {
     expect(screen.getByRole('textbox')).toHaveAttribute('type', 'text');
   });
 
+  it('shows no error by default', () => {
+    render(<Field label="First Name" value="" onChange={jest.fn()} />);
+    expect(screen.queryByTestId('field-first-name-error')).not.toBeInTheDocument();
+    expect(screen.getByTestId('field-first-name')).not.toHaveAttribute('aria-invalid');
+  });
+
+  it('renders the error message and marks the input invalid', () => {
+    render(<Field label="First Name" value="" onChange={jest.fn()} error="can't be blank" />);
+    expect(screen.getByTestId('field-first-name-error')).toHaveTextContent("can't be blank");
+    expect(screen.getByTestId('field-first-name')).toHaveAttribute('aria-invalid', 'true');
+  });
+
+  it('calls onBlur when the input loses focus', () => {
+    const handleBlur = jest.fn();
+    render(<Field label="Name" value="" onChange={jest.fn()} onBlur={handleBlur} />);
+    fireEvent.blur(screen.getByRole('textbox'));
+    expect(handleBlur).toHaveBeenCalled();
+  });
+
   it('applies custom type', () => {
     const { container } = render(<Field label="Password" value="" onChange={jest.fn()} type="password" />);
     const input = container.querySelector('input');

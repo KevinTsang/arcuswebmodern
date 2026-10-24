@@ -33,6 +33,8 @@ interface ExclusionRule {
 interface CustomRule {
   oneLetterOneNumber?: true;
   noSpaces?: true;
+  /** A US phone number: exactly 10 digits, any formatting (legacy `phoneNumber` validator). */
+  phoneNumber?: true;
 }
 
 type ValidationRule = Partial<
@@ -95,6 +97,12 @@ function validateField(
   if (rule.noSpaces) {
     if (value.includes(' ')) {
       errors.push('cannot use spaces');
+    }
+  }
+
+  if (rule.phoneNumber) {
+    if ((value.match(/\d/g) ?? []).length !== 10) {
+      errors.push('must be a valid phone number');
     }
   }
 

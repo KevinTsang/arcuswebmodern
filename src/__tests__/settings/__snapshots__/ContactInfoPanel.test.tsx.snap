@@ -1,0 +1,154 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`ContactInfoPanel rendering matches snapshot 1`] = `
+<div
+  class="p-4 space-y-4"
+>
+  <h3
+    class="text-lg font-semibold text-swift"
+    data-testid="contact-panel-title"
+  >
+    Edit Contact Info
+  </h3>
+  <div>
+    <label
+      class="block text-sm text-grouse mb-1"
+    >
+      First Name
+    </label>
+    <input
+      class="w-full border border-heron rounded-[var(--border-radius-base)] px-3 py-2 text-sm text-swift focus:outline-none focus:border-peacock"
+      data-testid="field-first-name"
+      type="text"
+      value="John"
+    />
+  </div>
+  <div>
+    <label
+      class="block text-sm text-grouse mb-1"
+    >
+      Last Name
+    </label>
+    <input
+      class="w-full border border-heron rounded-[var(--border-radius-base)] px-3 py-2 text-sm text-swift focus:outline-none focus:border-peacock"
+      data-testid="field-last-name"
+      type="text"
+      value="Doe"
+    />
+  </div>
+  <div>
+    <label
+      class="block text-sm text-grouse mb-1"
+    >
+      Phone
+    </label>
+    <input
+      class="w-full border border-heron rounded-[var(--border-radius-base)] px-3 py-2 text-sm text-swift focus:outline-none focus:border-peacock"
+      data-testid="field-phone"
+      type="tel"
+      value="5551234567"
+    />
+  </div>
+  <p
+    class="text-xs text-grouse"
+  >
+    Email cannot be changed here.
+  </p>
+  <div
+    class="flex gap-2 pt-2"
+  >
+    <button
+      class="px-4 py-2 bg-peacock text-crane rounded-[var(--border-radius-base)] text-sm font-medium hover:bg-peacock/90 disabled:opacity-50"
+      data-testid="contact-save"
+      disabled=""
+    >
+      Save
+    </button>
+    <button
+      class="px-4 py-2 border border-heron rounded-[var(--border-radius-base)] text-sm text-coot hover:bg-pigeon"
+    >
+      Cancel
+    </button>
+  </div>
+</div>
+`;
+
+exports[`ContactInfoPanel rendering matches snapshot when loading fails 1`] = `
+<div
+  class="p-4 space-y-4"
+>
+  <h3
+    class="text-lg font-semibold text-swift"
+    data-testid="contact-panel-title"
+  >
+    Edit Contact Info
+  </h3>
+  <div
+    class="space-y-2"
+  >
+    <p
+      class="text-sm text-cardinal"
+      data-testid="contact-load-error"
+    >
+      Unable to load your contact info.
+    </p>
+    <button
+      class="text-sm text-peacock hover:underline"
+      data-testid="contact-retry"
+    >
+      Try again
+    </button>
+  </div>
+  <div
+    class="flex gap-2 pt-2"
+  >
+    <button
+      class="px-4 py-2 bg-peacock text-crane rounded-[var(--border-radius-base)] text-sm font-medium hover:bg-peacock/90 disabled:opacity-50"
+      data-testid="contact-save"
+      disabled=""
+    >
+      Save
+    </button>
+    <button
+      class="px-4 py-2 border border-heron rounded-[var(--border-radius-base)] text-sm text-coot hover:bg-pigeon"
+    >
+      Cancel
+    </button>
+  </div>
+</div>
+`;
+
+exports[`ContactInfoPanel rendering matches snapshot while loading 1`] = `
+<div
+  class="p-4 space-y-4"
+>
+  <h3
+    class="text-lg font-semibold text-swift"
+    data-testid="contact-panel-title"
+  >
+    Edit Contact Info
+  </h3>
+  <p
+    class="text-sm text-grouse"
+    data-testid="contact-loading"
+  >
+    Loading contact info…
+  </p>
+  <div
+    class="flex gap-2 pt-2"
+  >
+    <button
+      class="px-4 py-2 bg-peacock text-crane rounded-[var(--border-radius-base)] text-sm font-medium hover:bg-peacock/90 disabled:opacity-50"
+      data-testid="contact-save"
+      disabled=""
+    >
+      Save
+    </button>
+    <button
+      class="px-4 py-2 border border-heron rounded-[var(--border-radius-base)] text-sm text-coot hover:bg-pigeon"
+    >
+      Cancel
+    </button>
+  </div>
+</div>
+`;

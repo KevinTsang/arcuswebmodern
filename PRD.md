@@ -446,6 +446,7 @@ None.
 
 ### Gaps
 
+- ~~**Bug:** Saving Profile → Edit Contact Info could blank the user's first and last name.~~ **DONE.** The form was seeded from `auth.person` (often just the session payload, with no names) and always wrote all three fields. `ContactInfoPanel` now loads the person with `base:GetAttributes` and stays disabled until that succeeds (error state + retry on failure), requires trimmed first/last names and a 10-digit phone (legacy rules, via `useFormValidation`'s new `phoneNumber` rule), and sends only the fields that changed, trimmed.
 - Billing and subscription management is entirely absent.
 - Notification preferences and call tree management.
 - Account-level features (email management, phone verification, security questions, account deletion).

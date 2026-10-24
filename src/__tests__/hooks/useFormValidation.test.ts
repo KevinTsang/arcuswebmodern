@@ -68,6 +68,39 @@ describe('useFormValidation', () => {
     expect(result.current.errors['password']).toContain('cannot use spaces');
   });
 
+  describe('phoneNumber', () => {
+    const phoneConstraints: ValidationConstraints = { phone: { presence: true, phoneNumber: true } };
+
+    it.each(['5551234567', '(555) 123-4567', '555-123-4567'])('accepts %s', (phone) => {
+      const { result } = renderHook(() => useFormValidation(phoneConstraints));
+      let valid: boolean;
+      act(() => {
+        valid = result.current.formValidates(['phone'], { phone });
+      });
+      expect(valid!).toBe(true);
+      expect(result.current.errors['phone']).toBeUndefined();
+    });
+
+    it.each(['555-1234', '15551234567', 'not a number'])('rejects %s', (phone) => {
+      const { result } = renderHook(() => useFormValidation(phoneConstraints));
+      let valid: boolean;
+      act(() => {
+        valid = result.current.formValidates(['phone'], { phone });
+      });
+      expect(valid!).toBe(false);
+      expect(result.current.errors['phone']).toEqual(['must be a valid phone number']);
+    });
+
+    it('skips the format check for an empty optional phone', () => {
+      const { result } = renderHook(() => useFormValidation({ phone: { phoneNumber: true } }));
+      let valid: boolean;
+      act(() => {
+        valid = result.current.formValidates(['phone'], { phone: '' });
+      });
+      expect(valid!).toBe(true);
+    });
+  });
+
   it('validates password equality', () => {
     const { result } = renderHook(() => useFormValidation(constraints));
     act(() => {
