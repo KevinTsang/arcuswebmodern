@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { Base, Place } from '@arcus/core';
 import AddPersonPanel from '@/components/settings/AddPersonPanel';
 import type { PlaceData } from '@/store/entityTypes';
@@ -241,6 +241,37 @@ describe('AddPersonPanel – interactions', () => {
     render(<AddPersonPanel {...defaultProps} />);
     fireEvent.click(screen.getByText('Cancel'));
     expect(mockCloseRight).toHaveBeenCalled();
+  });
+
+  it('does not close or toast once the panel is gone when the send succeeds', async () => {
+    let finishSend: () => void = () => {};
+    commandHandlers.set(Place.CMD_SENDINVITATION, () => new Promise<void>((resolve) => { finishSend = resolve; }));
+    const onSent = jest.fn();
+    const { unmount } = render(<AddPersonPanel {...defaultProps} onSent={onSent} />);
+    fillAndSubmit();
+    await waitFor(() => expect(mockBridgeRequest).toHaveBeenCalledTimes(2));
+
+    unmount();
+    await act(async () => finishSend());
+
+    expect(onSent).toHaveBeenCalled();
+    expect(mockCloseRight).not.toHaveBeenCalled();
+    expect(mockDispatch).not.toHaveBeenCalled();
+  });
+
+  it('does not toast once the panel is gone when the send fails', async () => {
+    let failSend: () => void = () => {};
+    commandHandlers.set(Place.CMD_SENDINVITATION, () =>
+      new Promise<void>((_, reject) => { failSend = () => reject(new Error('fail')); }),
+    );
+    const { unmount } = render(<AddPersonPanel {...defaultProps} />);
+    fillAndSubmit();
+    await waitFor(() => expect(mockBridgeRequest).toHaveBeenCalledTimes(2));
+
+    unmount();
+    await act(async () => failSend());
+
+    expect(mockDispatch).not.toHaveBeenCalled();
   });
 
   it('calls onSent callback after successful send', async () => {

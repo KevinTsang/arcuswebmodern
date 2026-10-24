@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import Bridge from '@arcus/core/bridge';
 import { Place } from '@arcus/core';
 import type { CreateInvitationResponse } from '@/arcus/types';
@@ -32,6 +32,14 @@ export default function AddPersonPanel({ placeId, placeName, onSent }: AddPerson
   const [pleaseDescribe, setPleaseDescribe] = useState('');
   const [sending, setSending] = useState(false);
 
+  // False once this panel is replaced or closed, so a send that finishes
+  // later doesn't close (or toast over) whatever the side panel shows now.
+  const mountedRef = useRef(false);
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => { mountedRef.current = false; };
+  }, []);
+
   const placeAddress = `SERV:place:${placeId}`;
 
   const relationship = relationshipTag === 'people_service_other'
@@ -39,7 +47,7 @@ export default function AddPersonPanel({ placeId, placeName, onSent }: AddPerson
     : relationshipTag || 'OTHER';
 
   const handleSend = useCallback(async () => {
-    if (!placeId || !inviteEmail.trim()) return;
+    if (!inviteEmail.trim()) return;
     setSending(true);
     try {
       const { invitation } = await Bridge.request<CreateInvitationResponse>(Place.CMD_CREATEINVITATION, placeAddress, {
@@ -49,15 +57,17 @@ export default function AddPersonPanel({ placeId, placeName, onSent }: AddPerson
         relationship,
       });
       await Bridge.request(Place.CMD_SENDINVITATION, placeAddress, { invitation });
-      dispatch(addNotification({ type: 'success', message: 'Invitation sent!' }));
       onSent?.();
+      if (!mountedRef.current) return;
+      dispatch(addNotification({ type: 'success', message: 'Invitation sent!' }));
       closeRight();
     } catch {
+      if (!mountedRef.current) return;
       dispatch(addNotification({ type: 'error', message: 'Failed to send invitation.' }));
     } finally {
       setSending(false);
     }
-  }, [placeId, placeAddress, firstName, lastName, inviteEmail, relationship, dispatch, closeRight, onSent]);
+  }, [placeAddress, firstName, lastName, inviteEmail, relationship, dispatch, closeRight, onSent]);
 
   return (
     <div className="p-4 space-y-4">

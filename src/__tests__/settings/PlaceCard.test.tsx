@@ -1,5 +1,5 @@
 import type { ReactElement } from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { Base, Person, Place } from '@arcus/core';
 import PlaceCard from '@/components/settings/PlaceCard';
 import type { PlaceWithPeople } from '@/components/settings/types';
@@ -56,7 +56,7 @@ function makePlace(overrides: Partial<PlaceWithPeople> = {}): PlaceWithPeople {
       [Place.ATTR_NAME]: 'Lake House',
       [Place.ATTR_STREETADDRESS1]: '1 Shore Rd',
       [Place.ATTR_CITY]: 'Tahoe',
-      [Place.ATTR_SERVICELEVEL]: 'PREMIUM',
+      [Place.ATTR_SERVICELEVEL]: Place.SERVICELEVEL_PREMIUM,
     },
     people: [
       {
@@ -84,6 +84,19 @@ function renderOpenedPanel() {
   expect(mockOpenRight).toHaveBeenCalledTimes(1);
   return render(mockOpenRight.mock.calls[0][0] as ReactElement);
 }
+
+/** The element most recently pushed into the side panel. */
+function lastOpenedPanel(): ReactElement {
+  return mockOpenRight.mock.calls[mockOpenRight.mock.calls.length - 1][0] as ReactElement;
+}
+
+/** An owned "Home" card shown next to the Lake House card. */
+const homePlace = makePlace({
+  placeId: 'place-home',
+  name: 'Home',
+  placeData: activePlace,
+  people: [],
+});
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -208,6 +221,60 @@ describe('PlaceCard – invite', () => {
 
     renderOpenedPanel();
     expect(screen.getByTestId('invite-panel-place')).toHaveTextContent('Send an invitation to join Unnamed Place.');
+  });
+});
+
+describe('PlaceCard – invite from more than one card', () => {
+  function renderBothCards() {
+    render(
+      <>
+        <PlaceCard {...defaultProps} />
+        <PlaceCard {...defaultProps} place={homePlace} isActive />
+      </>,
+    );
+  }
+
+  it("opens a fresh form for another card's place", () => {
+    renderBothCards();
+    fireEvent.click(screen.getByTestId('place-invite-place-lake'));
+    // The side panel renders each opened element in the same slot.
+    const panel = render(lastOpenedPanel());
+    fireEvent.change(screen.getByPlaceholderText('person@example.com'), { target: { value: 'jane@x.com' } });
+
+    fireEvent.click(screen.getByTestId('place-invite-place-home'));
+    panel.rerender(lastOpenedPanel());
+
+    expect(screen.getByTestId('invite-panel-place')).toHaveTextContent('Send an invitation to join Home.');
+    expect(screen.getByPlaceholderText('person@example.com')).toHaveValue('');
+    expect(screen.getByTestId('invite-send')).toBeDisabled();
+  });
+
+  it("does not close or toast over the new card's panel when the earlier send finishes", async () => {
+    let finishSend: () => void = () => {};
+    mockBridgeRequest.mockImplementation((type: string) =>
+      type === Place.CMD_CREATEINVITATION
+        ? Promise.resolve({ invitation: { code: 'abc', inviteeEmail: 'jane@x.com' } })
+        : new Promise<void>((resolve) => { finishSend = resolve; }),
+    );
+    renderBothCards();
+    fireEvent.click(screen.getByTestId('place-invite-place-lake'));
+    const panel = render(lastOpenedPanel());
+    fireEvent.change(screen.getByPlaceholderText('person@example.com'), { target: { value: 'jane@x.com' } });
+    fireEvent.click(screen.getByTestId('invite-send'));
+    await waitFor(() =>
+      expect(mockBridgeRequest).toHaveBeenCalledWith(Place.CMD_SENDINVITATION, 'SERV:place:place-lake', expect.anything()),
+    );
+
+    fireEvent.click(screen.getByTestId('place-invite-place-home'));
+    panel.rerender(lastOpenedPanel());
+    await act(async () => finishSend());
+
+    expect(mockCloseRight).not.toHaveBeenCalled();
+    expect(mockDispatch).not.toHaveBeenCalled();
+    expect(screen.getByTestId('invite-panel-place')).toHaveTextContent('Send an invitation to join Home.');
+    expect(screen.getByTestId('invite-send')).toHaveTextContent('Send Invitation');
+    // The invitation did go out, so the places list still refreshes.
+    expect(defaultProps.onRefresh).toHaveBeenCalled();
   });
 });
 

@@ -99,3 +99,50 @@ exports[`ApiKeysPage – rendering matches snapshot 1`] = `
   </div>
 </div>
 `;
+
+exports[`ApiKeysPage – rendering matches snapshot for a place the user does not own 1`] = `
+<div
+  class="p-[var(--gutter)]"
+>
+  <div
+    class="flex items-center gap-3 mb-6"
+  >
+    <a
+      class="text-peacock hover:underline text-sm"
+      href="/settings"
+    >
+      Settings
+    </a>
+    <span
+      class="text-grouse text-sm"
+    >
+      /
+    </span>
+    <h2
+      class="text-[length:var(--font-size-h2)] font-[var(--heading-font-weight)] text-swift"
+      data-testid="apikeys-title"
+    >
+      API Keys
+    </h2>
+    <span
+      class="text-sm text-grouse"
+      data-testid="apikeys-place"
+    >
+      for 
+      <span
+        class="font-medium text-swift"
+      >
+        Cabin
+      </span>
+    </span>
+  </div>
+  <p
+    class="text-sm text-grouse"
+    data-testid="apikeys-not-owner"
+  >
+    Only the account owner can manage API keys
+     for Cabin
+    .
+  </p>
+</div>
+`;

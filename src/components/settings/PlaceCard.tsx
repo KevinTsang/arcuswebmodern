@@ -33,9 +33,11 @@ export default function PlaceCard({
   const placeName = place.name || 'Unnamed Place';
 
   // Invitations and API keys act on THIS card's place, not the active place.
+  // Keyed by place so another card's Invite opens a fresh form.
   const handleInvite = useCallback(() => {
     openRight(
       <AddPersonPanel
+        key={place.placeId}
         placeId={place.placeId}
         placeName={placeName}
         onSent={onRefresh}
