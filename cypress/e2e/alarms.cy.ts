@@ -1,5 +1,5 @@
 /**
- * PRD §7 — Alarms & Security: status, arm/disarm/partial, panic, incident
+ * PRD §7 — Alarms & Security: status, arm/disarm/partial, incident
  * tracker + banner + redirect, and the settings tab (general toggles, call
  * tree, per-mode delays and sounds, device participation).
  */
@@ -53,9 +53,9 @@ describe('Alarm status', () => {
     tid('alarm-state').should('have.text', 'Disarmed');
   });
 
-  it('triggers a panic alarm', () => {
-    tid('alarm-panic').click();
-    cy.expectRequest(AlarmSubsystem.CMD_PANIC, (r) => r.destination === ALARM);
+  it('does not offer a panic button', () => {
+    tid('alarm-state').should('have.text', 'Disarmed');
+    tid('alarm-panic').should('not.exist');
   });
 
   it('shows triggered devices during an alert', () => {
@@ -66,7 +66,6 @@ describe('Alarm status', () => {
     tid('alarm-state').should('have.text', 'ALERT!');
     tid('alarm-triggered').should('have.text', `Triggered: ${DEVICE_NAME.contact}`);
     tid(`alarm-device-status-${DEVICE.contact}`).should('have.text', 'Triggered');
-    tid('alarm-panic').should('not.exist');
   });
 
   it('switches to the settings tab through the route', () => {
