@@ -180,6 +180,15 @@ describe('loginThunk', () => {
     expect(dispatched).toContainEqual(loginFailed());
   });
 
+  it('removes its auth listeners when login() rejects', async () => {
+    mockLogin.mockRejectedValue(new Error('Login failed: 401'));
+
+    await loginThunk(creds)(dispatch, () => ({}), undefined).catch(() => {});
+
+    expect(authListeners['authentication:success']).toHaveLength(0);
+    expect(authListeners['authentication:fail']).toHaveLength(0);
+  });
+
   it('passes isPublic flag to auth.login', async () => {
     mockLogin.mockImplementation(() => {
       emitAuth('authentication:success', sessionPayload);

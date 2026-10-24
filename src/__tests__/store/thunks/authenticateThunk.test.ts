@@ -75,6 +75,7 @@ beforeEach(() => {
   dispatched.length = 0;
   mockBridgeRequest.mockResolvedValue({});
   mockAuthenticate.mockResolvedValue(undefined);
+  localStorage.clear();
 });
 
 describe('authenticateThunk', () => {
@@ -151,6 +152,26 @@ describe('authenticateThunk', () => {
     await authenticateThunk()(dispatch, () => ({}), undefined);
 
     expect(dispatched).toContainEqual(loginFailed());
+  });
+
+  it('removes its auth listeners when authenticate() rejects', async () => {
+    mockAuthenticate.mockRejectedValue(new Error('WebSocket error'));
+
+    await authenticateThunk()(dispatch, () => ({}), undefined);
+
+    expect(authListeners['authentication:success']).toHaveLength(0);
+    expect(authListeners['authentication:fail']).toHaveLength(0);
+  });
+
+  it('stores the placeId when the restore succeeds, like login', async () => {
+    mockAuthenticate.mockImplementation(() => {
+      emitAuth('authentication:success', sessionPayload);
+      return Promise.resolve();
+    });
+
+    await authenticateThunk()(dispatch, () => ({}), undefined);
+
+    expect(localStorage.getItem('arcus:placeId')).toBe('place-1');
   });
 
   it('returns { session, placeId } on success', async () => {
