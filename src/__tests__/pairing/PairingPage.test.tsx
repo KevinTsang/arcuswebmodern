@@ -1,7 +1,7 @@
-import { render, screen, waitFor } from '@testing-library/react';
-import { Base, Product, PairingDevice, PairingSubsystem } from '@arcus/core';
+import { act, render, screen, waitFor } from '@testing-library/react';
+import { Base, Device, Product, PairingDevice, PairingSubsystem } from '@arcus/core';
 import PairingPage from '@/app/(authenticated)/pairing/page';
-import type { ArcusEntity, SubsystemEntity } from '@/store/entityTypes';
+import type { ArcusEntity, PairingDevice as PairingDeviceData, SubsystemEntity } from '@/store/entityTypes';
 import type { PairingState } from '@/store/slices/pairingSlice';
 
 // ── Mocks ─────────────────────────────────────────────────────────────
@@ -48,12 +48,16 @@ jest.mock('@/store/slices/pairingSlice', () => ({
 }));
 
 // Capture subcomponent props to allow triggering callbacks in tests
+let capturedStepsProps: any = {};
 let capturedCustomizeProps: any = {};
 let capturedCompletedProps: any = {};
 
 jest.mock('@/components/pairing', () => ({
   StageIndicator: ({ stage }: any) => <div data-testid="stage-indicator">{stage}</div>,
-  StepsStage: () => <div data-testid="steps-stage">StepsStage</div>,
+  StepsStage: (props: any) => {
+    capturedStepsProps = props;
+    return <div data-testid="steps-stage">StepsStage</div>;
+  },
   SearchingStage: () => <div data-testid="searching-stage">SearchingStage</div>,
   CustomizeStage: (props: any) => {
     capturedCustomizeProps = props;
@@ -84,8 +88,68 @@ jest.mock('@/store/hooks', () => ({
   useAppDispatch: () => mockDispatch,
 }));
 
+// ── Helpers ───────────────────────────────────────────────────────────
+
+function pairingDevice(
+  id: string,
+  state: string,
+  customizations: string[] = [],
+): PairingDeviceData {
+  return {
+    [Base.ATTR_ADDRESS]: `SERV:pairdev:${id}`,
+    [PairingDevice.ATTR_PAIRINGSTATE]: state,
+    [PairingDevice.ATTR_PAIRINGPHASE]: state === PairingDevice.PAIRINGSTATE_PAIRED
+      ? PairingDevice.PAIRINGPHASE_PAIRED
+      : PairingDevice.PAIRINGPHASE_JOIN,
+    [PairingDevice.ATTR_DEVICEADDRESS]: `DRIV:dev:${id}`,
+    [PairingDevice.ATTR_CUSTOMIZATIONS]: customizations,
+  };
+}
+
+/**
+ * Route Bridge requests by command. Each ListPairingDevices call takes the next
+ * list from `lists` (the last one repeats); other commands resolve their entry
+ * in `responses`, or `{}`.
+ */
+function mockPlatform(lists: PairingDeviceData[][], responses: Record<string, object> = {}) {
+  let call = 0;
+  mockBridgeRequest.mockImplementation((command: string) => {
+    if (command === PairingSubsystem.CMD_LISTPAIRINGDEVICES) {
+      const devices = lists[Math.min(call, lists.length - 1)] ?? [];
+      call += 1;
+      return Promise.resolve({ devices });
+    }
+    return Promise.resolve(responses[command] ?? {});
+  });
+}
+
+function commandsSent(): string[] {
+  return mockBridgeRequest.mock.calls.map(([command]) => command);
+}
+
+function devicePairedDispatches() {
+  return mockDispatch.mock.calls
+    .map(([action]) => action)
+    .filter((action) => action.type === 'pairing/devicePaired');
+}
+
+/** Let pending Bridge promises settle without moving the clock. */
+async function settle() {
+  await act(async () => {
+    await jest.advanceTimersByTimeAsync(0);
+  });
+}
+
+/** Advance to the next 3 s ListPairingDevices poll and let it finish. */
+async function nextPoll() {
+  await act(async () => {
+    await jest.advanceTimersByTimeAsync(3000);
+  });
+}
+
 beforeEach(() => {
   jest.clearAllMocks();
+  capturedStepsProps = {};
   capturedCustomizeProps = {};
   capturedCompletedProps = {};
   mockPairingState = {
@@ -506,5 +570,263 @@ describe('PairingPage – error handling', () => {
     await waitFor(() => {
       expect(mockPush).toHaveBeenCalledWith('/devices');
     });
+  });
+});
+
+describe('PairingPage – choosing the device to customize', () => {
+  const pairingSubAddr = 'SERV:subpairing:place-1';
+  const contactSensor = pairingDevice('contact', PairingDevice.PAIRINGSTATE_PAIRED);
+  const motionSensorJoining = pairingDevice('motion', PairingDevice.PAIRINGSTATE_PAIRING);
+  const motionSensor = pairingDevice('motion', PairingDevice.PAIRINGSTATE_PAIRED);
+
+  beforeEach(() => {
+    jest.useFakeTimers();
+    mockSubsystems = {
+      [pairingSubAddr]: { id: pairingSubAddr, [Base.ATTR_ADDRESS]: pairingSubAddr },
+    };
+  });
+
+  afterEach(() => {
+    jest.clearAllTimers();
+    jest.useRealTimers();
+  });
+
+  it('ignores a device that was already PAIRED when the session started', async () => {
+    // Left over from an earlier session (or a previous "Pair Another") and never dismissed
+    mockPlatform([
+      [contactSensor], // snapshot at session start
+      [contactSensor], // poll 1
+      [contactSensor, motionSensorJoining], // poll 2
+      [contactSensor, motionSensor], // poll 3
+    ]);
+
+    render(<PairingPage />);
+    await settle();
+    expect(commandsSent()).toEqual([PairingSubsystem.CMD_LISTPAIRINGDEVICES, PairingSubsystem.CMD_SEARCH]);
+
+    await nextPoll();
+    await nextPoll();
+    expect(devicePairedDispatches()).toHaveLength(0);
+
+    await nextPoll();
+    expect(devicePairedDispatches()).toEqual([
+      { type: 'pairing/devicePaired', payload: { device: motionSensor, defaultName: '' } },
+    ]);
+  });
+
+  it('ignores a PAIRED device that has already been customized', async () => {
+    const customized = pairingDevice('plug', PairingDevice.PAIRINGSTATE_PAIRED, ['NAME']);
+    mockPlatform([
+      [], // snapshot at session start
+      [customized], // poll 1
+      [customized, motionSensor], // poll 2
+    ]);
+
+    render(<PairingPage />);
+    await settle();
+
+    await nextPoll();
+    expect(devicePairedDispatches()).toHaveLength(0);
+
+    await nextPoll();
+    expect(devicePairedDispatches()).toEqual([
+      expect.objectContaining({ payload: expect.objectContaining({ device: motionSensor }) }),
+    ]);
+  });
+
+  it('snapshots before StartPairing, so a device that pairs during the steps is still customized', async () => {
+    const product = {
+      [Base.ATTR_ADDRESS]: 'SERV:product:motion',
+      [Product.ATTR_ID]: 'motion',
+      [Product.ATTR_NAME]: 'Motion Sensor',
+    };
+    sessionStorage.setItem('pairing:product', JSON.stringify(product));
+    mockPairingState = { ...mockPairingState, product };
+    mockPlatform(
+      [
+        [], // snapshot at session start, before the hub enters pairing mode
+        [motionSensor], // joined while the user was reading the steps
+      ],
+      { [PairingSubsystem.CMD_STARTPAIRING]: { steps: [{ id: 'step-1', order: 1, instructions: ['Pull the tab.'] }] } },
+    );
+
+    render(<PairingPage />);
+    await settle();
+    expect(commandsSent()).toEqual([PairingSubsystem.CMD_LISTPAIRINGDEVICES, PairingSubsystem.CMD_STARTPAIRING]);
+
+    await act(async () => {
+      await capturedStepsProps.onStartSearch();
+    });
+    // The search reuses the session snapshot rather than taking a new one
+    expect(commandsSent()).toEqual([
+      PairingSubsystem.CMD_LISTPAIRINGDEVICES,
+      PairingSubsystem.CMD_STARTPAIRING,
+      PairingSubsystem.CMD_SEARCH,
+    ]);
+
+    await nextPoll();
+    expect(devicePairedDispatches()).toEqual([
+      expect.objectContaining({ payload: expect.objectContaining({ device: motionSensor }) }),
+    ]);
+  });
+
+  it('reports a search failure when the session snapshot cannot be taken', async () => {
+    mockBridgeRequest.mockImplementation((command: string) =>
+      command === PairingSubsystem.CMD_LISTPAIRINGDEVICES
+        ? Promise.reject(new Error('Hub offline'))
+        : Promise.resolve({}));
+
+    render(<PairingPage />);
+    await settle();
+
+    expect(mockDispatch).toHaveBeenCalledWith({
+      type: 'ui/addNotification',
+      payload: { type: 'error', message: 'Failed to search for devices.' },
+    });
+    expect(commandsSent()).not.toContain(PairingSubsystem.CMD_SEARCH);
+  });
+});
+
+describe('PairingPage – dismissing customized devices', () => {
+  const motionSensor = pairingDevice('motion', PairingDevice.PAIRINGSTATE_PAIRED);
+  const pairdevAddr = motionSensor[Base.ATTR_ADDRESS];
+  const deviceAddr = motionSensor[PairingDevice.ATTR_DEVICEADDRESS];
+
+  beforeEach(() => {
+    mockPairingState = {
+      ...mockPairingState,
+      stage: 'customize',
+      activeDevice: motionSensor,
+      deviceName: 'Hallway Motion',
+      isFavorite: true,
+    };
+  });
+
+  it('customizes the newly paired device and then dismisses it', async () => {
+    mockBridgeRequest.mockResolvedValue({});
+
+    render(<PairingPage />);
+    await act(async () => {
+      await capturedCustomizeProps.onCustomize();
+    });
+
+    expect(mockBridgeRequest.mock.calls).toEqual([
+      [PairingDevice.CMD_CUSTOMIZE, pairdevAddr, {}],
+      [Base.CMD_SETATTRIBUTES, deviceAddr, { [Device.ATTR_NAME]: 'Hallway Motion' }],
+      [PairingDevice.CMD_ADDCUSTOMIZATION, pairdevAddr, { customization: 'NAME' }],
+      [PairingDevice.CMD_ADDCUSTOMIZATION, pairdevAddr, { customization: 'FAVORITE' }],
+      [PairingDevice.CMD_DISMISS, pairdevAddr, {}],
+    ]);
+    expect(mockDispatch).toHaveBeenCalledWith({ type: 'pairing/customizationComplete' });
+  });
+
+  it('does not dismiss when saving the customization fails', async () => {
+    mockBridgeRequest.mockImplementation((command: string) =>
+      command === PairingDevice.CMD_ADDCUSTOMIZATION
+        ? Promise.reject(new Error('AddCustomization failed'))
+        : Promise.resolve({}));
+
+    render(<PairingPage />);
+    await act(async () => {
+      await capturedCustomizeProps.onCustomize();
+    });
+
+    expect(commandsSent()).not.toContain(PairingDevice.CMD_DISMISS);
+    expect(mockDispatch).toHaveBeenCalledWith({
+      type: 'ui/addNotification',
+      payload: { type: 'error', message: 'Failed to save device customization. You can rename the device later from the Devices page.' },
+    });
+  });
+
+  it('treats a failed Dismiss as non-fatal once the customization is saved', async () => {
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    mockBridgeRequest.mockImplementation((command: string) =>
+      command === PairingDevice.CMD_DISMISS
+        ? Promise.reject(new Error('Dismiss failed'))
+        : Promise.resolve({}));
+
+    render(<PairingPage />);
+    await act(async () => {
+      await capturedCustomizeProps.onCustomize();
+    });
+
+    expect(commandsSent()).toContain(PairingDevice.CMD_DISMISS);
+    expect(mockDispatch).not.toHaveBeenCalledWith(expect.objectContaining({ type: 'ui/addNotification' }));
+    expect(mockDispatch).toHaveBeenCalledWith({ type: 'pairing/customizationComplete' });
+    expect(warnSpy).toHaveBeenCalledWith('Failed to dismiss pairing device:', expect.any(Error));
+    warnSpy.mockRestore();
+  });
+});
+
+describe('PairingPage – Pair Another', () => {
+  const contactSensor = pairingDevice('contact', PairingDevice.PAIRINGSTATE_PAIRED);
+
+  it('dismisses the completed device before returning to the catalog', async () => {
+    mockPairingState = { ...mockPairingState, stage: 'completed', activeDevice: contactSensor };
+    sessionStorage.setItem('pairing:product', JSON.stringify({ [Product.ATTR_ID]: 'contact' }));
+    mockBridgeRequest.mockResolvedValue({});
+
+    render(<PairingPage />);
+    await act(async () => {
+      await capturedCompletedProps.onPairAnother();
+    });
+
+    expect(mockBridgeRequest).toHaveBeenCalledWith(PairingDevice.CMD_DISMISS, contactSensor[Base.ATTR_ADDRESS], {});
+    // DismissAll is reserved for leaving pairing (Go to Devices)
+    expect(commandsSent()).not.toContain(PairingSubsystem.CMD_DISMISSALL);
+    expect(sessionStorage.getItem('pairing:product')).toBeNull();
+    expect(mockPush).toHaveBeenCalledWith('/product-catalog');
+  });
+
+  it('does not dismiss again a device already dismissed after customization', async () => {
+    mockPairingState = {
+      ...mockPairingState,
+      stage: 'customize',
+      activeDevice: contactSensor,
+      deviceName: 'Front Door',
+    };
+    mockBridgeRequest.mockResolvedValue({});
+
+    const { rerender } = render(<PairingPage />);
+    await act(async () => {
+      await capturedCustomizeProps.onCustomize();
+    });
+
+    mockPairingState = { ...mockPairingState, stage: 'completed' };
+    rerender(<PairingPage />);
+    await act(async () => {
+      await capturedCompletedProps.onPairAnother();
+    });
+
+    expect(commandsSent().filter((c) => c === PairingDevice.CMD_DISMISS)).toHaveLength(1);
+    expect(mockPush).toHaveBeenCalledWith('/product-catalog');
+  });
+
+  it('does not dismiss a mispaired device', async () => {
+    const mispaired = pairingDevice('lock', PairingDevice.PAIRINGSTATE_MISPAIRED);
+    mockPairingState = { ...mockPairingState, stage: 'completed', activeDevice: mispaired };
+    mockBridgeRequest.mockResolvedValue({});
+
+    render(<PairingPage />);
+    await act(async () => {
+      await capturedCompletedProps.onPairAnother();
+    });
+
+    expect(commandsSent()).not.toContain(PairingDevice.CMD_DISMISS);
+    expect(mockPush).toHaveBeenCalledWith('/product-catalog');
+  });
+
+  it('still returns to the catalog when Dismiss fails', async () => {
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    mockPairingState = { ...mockPairingState, stage: 'completed', activeDevice: contactSensor };
+    mockBridgeRequest.mockRejectedValue(new Error('Dismiss failed'));
+
+    render(<PairingPage />);
+    await act(async () => {
+      await capturedCompletedProps.onPairAnother();
+    });
+
+    expect(mockPush).toHaveBeenCalledWith('/product-catalog');
+    warnSpy.mockRestore();
   });
 });

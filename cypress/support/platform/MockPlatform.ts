@@ -1000,6 +1000,15 @@ export class MockPlatform {
       pairing[PairingDevice.ATTR_CUSTOMIZATIONS] = [...customizations];
       return {};
     },
+    [PairingDevice.CMD_DISMISS]: ({ destination }) => {
+      const pairing = this.data.entities[destination];
+      if (!pairing) return {}; // idempotent, like the platform
+      if (pairing[PairingDevice.ATTR_PAIRINGSTATE] !== PairingDevice.PAIRINGSTATE_PAIRED) {
+        throw new PlatformFailure('request.state.invalid', 'Can only dismiss fully PAIRED devices');
+      }
+      this.removeEntity(destination);
+      return {};
+    },
 
     // Professional monitoring
     'promon:GetSettings': () => ({ ...this.mustGet(`SERV:promon:${PLACE_ID}`) }),
