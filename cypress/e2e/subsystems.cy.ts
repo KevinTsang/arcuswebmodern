@@ -4,7 +4,7 @@
  */
 
 import {
-  Base, CareSubsystem, Contact, DoorLock, PresenceSubsystem, Valve,
+  Base, CareSubsystem, Contact, DoorLock, DoorsNLocksSubsystem, MotorizedDoor, PresenceSubsystem, Valve,
 } from '../../packages/arcus-core/src/capabilities/capabilities';
 import { DEVICE, addr } from '../support/platform/fixtures';
 import { tid } from '../support/selectors';
@@ -49,7 +49,7 @@ describe('Climate', () => {
     tid('climate-temperature').should('have.text', '72°F');
     tid('climate-humidity').should('have.text', '41%');
     tid('climate-thermostats').find(`[data-testid="device-panel-${DEVICE.thermostat}"]`).should('exist');
-    tid('climate-sensors').find(`[data-testid="device-panel-${DEVICE.frontDoor}"]`).should('exist');
+    tid('climate-sensors').find(`[data-testid="device-panel-${DEVICE.contact}"]`).should('exist');
     tid('climate-sensors').find(`[data-testid="device-panel-${DEVICE.thermostat}"]`).should('not.exist');
   });
 
@@ -90,7 +90,28 @@ describe('Doors & Locks', () => {
     tid('doors-unlocked-count').should('have.text', '0');
     tid('doors-open-count').should('have.text', '0');
     tid('doors-section-locks').find(`[data-testid="device-panel-${DEVICE.lock}"]`).should('exist');
-    tid('doors-section-door-window-sensors').find(`[data-testid="device-panel-${DEVICE.frontDoor}"]`).should('exist');
+    tid('doors-section-door-window-sensors').find(`[data-testid="device-panel-${DEVICE.contact}"]`).should('exist');
+    tid('doors-section-garage-doors').find(`[data-testid="device-panel-${DEVICE.garageDoor}"]`).should('exist');
+  });
+
+  it('opens and closes the garage door', () => {
+    cy.signIn({ path: '/services/doors-locks/status' });
+    tid(`device-door-toggle-${DEVICE.garageDoor}`).should('have.text', 'Open').click();
+    cy.expectRequest(MotorizedDoor.CMD_OPENGARAGEDOOR, (r) => r.destination === DEVICE.garageDoor);
+    tid('doors-open-count').should('have.text', '1');
+    tid(`device-door-toggle-${DEVICE.garageDoor}`).should('have.text', 'Close').click();
+    cy.expectRequest(MotorizedDoor.CMD_CLOSEGARAGEDOOR, (r) => r.destination === DEVICE.garageDoor);
+    tid('doors-open-count').should('have.text', '0');
+  });
+
+  it('hides the garage door section without motorized doors', () => {
+    cy.signIn({
+      path: '/services/doors-locks/status',
+      customize: (p) => {
+        p.data.entities[addr.subsystem('subdoorsnlocks')][DoorsNLocksSubsystem.ATTR_MOTORIZEDDOORDEVICES] = [];
+      },
+    });
+    tid('doors-section-locks').should('exist');
     tid('doors-section-garage-doors').should('not.exist');
   });
 
@@ -101,7 +122,7 @@ describe('Doors & Locks', () => {
       r.attributes[DoorLock.ATTR_LOCKSTATE] === DoorLock.LOCKSTATE_UNLOCKED);
     tid('doors-unlocked-count').should('have.text', '1');
 
-    cy.platform().invoke('updateEntity', DEVICE.frontDoor, { [Contact.ATTR_CONTACT]: Contact.CONTACT_OPENED });
+    cy.platform().invoke('updateEntity', DEVICE.contact, { [Contact.ATTR_CONTACT]: Contact.CONTACT_OPENED });
     tid('doors-open-count').should('have.text', '1');
   });
 
@@ -112,6 +133,7 @@ describe('Doors & Locks', () => {
         Object.assign(p.data.entities[addr.subsystem('subdoorsnlocks')], {
           'subdoorsnlocks:lockDevices': [],
           'subdoorsnlocks:contactSensorDevices': [],
+          [DoorsNLocksSubsystem.ATTR_MOTORIZEDDOORDEVICES]: [],
         });
       },
     });

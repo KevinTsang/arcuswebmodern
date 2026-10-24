@@ -22,7 +22,7 @@ describe('Alarm status', () => {
     tid('subsystem-title').should('have.text', 'Alarms');
     tid('alarm-state').should('have.text', 'Disarmed').and('have.attr', 'data-state', 'DISARMED');
     tid('alarm-summary').should('contain', '2 devices');
-    tid(`alarm-device-status-${DEVICE.frontDoor}`).should('have.text', 'Ready');
+    tid(`alarm-device-status-${DEVICE.contact}`).should('have.text', 'Ready');
     tid(`alarm-device-status-${DEVICE.motion}`).should('have.text', 'Ready');
   });
 
@@ -61,11 +61,11 @@ describe('Alarm status', () => {
   it('shows triggered devices during an alert', () => {
     cy.platform().invoke('updateEntity', SECURITY, {
       [SecuritySubsystem.ATTR_ALARMSTATE]: SecuritySubsystem.ALARMSTATE_ALERT,
-      [SecuritySubsystem.ATTR_TRIGGEREDDEVICES]: [DEVICE.frontDoor],
+      [SecuritySubsystem.ATTR_TRIGGEREDDEVICES]: [DEVICE.contact],
     });
     tid('alarm-state').should('have.text', 'ALERT!');
-    tid('alarm-triggered').should('have.text', `Triggered: ${DEVICE_NAME.frontDoor}`);
-    tid(`alarm-device-status-${DEVICE.frontDoor}`).should('have.text', 'Triggered');
+    tid('alarm-triggered').should('have.text', `Triggered: ${DEVICE_NAME.contact}`);
+    tid(`alarm-device-status-${DEVICE.contact}`).should('have.text', 'Triggered');
     tid('alarm-panic').should('not.exist');
   });
 
@@ -219,12 +219,12 @@ describe('Alarm settings', () => {
     });
     tid(`participation-select-${DEVICE.motion}`).should('have.value', 'none');
 
-    tid(`participation-select-${DEVICE.frontDoor}`).should('have.value', 'both').select('partial');
+    tid(`participation-select-${DEVICE.contact}`).should('have.value', 'both').select('partial');
     cy.expectRequest(Base.CMD_SETATTRIBUTES, (r) => {
       const on = r.attributes[`${SecurityAlarmMode.ATTR_DEVICES}:ON`] as string[] | undefined;
       return !!on && on.length === 0;
     });
-    tid(`participation-select-${DEVICE.frontDoor}`).should('have.value', 'partial');
+    tid(`participation-select-${DEVICE.contact}`).should('have.value', 'partial');
   });
 
   it('shows the Pro badge for professionally monitored places', () => {

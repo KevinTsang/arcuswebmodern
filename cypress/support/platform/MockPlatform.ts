@@ -14,7 +14,7 @@
  */
 
 import {
-  Account, AlarmIncident, AlarmSubsystem, Base, Device, Hub, HubZwave, PairingDevice,
+  Account, AlarmIncident, AlarmSubsystem, Base, Device, Hub, HubZwave, MotorizedDoor, PairingDevice,
   PairingSubsystem, Person, Place, Rule, RuleTemplate, Scene, SceneTemplate, Scheduler,
   SecuritySubsystem,
 } from '../../../packages/arcus-core/src/capabilities/capabilities';
@@ -852,6 +852,22 @@ export class MockPlatform {
     [Device.CMD_REMOVE]: ({ destination }) => {
       this.mustGet(destination);
       this.removeEntity(destination);
+      return {};
+    },
+    [MotorizedDoor.CMD_OPENGARAGEDOOR]: ({ destination }) => {
+      this.mustGet(destination);
+      this.updateEntity(destination, {
+        [MotorizedDoor.ATTR_DOORSTATE]: MotorizedDoor.DOORSTATE_OPEN,
+        [MotorizedDoor.ATTR_DOORLEVEL]: 100,
+      });
+      return {};
+    },
+    [MotorizedDoor.CMD_CLOSEGARAGEDOOR]: ({ destination }) => {
+      this.mustGet(destination);
+      this.updateEntity(destination, {
+        [MotorizedDoor.ATTR_DOORSTATE]: MotorizedDoor.DOORSTATE_CLOSED,
+        [MotorizedDoor.ATTR_DOORLEVEL]: 0,
+      });
       return {};
     },
     'ident:Identify': ({ destination }) => {
