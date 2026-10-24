@@ -2,8 +2,9 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { useAppSelector } from '@/store/hooks';
-import { ApiKeyService } from '@arcus/core/services';
+import { ApiKeyService, SessionService } from '@arcus/core/services';
 import type { ApiKeyMeta } from '@arcus/core/services/ApiKeyService';
 import { emptyPermSet, permSetToStrings, hasAnyPermission, type PermSet } from '@/components/api-keys/permissions';
 import PermissionsTable from '@/components/api-keys/PermissionsTable';
@@ -11,7 +12,14 @@ import KeyCard from '@/components/api-keys/KeyCard';
 import { TestIdScope } from '@/lib/testIdScope';
 
 export default function ApiKeysPage() {
-  const placeId = useAppSelector((s) => s.place.placeId);
+  // Keys belong to the place named by ?placeId= (the place card the user came
+  // from); fall back to the active place when the param is absent.
+  const searchParams = useSearchParams();
+  const activePlaceId = useAppSelector((s) => s.place.placeId);
+  const placeId = searchParams.get('placeId') || activePlaceId;
+  const [placeInfo, setPlaceInfo] = useState<{ placeId: string; name: string } | null>(null);
+  // Only trust a name fetched for the place currently shown.
+  const placeName = placeId && placeInfo?.placeId === placeId ? placeInfo.name : '';
   const [keys, setKeys] = useState<ApiKeyMeta[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -42,6 +50,23 @@ export default function ApiKeysPage() {
     fetchKeys();
   }, [fetchKeys]);
 
+  useEffect(() => {
+    if (!placeId) return;
+    let cancelled = false;
+    SessionService.ListAvailablePlaces()
+      .then((res) => {
+        if (cancelled) return;
+        const match = res.places?.find((p) => p.placeId === placeId);
+        setPlaceInfo({ placeId, name: match?.name ?? '' });
+      })
+      .catch(() => {
+        // Name is informational; the keys still load. Confirms fall back to "this place".
+      });
+    return () => { cancelled = true; };
+  }, [placeId]);
+
+  const placeLabel = placeName || 'this place';
+
   const handleCreate = useCallback(async () => {
     if (!placeId || !label.trim() || !hasAnyPermission(createPerms)) return;
     setCreating(true);
@@ -61,27 +86,27 @@ export default function ApiKeysPage() {
     }
   }, [placeId, label, createPerms, fetchKeys]);
 
-  const handleRevoke = useCallback(async (id: string) => {
+  const handleRevoke = useCallback(async (key: ApiKeyMeta) => {
     if (!placeId) return;
-    if (!window.confirm('Revoke this API key? This will immediately disable it.')) return;
+    if (!window.confirm(`Revoke the API key "${key.label}" for ${placeLabel}? This will immediately disable it.`)) return;
     try {
-      await ApiKeyService.Revoke(placeId, id);
+      await ApiKeyService.Revoke(placeId, key.id);
       await fetchKeys();
     } catch {
       setError('Failed to revoke API key.');
     }
-  }, [placeId, fetchKeys]);
+  }, [placeId, placeLabel, fetchKeys]);
 
-  const handleDelete = useCallback(async (id: string) => {
+  const handleDelete = useCallback(async (key: ApiKeyMeta) => {
     if (!placeId) return;
-    if (!window.confirm('Permanently delete this revoked API key?')) return;
+    if (!window.confirm(`Permanently delete the revoked API key "${key.label}" for ${placeLabel}?`)) return;
     try {
-      await ApiKeyService.Delete(placeId, id);
+      await ApiKeyService.Delete(placeId, key.id);
       await fetchKeys();
     } catch {
       setError('Failed to delete API key.');
     }
-  }, [placeId, fetchKeys]);
+  }, [placeId, placeLabel, fetchKeys]);
 
   const handleCopy = useCallback(async (text: string) => {
     await navigator.clipboard.writeText(text);
@@ -118,6 +143,11 @@ export default function ApiKeysPage() {
         <h2 data-testid="apikeys-title" className="text-[length:var(--font-size-h2)] font-[var(--heading-font-weight)] text-swift">
           API Keys
         </h2>
+        {placeName && (
+          <span data-testid="apikeys-place" className="text-sm text-grouse">
+            for <span className="font-medium text-swift">{placeName}</span>
+          </span>
+        )}
       </div>
 
       {error && (
@@ -225,8 +255,8 @@ export default function ApiKeysPage() {
                 <KeyCard
                   key={k.id}
                   apiKey={k}
-                  onRevoke={() => handleRevoke(k.id)}
-                  onDelete={() => handleDelete(k.id)}
+                  onRevoke={() => handleRevoke(k)}
+                  onDelete={() => handleDelete(k)}
                 />
               ))}
             </div>

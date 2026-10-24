@@ -2,9 +2,9 @@
 
 import { useState, useCallback } from 'react';
 import Bridge from '@arcus/core/bridge';
-import { Base, Place } from '@arcus/core';
+import { Place } from '@arcus/core';
 import type { CreateInvitationResponse } from '@/arcus/types';
-import { useAppSelector, useAppDispatch } from '@/store/hooks';
+import { useAppDispatch } from '@/store/hooks';
 import { addNotification } from '@/store/slices/uiSlice';
 import { useSidePanel } from '@/components/SidePanel';
 import Field from './Field';
@@ -13,12 +13,15 @@ import { RELATIONSHIPS } from './types';
 // ── Component ────────────────────────────────────────────────────
 
 interface AddPersonPanelProps {
+  /** The place the invitation grants access to — not necessarily the active place. */
+  placeId: string;
+  /** Display name of that place, shown so the owner knows where the invitee gets access. */
+  placeName: string;
   /** Called after invitation is sent successfully. */
   onSent?: () => void;
 }
 
-export default function AddPersonPanel({ onSent }: AddPersonPanelProps) {
-  const place = useAppSelector((s) => s.place.place);
+export default function AddPersonPanel({ placeId, placeName, onSent }: AddPersonPanelProps) {
   const dispatch = useAppDispatch();
   const { closeRight } = useSidePanel();
 
@@ -29,23 +32,23 @@ export default function AddPersonPanel({ onSent }: AddPersonPanelProps) {
   const [pleaseDescribe, setPleaseDescribe] = useState('');
   const [sending, setSending] = useState(false);
 
-  const resolvedAddress = place?.[Base.ATTR_ADDRESS] as string | undefined;
+  const placeAddress = `SERV:place:${placeId}`;
 
   const relationship = relationshipTag === 'people_service_other'
     ? pleaseDescribe.trim() || 'OTHER'
     : relationshipTag || 'OTHER';
 
   const handleSend = useCallback(async () => {
-    if (!resolvedAddress || !inviteEmail.trim()) return;
+    if (!placeId || !inviteEmail.trim()) return;
     setSending(true);
     try {
-      const { invitation } = await Bridge.request<CreateInvitationResponse>(Place.CMD_CREATEINVITATION, resolvedAddress, {
+      const { invitation } = await Bridge.request<CreateInvitationResponse>(Place.CMD_CREATEINVITATION, placeAddress, {
         firstName: firstName.trim(),
         lastName: lastName.trim(),
         email: inviteEmail.trim(),
         relationship,
       });
-      await Bridge.request(Place.CMD_SENDINVITATION, resolvedAddress, { invitation });
+      await Bridge.request(Place.CMD_SENDINVITATION, placeAddress, { invitation });
       dispatch(addNotification({ type: 'success', message: 'Invitation sent!' }));
       onSent?.();
       closeRight();
@@ -54,12 +57,14 @@ export default function AddPersonPanel({ onSent }: AddPersonPanelProps) {
     } finally {
       setSending(false);
     }
-  }, [resolvedAddress, firstName, lastName, inviteEmail, relationship, dispatch, closeRight, onSent]);
+  }, [placeId, placeAddress, firstName, lastName, inviteEmail, relationship, dispatch, closeRight, onSent]);
 
   return (
     <div className="p-4 space-y-4">
       <h3 data-testid="invite-panel-title" className="text-lg font-semibold text-swift">Invite a Person</h3>
-      <p className="text-sm text-grouse">Send an invitation to join this place.</p>
+      <p data-testid="invite-panel-place" className="text-sm text-grouse">
+        Send an invitation to join <span className="font-medium text-swift">{placeName}</span>.
+      </p>
       <Field label="First Name" value={firstName} onChange={setFirstName} />
       <Field label="Last Name" value={lastName} onChange={setLastName} />
       <Field label="Email" value={inviteEmail} onChange={setInviteEmail} type="email" placeholder="person@example.com" />
