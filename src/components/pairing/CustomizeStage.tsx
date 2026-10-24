@@ -8,6 +8,8 @@ interface CustomizeStageProps {
   product: PairingProduct | null;
   deviceName: string;
   isFavorite: boolean;
+  /** The customization is being saved. */
+  saving: boolean;
   dispatch: AppDispatch;
   onCustomize: () => void;
 }
@@ -17,6 +19,7 @@ export default function CustomizeStage({
   product,
   deviceName,
   isFavorite,
+  saving,
   dispatch,
   onCustomize,
 }: CustomizeStageProps) {
@@ -54,9 +57,10 @@ export default function CustomizeStage({
         <button
           onClick={onCustomize}
           data-testid="pairing-customize-save"
-          className="w-full py-2.5 bg-peacock text-crane rounded-[var(--border-radius-base)] text-sm font-medium hover:bg-peacock/90"
+          disabled={saving}
+          className="w-full py-2.5 bg-peacock text-crane rounded-[var(--border-radius-base)] text-sm font-medium hover:bg-peacock/90 disabled:opacity-50"
         >
-          {isHubPairing ? 'Save & Continue' : 'Save & Finish'}
+          {saving ? 'Saving…' : isHubPairing ? 'Save & Continue' : 'Save & Finish'}
         </button>
       </div>
     </div>

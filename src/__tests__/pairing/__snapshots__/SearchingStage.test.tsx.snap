@@ -1,0 +1,114 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`SearchingStage – device search matches snapshot 1`] = `
+<div
+  class="text-center py-6"
+  data-failed="false"
+  data-testid="pairing-searching"
+  data-timed-out="false"
+>
+  <h3
+    class="text-lg font-semibold text-swift mb-4"
+  >
+    Searching for Device
+  </h3>
+  <div
+    class="animate-pulse mb-4"
+  >
+    <div
+      class="w-16 h-16 bg-peacock/10 rounded-full flex items-center justify-center mx-auto"
+    >
+      <span
+        class="icon-app-devices text-2xl text-peacock"
+      />
+    </div>
+  </div>
+  <p
+    class="text-sm text-grouse mb-2"
+  >
+    Looking for your Smart Plug…
+  </p>
+  <div
+    class="mt-4 space-y-2"
+  >
+    <div
+      class="flex items-center justify-between px-3 py-2 border border-heron rounded text-sm"
+      data-earlier="false"
+      data-testid="pairing-device-row-SERV:pairdev:plug"
+    >
+      <span
+        class="text-swift"
+      >
+        Device Found
+      </span>
+      <span
+        class="text-grouse"
+      >
+        Connecting…
+      </span>
+    </div>
+    <div
+      class="flex items-center justify-between px-3 py-2 border border-heron rounded text-sm"
+      data-earlier="true"
+      data-testid="pairing-device-row-SERV:pairdev:lock"
+    >
+      <span
+        class="text-swift"
+      >
+        From an earlier pairing
+      </span>
+      <span
+        class="text-canary"
+      >
+        Improperly Paired
+      </span>
+    </div>
+  </div>
+  <button
+    class="mt-4 px-4 py-2 border border-heron rounded-[var(--border-radius-base)] text-sm text-coot hover:bg-pigeon"
+    data-testid="pairing-cancel"
+  >
+    Cancel
+  </button>
+</div>
+`;
+
+exports[`SearchingStage – search failed matches snapshot 1`] = `
+<div
+  class="text-center py-6"
+  data-failed="true"
+  data-testid="pairing-searching"
+  data-timed-out="false"
+>
+  <h3
+    class="text-lg font-semibold text-swift mb-4"
+  >
+    Searching for Device
+  </h3>
+  <p
+    class="text-sm text-swift mb-2"
+  >
+    Search failed
+  </p>
+  <p
+    class="text-sm text-grouse mb-4"
+  >
+    The search could not be started. Check the hub connection and try again.
+  </p>
+  <div
+    class="flex gap-2 justify-center"
+  >
+    <button
+      class="px-4 py-2 bg-peacock text-crane rounded-[var(--border-radius-base)] text-sm font-medium hover:bg-peacock/90"
+      data-testid="pairing-search-retry"
+    >
+      Try Again
+    </button>
+    <button
+      class="px-4 py-2 border border-heron rounded-[var(--border-radius-base)] text-sm text-coot hover:bg-pigeon"
+    >
+      Cancel
+    </button>
+  </div>
+</div>
+`;

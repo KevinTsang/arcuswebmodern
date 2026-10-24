@@ -13,7 +13,7 @@
  * Hub pairing (RegisterHubV2) is handled separately from device pairing.
  */
 
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Base, Device, Product, PairingDevice, PairingSubsystem, Hub, Place } from '@arcus/core';
 import Bridge from '@arcus/core/bridge';
@@ -30,6 +30,7 @@ import {
   devicePaired,
   deviceMispaired,
   searchTimedOut,
+  searchFailed,
   setPairingLoading,
   setSteps,
   startHubRegistration as startHubRegistrationAction,
@@ -37,6 +38,8 @@ import {
   setHubRegistrationState,
   hubRegistrationError,
   customizationComplete,
+  startPairingFlow,
+  endPairingFlow,
   resetPairing,
 } from '@/store/slices/pairingSlice';
 import {
@@ -46,21 +49,15 @@ import {
   CustomizeStage,
   CompletedStage,
 } from '@/components/pairing';
-
-function isPaired(device: PairingDeviceData): boolean {
-  return device[PairingDevice.ATTR_PAIRINGSTATE] === PairingDevice.PAIRINGSTATE_PAIRED;
-}
-
-/**
- * The pairing list holds every pairing device at the place, including ones from
- * earlier sessions that were never dismissed. Only a device that became PAIRED
- * during this session and that no client has customized yet is ours to customize.
- */
-function isNewlyPaired(device: PairingDeviceData, pairedBeforeSession: ReadonlySet<string>): boolean {
-  return isPaired(device)
-    && !pairedBeforeSession.has(device[Base.ATTR_ADDRESS])
-    && (device[PairingDevice.ATTR_CUSTOMIZATIONS] ?? []).length === 0;
-}
+import type { PairingFlow } from '@/components/pairing';
+import {
+  earlierMispairedDevices,
+  findMispairedDevice,
+  findPairedDevice,
+  isPaired,
+  newPairingFlow,
+  searchDevices,
+} from '@/lib/pairingFlow';
 
 export default function PairingPage() {
   const router = useRouter();
@@ -71,10 +68,19 @@ export default function PairingPage() {
   const pairing = useAppSelector((s) => s.pairing);
 
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  // Addresses of pairing devices that were already PAIRED when this session started.
-  const pairedBeforeSessionRef = useRef<Set<string> | null>(null);
-  // Pairing devices this session has dismissed, so they aren't dismissed twice.
+  const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // The pairing subsystem this page is working with, or null once the page has
+  // unmounted. Async pairing work checks it after every await, so nothing is
+  // sent and no timer starts after the cleanup below has stopped searching.
+  const liveSubsystemRef = useRef<string | null>(null);
+  // The current pairing flow, readable by async work before the store update
+  // that starts a flow has re-rendered the page.
+  const flowRef = useRef<PairingFlow | null>(pairing.flow);
+  // Pairing devices this page has dismissed or is dismissing, so they aren't dismissed twice.
   const dismissedRef = useRef<Set<string>>(new Set());
+  // Save & Finish, Go to Devices and Pair Another run one at a time.
+  const busyRef = useRef(false);
+  const [busy, setBusy] = useState(false);
 
   // Reset pairing state on mount/unmount
   useEffect(() => {
@@ -83,6 +89,10 @@ export default function PairingPage() {
       dispatch(resetPairing());
     };
   }, [dispatch]);
+
+  useEffect(() => {
+    flowRef.current = pairing.flow;
+  }, [pairing.flow]);
 
   // Product loading is handled in the auto-start effect below to avoid race conditions.
 
@@ -97,10 +107,18 @@ export default function PairingPage() {
     return (sub?.[Base.ATTR_ADDRESS] as string) ?? null;
   })();
 
+  const stopPolling = useCallback(() => {
+    if (pollRef.current) clearInterval(pollRef.current);
+    if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+    pollRef.current = null;
+    searchTimeoutRef.current = null;
+  }, []);
+
   // Stop pairing on unmount or page refresh/close
   useEffect(() => {
+    liveSubsystemRef.current = pairingSubAddr;
     const stopPairing = () => {
-      if (pollRef.current) clearInterval(pollRef.current);
+      stopPolling();
       if (pairingSubAddr) {
         Bridge.request(PairingSubsystem.CMD_STOPSEARCHING, pairingSubAddr, {}).catch(() => {});
       }
@@ -108,34 +126,42 @@ export default function PairingPage() {
 
     window.addEventListener('beforeunload', stopPairing);
     return () => {
+      liveSubsystemRef.current = null;
       window.removeEventListener('beforeunload', stopPairing);
       stopPairing();
     };
-  }, [pairingSubAddr]);
+  }, [pairingSubAddr, stopPolling]);
 
-  // ── Pairing device bookkeeping ─────────────────────────────
+  // ── Pairing flow ───────────────────────────────────────────
 
-  // Record which devices were already PAIRED before this session put the hub
-  // into pairing mode (StartPairing or Search, whichever comes first), so the
-  // poller ignores them. Taken once per session; searching again keeps it.
-  const snapshotPairedDevices = useCallback(async () => {
-    if (!pairingSubAddr || pairedBeforeSessionRef.current) return;
-    const resp = await Bridge.request<ListPairingDevicesResponse>(PairingSubsystem.CMD_LISTPAIRINGDEVICES, pairingSubAddr, {});
-    pairedBeforeSessionRef.current = new Set(
-      (resp.devices ?? []).filter(isPaired).map((d) => d[Base.ATTR_ADDRESS]),
-    );
-  }, [pairingSubAddr]);
+  // Return this place's pairing flow, starting one from the current pairing
+  // list if there is none. Called before StartPairing (or Search, when there are
+  // no steps), so the list is read before this flow puts the hub in pairing mode.
+  const ensureFlow = useCallback(async (subAddr: string): Promise<PairingFlow> => {
+    const current = flowRef.current;
+    if (current?.pairingSubsystem === subAddr) return current;
+    const resp = await Bridge.request<ListPairingDevicesResponse>(PairingSubsystem.CMD_LISTPAIRINGDEVICES, subAddr, {});
+    const flow = newPairingFlow(subAddr, resp.devices ?? []);
+    flowRef.current = flow;
+    dispatch(startPairingFlow(flow));
+    return flow;
+  }, [dispatch]);
 
   // Remove a PAIRED device from the pairing list once the user is done with it.
-  // Best-effort: the device itself is already paired, and DismissAll on Finish
-  // sweeps up anything left behind, so a failure here isn't surfaced.
+  // Callers don't await it: it is best-effort and can take up to the request timeout.
   const dismissPairingDevice = useCallback(async (device: PairingDeviceData) => {
     const address = device[Base.ATTR_ADDRESS];
+    // The platform only dismisses PAIRED devices.
     if (!isPaired(device) || dismissedRef.current.has(address)) return;
+    // Mark it before sending, so a second call while this one is in flight sends nothing.
+    dismissedRef.current.add(address);
     try {
       await Bridge.request(PairingDevice.CMD_DISMISS, address, {});
-      dismissedRef.current.add(address);
     } catch (e) {
+      // No error toast: the device itself is paired, and a failed customization
+      // has already been reported. Dismiss only tidies the pairing list; the flow
+      // skips this device from now on, and DismissAll on Finish removes it.
+      dismissedRef.current.delete(address); // so Pair Another can try again
       console.warn('Failed to dismiss pairing device:', e);
     }
   }, []);
@@ -143,41 +169,46 @@ export default function PairingPage() {
   // ── Search for device ──────────────────────────────────────
 
   const startSearch = useCallback(async () => {
-    if (!pairingSubAddr) return;
+    const subAddr = pairingSubAddr;
+    if (!subAddr) return;
 
+    stopPolling();
     dispatch(startSearchAction());
 
     try {
-      await snapshotPairedDevices();
-      await Bridge.request(PairingSubsystem.CMD_SEARCH, pairingSubAddr, {
+      const flow = await ensureFlow(subAddr);
+      if (liveSubsystemRef.current !== subAddr) return;
+      await Bridge.request(PairingSubsystem.CMD_SEARCH, subAddr, {
         productAddress: pairing.product?.[Base.ATTR_ADDRESS] ?? '',
       });
+      if (liveSubsystemRef.current !== subAddr) return;
 
+      let found = false;
       const checkDevices = async () => {
         try {
-          const resp = await Bridge.request<ListPairingDevicesResponse>(PairingSubsystem.CMD_LISTPAIRINGDEVICES, pairingSubAddr, {});
+          const resp = await Bridge.request<ListPairingDevicesResponse>(PairingSubsystem.CMD_LISTPAIRINGDEVICES, subAddr, {});
+          // Drop a poll that finishes after the page left or after an earlier poll found the device.
+          if (found || liveSubsystemRef.current !== subAddr) return;
           const devList = resp.devices ?? [];
           dispatch(setDevices(devList));
 
-          const pairedBeforeSession = pairedBeforeSessionRef.current ?? new Set<string>();
-          const paired = devList.find((d) => isNewlyPaired(d, pairedBeforeSession));
+          const paired = findPairedDevice(devList, flow);
           if (paired) {
-            if (pollRef.current) clearInterval(pollRef.current);
+            found = true;
+            stopPolling();
             dispatch(devicePaired({
               device: paired,
               defaultName: paired[PairingDevice.ATTR_DEVICEADDRESS]
                 ? ''
                 : (pairing.product?.[Product.ATTR_NAME] ?? 'New Device'),
             }));
+            return;
           }
 
-          const mispaired = devList.find(
-            (d) =>
-              d[PairingDevice.ATTR_PAIRINGSTATE] === PairingDevice.PAIRINGSTATE_MISPAIRED ||
-              d[PairingDevice.ATTR_PAIRINGSTATE] === PairingDevice.PAIRINGSTATE_MISCONFIGURED,
-          );
-          if (mispaired && !paired) {
-            if (pollRef.current) clearInterval(pollRef.current);
+          const mispaired = findMispairedDevice(devList, flow);
+          if (mispaired) {
+            found = true;
+            stopPolling();
             dispatch(deviceMispaired(mispaired));
           }
         } catch (e) {
@@ -187,28 +218,32 @@ export default function PairingPage() {
 
       pollRef.current = setInterval(checkDevices, 3000);
 
-      setTimeout(() => {
-        if (pollRef.current) {
-          clearInterval(pollRef.current);
-          dispatch(searchTimedOut());
-        }
+      searchTimeoutRef.current = setTimeout(() => {
+        stopPolling();
+        dispatch(searchTimedOut());
       }, 180000);
     } catch {
+      if (liveSubsystemRef.current !== subAddr) return;
+      dispatch(searchFailed());
       dispatch(addNotification({ type: 'error', message: 'Failed to search for devices.' }));
     }
-  }, [pairing.product, pairingSubAddr, dispatch, snapshotPairedDevices]);
+  }, [pairing.product, pairingSubAddr, dispatch, ensureFlow, stopPolling]);
 
   // ── Start Pairing (put hub in search mode) ─────────────────
 
   const startPairing = useCallback(async () => {
-    if (!pairing.product || !pairingSubAddr) return;
+    const subAddr = pairingSubAddr;
+    if (!pairing.product || !subAddr) return;
+    const productAddress = pairing.product[Base.ATTR_ADDRESS];
 
     dispatch(setPairingLoading(true));
     try {
-      await snapshotPairedDevices();
-      const resp = await Bridge.request<StartPairingResponse>(PairingSubsystem.CMD_STARTPAIRING, pairingSubAddr, {
-        productAddress: pairing.product[Base.ATTR_ADDRESS],
+      await ensureFlow(subAddr);
+      if (liveSubsystemRef.current !== subAddr) return;
+      const resp = await Bridge.request<StartPairingResponse>(PairingSubsystem.CMD_STARTPAIRING, subAddr, {
+        productAddress,
       });
+      if (liveSubsystemRef.current !== subAddr) return;
 
       const pairingSteps = resp.steps ?? [];
       dispatch(setSteps(pairingSteps));
@@ -217,11 +252,13 @@ export default function PairingPage() {
         startSearch();
       }
     } catch {
-      dispatch(addNotification({ type: 'error', message: 'Failed to start pairing. Check hub connection.' }));
+      if (liveSubsystemRef.current === subAddr) {
+        dispatch(addNotification({ type: 'error', message: 'Failed to start pairing. Check hub connection.' }));
+      }
     } finally {
-      dispatch(setPairingLoading(false));
+      if (liveSubsystemRef.current === subAddr) dispatch(setPairingLoading(false));
     }
-  }, [pairing.product, pairingSubAddr, dispatch, startSearch, snapshotPairedDevices]);
+  }, [pairing.product, pairingSubAddr, dispatch, ensureFlow, startSearch]);
 
   // Load product from sessionStorage and auto-start pairing in a single effect
   // to avoid race conditions between separate load and start effects.
@@ -295,55 +332,65 @@ export default function PairingPage() {
   // ── Customization ──────────────────────────────────────────
 
   const handleCustomize = useCallback(async () => {
-    if (pairing.isHubPairing) {
-      if (hub && pairing.deviceName.trim()) {
+    if (busyRef.current) return;
+    busyRef.current = true;
+    setBusy(true);
+    try {
+      if (pairing.isHubPairing) {
+        if (hub && pairing.deviceName.trim()) {
+          try {
+            const hubAddr = hub[Base.ATTR_ADDRESS] as string;
+            await Bridge.request(Base.CMD_SETATTRIBUTES, hubAddr, {
+              [Device.ATTR_NAME]: pairing.deviceName.trim(),
+            });
+          } catch {
+            dispatch(addNotification({ type: 'error', message: 'Failed to set hub name.' }));
+          }
+        }
+      } else if (pairing.activeDevice) {
+        const device = pairing.activeDevice;
         try {
-          const hubAddr = hub[Base.ATTR_ADDRESS] as string;
-          await Bridge.request(Base.CMD_SETATTRIBUTES, hubAddr, {
-            [Device.ATTR_NAME]: pairing.deviceName.trim(),
+          await Bridge.request(PairingDevice.CMD_CUSTOMIZE, device[Base.ATTR_ADDRESS], {});
+
+          if (pairing.deviceName.trim()) {
+            const devAddr = device[PairingDevice.ATTR_DEVICEADDRESS];
+            if (devAddr) {
+              await Bridge.request(Base.CMD_SETATTRIBUTES, devAddr, {
+                [Device.ATTR_NAME]: pairing.deviceName.trim(),
+              });
+            }
+          }
+
+          await Bridge.request(PairingDevice.CMD_ADDCUSTOMIZATION, device[Base.ATTR_ADDRESS], {
+            customization: 'NAME',
           });
+
+          if (pairing.isFavorite) {
+            await Bridge.request(PairingDevice.CMD_ADDCUSTOMIZATION, device[Base.ATTR_ADDRESS], {
+              customization: 'FAVORITE',
+            });
+          }
+
+          // Not awaited: the customization is saved, so a slow Dismiss mustn't hold back the Completed screen.
+          dismissPairingDevice(device);
         } catch {
-          dispatch(addNotification({ type: 'error', message: 'Failed to set hub name.' }));
+          dispatch(addNotification({ type: 'error', message: 'Failed to save device customization. You can rename the device later from the Devices page.' }));
         }
       }
       dispatch(customizationComplete());
-      return;
+    } finally {
+      busyRef.current = false;
+      setBusy(false);
     }
-
-    if (pairing.activeDevice) {
-      try {
-        await Bridge.request(PairingDevice.CMD_CUSTOMIZE, pairing.activeDevice[Base.ATTR_ADDRESS], {});
-
-        if (pairing.deviceName.trim()) {
-          const devAddr = pairing.activeDevice[PairingDevice.ATTR_DEVICEADDRESS] as string;
-          if (devAddr) {
-            await Bridge.request(Base.CMD_SETATTRIBUTES, devAddr, {
-              [Device.ATTR_NAME]: pairing.deviceName.trim(),
-            });
-          }
-        }
-
-        await Bridge.request(PairingDevice.CMD_ADDCUSTOMIZATION, pairing.activeDevice[Base.ATTR_ADDRESS], {
-          customization: 'NAME',
-        });
-
-        if (pairing.isFavorite) {
-          await Bridge.request(PairingDevice.CMD_ADDCUSTOMIZATION, pairing.activeDevice[Base.ATTR_ADDRESS], {
-            customization: 'FAVORITE',
-          });
-        }
-
-        await dismissPairingDevice(pairing.activeDevice);
-      } catch {
-        dispatch(addNotification({ type: 'error', message: 'Failed to save device customization. You can rename the device later from the Devices page.' }));
-      }
-    }
-    dispatch(customizationComplete());
   }, [pairing.isHubPairing, pairing.activeDevice, pairing.deviceName, pairing.isFavorite, hub, dispatch, dismissPairingDevice]);
 
   // ── Finish ─────────────────────────────────────────────────
 
+  // Finish and Pair Another leave the page, so they stay busy until it unmounts.
   const handleFinish = useCallback(async () => {
+    if (busyRef.current) return;
+    busyRef.current = true;
+    setBusy(true);
     if (pairingSubAddr) {
       try {
         await Bridge.request(PairingSubsystem.CMD_DISMISSALL, pairingSubAddr, {});
@@ -351,16 +398,23 @@ export default function PairingPage() {
         // OK
       }
     }
+    // The pairing flow ends here; the next pairing starts a new one.
+    flowRef.current = null;
+    dispatch(endPairingFlow());
     sessionStorage.removeItem('pairing:product');
     router.push('/devices');
-  }, [pairingSubAddr, router]);
+  }, [pairingSubAddr, router, dispatch]);
 
-  // Pair Another skips DismissAll (the exit-pairing call, which also clears the
-  // post-pairing Z-Wave rebuild prompt), so dismiss the device we just finished
-  // with or the next search would still see it.
-  const handlePairAnother = useCallback(async () => {
+  // Pair Another stays in the pairing flow, so it skips DismissAll, which ends
+  // pairing and takes the hub out of pairing mode. It dismisses just the device
+  // we finished with; the rest of the flow skips that device either way.
+  const handlePairAnother = useCallback(() => {
+    if (busyRef.current) return;
+    busyRef.current = true;
+    setBusy(true);
     if (pairing.activeDevice) {
-      await dismissPairingDevice(pairing.activeDevice);
+      // Not awaited, so a slow Dismiss doesn't hold up navigation.
+      dismissPairingDevice(pairing.activeDevice);
     }
     sessionStorage.removeItem('pairing:product');
     router.push('/product-catalog');
@@ -369,6 +423,12 @@ export default function PairingPage() {
   const productName = pairing.product
     ? `${pairing.product[Product.ATTR_VENDOR] ?? ''} ${pairing.product[Product.ATTR_NAME] ?? ''}`.trim()
     : '';
+
+  // Show only what the current search found, plus earlier improperly paired
+  // devices (labeled as such), never leftovers the search ignores.
+  const flow = pairing.flow?.pairingSubsystem === pairingSubAddr ? pairing.flow : null;
+  const foundDevices = flow ? searchDevices(pairing.devices, flow) : [];
+  const earlierDevices = flow ? earlierMispairedDevices(pairing.devices, flow) : [];
 
   return (
     <div className="p-[var(--gutter)]">
@@ -408,8 +468,10 @@ export default function PairingPage() {
             <SearchingStage
               product={pairing.product}
               isHubPairing={pairing.isHubPairing}
-              devices={pairing.devices}
+              devices={foundDevices}
+              earlierDevices={earlierDevices}
               searchTimedOut={pairing.searchTimedOut}
+              searchFailed={pairing.searchFailed}
               hubRegistrationState={pairing.hubRegistrationState}
               dispatch={dispatch}
               onStartSearch={startSearch}
@@ -423,6 +485,7 @@ export default function PairingPage() {
               product={pairing.product}
               deviceName={pairing.deviceName}
               isFavorite={pairing.isFavorite}
+              saving={busy}
               dispatch={dispatch}
               onCustomize={handleCustomize}
             />
@@ -433,6 +496,7 @@ export default function PairingPage() {
               isHubPairing={pairing.isHubPairing}
               activeDevice={pairing.activeDevice}
               productName={productName}
+              busy={busy}
               onFinish={handleFinish}
               onPairAnother={handlePairAnother}
             />

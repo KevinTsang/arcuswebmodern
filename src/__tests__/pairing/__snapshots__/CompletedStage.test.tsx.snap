@@ -1,0 +1,47 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`CompletedStage – successful device pairing matches snapshot 1`] = `
+<div
+  class="text-center py-6"
+  data-mispaired="false"
+  data-testid="pairing-complete"
+>
+  <div
+    class="w-16 h-16 bg-honeycreeper/10 rounded-full flex items-center justify-center mx-auto mb-4"
+  >
+    <span
+      class="text-2xl text-honeycreeper"
+    >
+      ✓
+    </span>
+  </div>
+  <h3
+    class="text-lg font-semibold text-swift mb-2"
+    data-testid="pairing-complete-title"
+  >
+    Device Paired!
+  </h3>
+  <p
+    class="text-sm text-grouse mb-4"
+    data-testid="pairing-complete-message"
+  >
+    GE Smart Plug has been successfully paired.
+  </p>
+  <div
+    class="flex gap-2 justify-center"
+  >
+    <button
+      class="px-6 py-2.5 bg-peacock text-crane rounded-[var(--border-radius-base)] text-sm font-medium hover:bg-peacock/90 disabled:opacity-50"
+      data-testid="pairing-finish"
+    >
+      Go to Devices
+    </button>
+    <button
+      class="px-4 py-2.5 border border-heron rounded-[var(--border-radius-base)] text-sm text-coot hover:bg-pigeon disabled:opacity-50"
+      data-testid="pairing-pair-another"
+    >
+      Pair Another
+    </button>
+  </div>
+</div>
+`;

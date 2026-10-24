@@ -257,6 +257,7 @@ export type PairingDevice = ArcusPayload
   & Record<typeof PairingDeviceCap.ATTR_PAIRINGSTATE, string>
   & Record<typeof PairingDeviceCap.ATTR_PAIRINGPHASE, string>
   & Partial<
+    Record<typeof Base.ATTR_TAGS, string[]> &
     Record<typeof PairingDeviceCap.ATTR_PRODUCTADDRESS, string> &
     Record<typeof PairingDeviceCap.ATTR_DEVICEADDRESS, string> &
     Record<typeof PairingDeviceCap.ATTR_CUSTOMIZATIONS, string[]>

@@ -1,0 +1,20 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`DeviceStateRow matches snapshot 1`] = `
+<div
+  class="flex items-center justify-between px-3 py-2 border border-heron rounded text-sm"
+  data-earlier="false"
+  data-testid="pairing-device-row-DRIV:dev:dev-1"
+>
+  <span
+    class="text-swift"
+  >
+    Device Found
+  </span>
+  <span
+    class="text-grouse"
+  >
+    Connecting…
+  </span>
+</div>
+`;

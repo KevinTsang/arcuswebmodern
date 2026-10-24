@@ -17,6 +17,7 @@ import type { PairingDevice as PairingDeviceData } from '@/store/entityTypes';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import { selectAllDevices } from '@/store/slices/devicesSlice';
 import { addNotification } from '@/store/slices/uiSlice';
+import { endPairingFlow } from '@/store/slices/pairingSlice';
 
 type DeviceState = 'inactive' | 'customizable' | 'active' | 'mispaired' | 'missing';
 
@@ -166,8 +167,10 @@ export default function KitActivatePage() {
         // OK
       }
     }
+    // DismissAll ends pairing, so the next pairing starts a new flow.
+    dispatch(endPairingFlow());
     router.push('/devices');
-  }, [pairingSubAddr, router]);
+  }, [pairingSubAddr, router, dispatch]);
 
   if (loading) {
     return (

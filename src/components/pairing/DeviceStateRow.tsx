@@ -1,11 +1,13 @@
-import { PairingDevice as PairingDeviceCap } from '@arcus/core';
+import { Base, PairingDevice as PairingDeviceCap } from '@arcus/core';
 import type { PairingDevice } from '@/store/entityTypes';
 
 interface DeviceStateRowProps {
   device: PairingDevice;
+  /** The record is left from an earlier pairing, not found by the current search. */
+  earlier?: boolean;
 }
 
-export default function DeviceStateRow({ device }: DeviceStateRowProps) {
+export default function DeviceStateRow({ device, earlier = false }: DeviceStateRowProps) {
   const state = device[PairingDeviceCap.ATTR_PAIRINGSTATE];
   const phase = device[PairingDeviceCap.ATTR_PAIRINGPHASE];
 
@@ -41,8 +43,12 @@ export default function DeviceStateRow({ device }: DeviceStateRowProps) {
   }
 
   return (
-    <div className="flex items-center justify-between px-3 py-2 border border-heron rounded text-sm">
-      <span className="text-swift">Device Found</span>
+    <div
+      data-testid={`pairing-device-row-${device[Base.ATTR_ADDRESS]}`}
+      data-earlier={earlier}
+      className="flex items-center justify-between px-3 py-2 border border-heron rounded text-sm"
+    >
+      <span className="text-swift">{earlier ? 'From an earlier pairing' : 'Device Found'}</span>
       <span className={statusColor}>{statusText}</span>
     </div>
   );
