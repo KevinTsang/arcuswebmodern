@@ -12,7 +12,7 @@ import cornea from '@arcus/core/cornea';
 import auth from '@arcus/core/auth';
 import propertyAliases from '@arcus/core/property-aliases';
 import { Base, Person, AlarmIncident } from '@arcus/core';
-import type { ArcusPayload, PlaceData } from '../entityTypes';
+import type { ArcusPayload } from '../entityTypes';
 import { loginSuccess, logout, sessionExpired } from '../slices/authSlice';
 import { deviceAdded, deviceUpdated, deviceRemoved } from '../slices/devicesSlice';
 import { subsystemAdded, subsystemUpdated, subsystemRemoved } from '../slices/subsystemsSlice';
@@ -22,7 +22,7 @@ import { schedulerAdded, schedulerUpdated, schedulerRemoved } from '../slices/sc
 import { incidentAdded, incidentUpdated, incidentRemoved, setCurrentIncident } from '../slices/incidentsSlice';
 import { personAdded, personUpdated, personRemoved } from '../slices/peopleSlice';
 import { setHub, updateHub, clearHub } from '../slices/hubSlice';
-import { setPlace } from '../slices/placeSlice';
+import { updatePlace } from '../slices/placeSlice';
 import { setInvitations } from '../slices/invitationsSlice';
 import Bridge from '@arcus/core/bridge';
 import type { PendingInvitationsResponse } from '@/arcus/types';
@@ -166,9 +166,11 @@ function subscribeToCorneaEvents(dispatch: (action: { type: string }) => void, g
     () => cornea.off(`${HUB_NAMESPACE} ${Base.EVENT_DELETED}`, onHubDeleted),
   );
 
-  // Place events — single entity (platform always includes base:id for place)
+  // Place events — single entity. A ValueChange carries only the address and
+  // the changed attributes, and may be for a place other than the active one,
+  // so it is merged into the active place rather than replacing it.
   const onPlaceValueChange = (obj: ArcusPayload) => {
-    dispatch(setPlace(obj as PlaceData));
+    dispatch(updatePlace(obj));
   };
 
   cornea.on(`${PLACE_NAMESPACE} ${Base.EVENT_VALUECHANGE}`, onPlaceValueChange);
