@@ -10,7 +10,8 @@
  * Replaces src/components/device/remove-panel/remove-panel.stache.
  */
 
-import { RemovalMode, type DeviceRemovalFlow } from '@/hooks/useDeviceRemoval';
+import { PairingDevice } from '@arcus/core';
+import type { DeviceRemovalFlow } from '@/hooks/useDeviceRemoval';
 
 interface DeviceRemovalSectionProps {
   name: string;
@@ -23,7 +24,7 @@ const SECONDARY_BUTTON =
   'border border-heron text-coot px-4 py-2 rounded-[var(--border-radius-base)] text-sm disabled:opacity-50';
 
 export function DeviceRemovalSection({ name, removal }: DeviceRemovalSectionProps) {
-  const { stage, mode, steps, cancelling } = removal;
+  const { stage, mode, hubMode, steps, cancelling } = removal;
 
   if (stage === 'idle') {
     return (
@@ -99,7 +100,6 @@ export function DeviceRemovalSection({ name, removal }: DeviceRemovalSectionProp
   }
 
   // removing / timedOut
-  const hubMode = mode === RemovalMode.HUB_AUTOMATIC || mode === RemovalMode.HUB_MANUAL;
   const cancelButton = (
     <button
       onClick={removal.cancel}
@@ -137,11 +137,15 @@ export function DeviceRemovalSection({ name, removal }: DeviceRemovalSectionProp
 
   const tip = steps[0]?.title?.replace(/^TIP:\s*/, '');
   const showStepCount = steps.length > 1;
+  // The platform's own default removal step uses the same wording.
+  const defaultStepText = hubMode
+    ? 'The hub will beep when the device is successfully removed.'
+    : 'This should only take a moment.';
 
   return (
     <div data-testid="device-remove-status" data-stage={stage}>
       <h4 data-testid="device-remove-title" className="text-base font-medium text-swift mb-2">
-        {mode === RemovalMode.HUB_AUTOMATIC ? 'Removing Device...' : `Remove ${name}`}
+        {mode === PairingDevice.REMOVEMODE_HUB_AUTOMATIC ? 'Removing Device...' : `Remove ${name}`}
       </h4>
       {tip && (
         <p data-testid="device-remove-tip" className="text-sm text-grouse mb-3">{tip}</p>
@@ -162,15 +166,13 @@ export function DeviceRemovalSection({ name, removal }: DeviceRemovalSectionProp
                   <p key={j} className="text-sm text-swift">{text}</p>
                 ))
               ) : (
-                <p className="text-sm text-swift">
-                  {step.info ?? 'The hub will beep when the device is successfully removed.'}
-                </p>
+                <p className="text-sm text-swift">{step.info ?? defaultStepText}</p>
               )}
             </div>
           </li>
         ))}
       </ol>
-      {mode === RemovalMode.HUB_MANUAL && (
+      {mode === PairingDevice.REMOVEMODE_HUB_MANUAL && (
         <p className="text-sm font-medium text-swift mb-3">This may take several minutes.</p>
       )}
       <p className="text-sm text-grouse animate-pulse mb-3">Waiting for the device to be removed…</p>

@@ -1,12 +1,15 @@
 import { renderHook, act } from '@testing-library/react';
-import { Base, Device, Hub } from '@arcus/core';
+import { Base, Device, DeviceAdvanced, Hub, PairingDevice } from '@arcus/core';
 import {
   useDeviceRemoval,
+  isHubRemovalMode,
   REMOVE_TIMEOUT,
-  RemovalMode,
-  type RemoveResponse,
+  FORCE_REMOVE_TIMEOUT,
 } from '@/hooks/useDeviceRemoval';
-import type { HubData } from '@/store/entityTypes';
+import { UnpairingAction } from '@/lib/hubUnpairing';
+import type { RemoveResponse } from '@/arcus/types';
+import type { DeviceEntity, HubData } from '@/store/entityTypes';
+import { makeDevice } from '../helpers/factories';
 
 // ── Mocks ─────────────────────────────────────────────────────────────
 
@@ -14,6 +17,7 @@ const mockDispatch = jest.fn();
 const mockBridgeRequest = jest.fn();
 const corneaListeners: Record<string, Array<(...args: any[]) => void>> = {};
 let mockHub: HubData | null = null;
+let mockDevice: DeviceEntity | undefined;
 
 jest.mock('@arcus/core/bridge', () => ({
   __esModule: true,
@@ -37,6 +41,10 @@ jest.mock('@/store/hooks', () => ({
   useAppSelector: (sel: (s: any) => any) => sel({ hub: { hub: mockHub } }),
 }));
 
+jest.mock('@/hooks/useDeviceCapability', () => ({
+  useDevice: () => mockDevice,
+}));
+
 jest.mock('@/store/slices/uiSlice', () => ({
   addNotification: (payload: unknown) => ({ type: 'ui/addNotification', payload }),
 }));
@@ -44,15 +52,17 @@ jest.mock('@/store/slices/uiSlice', () => ({
 // ── Helpers ───────────────────────────────────────────────────────────
 
 const DEVICE = 'DRIV:dev:lamp';
+const OTHER_DEVICE = 'DRIV:dev:other';
 const HUB = 'SERV:hub-1:hub';
 const DELETED = `${Device.NAMESPACE} ${Base.EVENT_DELETED}`;
+const STOP_FAILED = "Couldn't take the hub out of removal mode. The hub may stay in removal mode for a few minutes.";
 const onClose = jest.fn();
 
 const HUB_RESPONSE: RemoveResponse = {
-  mode: RemovalMode.HUB_MANUAL,
+  mode: PairingDevice.REMOVEMODE_HUB_MANUAL,
   steps: [{ id: 'pair/remove1', order: 1, instructions: ['Press the button on the device.'] }],
 };
-const CLOUD_RESPONSE: RemoveResponse = { mode: RemovalMode.CLOUD, steps: [] };
+const CLOUD_RESPONSE: RemoveResponse = { mode: PairingDevice.REMOVEMODE_CLOUD, steps: [] };
 
 function emitDeleted(address = DEVICE) {
   act(() => {
@@ -62,8 +72,12 @@ function emitDeleted(address = DEVICE) {
 
 function deferred<T>() {
   let resolve!: (value: T) => void;
-  const promise = new Promise<T>((r) => { resolve = r; });
-  return { promise, resolve };
+  let reject!: (reason: Error) => void;
+  const promise = new Promise<T>((res, rej) => {
+    resolve = res;
+    reject = rej;
+  });
+  return { promise, resolve, reject };
 }
 
 /** Route Bridge requests by command; anything unlisted resolves {}. */
@@ -72,11 +86,19 @@ function bridge(handlers: Partial<Record<string, () => Promise<unknown>>>) {
 }
 
 function stopCalls() {
-  return mockBridgeRequest.mock.calls.filter(([cmd]) => cmd === Hub.CMD_UNPAIRINGREQUEST);
+  return mockBridgeRequest.mock.calls.filter(
+    ([cmd, , attrs]) => cmd === Hub.CMD_UNPAIRINGREQUEST && attrs.actionType === UnpairingAction.STOP,
+  );
 }
 
-function renderRemoval() {
-  return renderHook(() => useDeviceRemoval(DEVICE, 'Lamp', onClose));
+function notification(type: string, message: string) {
+  return { type: 'ui/addNotification', payload: { type, message } };
+}
+
+function renderRemoval(address = DEVICE) {
+  return renderHook(({ addr }) => useDeviceRemoval(addr, 'Lamp', onClose), {
+    initialProps: { addr: address },
+  });
 }
 
 async function startRemoval(response: RemoveResponse = HUB_RESPONSE) {
@@ -86,10 +108,16 @@ async function startRemoval(response: RemoveResponse = HUB_RESPONSE) {
   return hook;
 }
 
+/** Wait for queued promise callbacks (e.g. a STOP sent from a cleanup). */
+async function flush() {
+  await act(async () => {});
+}
+
 beforeEach(() => {
   jest.clearAllMocks();
   Object.keys(corneaListeners).forEach((k) => delete corneaListeners[k]);
   mockHub = { [Base.ATTR_ADDRESS]: HUB, [Hub.ATTR_STATE]: Hub.STATE_NORMAL };
+  mockDevice = makeDevice(DEVICE, { [DeviceAdvanced.ATTR_PROTOCOL]: 'ZWAV' });
   bridge({});
 });
 
@@ -98,6 +126,17 @@ afterEach(() => {
 });
 
 // ── Tests ─────────────────────────────────────────────────────────────
+
+describe('isHubRemovalMode', () => {
+  it.each([
+    [PairingDevice.REMOVEMODE_HUB_MANUAL, true],
+    [PairingDevice.REMOVEMODE_HUB_AUTOMATIC, true],
+    [PairingDevice.REMOVEMODE_CLOUD, false],
+    [null, false],
+  ] as const)('is %s → %s', (mode, expected) => {
+    expect(isHubRemovalMode(mode)).toBe(expected);
+  });
+});
 
 describe('useDeviceRemoval – confirmation', () => {
   it('starts idle and toggles the confirmation prompt', () => {
@@ -119,8 +158,14 @@ describe('useDeviceRemoval – dev:Remove', () => {
 
     expect(mockBridgeRequest).toHaveBeenCalledWith(Device.CMD_REMOVE, DEVICE, {});
     expect(result.current.stage).toBe('removing');
-    expect(result.current.mode).toBe(RemovalMode.HUB_MANUAL);
+    expect(result.current.mode).toBe(PairingDevice.REMOVEMODE_HUB_MANUAL);
+    expect(result.current.hubMode).toBe(true);
     expect(result.current.steps).toEqual(HUB_RESPONSE.steps);
+  });
+
+  it('reports a cloud removal as not hub mode', async () => {
+    const { result } = await startRemoval(CLOUD_RESPONSE);
+    expect(result.current.hubMode).toBe(false);
   });
 
   it('does not report success or close until base:Deleted arrives', async () => {
@@ -142,22 +187,54 @@ describe('useDeviceRemoval – dev:Remove', () => {
     expect(result.current.stage).toBe('removing');
   });
 
-  it('notifies and returns to the prompt when dev:Remove fails', async () => {
+  it('notifies and returns to the prompt when dev:Remove fails for a cloud device', async () => {
+    mockDevice = makeDevice(DEVICE, { [DeviceAdvanced.ATTR_PROTOCOL]: 'IPCD' });
     bridge({ [Device.CMD_REMOVE]: () => Promise.reject(new Error('nope')) });
     const { result } = renderRemoval();
     await act(async () => { await result.current.remove(); });
 
-    expect(mockDispatch).toHaveBeenCalledWith({
-      type: 'ui/addNotification',
-      payload: { type: 'error', message: 'Failed to remove Lamp' },
-    });
+    expect(mockDispatch).toHaveBeenCalledWith(notification('error', 'Failed to remove Lamp'));
     expect(result.current.stage).toBe('confirm');
     expect(stopCalls()).toHaveLength(0);
+  });
+
+  it('stops unpairing, best effort, when dev:Remove fails for a hub device', async () => {
+    bridge({ [Device.CMD_REMOVE]: () => Promise.reject(new Error('timeout')) });
+    const { result } = renderRemoval();
+    await act(async () => { await result.current.remove(); });
+
+    expect(mockBridgeRequest).toHaveBeenCalledWith(Hub.CMD_UNPAIRINGREQUEST, HUB, {
+      actionType: UnpairingAction.STOP,
+    });
+    expect(mockDispatch).toHaveBeenCalledWith(notification('error', 'Failed to remove Lamp'));
+    expect(result.current.stage).toBe('confirm');
+  });
+
+  it('only reports the failed removal when that best-effort stop fails too', async () => {
+    bridge({
+      [Device.CMD_REMOVE]: () => Promise.reject(new Error('timeout')),
+      [Hub.CMD_UNPAIRINGREQUEST]: () => Promise.reject(new Error('timeout')),
+    });
+    const { result } = renderRemoval();
+    await act(async () => { await result.current.remove(); });
+
+    expect(mockDispatch.mock.calls).toEqual([[notification('error', 'Failed to remove Lamp')]]);
+  });
+
+  it('can retry after dev:Remove fails', async () => {
+    bridge({ [Device.CMD_REMOVE]: () => Promise.reject(new Error('nope')) });
+    const { result } = renderRemoval();
+    await act(async () => { await result.current.remove(); });
+
+    bridge({ [Device.CMD_REMOVE]: () => Promise.resolve(HUB_RESPONSE) });
+    await act(async () => { await result.current.remove(); });
+    expect(result.current.stage).toBe('removing');
   });
 
   it('defaults to no steps when the response has none', async () => {
     const { result } = await startRemoval({});
     expect(result.current.mode).toBeNull();
+    expect(result.current.hubMode).toBe(false);
     expect(result.current.steps).toEqual([]);
   });
 });
@@ -166,19 +243,17 @@ describe('useDeviceRemoval – base:Deleted', () => {
   it('reports success, closes and stops unpairing for a hub removal', async () => {
     await startRemoval();
     emitDeleted();
+    await flush();
 
-    expect(mockDispatch).toHaveBeenCalledWith({
-      type: 'ui/addNotification',
-      payload: { type: 'success', message: 'Lamp removed' },
-    });
+    expect(mockDispatch.mock.calls).toEqual([[notification('success', 'Lamp removed')]]);
     expect(onClose).toHaveBeenCalledTimes(1);
     expect(mockBridgeRequest).toHaveBeenCalledWith(Hub.CMD_UNPAIRINGREQUEST, HUB, {
-      actionType: 'STOP_UNPAIRING',
+      actionType: UnpairingAction.STOP,
     });
   });
 
   it('stops unpairing for HUB_AUTOMATIC removals too', async () => {
-    await startRemoval({ mode: RemovalMode.HUB_AUTOMATIC, steps: [] });
+    await startRemoval({ mode: PairingDevice.REMOVEMODE_HUB_AUTOMATIC, steps: [] });
     emitDeleted();
     expect(stopCalls()).toHaveLength(1);
   });
@@ -193,7 +268,7 @@ describe('useDeviceRemoval – base:Deleted', () => {
 
   it('ignores another device being deleted', async () => {
     await startRemoval();
-    emitDeleted('DRIV:dev:other');
+    emitDeleted(OTHER_DEVICE);
 
     expect(onClose).not.toHaveBeenCalled();
     expect(mockDispatch).not.toHaveBeenCalled();
@@ -221,15 +296,46 @@ describe('useDeviceRemoval – base:Deleted', () => {
     // The late response says the hub is unpairing: stop it.
     await act(async () => { pending.resolve(HUB_RESPONSE); await done; });
     expect(stopCalls()).toHaveLength(1);
+    expect(mockDispatch.mock.calls).toEqual([[notification('success', 'Lamp removed')]]);
   });
 
-  it('skips STOP_UNPAIRING when there is no hub', async () => {
+  it('does not also report a failure when dev:Remove rejects after base:Deleted', async () => {
+    const pending = deferred<RemoveResponse>();
+    bridge({ [Device.CMD_REMOVE]: () => pending.promise });
+    const { result } = renderRemoval();
+
+    let done!: Promise<void>;
+    act(() => { done = result.current.remove(); });
+    emitDeleted();
+    await act(async () => { pending.reject(new Error('timeout')); await done; });
+
+    expect(mockDispatch.mock.calls).toEqual([[notification('success', 'Lamp removed')]]);
+    expect(onClose).toHaveBeenCalledTimes(1);
+    // Hub device: the hub may still have been put into unpairing mode.
+    expect(stopCalls()).toHaveLength(1);
+  });
+
+  it('reports that the hub may stay unpairing when there is no hub to stop', async () => {
     mockHub = null;
     await startRemoval();
     emitDeleted();
+    await flush();
 
     expect(onClose).toHaveBeenCalledTimes(1);
     expect(stopCalls()).toHaveLength(0);
+    expect(mockDispatch).toHaveBeenCalledWith(notification('error', STOP_FAILED));
+  });
+
+  it('reports a failed stop after success', async () => {
+    await startRemoval();
+    bridge({ [Hub.CMD_UNPAIRINGREQUEST]: () => Promise.reject(new Error('offline')) });
+    emitDeleted();
+    await flush();
+
+    expect(mockDispatch.mock.calls).toEqual([
+      [notification('success', 'Lamp removed')],
+      [notification('error', STOP_FAILED)],
+    ]);
   });
 });
 
@@ -239,9 +345,10 @@ describe('useDeviceRemoval – cancel', () => {
     await act(async () => { await result.current.cancel(); });
 
     expect(mockBridgeRequest).toHaveBeenCalledWith(Hub.CMD_UNPAIRINGREQUEST, HUB, {
-      actionType: 'STOP_UNPAIRING',
+      actionType: UnpairingAction.STOP,
     });
     expect(onClose).toHaveBeenCalledTimes(1);
+    expect(mockDispatch).not.toHaveBeenCalled();
   });
 
   it('is cancelling while STOP_UNPAIRING is in flight', async () => {
@@ -257,21 +364,22 @@ describe('useDeviceRemoval – cancel', () => {
     expect(result.current.cancelling).toBe(false);
   });
 
-  it('notifies and stays open when STOP_UNPAIRING fails, and can retry', async () => {
+  it('notifies but still closes when STOP_UNPAIRING fails', async () => {
     const { result } = await startRemoval();
     bridge({ [Hub.CMD_UNPAIRINGREQUEST]: () => Promise.reject(new Error('offline')) });
     await act(async () => { await result.current.cancel(); });
 
-    expect(mockDispatch).toHaveBeenCalledWith({
-      type: 'ui/addNotification',
-      payload: { type: 'error', message: 'Failed to take the hub out of removal mode' },
-    });
-    expect(onClose).not.toHaveBeenCalled();
-    expect(result.current.stage).toBe('removing');
+    expect(mockDispatch).toHaveBeenCalledWith(notification('error', STOP_FAILED));
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
 
-    bridge({});
+  it('notifies and closes when there is no hub to stop', async () => {
+    mockHub = null;
+    const { result } = await startRemoval();
     await act(async () => { await result.current.cancel(); });
-    expect(stopCalls()).toHaveLength(2);
+
+    expect(stopCalls()).toHaveLength(0);
+    expect(mockDispatch).toHaveBeenCalledWith(notification('error', STOP_FAILED));
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
@@ -290,16 +398,79 @@ describe('useDeviceRemoval – cancel', () => {
     emitDeleted();
     expect(mockDispatch).not.toHaveBeenCalled();
   });
+
+  it('does not close again when the panel closed while STOP was in flight', async () => {
+    const pending = deferred<unknown>();
+    const { result, unmount } = await startRemoval();
+    bridge({ [Hub.CMD_UNPAIRINGREQUEST]: () => pending.promise });
+
+    let done!: Promise<void>;
+    act(() => { done = result.current.cancel(); });
+    unmount();
+    await act(async () => { pending.resolve({}); await done; });
+
+    expect(onClose).not.toHaveBeenCalled();
+    // The unmount shares the stop already in flight.
+    expect(stopCalls()).toHaveLength(1);
+    expect(mockDispatch).toHaveBeenCalledWith(notification('warning', 'Removal of Lamp cancelled.'));
+  });
+
+  it('closes once when the device is removed while STOP was in flight', async () => {
+    const pending = deferred<unknown>();
+    const { result } = await startRemoval();
+    bridge({ [Hub.CMD_UNPAIRINGREQUEST]: () => pending.promise });
+
+    let done!: Promise<void>;
+    act(() => { done = result.current.cancel(); });
+    emitDeleted();
+    await act(async () => { pending.resolve({}); await done; });
+
+    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(stopCalls()).toHaveLength(1);
+    expect(mockDispatch.mock.calls).toEqual([[notification('success', 'Lamp removed')]]);
+  });
+});
+
+describe('useDeviceRemoval – hub address', () => {
+  it('stops the hub the removal started on, even if the store hub changes', async () => {
+    const { result, rerender } = await startRemoval();
+    mockHub = { [Base.ATTR_ADDRESS]: 'SERV:hub-2:hub' };
+    rerender({ addr: DEVICE });
+
+    await act(async () => { await result.current.cancel(); });
+    expect(stopCalls()).toEqual([[Hub.CMD_UNPAIRINGREQUEST, HUB, { actionType: UnpairingAction.STOP }]]);
+  });
+
+  it('still stops that hub after the hub leaves the store', async () => {
+    const { result, rerender } = await startRemoval();
+    mockHub = null;
+    rerender({ addr: DEVICE });
+
+    await act(async () => { await result.current.cancel(); });
+    expect(stopCalls()).toEqual([[Hub.CMD_UNPAIRINGREQUEST, HUB, { actionType: UnpairingAction.STOP }]]);
+    expect(mockDispatch).not.toHaveBeenCalled();
+  });
 });
 
 describe('useDeviceRemoval – unmount', () => {
-  it('stops unpairing when unmounted mid-removal', async () => {
+  it('stops unpairing and says the removal was cancelled when unmounted mid-removal', async () => {
     const { unmount } = await startRemoval();
     unmount();
+    await flush();
 
     expect(mockBridgeRequest).toHaveBeenCalledWith(Hub.CMD_UNPAIRINGREQUEST, HUB, {
-      actionType: 'STOP_UNPAIRING',
+      actionType: UnpairingAction.STOP,
     });
+    expect(mockDispatch.mock.calls).toEqual([[notification('warning', 'Removal of Lamp cancelled.')]]);
+  });
+
+  it('says nothing when a cloud removal is left to finish', async () => {
+    const { unmount } = await startRemoval(CLOUD_RESPONSE);
+    unmount();
+    await flush();
+
+    expect(stopCalls()).toHaveLength(0);
+    expect(mockDispatch).not.toHaveBeenCalled();
   });
 
   it('stops unpairing once the response arrives when unmounted mid-request', async () => {
@@ -314,6 +485,7 @@ describe('useDeviceRemoval – unmount', () => {
 
     await act(async () => { pending.resolve(HUB_RESPONSE); await done; });
     expect(stopCalls()).toHaveLength(1);
+    expect(mockDispatch.mock.calls).toEqual([[notification('warning', 'Removal of Lamp cancelled.')]]);
   });
 
   it('sends STOP_UNPAIRING only once after success', async () => {
@@ -327,6 +499,7 @@ describe('useDeviceRemoval – unmount', () => {
     const { unmount } = renderRemoval();
     unmount();
     expect(mockBridgeRequest).not.toHaveBeenCalled();
+    expect(mockDispatch).not.toHaveBeenCalled();
   });
 
   it('notifies when STOP_UNPAIRING fails on unmount', async () => {
@@ -334,16 +507,62 @@ describe('useDeviceRemoval – unmount', () => {
     bridge({ [Hub.CMD_UNPAIRINGREQUEST]: () => Promise.reject(new Error('offline')) });
     await act(async () => { unmount(); });
 
-    expect(mockDispatch).toHaveBeenCalledWith({
-      type: 'ui/addNotification',
-      payload: { type: 'error', message: 'Failed to take the hub out of removal mode' },
-    });
+    expect(mockDispatch).toHaveBeenCalledWith(
+      notification('error', 'Removal of Lamp cancelled. The hub may stay in removal mode for a few minutes.'),
+    );
   });
 
   it('stops listening for base:Deleted', async () => {
     const { unmount } = await startRemoval();
     unmount();
     expect(corneaListeners[DELETED]).toHaveLength(0);
+  });
+});
+
+describe('useDeviceRemoval – address change', () => {
+  it('ends the removal and resets the flow for the new device', async () => {
+    const { result, rerender } = await startRemoval();
+    expect(result.current.stage).toBe('removing');
+
+    mockDevice = makeDevice(OTHER_DEVICE, { [DeviceAdvanced.ATTR_PROTOCOL]: 'ZIGB' });
+    rerender({ addr: OTHER_DEVICE });
+    await flush();
+
+    expect(result.current.stage).toBe('idle');
+    expect(result.current.mode).toBeNull();
+    expect(result.current.steps).toEqual([]);
+    expect(stopCalls()).toHaveLength(1);
+    expect(mockDispatch.mock.calls).toEqual([[notification('warning', 'Removal of Lamp cancelled.')]]);
+  });
+
+  it('runs a fresh removal for the new device', async () => {
+    const { result, rerender } = await startRemoval();
+    rerender({ addr: OTHER_DEVICE });
+    await flush();
+    mockDispatch.mockClear();
+
+    await act(async () => { await result.current.remove(); });
+    expect(mockBridgeRequest).toHaveBeenLastCalledWith(Device.CMD_REMOVE, OTHER_DEVICE, {});
+    expect(result.current.stage).toBe('removing');
+
+    emitDeleted(DEVICE);
+    expect(onClose).not.toHaveBeenCalled();
+    emitDeleted(OTHER_DEVICE);
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('ignores the old device response arriving after the switch', async () => {
+    const pending = deferred<RemoveResponse>();
+    bridge({ [Device.CMD_REMOVE]: () => pending.promise });
+    const { result, rerender } = renderRemoval();
+
+    let done!: Promise<void>;
+    act(() => { done = result.current.remove(); });
+    rerender({ addr: OTHER_DEVICE });
+    await act(async () => { pending.resolve(HUB_RESPONSE); await done; });
+
+    expect(result.current.stage).toBe('idle');
+    expect(stopCalls()).toHaveLength(1);
   });
 });
 
@@ -395,10 +614,7 @@ describe('useDeviceRemoval – timeout and Force Remove', () => {
     expect(onClose).not.toHaveBeenCalled();
 
     emitDeleted();
-    expect(mockDispatch).toHaveBeenCalledWith({
-      type: 'ui/addNotification',
-      payload: { type: 'success', message: 'Lamp removed' },
-    });
+    expect(mockDispatch).toHaveBeenCalledWith(notification('success', 'Lamp removed'));
     expect(onClose).toHaveBeenCalledTimes(1);
     expect(stopCalls()).toHaveLength(1);
   });
@@ -409,11 +625,35 @@ describe('useDeviceRemoval – timeout and Force Remove', () => {
     act(() => result.current.requestForceRemove());
     await act(async () => { await result.current.forceRemove(); });
 
-    expect(mockDispatch).toHaveBeenCalledWith({
-      type: 'ui/addNotification',
-      payload: { type: 'error', message: 'Failed to force remove Lamp' },
-    });
+    expect(mockDispatch).toHaveBeenCalledWith(notification('error', 'Failed to force remove Lamp'));
     expect(result.current.stage).toBe('timedOut');
+  });
+
+  it('gives up waiting for base:Deleted after Force Remove', async () => {
+    const { result } = await timedOut();
+    act(() => result.current.requestForceRemove());
+    await act(async () => { await result.current.forceRemove(); });
+
+    act(() => { jest.advanceTimersByTime(FORCE_REMOVE_TIMEOUT - 1); });
+    expect(result.current.stage).toBe('forcing');
+
+    act(() => { jest.advanceTimersByTime(1); });
+    expect(result.current.stage).toBe('timedOut');
+    expect(mockDispatch).toHaveBeenCalledWith(
+      notification('error', "Couldn't confirm that Lamp was removed"),
+    );
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it('does not say the removal was cancelled when closed while force removing', async () => {
+    const { result, unmount } = await timedOut();
+    act(() => result.current.requestForceRemove());
+    await act(async () => { await result.current.forceRemove(); });
+    unmount();
+    await flush();
+
+    expect(stopCalls()).toHaveLength(1);
+    expect(mockDispatch).not.toHaveBeenCalled();
   });
 
   it('can still cancel after timing out', async () => {

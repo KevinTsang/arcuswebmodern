@@ -1,6 +1,7 @@
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
-import { Base, Device, DeviceAdvanced, DeviceConnection, Hub } from '@arcus/core';
+import { Base, Device, DeviceAdvanced, DeviceConnection, Hub, PairingDevice } from '@arcus/core';
 import { DeviceDetailPanel } from '@/components/devices/DeviceDetailPanel';
+import { UnpairingAction } from '@/lib/hubUnpairing';
 import type { DeviceEntity } from '@/store/entityTypes';
 
 // ── Mocks ─────────────────────────────────────────────────────────────
@@ -216,7 +217,7 @@ describe('DeviceDetailPanel – removal', () => {
       [DeviceConnection.ATTR_STATE]: 'ONLINE',
     };
     mockBridgeRequest.mockImplementation((cmd: string) =>
-      Promise.resolve(cmd === Device.CMD_REMOVE ? { mode: 'HUB_MANUAL', steps: STEPS } : {}),
+      Promise.resolve(cmd === Device.CMD_REMOVE ? { mode: PairingDevice.REMOVEMODE_HUB_MANUAL, steps: STEPS } : {}),
     );
   });
 
@@ -259,7 +260,7 @@ describe('DeviceDetailPanel – removal', () => {
     });
     expect(mockCloseRight).toHaveBeenCalled();
     expect(mockBridgeRequest).toHaveBeenCalledWith(Hub.CMD_UNPAIRINGREQUEST, 'SERV:hub-1:hub', {
-      actionType: 'STOP_UNPAIRING',
+      actionType: UnpairingAction.STOP,
     });
   });
 
@@ -269,15 +270,36 @@ describe('DeviceDetailPanel – removal', () => {
 
     await waitFor(() => expect(mockCloseRight).toHaveBeenCalled());
     expect(mockBridgeRequest).toHaveBeenCalledWith(Hub.CMD_UNPAIRINGREQUEST, 'SERV:hub-1:hub', {
-      actionType: 'STOP_UNPAIRING',
+      actionType: UnpairingAction.STOP,
     });
   });
 
-  it('stops unpairing when the panel is closed mid-removal', async () => {
+  it('stops unpairing and says so when the panel is closed mid-removal', async () => {
     const { unmount } = await confirmRemove();
     unmount();
     expect(mockBridgeRequest).toHaveBeenCalledWith(Hub.CMD_UNPAIRINGREQUEST, 'SERV:hub-1:hub', {
-      actionType: 'STOP_UNPAIRING',
+      actionType: UnpairingAction.STOP,
+    });
+    await waitFor(() =>
+      expect(mockDispatch).toHaveBeenCalledWith({
+        type: 'ui/addNotification',
+        payload: { type: 'warning', message: 'Removal of Hall Switch cancelled.' },
+      }),
+    );
+  });
+
+  it('closes on Cancel even when the hub cannot be reached', async () => {
+    await confirmRemove();
+    mockBridgeRequest.mockRejectedValue(new Error('offline'));
+    fireEvent.click(screen.getByTestId('device-remove-abort'));
+
+    await waitFor(() => expect(mockCloseRight).toHaveBeenCalledTimes(1));
+    expect(mockDispatch).toHaveBeenCalledWith({
+      type: 'ui/addNotification',
+      payload: {
+        type: 'error',
+        message: "Couldn't take the hub out of removal mode. The hub may stay in removal mode for a few minutes.",
+      },
     });
   });
 

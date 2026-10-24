@@ -9,6 +9,7 @@
  */
 
 import type { Invitation } from '@arcus/core/services/types';
+import type { PairingDevice as PairingDeviceCapability } from '@arcus/core';
 import type {
   PersonData, PlaceData, AccountData,
   DeviceData, SceneData, RuleData, RuleTemplateData,
@@ -164,6 +165,22 @@ export interface PendingInvitationsResponse {
 // ── Invitation service responses ──────────────────────────────────
 
 export type { GetInvitationResponse } from '@arcus/core/services/types';
+
+// ── Device responses ──────────────────────────────────────────────
+
+/** dev:Remove `mode` (devicebase.xml). */
+export type RemovalMode =
+  | typeof PairingDeviceCapability.REMOVEMODE_CLOUD
+  | typeof PairingDeviceCapability.REMOVEMODE_HUB_AUTOMATIC
+  | typeof PairingDeviceCapability.REMOVEMODE_HUB_MANUAL;
+
+/** dev:Remove response (devicebase.xml). */
+export interface RemoveResponse {
+  /** Steps to show the user; empty for devices that remove themselves. */
+  steps?: PairingStep[];
+  mode?: RemovalMode;
+  video?: string;
+}
 
 // ── Pairing subsystem responses ───────────────────────────────────
 
