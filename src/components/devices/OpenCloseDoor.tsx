@@ -1,76 +1,102 @@
 'use client';
 
-import { useState, useCallback } from 'react';
-import { MotorizedDoor, DeviceAdvanced } from '@arcus/core';
+import { useState, useCallback, useEffect } from 'react';
+import { MotorizedDoor } from '@arcus/core';
 import { useDevice } from '@/hooks/useDeviceCapability';
 import { useDeviceActions } from '@/hooks/useDeviceActions';
 import { useAppDispatch } from '@/store/hooks';
 import { addNotification } from '@/store/slices/uiSlice';
+import { getGarageDoorStatus } from '@/lib/garageDoorStatus';
 
 /**
- * devadv:errors key the garage door drivers set when the door is obstructed.
- * While it is present the drivers ignore door state changes until the door
- * is operated manually and reports OPEN or CLOSED again.
+ * How long the control waits for the door to report a new doorstate after a
+ * write. The platform acks the write right away, but Z-Wave controllers flash
+ * and beep for several seconds before the door moves, and GoControl/Linear
+ * only report OPENING/CLOSING once it does.
  */
-const ERR_OBSTRUCTION = 'ERR_OBSTRUCTION';
+export const DOOR_COMMAND_TIMEOUT_MS = 30_000;
 
-const STATE_LABELS: Record<string, string> = {
-  [MotorizedDoor.DOORSTATE_OPENING]: 'Opening',
-  [MotorizedDoor.DOORSTATE_CLOSING]: 'Closing',
-};
+const BLOCKED_HINT = 'Clear the obstruction, then operate the door manually to restore remote control.';
+const OBSTRUCTED_HINT = 'Obstruction detected. Make sure the doorway is clear before closing.';
 
 /**
- * Garage door control. The platform has no open/close methods on
- * motdoor; the door is driven by writing motdoor:doorstate, and the drivers
- * only accept OPEN or CLOSED as the desired state.
+ * Garage door control. The platform has no open/close methods on motdoor;
+ * the door is driven by writing motdoor:doorstate OPEN or CLOSED. Close stays
+ * available unless the door is settled CLOSED, so a lost final report never
+ * leaves it uncontrollable; the only lockout is the drivers' own, while
+ * devadv:errors has ERR_OBSTRUCTION.
  */
 export default function OpenCloseDoor({ address }: { address: string }) {
   const device = useDevice(address);
   const { setAttribute } = useDeviceActions(address);
   const dispatch = useAppDispatch();
-  const [pending, setPending] = useState(false);
+  const hintId = `device-door-hint-${address}`;
+  const { state, obstructed, label: stateLabel, target } = getGarageDoorStatus(device);
 
-  const doorState = device?.[MotorizedDoor.ATTR_DOORSTATE] as string | undefined;
-  const errors = device?.[DeviceAdvanced.ATTR_ERRORS] as Record<string, string> | undefined;
-  const obstructed = doorState === MotorizedDoor.DOORSTATE_OBSTRUCTION || !!errors?.[ERR_OBSTRUCTION];
+  // Set when a write is sent; cleared once the door reports a different
+  // doorstate, the write fails, or DOOR_COMMAND_TIMEOUT_MS passes.
+  const [awaiting, setAwaiting] = useState(false);
+  const [sentFromState, setSentFromState] = useState(state);
+  if (state !== sentFromState) {
+    setSentFromState(state);
+    setAwaiting(false);
+  }
 
-  let target: string | null = null;
-  if (!obstructed && doorState === MotorizedDoor.DOORSTATE_CLOSED) target = MotorizedDoor.DOORSTATE_OPEN;
-  if (!obstructed && doorState === MotorizedDoor.DOORSTATE_OPEN) target = MotorizedDoor.DOORSTATE_CLOSED;
+  useEffect(() => {
+    if (!awaiting) return;
+    const timer = setTimeout(() => setAwaiting(false), DOOR_COMMAND_TIMEOUT_MS);
+    return () => clearTimeout(timer);
+  }, [awaiting]);
 
   const handleToggle = useCallback(async () => {
-    if (!target) return;
-    setPending(true);
+    setAwaiting(true);
     try {
       await setAttribute(MotorizedDoor.ATTR_DOORSTATE, target);
     } catch {
+      setAwaiting(false);
       const verb = target === MotorizedDoor.DOORSTATE_OPEN ? 'open' : 'close';
       dispatch(addNotification({ type: 'error', message: `Failed to ${verb} the garage door` }));
-    } finally {
-      setPending(false);
     }
   }, [target, setAttribute, dispatch]);
 
+  const blocked = obstructed && target === null;
+  const settled = !obstructed && (state === MotorizedDoor.DOORSTATE_OPEN || state === MotorizedDoor.DOORSTATE_CLOSED);
+
   let label: string;
-  if (pending) label = '...';
-  else if (obstructed) label = 'Obstructed';
+  if (awaiting) label = '...';
   else if (target === MotorizedDoor.DOORSTATE_OPEN) label = 'Open';
   else if (target === MotorizedDoor.DOORSTATE_CLOSED) label = 'Close';
-  else label = STATE_LABELS[doorState ?? ''] ?? 'Unknown';
+  else label = stateLabel;
 
   return (
-    <button
-      onClick={handleToggle}
-      disabled={pending || !target}
-      title={obstructed ? 'Obstruction detected. Clear it and operate the door manually to restore control.' : undefined}
-      data-testid={`device-door-toggle-${address}`}
-      className={`
-        px-4 py-1.5 rounded-[var(--border-radius-base)] text-sm font-medium
-        ${obstructed ? 'bg-cardinal/10 text-cardinal border border-cardinal/30' : 'bg-peacock text-crane'}
-        disabled:opacity-50
-      `}
-    >
-      {label}
-    </button>
+    <div className="flex flex-col items-end gap-1">
+      <div className="flex items-center gap-2">
+        {!settled && target !== null && (
+          <span
+            data-testid={`device-door-state-${address}`}
+            className={`text-xs font-medium ${obstructed ? 'text-cardinal' : 'text-grouse'}`}
+          >
+            {stateLabel}
+          </span>
+        )}
+        <button
+          onClick={handleToggle}
+          disabled={awaiting || target === null}
+          aria-describedby={obstructed ? hintId : undefined}
+          data-testid={`device-door-toggle-${address}`}
+          className={`
+            px-4 py-1.5 rounded-[var(--border-radius-base)] text-sm font-medium
+            ${blocked ? 'bg-cardinal/10 text-cardinal border border-cardinal/30 cursor-not-allowed' : 'bg-peacock text-crane disabled:opacity-50'}
+          `}
+        >
+          {label}
+        </button>
+      </div>
+      {obstructed && (
+        <p id={hintId} data-testid={hintId} className="max-w-48 text-right text-xs text-cardinal">
+          {blocked ? BLOCKED_HINT : OBSTRUCTED_HINT}
+        </p>
+      )}
+    </div>
   );
 }

@@ -1,9 +1,14 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { Base, DeviceAdvanced, MotorizedDoor } from '@arcus/core';
-import OpenCloseDoor from '@/components/devices/OpenCloseDoor';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
+import { DeviceAdvanced, MotorizedDoor } from '@arcus/core';
+import OpenCloseDoor, { DOOR_COMMAND_TIMEOUT_MS } from '@/components/devices/OpenCloseDoor';
+import { ERR_OBSTRUCTION } from '@/lib/garageDoorStatus';
 import type { DeviceEntity } from '@/store/entityTypes';
+import { makeDevice } from '../helpers/factories';
 
 // ── Mocks ─────────────────────────────────────────────────────────────
+
+/** base:SetAttributes answers with an empty object. */
+type SetAttributesResponse = Record<string, never>;
 
 const mockSetAttribute = jest.fn();
 const mockSendCommand = jest.fn();
@@ -32,24 +37,42 @@ jest.mock('@/store/slices/uiSlice', () => ({
 // ── Helpers ───────────────────────────────────────────────────────────
 
 const ADDRESS = 'DRIV:dev:garage';
+const OBSTRUCTED = { [ERR_OBSTRUCTION]: 'Garage door may be obstructed' };
 
 function makeDoor(doorState?: string, errors?: Record<string, string>): DeviceEntity {
-  return {
-    id: ADDRESS,
-    [Base.ATTR_ADDRESS]: ADDRESS,
+  return makeDevice(ADDRESS, {
     ...(doorState !== undefined && { [MotorizedDoor.ATTR_DOORSTATE]: doorState }),
     ...(errors && { [DeviceAdvanced.ATTR_ERRORS]: errors }),
-  };
+  });
 }
 
 function getButton() {
   return screen.getByTestId(`device-door-toggle-${ADDRESS}`);
 }
 
+function queryStateText() {
+  return screen.queryByTestId(`device-door-state-${ADDRESS}`);
+}
+
+function queryHint() {
+  return screen.queryByTestId(`device-door-hint-${ADDRESS}`);
+}
+
+/** Make the next write hang until the returned function is called. */
+function deferWrite(): () => void {
+  let resolve: (value: SetAttributesResponse) => void = () => {};
+  mockSetAttribute.mockReturnValueOnce(new Promise<SetAttributesResponse>((r) => { resolve = r; }));
+  return () => resolve({});
+}
+
 beforeEach(() => {
   jest.clearAllMocks();
   mockSetAttribute.mockResolvedValue({});
   mockDevice = makeDoor(MotorizedDoor.DOORSTATE_CLOSED);
+});
+
+afterEach(() => {
+  jest.useRealTimers();
 });
 
 // ── Tests ─────────────────────────────────────────────────────────────
@@ -61,8 +84,14 @@ describe('OpenCloseDoor', () => {
       expect(container.firstChild).toMatchSnapshot();
     });
 
+    it('matches snapshot while closing', () => {
+      mockDevice = makeDoor(MotorizedDoor.DOORSTATE_CLOSING);
+      const { container } = render(<OpenCloseDoor address={ADDRESS} />);
+      expect(container.firstChild).toMatchSnapshot();
+    });
+
     it('matches snapshot when obstructed', () => {
-      mockDevice = makeDoor(MotorizedDoor.DOORSTATE_OBSTRUCTION);
+      mockDevice = makeDoor(MotorizedDoor.DOORSTATE_OBSTRUCTION, OBSTRUCTED);
       const { container } = render(<OpenCloseDoor address={ADDRESS} />);
       expect(container.firstChild).toMatchSnapshot();
     });
@@ -73,6 +102,8 @@ describe('OpenCloseDoor', () => {
       render(<OpenCloseDoor address={ADDRESS} />);
       expect(getButton()).toHaveTextContent('Open');
       expect(getButton()).toBeEnabled();
+      expect(queryStateText()).not.toBeInTheDocument();
+      expect(queryHint()).not.toBeInTheDocument();
     });
 
     it('offers "Close" when the door is open', () => {
@@ -80,35 +111,57 @@ describe('OpenCloseDoor', () => {
       render(<OpenCloseDoor address={ADDRESS} />);
       expect(getButton()).toHaveTextContent('Close');
       expect(getButton()).toBeEnabled();
+      expect(queryStateText()).not.toBeInTheDocument();
     });
 
-    it('shows "Opening" and disables the button while the door is opening', () => {
+    it('shows "Opening" and keeps "Close" available while the door is opening', () => {
       mockDevice = makeDoor(MotorizedDoor.DOORSTATE_OPENING);
       render(<OpenCloseDoor address={ADDRESS} />);
-      expect(getButton()).toHaveTextContent('Opening');
-      expect(getButton()).toBeDisabled();
+      expect(queryStateText()).toHaveTextContent('Opening');
+      expect(getButton()).toHaveTextContent('Close');
+      expect(getButton()).toBeEnabled();
     });
 
-    it('shows "Closing" and disables the button while the door is closing', () => {
+    it('shows "Closing" and offers "Close" again, never "Open", while the door is closing', () => {
       mockDevice = makeDoor(MotorizedDoor.DOORSTATE_CLOSING);
       render(<OpenCloseDoor address={ADDRESS} />);
-      expect(getButton()).toHaveTextContent('Closing');
+      expect(queryStateText()).toHaveTextContent('Closing');
+      expect(getButton()).toHaveTextContent('Close');
+      expect(getButton()).toBeEnabled();
+    });
+
+    it('disables the control and explains why while devadv:errors has ERR_OBSTRUCTION', () => {
+      mockDevice = makeDoor(MotorizedDoor.DOORSTATE_OBSTRUCTION, OBSTRUCTED);
+      render(<OpenCloseDoor address={ADDRESS} />);
+      expect(getButton()).toHaveTextContent('Obstructed');
+      expect(getButton()).toBeDisabled();
+      expect(queryHint()).toBeVisible();
+      expect(queryHint()).toHaveTextContent('operate the door manually');
+      expect(getButton()).toHaveAccessibleDescription(/operate the door manually/);
+      expect(getButton()).not.toHaveClass('disabled:opacity-50');
+    });
+
+    it('treats ERR_OBSTRUCTION as obstructed even when the door reports a settled state', () => {
+      mockDevice = makeDoor(MotorizedDoor.DOORSTATE_CLOSED, OBSTRUCTED);
+      render(<OpenCloseDoor address={ADDRESS} />);
+      expect(getButton()).toHaveTextContent('Obstructed');
       expect(getButton()).toBeDisabled();
     });
 
-    it('shows "Obstructed" and disables the button when the door reports an obstruction', () => {
+    it('detects ERR_OBSTRUCTION by key, even with an empty message', () => {
+      mockDevice = makeDoor(MotorizedDoor.DOORSTATE_OPEN, { [ERR_OBSTRUCTION]: '' });
+      render(<OpenCloseDoor address={ADDRESS} />);
+      expect(getButton()).toHaveTextContent('Obstructed');
+      expect(getButton()).toBeDisabled();
+    });
+
+    it('offers "Close" for an OBSTRUCTION doorstate without ERR_OBSTRUCTION, which the drivers accept', () => {
       mockDevice = makeDoor(MotorizedDoor.DOORSTATE_OBSTRUCTION);
       render(<OpenCloseDoor address={ADDRESS} />);
-      expect(getButton()).toHaveTextContent('Obstructed');
-      expect(getButton()).toBeDisabled();
-      expect(getButton()).toHaveAttribute('title', expect.stringContaining('Obstruction detected'));
-    });
-
-    it('treats an ERR_OBSTRUCTION device error as obstructed even if the door state is settled', () => {
-      mockDevice = makeDoor(MotorizedDoor.DOORSTATE_CLOSED, { ERR_OBSTRUCTION: 'Garage door may be obstructed' });
-      render(<OpenCloseDoor address={ADDRESS} />);
-      expect(getButton()).toHaveTextContent('Obstructed');
-      expect(getButton()).toBeDisabled();
+      expect(queryStateText()).toHaveTextContent('Obstructed');
+      expect(getButton()).toHaveTextContent('Close');
+      expect(getButton()).toBeEnabled();
+      expect(queryHint()).toHaveTextContent('Make sure the doorway is clear');
     });
 
     it('ignores unrelated device errors', () => {
@@ -116,6 +169,7 @@ describe('OpenCloseDoor', () => {
       render(<OpenCloseDoor address={ADDRESS} />);
       expect(getButton()).toHaveTextContent('Open');
       expect(getButton()).toBeEnabled();
+      expect(queryHint()).not.toBeInTheDocument();
     });
   });
 
@@ -139,25 +193,59 @@ describe('OpenCloseDoor', () => {
       expect(mockSendCommand).not.toHaveBeenCalled();
     });
 
-    it('disables the button while the request is in flight and re-enables it afterwards', async () => {
-      let resolve: (value: unknown) => void = () => {};
-      mockSetAttribute.mockReturnValue(new Promise((r) => { resolve = r; }));
+    it.each([
+      MotorizedDoor.DOORSTATE_OPENING,
+      MotorizedDoor.DOORSTATE_CLOSING,
+      MotorizedDoor.DOORSTATE_OBSTRUCTION,
+      'STOPPED',
+    ])('writes CLOSED when clicked in the %s state', async (state) => {
+      mockDevice = makeDoor(state);
       render(<OpenCloseDoor address={ADDRESS} />);
       fireEvent.click(getButton());
       await waitFor(() => {
-        expect(getButton()).toHaveTextContent('...');
+        expect(mockSetAttribute).toHaveBeenCalledWith(MotorizedDoor.ATTR_DOORSTATE, MotorizedDoor.DOORSTATE_CLOSED);
       });
+      expect(mockSetAttribute).toHaveBeenCalledTimes(1);
+    });
+
+    it('stays busy after the platform acks until the door reports a new state', async () => {
+      const ack = deferWrite();
+      mockDevice = makeDoor(MotorizedDoor.DOORSTATE_OPEN);
+      const { rerender } = render(<OpenCloseDoor address={ADDRESS} />);
+      fireEvent.click(getButton());
+      expect(getButton()).toHaveTextContent('...');
       expect(getButton()).toBeDisabled();
 
-      resolve({});
-      await waitFor(() => {
-        expect(getButton()).toBeEnabled();
-      });
-      expect(getButton()).toHaveTextContent('Open');
+      await act(async () => { ack(); });
+      expect(getButton()).toHaveTextContent('...');
+      expect(getButton()).toBeDisabled();
+
+      mockDevice = makeDoor(MotorizedDoor.DOORSTATE_CLOSING);
+      rerender(<OpenCloseDoor address={ADDRESS} />);
+      expect(getButton()).toHaveTextContent('Close');
+      expect(getButton()).toBeEnabled();
+      expect(queryStateText()).toHaveTextContent('Closing');
+      expect(mockSetAttribute).toHaveBeenCalledTimes(1);
       expect(mockDispatch).not.toHaveBeenCalled();
     });
 
-    it('shows an error toast when closing fails', async () => {
+    it('re-enables the control when the door never reports a new state', async () => {
+      jest.useFakeTimers();
+      mockDevice = makeDoor(MotorizedDoor.DOORSTATE_OPEN);
+      render(<OpenCloseDoor address={ADDRESS} />);
+      fireEvent.click(getButton());
+      await act(async () => {});
+      expect(getButton()).toBeDisabled();
+
+      act(() => { jest.advanceTimersByTime(DOOR_COMMAND_TIMEOUT_MS - 1); });
+      expect(getButton()).toBeDisabled();
+
+      act(() => { jest.advanceTimersByTime(1); });
+      expect(getButton()).toBeEnabled();
+      expect(getButton()).toHaveTextContent('Close');
+    });
+
+    it('shows an error toast and re-enables the control when closing fails', async () => {
       mockDevice = makeDoor(MotorizedDoor.DOORSTATE_OPEN);
       mockSetAttribute.mockRejectedValue(new Error('UnsupportedMessageType'));
       render(<OpenCloseDoor address={ADDRESS} />);
@@ -183,25 +271,22 @@ describe('OpenCloseDoor', () => {
         });
       });
     });
-
-    it.each([
-      MotorizedDoor.DOORSTATE_OPENING,
-      MotorizedDoor.DOORSTATE_CLOSING,
-      MotorizedDoor.DOORSTATE_OBSTRUCTION,
-    ])('does not send anything when clicked in the %s state', (state) => {
-      mockDevice = makeDoor(state);
-      render(<OpenCloseDoor address={ADDRESS} />);
-      fireEvent.click(getButton());
-      expect(mockSetAttribute).not.toHaveBeenCalled();
-    });
   });
 
   describe('edge cases', () => {
-    it('disables the control when the door state is unknown', () => {
+    it('offers "Close" when the door state is unknown', () => {
       mockDevice = makeDoor();
       render(<OpenCloseDoor address={ADDRESS} />);
-      expect(getButton()).toHaveTextContent('Unknown');
-      expect(getButton()).toBeDisabled();
+      expect(queryStateText()).toHaveTextContent('Unknown');
+      expect(getButton()).toHaveTextContent('Close');
+      expect(getButton()).toBeEnabled();
+    });
+
+    it('treats an inherited property name as an unknown state', () => {
+      mockDevice = makeDoor('constructor');
+      render(<OpenCloseDoor address={ADDRESS} />);
+      expect(queryStateText()).toHaveTextContent('Unknown');
+      expect(getButton()).toHaveTextContent('Close');
     });
 
     it('disables the control when the device is not in the store', () => {

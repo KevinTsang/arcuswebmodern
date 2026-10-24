@@ -23,6 +23,7 @@ import {
   type DeviceWebConfig,
 } from '../lib/deviceConfig';
 import type { DeviceEntity } from '../store/entityTypes';
+import { getGarageDoorStatus } from '../lib/garageDoorStatus';
 
 type DeviceObj = DeviceEntity;
 
@@ -371,7 +372,7 @@ export function getDeviceStatusText(device: DeviceObj, config: DeviceWebConfig):
     case 'lock':
       return (device[DoorLock.ATTR_LOCKSTATE] as string) === DoorLock.LOCKSTATE_LOCKED ? 'Locked' : 'Unlocked';
     case 'garagedoor':
-      return (device[MotorizedDoor.ATTR_DOORSTATE] as string) === MotorizedDoor.DOORSTATE_CLOSED ? 'Closed' : 'Open';
+      return getGarageDoorStatus(device).label;
     case 'thermostat':
     case 'nestthermostat':
     case 'tccthermostat': {
