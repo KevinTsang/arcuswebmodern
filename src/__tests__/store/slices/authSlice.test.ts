@@ -1,6 +1,7 @@
 import reducer, {
   setAuthenticating,
   loginSuccess,
+  accountUpdated,
   loginFailed,
   logout,
   sessionExpired,
@@ -38,6 +39,19 @@ describe('authSlice', () => {
     expect(state.authenticating).toBe(false);
     expect(state.person).toEqual(person);
     expect(state.account).toEqual(account);
+  });
+
+  it('accountUpdated replaces the account and keeps the rest of the session', () => {
+    const person = { [Person.ATTR_FIRSTNAME]: 'Alice', [Base.ATTR_ADDRESS]: 'SERV:person:p1' };
+    const logged = reducer(initial, loginSuccess({
+      person,
+      account: { [Account.ATTR_STATE]: 'ACTIVE', [Base.ATTR_ADDRESS]: 'SERV:account:a1' },
+    }));
+    const other = { [Account.ATTR_STATE]: 'ACTIVE', [Base.ATTR_ADDRESS]: 'SERV:account:a2' };
+    const state = reducer(logged, accountUpdated(other));
+    expect(state.account).toEqual(other);
+    expect(state.person).toEqual(person);
+    expect(state.authenticated).toBe(true);
   });
 
   it('loginFailed clears everything', () => {
