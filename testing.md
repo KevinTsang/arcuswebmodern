@@ -267,7 +267,7 @@ stable identifier when the element repeats — never from display text alone.
 | `<domain>-<thing>-<id>` for repeated items, keyed by platform address / id / slug | `device-row-DRIV:dev:lamp`, `scene-card-goodnight`, `rule-row-1`, `place-card-place-maple`, `product-acme-plug`, `calltree-entry-SERV:person:person-alex` |
 | Children of a repeated item carry the item's key too — **every id is unique on the page** | `device-toggle-DRIV:dev:coffee`, `device-toggle-DRIV:dev:relay-relay2`, `scene-run-goodnight`, `rule-edit-1`, `exit-delay-on`, `apikey-revoke-key-1`, `history-entry-0` |
 | Generic components read a scope from the nearest `TestIdScope` provider (`src/lib/testIdScope.ts`) — never a test-only prop | `status-value-<card>-<badge>` (`CardShell` provides the card slug), `<info card id>-value-<label>` (`InfoCard`), `<scope>-perm-<cat>-<r\|w\|x\|all>` (`KeyCard` / the create form provide `apikey-<id>` / `apikey-new`) |
-| Label-derived ids via `testIdSlug()` (`src/lib/testId.ts`) when the component is generic | `setting-record-on-security-alarm`, `info-value-current-plan`, `field-first-name`, `accordion-lights-switches`, `card-doors-locks`, `status-value-open` |
+| Label-derived ids via `testIdSlug()` (`src/lib/testId.ts`) when the component is generic | `setting-fan-shutoff-on-smoke`, `info-value-current-plan`, `field-first-name`, `accordion-lights-switches`, `card-doors-locks`, `status-value-open` |
 | State the test must read goes in a `data-*` attribute next to the id | `data-enabled`, `data-position`, `data-state`, `data-favorite`, `data-current` |
 
 A global `afterEach` in `cypress/support/e2e.ts` fails any test whose page ends

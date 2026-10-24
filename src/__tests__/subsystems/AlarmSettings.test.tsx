@@ -63,6 +63,11 @@ beforeEach(() => {
 });
 
 describe('AlarmSettings', () => {
+  it('matches snapshot', () => {
+    const { container } = render(<AlarmSettings />);
+    expect(container.firstChild).toMatchSnapshot();
+  });
+
   it('renders both fan shutoff toggles', () => {
     render(<AlarmSettings />);
     expect(screen.getByText('Fan Shutoff on Smoke')).toBeInTheDocument();
@@ -80,13 +85,14 @@ describe('AlarmSettings', () => {
   it('does not offer camera recording on security alarm', () => {
     render(<AlarmSettings />);
     expect(screen.queryByText('Record on Security Alarm')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('setting-record-on-security-alarm')).not.toBeInTheDocument();
   });
 
   it('toggles fanShutoffOnSmoke from off to on', async () => {
     mockBridgeRequest.mockResolvedValue({});
     render(<AlarmSettings />);
 
-    fireEvent.click(screen.getByText('Fan Shutoff on Smoke').closest('div')!.parentElement!.querySelector('button[role="switch"]')!);
+    fireEvent.click(screen.getByRole('switch', { name: 'Fan Shutoff on Smoke' }));
 
     await waitFor(() => {
       expect(mockBridgeRequest).toHaveBeenCalledWith(
@@ -102,7 +108,7 @@ describe('AlarmSettings', () => {
     mockBridgeRequest.mockResolvedValue({});
     render(<AlarmSettings />);
 
-    fireEvent.click(screen.getByText('Fan Shutoff on Smoke').closest('div')!.parentElement!.querySelector('button[role="switch"]')!);
+    fireEvent.click(screen.getByRole('switch', { name: 'Fan Shutoff on Smoke' }));
 
     await waitFor(() => {
       expect(mockBridgeRequest).toHaveBeenCalledWith(
@@ -117,7 +123,7 @@ describe('AlarmSettings', () => {
     mockBridgeRequest.mockResolvedValue({});
     render(<AlarmSettings />);
 
-    fireEvent.click(screen.getByText('Fan Shutoff on CO').closest('div')!.parentElement!.querySelector('button[role="switch"]')!);
+    fireEvent.click(screen.getByRole('switch', { name: 'Fan Shutoff on CO' }));
 
     await waitFor(() => {
       expect(mockBridgeRequest).toHaveBeenCalledWith(
@@ -132,7 +138,7 @@ describe('AlarmSettings', () => {
     mockBridgeRequest.mockRejectedValue(new Error('network'));
     render(<AlarmSettings />);
 
-    fireEvent.click(screen.getByText('Fan Shutoff on Smoke').closest('div')!.parentElement!.querySelector('button[role="switch"]')!);
+    fireEvent.click(screen.getByRole('switch', { name: 'Fan Shutoff on Smoke' }));
 
     await waitFor(() => {
       expect(mockDispatch).toHaveBeenCalledWith({
@@ -146,7 +152,7 @@ describe('AlarmSettings', () => {
     mockAlarm = { ...defaultAlarm, alarmSubsystem: undefined as any };
     render(<AlarmSettings />);
 
-    fireEvent.click(screen.getByText('Fan Shutoff on Smoke').closest('div')!.parentElement!.querySelector('button[role="switch"]')!);
+    fireEvent.click(screen.getByRole('switch', { name: 'Fan Shutoff on Smoke' }));
 
     await waitFor(() => {
       expect(mockBridgeRequest).not.toHaveBeenCalled();
@@ -155,10 +161,16 @@ describe('AlarmSettings', () => {
 
   it('reflects enabled state on toggle switches', () => {
     mockAlarm = { ...defaultAlarm, fanShutoffOnSmoke: true, fanShutoffOnCO: false };
+    const { unmount } = render(<AlarmSettings />);
+
+    expect(screen.getByRole('switch', { name: 'Fan Shutoff on Smoke' })).toHaveAttribute('aria-checked', 'true');
+    expect(screen.getByRole('switch', { name: 'Fan Shutoff on CO' })).toHaveAttribute('aria-checked', 'false');
+
+    unmount();
+    mockAlarm = { ...defaultAlarm, fanShutoffOnSmoke: false, fanShutoffOnCO: true };
     render(<AlarmSettings />);
 
-    const switches = screen.getAllByRole('switch');
-    expect(switches[0]).toHaveAttribute('aria-checked', 'true');
-    expect(switches[1]).toHaveAttribute('aria-checked', 'false');
+    expect(screen.getByRole('switch', { name: 'Fan Shutoff on Smoke' })).toHaveAttribute('aria-checked', 'false');
+    expect(screen.getByRole('switch', { name: 'Fan Shutoff on CO' })).toHaveAttribute('aria-checked', 'true');
   });
 });
