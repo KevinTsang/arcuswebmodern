@@ -53,6 +53,14 @@ describe('Authentication', () => {
     tid('scenes-title').should('have.text', 'Scenes');
   });
 
+  it('ignores a redirect query that points off-site', () => {
+    cy.visit('/login?redirect=//evil.example/login');
+    login(LOGIN.email, LOGIN.password);
+
+    cy.location('pathname', { timeout: 20000 }).should('not.eq', '/login');
+    cy.location('origin').should('eq', Cypress.config('baseUrl'));
+  });
+
   it('restores an existing session on a hard refresh', () => {
     cy.signIn({ path: '/devices' });
     tid('devices-title').should('have.text', 'Devices');

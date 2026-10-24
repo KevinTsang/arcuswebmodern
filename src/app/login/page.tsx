@@ -18,6 +18,7 @@ import { loginThunk } from '@/store/thunks/loginThunk';
 import { loadPlaceDataThunk } from '@/store/thunks/loadPlaceDataThunk';
 import { useFormValidation, type ValidationConstraints } from '@/hooks/useFormValidation';
 import { PersonService } from '@arcus/core/services';
+import { safeRedirectPath } from '@/lib/safeRedirect';
 
 // ── Validation constraints ────────────────────────────────────────────
 
@@ -98,8 +99,7 @@ function LoginForm() {
           await dispatch(loadPlaceDataThunk(result.placeId)).unwrap();
         }
 
-        const redirect = searchParams.get('redirect') ?? '/';
-        router.replace(redirect);
+        router.replace(safeRedirectPath(searchParams.get('redirect')));
       } catch {
         setSaving(false);
         form.setFormError('Invalid username or password');
