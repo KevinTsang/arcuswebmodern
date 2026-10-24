@@ -4,6 +4,7 @@ exports[`ArcusLogo matches snapshot 1`] = `
 <svg
   aria-hidden="true"
   class="w-8 h-8"
+  data-testid="arcus-logo"
   viewBox="-101 -101 202 202"
 >
   <path

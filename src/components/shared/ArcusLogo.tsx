@@ -32,7 +32,7 @@ const FACES = [
 export function ArcusLogo({ className, label }: ArcusLogoProps) {
   const a11y = label ? { role: 'img', 'aria-label': label } : { 'aria-hidden': true };
   return (
-    <svg viewBox="-101 -101 202 202" className={className} {...a11y}>
+    <svg viewBox="-101 -101 202 202" data-testid="arcus-logo" className={className} {...a11y}>
       {/* Matching thin strokes hide anti-aliasing seams between adjacent shapes */}
       {[...SECTORS, ...FACES].map(({ d, fill }) => (
         <path key={d} d={d} fill={fill} stroke={fill} strokeWidth={0.6} strokeLinejoin="round" />
