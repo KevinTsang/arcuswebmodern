@@ -45,19 +45,21 @@ describe('Authentication', () => {
     cy.platform().its('authenticated').should('eq', false);
   });
 
-  it('honours the redirect query after login', () => {
-    cy.visit('/login?redirect=/scenes');
+  it('returns to the page the user was trying to reach after login', () => {
+    cy.visit('/scenes');
+    cy.location('pathname', { timeout: 20000 }).should('eq', '/login');
+    cy.location('search').should('not.include', 'redirect');
     login(LOGIN.email, LOGIN.password);
 
     cy.location('pathname', { timeout: 20000 }).should('eq', '/scenes');
     tid('scenes-title').should('have.text', 'Scenes');
   });
 
-  it('ignores a redirect query that points off-site', () => {
+  it('ignores a redirect query param and lands on the dashboard', () => {
     cy.visit('/login?redirect=//evil.example/login');
     login(LOGIN.email, LOGIN.password);
 
-    cy.location('pathname', { timeout: 20000 }).should('not.eq', '/login');
+    cy.location('pathname', { timeout: 20000 }).should('eq', '/home');
     cy.location('origin').should('eq', Cypress.config('baseUrl'));
   });
 
