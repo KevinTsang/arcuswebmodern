@@ -13,12 +13,15 @@ exports[`ContactInfoPanel rendering matches snapshot 1`] = `
   <div>
     <label
       class="block text-sm text-grouse mb-1"
+      for="contact-first-name"
     >
       First Name
     </label>
     <input
-      class="w-full border border-heron rounded-[var(--border-radius-base)] px-3 py-2 text-sm text-swift focus:outline-none focus:border-peacock"
+      autocomplete="given-name"
+      class="w-full border border-heron rounded-[var(--border-radius-base)] px-3 py-2 text-sm text-swift focus:outline-none focus:border-peacock disabled:opacity-50"
       data-testid="field-first-name"
+      id="contact-first-name"
       type="text"
       value="John"
     />
@@ -26,12 +29,15 @@ exports[`ContactInfoPanel rendering matches snapshot 1`] = `
   <div>
     <label
       class="block text-sm text-grouse mb-1"
+      for="contact-last-name"
     >
       Last Name
     </label>
     <input
-      class="w-full border border-heron rounded-[var(--border-radius-base)] px-3 py-2 text-sm text-swift focus:outline-none focus:border-peacock"
+      autocomplete="family-name"
+      class="w-full border border-heron rounded-[var(--border-radius-base)] px-3 py-2 text-sm text-swift focus:outline-none focus:border-peacock disabled:opacity-50"
       data-testid="field-last-name"
+      id="contact-last-name"
       type="text"
       value="Doe"
     />
@@ -39,14 +45,17 @@ exports[`ContactInfoPanel rendering matches snapshot 1`] = `
   <div>
     <label
       class="block text-sm text-grouse mb-1"
+      for="contact-phone"
     >
       Phone
     </label>
     <input
-      class="w-full border border-heron rounded-[var(--border-radius-base)] px-3 py-2 text-sm text-swift focus:outline-none focus:border-peacock"
+      autocomplete="tel"
+      class="w-full border border-heron rounded-[var(--border-radius-base)] px-3 py-2 text-sm text-swift focus:outline-none focus:border-peacock disabled:opacity-50"
       data-testid="field-phone"
+      id="contact-phone"
       type="tel"
-      value="5551234567"
+      value="(555) 123-4567"
     />
   </div>
   <p
@@ -118,6 +127,41 @@ exports[`ContactInfoPanel rendering matches snapshot when loading fails 1`] = `
 </div>
 `;
 
+exports[`ContactInfoPanel rendering matches snapshot when signed out 1`] = `
+<div
+  class="p-4 space-y-4"
+>
+  <h3
+    class="text-lg font-semibold text-swift"
+    data-testid="contact-panel-title"
+  >
+    Edit Contact Info
+  </h3>
+  <p
+    class="text-sm text-cardinal"
+    data-testid="contact-signed-out"
+  >
+    Your session has ended. Sign in again to edit your contact info.
+  </p>
+  <div
+    class="flex gap-2 pt-2"
+  >
+    <button
+      class="px-4 py-2 bg-peacock text-crane rounded-[var(--border-radius-base)] text-sm font-medium hover:bg-peacock/90 disabled:opacity-50"
+      data-testid="contact-save"
+      disabled=""
+    >
+      Save
+    </button>
+    <button
+      class="px-4 py-2 border border-heron rounded-[var(--border-radius-base)] text-sm text-coot hover:bg-pigeon"
+    >
+      Cancel
+    </button>
+  </div>
+</div>
+`;
+
 exports[`ContactInfoPanel rendering matches snapshot while loading 1`] = `
 <div
   class="p-4 space-y-4"
@@ -141,6 +185,105 @@ exports[`ContactInfoPanel rendering matches snapshot while loading 1`] = `
       class="px-4 py-2 bg-peacock text-crane rounded-[var(--border-radius-base)] text-sm font-medium hover:bg-peacock/90 disabled:opacity-50"
       data-testid="contact-save"
       disabled=""
+    >
+      Save
+    </button>
+    <button
+      class="px-4 py-2 border border-heron rounded-[var(--border-radius-base)] text-sm text-coot hover:bg-pigeon"
+    >
+      Cancel
+    </button>
+  </div>
+</div>
+`;
+
+exports[`ContactInfoPanel rendering matches snapshot with field errors 1`] = `
+<div
+  class="p-4 space-y-4"
+>
+  <h3
+    class="text-lg font-semibold text-swift"
+    data-testid="contact-panel-title"
+  >
+    Edit Contact Info
+  </h3>
+  <div>
+    <label
+      class="block text-sm text-grouse mb-1"
+      for="contact-first-name"
+    >
+      First Name
+    </label>
+    <input
+      aria-describedby="contact-first-name-error"
+      aria-invalid="true"
+      autocomplete="given-name"
+      class="w-full border border-heron rounded-[var(--border-radius-base)] px-3 py-2 text-sm text-swift focus:outline-none focus:border-peacock disabled:opacity-50"
+      data-testid="field-first-name"
+      id="contact-first-name"
+      type="text"
+      value=""
+    />
+    <p
+      class="mt-1 text-sm text-cardinal"
+      data-testid="field-first-name-error"
+      id="contact-first-name-error"
+    >
+      can't be blank
+    </p>
+  </div>
+  <div>
+    <label
+      class="block text-sm text-grouse mb-1"
+      for="contact-last-name"
+    >
+      Last Name
+    </label>
+    <input
+      autocomplete="family-name"
+      class="w-full border border-heron rounded-[var(--border-radius-base)] px-3 py-2 text-sm text-swift focus:outline-none focus:border-peacock disabled:opacity-50"
+      data-testid="field-last-name"
+      id="contact-last-name"
+      type="text"
+      value="Doe"
+    />
+  </div>
+  <div>
+    <label
+      class="block text-sm text-grouse mb-1"
+      for="contact-phone"
+    >
+      Phone
+    </label>
+    <input
+      aria-describedby="contact-phone-error"
+      aria-invalid="true"
+      autocomplete="tel"
+      class="w-full border border-heron rounded-[var(--border-radius-base)] px-3 py-2 text-sm text-swift focus:outline-none focus:border-peacock disabled:opacity-50"
+      data-testid="field-phone"
+      id="contact-phone"
+      type="tel"
+      value="555-123"
+    />
+    <p
+      class="mt-1 text-sm text-cardinal"
+      data-testid="field-phone-error"
+      id="contact-phone-error"
+    >
+      must be a valid phone number
+    </p>
+  </div>
+  <p
+    class="text-xs text-grouse"
+  >
+    Email cannot be changed here.
+  </p>
+  <div
+    class="flex gap-2 pt-2"
+  >
+    <button
+      class="px-4 py-2 bg-peacock text-crane rounded-[var(--border-radius-base)] text-sm font-medium hover:bg-peacock/90 disabled:opacity-50"
+      data-testid="contact-save"
     >
       Save
     </button>

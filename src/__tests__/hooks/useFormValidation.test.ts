@@ -1,5 +1,5 @@
 import { renderHook, act } from '@testing-library/react';
-import { useFormValidation, type ValidationConstraints } from '@/hooks/useFormValidation';
+import { useFormValidation, validateFields, type ValidationConstraints } from '@/hooks/useFormValidation';
 
 describe('useFormValidation', () => {
   const constraints: ValidationConstraints = {
@@ -71,7 +71,7 @@ describe('useFormValidation', () => {
   describe('phoneNumber', () => {
     const phoneConstraints: ValidationConstraints = { phone: { presence: true, phoneNumber: true } };
 
-    it.each(['5551234567', '(555) 123-4567', '555-123-4567'])('accepts %s', (phone) => {
+    it.each(['5551234567', '(555) 123-4567', '555-123-4567', '+1 555.123.4567'])('accepts %s', (phone) => {
       const { result } = renderHook(() => useFormValidation(phoneConstraints));
       let valid: boolean;
       act(() => {
@@ -81,7 +81,7 @@ describe('useFormValidation', () => {
       expect(result.current.errors['phone']).toBeUndefined();
     });
 
-    it.each(['555-1234', '15551234567', 'not a number'])('rejects %s', (phone) => {
+    it.each(['555-1234', '25551234567', 'not a number', 'call 555 123 4567'])('rejects %s', (phone) => {
       const { result } = renderHook(() => useFormValidation(phoneConstraints));
       let valid: boolean;
       act(() => {
@@ -98,6 +98,20 @@ describe('useFormValidation', () => {
         valid = result.current.formValidates(['phone'], { phone: '' });
       });
       expect(valid!).toBe(true);
+    });
+  });
+
+  describe('validateFields', () => {
+    it('returns the errors of the given fields only', () => {
+      const values = { email: 'bad', password: 'short', confirmPassword: '' };
+      expect(validateFields(constraints, ['email', 'confirmPassword'], values)).toEqual({
+        email: ['is invalid'],
+        confirmPassword: ["can't be blank"],
+      });
+    });
+
+    it('returns no errors for valid or unconstrained fields', () => {
+      expect(validateFields(constraints, ['email', 'nickname'], { email: 'a@b.co', nickname: '' })).toEqual({});
     });
   });
 

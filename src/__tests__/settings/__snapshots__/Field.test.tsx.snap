@@ -1,0 +1,46 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`Field matches snapshot 1`] = `
+<div>
+  <label
+    class="block text-sm text-grouse mb-1"
+    for="email"
+  >
+    Email
+  </label>
+  <input
+    class="w-full border border-heron rounded-[var(--border-radius-base)] px-3 py-2 text-sm text-swift focus:outline-none focus:border-peacock disabled:opacity-50"
+    data-testid="field-email"
+    id="email"
+    type="text"
+    value="john@test.com"
+  />
+</div>
+`;
+
+exports[`Field matches snapshot with an error 1`] = `
+<div>
+  <label
+    class="block text-sm text-grouse mb-1"
+    for="first-name"
+  >
+    First Name
+  </label>
+  <input
+    aria-describedby="first-name-error"
+    aria-invalid="true"
+    class="w-full border border-heron rounded-[var(--border-radius-base)] px-3 py-2 text-sm text-swift focus:outline-none focus:border-peacock disabled:opacity-50"
+    data-testid="field-first-name"
+    id="first-name"
+    type="text"
+    value=""
+  />
+  <p
+    class="mt-1 text-sm text-cardinal"
+    data-testid="field-first-name-error"
+    id="first-name-error"
+  >
+    can't be blank
+  </p>
+</div>
+`;

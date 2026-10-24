@@ -6,7 +6,8 @@ import { Base, Person } from '@arcus/core';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import { addNotification } from '@/store/slices/uiSlice';
 import { useSidePanel } from '@/components/SidePanel';
-import { useFormValidation, type ValidationConstraints } from '@/hooks/useFormValidation';
+import { validateFields, type ValidationConstraints } from '@/hooks/useFormValidation';
+import { formatPhoneNumber } from '@/lib/phoneNumber';
 import type { PersonData } from '@/store/entityTypes';
 import Field from './Field';
 
@@ -18,21 +19,52 @@ type ContactField =
 /** The person attributes this panel edits, keyed by attribute name. */
 type ContactValues = Record<ContactField, string>;
 
-const CONTACT_FIELDS: ContactField[] = [Person.ATTR_FIRSTNAME, Person.ATTR_LASTNAME, Person.ATTR_MOBILENUMBER];
+/** The person as loaded from the platform. The form is only shown, and saved, once it is `ready`. */
+type LoadState =
+  | { status: 'loading' }
+  | { status: 'error' }
+  | { status: 'ready'; loaded: ContactValues };
 
-// Same rules as the legacy profile contact-info form: names and a 10-digit phone are required.
+interface ContactFieldConfig {
+  field: ContactField;
+  id: string;
+  label: string;
+  type?: string;
+  autoComplete: string;
+}
+
+const CONTACT_FIELDS: ContactFieldConfig[] = [
+  { field: Person.ATTR_FIRSTNAME, id: 'contact-first-name', label: 'First Name', autoComplete: 'given-name' },
+  { field: Person.ATTR_LASTNAME, id: 'contact-last-name', label: 'Last Name', autoComplete: 'family-name' },
+  { field: Person.ATTR_MOBILENUMBER, id: 'contact-phone', label: 'Phone', type: 'tel', autoComplete: 'tel' },
+];
+
+const EMPTY_VALUES: ContactValues = {
+  [Person.ATTR_FIRSTNAME]: '',
+  [Person.ATTR_LASTNAME]: '',
+  [Person.ATTR_MOBILENUMBER]: '',
+};
+
+// The legacy profile form's rules: names can't be blank, and the phone must be a US number.
+// They only apply to fields the user changed, since sign-up and invite let people skip the phone.
 const CONTACT_CONSTRAINTS: ValidationConstraints = {
   [Person.ATTR_FIRSTNAME]: { presence: true },
   [Person.ATTR_LASTNAME]: { presence: true },
   [Person.ATTR_MOBILENUMBER]: { presence: true, phoneNumber: true },
 };
 
-/** Trimmed values of the fields that differ from what was loaded. */
+/** The value to save for `field`: trimmed, and a phone in the "(555) 123-4567" format the platform stores. */
+function normalize(field: ContactField, value: string): string {
+  const trimmed = value.trim();
+  return field === Person.ATTR_MOBILENUMBER ? formatPhoneNumber(trimmed) ?? trimmed : trimmed;
+}
+
+/** Normalized values of the fields that differ from what was loaded. */
 function changedAttributes(loaded: ContactValues, values: ContactValues): Partial<ContactValues> {
   const changes: Partial<ContactValues> = {};
-  for (const field of CONTACT_FIELDS) {
-    const value = values[field].trim();
-    if (value !== loaded[field].trim()) changes[field] = value;
+  for (const { field } of CONTACT_FIELDS) {
+    const value = normalize(field, values[field]);
+    if (value !== normalize(field, loaded[field])) changes[field] = value;
   }
   return changes;
 }
@@ -41,67 +73,65 @@ export default function ContactInfoPanel() {
   const personId = useAppSelector((s) => s.auth.person?.personId);
   const dispatch = useAppDispatch();
   const { closeRight } = useSidePanel();
-  const form = useFormValidation(CONTACT_CONSTRAINTS);
 
-  // The person's current attributes, fetched from the platform when the panel opens. The store's
   // auth.person may be just the session payload (no names), so the form is never seeded from it.
-  const [loaded, setLoaded] = useState<ContactValues | null>(null);
-  const [loadFailed, setLoadFailed] = useState(false);
+  const [load, setLoad] = useState<LoadState>({ status: 'loading' });
   const [reloadKey, setReloadKey] = useState(0);
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [phone, setPhone] = useState('');
+  const [values, setValues] = useState<ContactValues>(EMPTY_VALUES);
+  // Set when Save finds invalid fields. From then on errors follow what the user types. Nothing is
+  // validated on blur, so the Save/Cancel row never moves between mousedown and mouseup.
+  const [showErrors, setShowErrors] = useState(false);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
+    if (!personId) return;
     let cancelled = false;
 
-    async function load() {
-      setLoaded(null);
-      setLoadFailed(false);
+    async function fetchPerson() {
+      setLoad({ status: 'loading' });
       try {
-        if (!personId) throw new Error('No signed-in person');
         const attrs = await Bridge.request<PersonData>(Base.CMD_GETATTRIBUTES, `SERV:person:${personId}`, {});
         if (cancelled) return;
-        const current: ContactValues = {
+        const loaded: ContactValues = {
           [Person.ATTR_FIRSTNAME]: attrs[Person.ATTR_FIRSTNAME] ?? '',
           [Person.ATTR_LASTNAME]: attrs[Person.ATTR_LASTNAME] ?? '',
           [Person.ATTR_MOBILENUMBER]: attrs[Person.ATTR_MOBILENUMBER] ?? '',
         };
-        setFirstName(current[Person.ATTR_FIRSTNAME]);
-        setLastName(current[Person.ATTR_LASTNAME]);
-        setPhone(current[Person.ATTR_MOBILENUMBER]);
-        setLoaded(current);
+        setValues(loaded);
+        setLoad({ status: 'ready', loaded });
       } catch {
-        if (!cancelled) setLoadFailed(true);
+        if (cancelled) return;
+        setLoad({ status: 'error' });
+        dispatch(addNotification({ type: 'error', message: 'Failed to load contact info.' }));
       }
     }
 
-    load();
+    fetchPerson();
     return () => { cancelled = true; };
-  }, [personId, reloadKey]);
+  }, [personId, reloadKey, dispatch]);
 
-  const values = useMemo<ContactValues>(() => ({
-    [Person.ATTR_FIRSTNAME]: firstName,
-    [Person.ATTR_LASTNAME]: lastName,
-    [Person.ATTR_MOBILENUMBER]: phone,
-  }), [firstName, lastName, phone]);
-
-  const hasChanges = loaded !== null && Object.keys(changedAttributes(loaded, values)).length > 0;
+  const changes = useMemo(
+    () => (load.status === 'ready' ? changedAttributes(load.loaded, values) : {}),
+    [load, values],
+  );
+  const errors = useMemo(
+    () => validateFields(CONTACT_CONSTRAINTS, Object.keys(changes), values),
+    [changes, values],
+  );
+  const hasChanges = Object.keys(changes).length > 0;
 
   const handleRetry = useCallback(() => setReloadKey((k) => k + 1), []);
 
-  // After a save attempt has flagged fields, re-check them as the user moves between inputs.
-  const handleBlur = useCallback(() => {
-    const flagged = CONTACT_FIELDS.filter((field) => form.visited[field]);
-    if (flagged.length > 0) form.formValidates(flagged, values);
-  }, [form, values]);
+  const setField = useCallback((field: ContactField, value: string) => {
+    setValues((prev) => ({ ...prev, [field]: value }));
+  }, []);
 
   const handleSave = useCallback(async () => {
-    if (!personId || !loaded || saving) return;
-    if (!form.formValidates(CONTACT_FIELDS, values)) return;
-    const changes = changedAttributes(loaded, values);
-    if (Object.keys(changes).length === 0) return;
+    if (!personId || !hasChanges || saving) return;
+    if (Object.keys(errors).length > 0) {
+      setShowErrors(true);
+      return;
+    }
 
     setSaving(true);
     try {
@@ -113,38 +143,33 @@ export default function ContactInfoPanel() {
     } finally {
       setSaving(false);
     }
-  }, [personId, loaded, saving, form, values, dispatch, closeRight]);
+  }, [personId, hasChanges, saving, errors, changes, dispatch, closeRight]);
 
   return (
     <div className="p-4 space-y-4">
       <h3 data-testid="contact-panel-title" className="text-lg font-semibold text-swift">Edit Contact Info</h3>
-      {loaded ? (
+      {!personId ? (
+        <p data-testid="contact-signed-out" className="text-sm text-cardinal">
+          Your session has ended. Sign in again to edit your contact info.
+        </p>
+      ) : load.status === 'ready' ? (
         <>
-          <Field
-            label="First Name"
-            value={firstName}
-            onChange={setFirstName}
-            onBlur={handleBlur}
-            error={form.getFieldErrors(Person.ATTR_FIRSTNAME)[0]}
-          />
-          <Field
-            label="Last Name"
-            value={lastName}
-            onChange={setLastName}
-            onBlur={handleBlur}
-            error={form.getFieldErrors(Person.ATTR_LASTNAME)[0]}
-          />
-          <Field
-            label="Phone"
-            value={phone}
-            onChange={setPhone}
-            onBlur={handleBlur}
-            type="tel"
-            error={form.getFieldErrors(Person.ATTR_MOBILENUMBER)[0]}
-          />
+          {CONTACT_FIELDS.map(({ field, id, label, type, autoComplete }) => (
+            <Field
+              key={field}
+              id={id}
+              label={label}
+              type={type}
+              autoComplete={autoComplete}
+              value={values[field]}
+              onChange={(value) => setField(field, value)}
+              disabled={saving}
+              error={showErrors ? errors[field]?.[0] : undefined}
+            />
+          ))}
           <p className="text-xs text-grouse">Email cannot be changed here.</p>
         </>
-      ) : loadFailed ? (
+      ) : load.status === 'error' ? (
         <div className="space-y-2">
           <p data-testid="contact-load-error" className="text-sm text-cardinal">
             Unable to load your contact info.
@@ -160,7 +185,7 @@ export default function ContactInfoPanel() {
         <button
           onClick={handleSave}
           data-testid="contact-save"
-          disabled={!loaded || !hasChanges || saving}
+          disabled={!personId || !hasChanges || saving}
           className="px-4 py-2 bg-peacock text-crane rounded-[var(--border-radius-base)] text-sm font-medium hover:bg-peacock/90 disabled:opacity-50"
         >
           {saving ? 'Saving…' : 'Save'}
