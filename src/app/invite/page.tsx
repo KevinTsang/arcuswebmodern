@@ -26,7 +26,8 @@ import { initializeCoreConfig } from '@/store/thunks/initConfig';
 import { getDefaultPlaceId } from '@/store/thunks/placeSelection';
 import { useFormValidation, type ValidationConstraints } from '@/hooks/useFormValidation';
 import ChangePinForm from '@/components/ChangePinForm';
-import { SessionCreatedEvent } from '@/arcus/types';
+import type { SessionCreatedEvent } from '@/arcus/types';
+import type { Invitation } from '@/store/slices/invitationsSlice';
 import { AccountData } from '@/store/entityTypes';
 
 type InviteStep = 'code' | 'confirm' | 'create-login' | 'pin' | 'welcome';
@@ -59,7 +60,7 @@ export default function InvitePage() {
   // Phase 1: code entry
   const [inviteCode, setInviteCode] = useState('');
   const [inviteeEmail, setInviteeEmail] = useState('');
-  const [invitation, setInvitation] = useState<Record<string, unknown> | null>(null);
+  const [invitation, setInvitation] = useState<Invitation | null>(null);
 
   // Phase 2: account creation
   const [firstName, setFirstName] = useState('');
@@ -69,7 +70,7 @@ export default function InvitePage() {
   const [confirmPassword, setConfirmPassword] = useState('');
 
   // Phase 3: PIN
-  const [personData, setPersonData] = useState<Record<string, unknown> | null>(null);
+  const [personData, setPersonData] = useState<SessionCreatedEvent | null>(null);
   const [placeId, setPlaceId] = useState<string | null>(null);
   const [pinError, setPinError] = useState<string | null>(null);
 
@@ -86,9 +87,9 @@ export default function InvitePage() {
 
     try {
       initializeCoreConfig();
-      const result = await InvitationService.GetInvitation(inviteCode.trim(), inviteeEmail.trim());
-      setInvitation(result);
-      setFirstName((result['inviteeFirstName'] as string) ?? '');
+      const { invitation: found } = await InvitationService.GetInvitation(inviteCode.trim(), inviteeEmail.trim());
+      setInvitation(found);
+      setFirstName(found.inviteeFirstName ?? '');
       setStep('confirm');
     } catch {
       setError(
@@ -195,7 +196,7 @@ export default function InvitePage() {
     setPinError(null);
 
     try {
-      const personId = person.personId as string;
+      const personId = person.personId;
       await Bridge.restfulRequest('person:ChangePinV2', `SERV:person:${personId}`, {
         place: placeId,
         pin: pinValue,
@@ -234,7 +235,7 @@ export default function InvitePage() {
 
         <div className="bg-crane rounded-[var(--border-radius-lg)] shadow-sm border border-heron p-6">
           {error && (
-            <div className="mb-4 text-cardinal text-sm bg-cardinal/5 border border-cardinal/20 rounded px-3 py-2">
+            <div data-testid="invite-error" className="mb-4 text-cardinal text-sm bg-cardinal/5 border border-cardinal/20 rounded px-3 py-2">
               {error}
             </div>
           )}
@@ -254,6 +255,7 @@ export default function InvitePage() {
               />
               <button
                 type="submit"
+                data-testid="invite-lookup"
                 disabled={loading || !inviteCode.trim() || !inviteeEmail.trim()}
                 className="w-full py-2.5 bg-peacock text-crane rounded-[var(--border-radius-base)] text-sm font-medium hover:bg-peacock/90 disabled:opacity-50"
               >
@@ -263,20 +265,21 @@ export default function InvitePage() {
           )}
 
           {step === 'confirm' && invitation && (
-            <div className="space-y-4 text-center py-4">
-              <p className="text-lg text-swift">
+            <div data-testid="invite-confirm" className="space-y-4 text-center py-4">
+              <p data-testid="invite-greeting" className="text-lg text-swift">
                 Hello{firstName ? `, ${firstName}` : ''}!
               </p>
-              <p className="text-sm text-grouse">
+              <p data-testid="invite-summary" className="text-sm text-grouse">
                 Thanks for accepting your invitation to{' '}
                 <strong className="text-swift">
-                  {String(invitation['invitorFirstName'] ?? '')} {String(invitation['invitorLastName'] ?? '')}
+                  {invitation.invitorFirstName} {invitation.invitorLastName}
                 </strong>&apos;s place called{' '}
-                <strong className="text-swift">{String(invitation['placeName'] ?? 'their home')}</strong>.
+                <strong className="text-swift">{invitation.placeName || 'their home'}</strong>.
               </p>
               <p className="text-sm text-grouse">Get started by answering a few questions!</p>
               <button
                 onClick={handleConfirm}
+                data-testid="invite-next"
                 className="w-full py-2.5 bg-peacock text-crane rounded-[var(--border-radius-base)] text-sm font-medium hover:bg-peacock/90"
               >
                 Next
@@ -316,6 +319,7 @@ export default function InvitePage() {
               />
               <button
                 type="submit"
+                data-testid="invite-create-login"
                 disabled={loading}
                 className="w-full py-2.5 bg-peacock text-crane rounded-[var(--border-radius-base)] text-sm font-medium hover:bg-peacock/90 disabled:opacity-50"
               >
@@ -337,7 +341,7 @@ export default function InvitePage() {
           {step === 'welcome' && (
             <div className="text-center py-6 space-y-4">
               <div className="text-4xl">&#127968;</div>
-              <h3 className="text-xl font-semibold text-swift">
+              <h3 data-testid="invite-welcome" className="text-xl font-semibold text-swift">
                 Welcome{firstName ? `, ${firstName}` : ''}!
               </h3>
               <p className="text-sm text-grouse">
@@ -345,6 +349,7 @@ export default function InvitePage() {
               </p>
               <button
                 onClick={handleFinish}
+                data-testid="invite-finish"
                 disabled={loading}
                 className="w-full py-2.5 bg-peacock text-crane rounded-[var(--border-radius-base)] text-sm font-medium hover:bg-peacock/90 disabled:opacity-50"
               >

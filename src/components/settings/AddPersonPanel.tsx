@@ -58,7 +58,7 @@ export default function AddPersonPanel({ onSent }: AddPersonPanelProps) {
 
   return (
     <div className="p-4 space-y-4">
-      <h3 className="text-lg font-semibold text-swift">Invite a Person</h3>
+      <h3 data-testid="invite-panel-title" className="text-lg font-semibold text-swift">Invite a Person</h3>
       <p className="text-sm text-grouse">Send an invitation to join this place.</p>
       <Field label="First Name" value={firstName} onChange={setFirstName} />
       <Field label="Last Name" value={lastName} onChange={setLastName} />
@@ -67,6 +67,7 @@ export default function AddPersonPanel({ onSent }: AddPersonPanelProps) {
       <div>
         <label className="block text-sm text-grouse mb-1">Relationship</label>
         <select
+          data-testid="invite-relationship"
           value={relationshipTag}
           onChange={(e) => setRelationshipTag(e.target.value)}
           className="w-full border border-heron rounded-[var(--border-radius-base)] px-3 py-2 text-sm text-swift focus:outline-none focus:border-peacock bg-crane"
@@ -96,6 +97,7 @@ export default function AddPersonPanel({ onSent }: AddPersonPanelProps) {
       <div className="flex gap-2 pt-2">
         <button
           onClick={handleSend}
+          data-testid="invite-send"
           disabled={sending || !inviteEmail.trim()}
           className="px-4 py-2 bg-peacock text-crane rounded-[var(--border-radius-base)] text-sm font-medium hover:bg-peacock/90 disabled:opacity-50"
         >

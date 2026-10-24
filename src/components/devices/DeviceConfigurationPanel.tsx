@@ -35,13 +35,13 @@ export function DeviceConfigurationPanel({ address }: DeviceConfigurationPanelPr
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-swift">Configuration</h3>
+        <h3 data-testid="device-config-title" className="text-lg font-semibold text-swift">Configuration</h3>
         <button onClick={closeRight} className="text-grouse hover:text-swift text-sm">Done</button>
       </div>
       <p className="text-sm text-grouse mb-6">{name}</p>
 
       {configurators.length === 0 ? (
-        <p className="text-sm text-grouse">No configurable settings for this device.</p>
+        <p data-testid="config-empty" className="text-sm text-grouse">No configurable settings for this device.</p>
       ) : (
         <div className="space-y-6">
           {configurators.map((key) => (

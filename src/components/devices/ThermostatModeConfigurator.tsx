@@ -19,6 +19,7 @@ export default function ThermostatModeConfigurator({ address }: { address: strin
           <button
             key={m}
             onClick={() => setAttribute(Thermostat.ATTR_HVACMODE, m)}
+            data-testid={`hvac-mode-${m.toLowerCase()}`}
             className={`
               px-3 py-1.5 text-sm rounded-[var(--border-radius-base)] transition-colors
               ${mode === m

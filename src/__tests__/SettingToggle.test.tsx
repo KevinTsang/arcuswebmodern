@@ -37,4 +37,9 @@ describe('SettingToggle', () => {
     fireEvent.click(screen.getByRole('switch'));
     expect(onToggle).toHaveBeenCalledTimes(1);
   });
+
+  it('names the switch with its label for assistive tech', () => {
+    render(<SettingToggle {...defaultProps} enabled />);
+    expect(screen.getByRole('switch', { name: 'Test Setting' })).toHaveAttribute('aria-checked', 'true');
+  });
 });

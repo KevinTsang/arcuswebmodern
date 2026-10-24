@@ -87,7 +87,7 @@ export default function PeoplePlacesSection() {
     <div className="space-y-8">
       {/* Owner places */}
       {ownerPlaces.length > 0 && (
-        <div className="space-y-4">
+        <div data-testid="owner-places" className="space-y-4">
           <h3 className="text-sm font-medium text-grouse uppercase tracking-wide">Your Places</h3>
           {ownerPlaces.map((place) => (
             <PlaceCard
@@ -104,7 +104,7 @@ export default function PeoplePlacesSection() {
 
       {/* Guest places */}
       {guestPlaces.length > 0 && (
-        <div className="space-y-4">
+        <div data-testid="guest-places" className="space-y-4">
           <h3 className="text-sm font-medium text-grouse uppercase tracking-wide">Guest At</h3>
           {guestPlaces.map((place) => (
             <PlaceCard
@@ -126,6 +126,7 @@ export default function PeoplePlacesSection() {
       {/* Add place */}
       <button
         onClick={() => openRight(<AddPlacePanel />)}
+        data-testid="add-place"
         className="px-4 py-2 bg-peacock text-crane rounded-[var(--border-radius-base)] text-sm font-medium hover:bg-peacock/90"
       >
         + Add Place

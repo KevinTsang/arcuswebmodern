@@ -10,13 +10,18 @@ import { Base } from '@arcus/core';
 import { useAppSelector } from '@/store/hooks';
 import { selectAllSubsystems } from '@/store/slices/subsystemsSlice';
 import { selectAllDevices } from '@/store/slices/devicesSlice';
-import { type SubsystemConfigEntry, subsystemConfigs } from '@/lib/subsystemConfig';
+import {
+  type SubsystemConfigEntry,
+  type SubsystemNamespace,
+  getSubsystemConfigByNamespace,
+  subsystemConfigs,
+} from '@/lib/subsystemConfig';
 import type { SubsystemEntity } from '@/store/entityTypes';
 
 /**
  * Find a subsystem entity by its namespace prefix (e.g., 'subalarm').
  */
-export function useSubsystem(namespace: string): SubsystemEntity | undefined {
+export function useSubsystem(namespace: SubsystemNamespace): SubsystemEntity | undefined {
   const subsystems = useAppSelector(selectAllSubsystems);
   return useMemo(() => {
     return subsystems.find((s) => {
@@ -48,14 +53,17 @@ export function useVisibleSubsystems(): Array<{
 }
 
 /**
- * Get device entities associated with a subsystem from its device address lists.
+ * Get the device entities a subsystem owns. Which subsystem attributes hold
+ * the device address lists comes from `subsystemConfig`, so callers only name
+ * the subsystem and cannot pass the wrong kind of attribute.
  */
-export function useSubsystemDevices(namespace: string, deviceAttributes: string[]) {
+export function useSubsystemDevices(namespace: SubsystemNamespace) {
   const subsystem = useSubsystem(namespace);
   const allDevices = useAppSelector(selectAllDevices);
 
   return useMemo(() => {
     if (!subsystem) return [];
+    const deviceAttributes = getSubsystemConfigByNamespace(namespace)?.deviceAttributes ?? [];
     const addresses = new Set<string>();
     for (const attr of deviceAttributes) {
       const list = subsystem[attr] as string[] | undefined;
@@ -64,5 +72,5 @@ export function useSubsystemDevices(namespace: string, deviceAttributes: string[
       }
     }
     return allDevices.filter((d) => addresses.has(d[Base.ATTR_ADDRESS]));
-  }, [subsystem, deviceAttributes, allDevices]);
+  }, [subsystem, namespace, allDevices]);
 }

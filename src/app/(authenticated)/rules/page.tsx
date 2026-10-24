@@ -41,7 +41,7 @@ export default function RulesPage() {
     <div className="p-[var(--gutter)]">
       {/* Context bar */}
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-[length:var(--font-size-h2)] font-[var(--heading-font-weight)] text-swift">
+        <h2 data-testid="rules-title" className="text-[length:var(--font-size-h2)] font-[var(--heading-font-weight)] text-swift">
           Rules
         </h2>
         <span className="text-sm text-grouse">{placeName}</span>
@@ -51,6 +51,7 @@ export default function RulesPage() {
       <div className="flex gap-1 mb-6 bg-pigeon rounded-[var(--border-radius-base)] p-1 w-fit">
         <button
           onClick={() => setView('my')}
+          data-testid="rules-view-my"
           className={`
             px-4 py-1.5 rounded text-sm font-medium transition-colors
             ${view === 'my' ? 'bg-crane text-swift shadow-sm' : 'text-grouse hover:text-coot'}
@@ -60,6 +61,7 @@ export default function RulesPage() {
         </button>
         <button
           onClick={() => setView('library')}
+          data-testid="rules-view-library"
           className={`
             px-4 py-1.5 rounded text-sm font-medium transition-colors
             ${view === 'library' ? 'bg-crane text-swift shadow-sm' : 'text-grouse hover:text-coot'}
@@ -71,7 +73,7 @@ export default function RulesPage() {
 
       {view === 'my' ? (
         rules.length === 0 ? (
-          <div className="text-center py-12">
+          <div data-testid="rules-empty" className="text-center py-12">
             <p className="text-grouse mb-2">No rules configured yet.</p>
             <p className="text-sm text-grouse">
               Rules let you automate actions based on device events and schedules.

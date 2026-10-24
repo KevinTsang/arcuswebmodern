@@ -200,6 +200,11 @@ export function useFormValidation(constraints: ValidationConstraints) {
         // Set new errors
         return { ...next, ...newErrors };
       });
+      // A submit attempt counts as visiting every field, so untouched fields show their errors.
+      setVisited((prev) => ({
+        ...prev,
+        ...Object.fromEntries(fieldsToValidate.map((field) => [field, true])),
+      }));
 
       return !hasErrors;
     },

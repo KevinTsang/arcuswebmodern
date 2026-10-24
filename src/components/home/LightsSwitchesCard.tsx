@@ -1,10 +1,10 @@
-import { Switch } from '@arcus/core';
+import { LightsNSwitchesSubsystem, Switch } from '@arcus/core';
 import { useSubsystemDevices } from '@/hooks/useSubsystem';
 import CardShell from './CardShell';
 import StatusBadge from './StatusBadge';
 
 export default function LightsSwitchesCard() {
-  const lightDevices = useSubsystemDevices('sublightsnswitches', [Switch.ATTR_STATE]);
+  const lightDevices = useSubsystemDevices(LightsNSwitchesSubsystem.NAMESPACE);
 
   const onCount = lightDevices.filter(
     (d) => d[Switch.ATTR_STATE] === Switch.STATE_ON,

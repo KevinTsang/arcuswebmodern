@@ -40,7 +40,7 @@ export default function WelcomeStep() {
   return (
     <div className="text-center py-6 space-y-4">
       <div className="text-4xl">&#127968;</div>
-      <h3 className="text-xl font-semibold text-swift">
+      <h3 data-testid="welcome-title" className="text-xl font-semibold text-swift">
         Welcome{firstName ? `, ${firstName}` : ''}!
       </h3>
       <p className="text-sm text-grouse">
@@ -56,6 +56,7 @@ export default function WelcomeStep() {
       ) : (
         <button
           onClick={handleFinish}
+          data-testid="welcome-finish"
           disabled={loading}
           className="w-full py-2.5 bg-peacock text-crane rounded-[var(--border-radius-base)] text-sm font-medium hover:bg-peacock/90 disabled:opacity-50"
         >

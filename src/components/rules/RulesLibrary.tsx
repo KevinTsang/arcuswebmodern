@@ -3,6 +3,7 @@ import { useAppSelector } from '@/store/hooks';
 import { useSidePanel } from '@/components/SidePanel';
 import { Accordion, AccordionPanel } from '@/components/shared/Accordion';
 import { RulePanel } from './RulePanel';
+import { Base } from '@arcus/core';
 import type { RuleTemplateEntity } from '@/store/entityTypes';
 
 interface RulesLibraryProps {
@@ -60,6 +61,7 @@ export function RulesLibrary({ placeId }: RulesLibraryProps) {
               <button
                 key={i}
                 onClick={() => handleTemplateClick(tmpl)}
+                data-testid={`rule-template-${tmpl[Base.ATTR_ID] ?? i}`}
                 className="w-full text-left py-2.5 px-2 border-b border-pigeon last:border-b-0 hover:bg-pigeon/50 rounded transition-colors group flex items-center gap-2"
               >
                 <span className="text-peacock opacity-0 group-hover:opacity-100 transition-opacity text-lg leading-none">+</span>

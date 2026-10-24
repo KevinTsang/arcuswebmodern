@@ -15,7 +15,7 @@ export function LawnGardenView() {
 
   if (controllers.length === 0) {
     return (
-      <div className="text-center py-8">
+      <div data-testid="lawn-empty" className="text-center py-8">
         <p className="text-grouse">No irrigation controllers paired.</p>
       </div>
     );
@@ -28,7 +28,7 @@ export function LawnGardenView() {
         <div className={`flex-1 rounded-[var(--border-radius-base)] p-4 text-center ${
           zonesWatering.length > 0 ? 'bg-peacock/10 border border-peacock/30' : 'bg-pigeon/50'
         }`}>
-          <div className="text-2xl font-light text-swift">{zonesWatering.length}</div>
+          <div data-testid="lawn-watering-count" className="text-2xl font-light text-swift">{zonesWatering.length}</div>
           <p className="text-xs text-grouse mt-1">
             Zone{zonesWatering.length !== 1 ? 's' : ''} Watering
           </p>
@@ -36,7 +36,7 @@ export function LawnGardenView() {
         {nextEvent && (
           <div className="flex-1 bg-pigeon/50 rounded-[var(--border-radius-base)] p-4 text-center">
             <p className="text-sm text-swift">Next Event</p>
-            <p className="text-xs text-grouse mt-1">
+            <p data-testid="lawn-next-event" className="text-xs text-grouse mt-1">
               {(nextEvent['zoneName'] as string) ?? 'Zone'}
             </p>
           </div>
@@ -44,7 +44,7 @@ export function LawnGardenView() {
       </div>
 
       {/* Controllers */}
-      <div>
+      <div data-testid="lawn-controllers">
         <h3 className="text-sm font-medium text-swift mb-3">Controllers</h3>
         {controllers.map((device) => (
           <DevicePanel key={device.id} address={device[Base.ATTR_ADDRESS]} />

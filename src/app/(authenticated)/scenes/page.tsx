@@ -43,11 +43,12 @@ export default function ScenesPage() {
       {/* Context bar */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <h2 className="text-[length:var(--font-size-h2)] font-[var(--heading-font-weight)] text-swift">
+          <h2 data-testid="scenes-title" className="text-[length:var(--font-size-h2)] font-[var(--heading-font-weight)] text-swift">
             Scenes
           </h2>
           <button
             onClick={handleAddScene}
+            data-testid="add-scene"
             className="bg-peacock text-crane px-3 py-1.5 rounded-[var(--border-radius-base)] hover:opacity-90 text-sm font-medium"
           >
             + Add Scene
@@ -57,7 +58,7 @@ export default function ScenesPage() {
       </div>
 
       {scenes.length === 0 ? (
-        <div className="text-center py-12">
+        <div data-testid="scenes-empty" className="text-center py-12">
           <p className="text-grouse mb-2">No scenes configured yet.</p>
           <p className="text-sm text-grouse">
             Scenes let you control multiple devices with a single tap.

@@ -29,6 +29,7 @@ export function AlarmsView({ action = 'status' }: { action?: string }) {
           <Link
             key={tab.action}
             href={`/services/alarms/${tab.action}`}
+            data-testid={`alarm-tab-${tab.action}`}
             className={`px-4 py-1.5 rounded text-sm font-medium transition-colors ${
               activeAction === tab.action
                 ? 'bg-crane text-swift shadow-sm'

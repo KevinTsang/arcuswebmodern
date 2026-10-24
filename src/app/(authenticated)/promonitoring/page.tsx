@@ -23,6 +23,7 @@ import type { PromonSettingsResponse } from '@/arcus/types';
 import { ProMonitoringService } from '@arcus/core/services';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import { addNotification } from '@/store/slices/uiSlice';
+import { testIdSlug } from '@/lib/testId';
 
 type ProMonStep = 'address' | 'alarms' | 'details' | 'permit' | 'review' | 'test' | 'welcome';
 
@@ -220,7 +221,7 @@ export default function ProMonitoringPage() {
       <div className="max-w-lg mx-auto">
         {/* Header */}
         <div className="text-center mb-6">
-          <h2 className="text-[length:var(--font-size-h2)] font-[var(--heading-font-weight)] text-swift">
+          <h2 data-testid="promon-title" className="text-[length:var(--font-size-h2)] font-[var(--heading-font-weight)] text-swift">
             Professional Monitoring
           </h2>
           <p className="text-sm text-grouse mt-1">{placeName}</p>
@@ -250,10 +251,10 @@ export default function ProMonitoringPage() {
 
         {/* Content */}
         <div className="bg-crane border border-heron rounded-[var(--border-radius-lg)] p-6">
-          <h3 className="text-lg font-semibold text-swift mb-1">{STEP_LABELS[step]}</h3>
+          <h3 data-testid="promon-step" data-step={step} className="text-lg font-semibold text-swift mb-1">{STEP_LABELS[step]}</h3>
 
           {error && (
-            <div className="mb-4 text-cardinal text-sm bg-cardinal/5 border border-cardinal/20 rounded px-3 py-2">
+            <div data-testid="promon-error" className="mb-4 text-cardinal text-sm bg-cardinal/5 border border-cardinal/20 rounded px-3 py-2">
               {error}
             </div>
           )}
@@ -265,10 +266,11 @@ export default function ProMonitoringPage() {
                 Verify your home address for emergency dispatch.
               </p>
               <div className="bg-pigeon/30 rounded-[var(--border-radius-base)] p-4">
-                <p className="text-sm text-swift">{address || 'No address on file'}</p>
+                <p data-testid="promon-address" className="text-sm text-swift">{address || 'No address on file'}</p>
               </div>
               <button
                 onClick={handleAddressNext}
+                data-testid="promon-next"
                 className="w-full py-2.5 bg-peacock text-crane rounded-[var(--border-radius-base)] text-sm font-medium hover:bg-peacock/90"
               >
                 {address ? 'Address is Correct' : 'Continue'}
@@ -284,7 +286,7 @@ export default function ProMonitoringPage() {
               </p>
               <div className="space-y-2">
                 {ALARM_TYPES.map((alarm) => (
-                  <div key={alarm.key} className="flex items-center gap-3 p-3 border border-heron rounded-[var(--border-radius-base)]">
+                  <div key={alarm.key} data-testid={`promon-alarm-${alarm.key.toLowerCase()}`} className="flex items-center gap-3 p-3 border border-heron rounded-[var(--border-radius-base)]">
                     <span className={`${alarm.icon} text-lg text-peacock`} />
                     <div>
                       <p className="text-sm font-medium text-swift">{alarm.label}</p>
@@ -339,12 +341,12 @@ export default function ProMonitoringPage() {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-grouse">Household</span>
-                  <span className="text-swift">{adults} adults, {children} children, {pets} pets</span>
+                  <span data-testid="promon-household" className="text-swift">{adults} adults, {children} children, {pets} pets</span>
                 </div>
                 {permitNumber && (
                   <div className="flex justify-between">
                     <span className="text-grouse">Permit</span>
-                    <span className="text-swift">{permitNumber}</span>
+                    <span data-testid="promon-permit-summary" className="text-swift">{permitNumber}</span>
                   </div>
                 )}
               </div>
@@ -352,6 +354,7 @@ export default function ProMonitoringPage() {
                 <label className="block text-sm font-medium text-swift mb-1">PIN Code</label>
                 <input
                   type="password"
+                  data-testid="promon-pin"
                   inputMode="numeric"
                   maxLength={8}
                   value={pin}
@@ -379,12 +382,13 @@ export default function ProMonitoringPage() {
                 A test call will be placed to verify your monitoring connection.
               </p>
               {testStatus === 'SUCCEEDED' ? (
-                <div className="text-honeycreeper font-medium">Test call successful!</div>
+                <div data-testid="promon-test-status" data-status="SUCCEEDED" className="text-honeycreeper font-medium">Test call successful!</div>
               ) : testStatus === 'FAILED' ? (
                 <>
-                  <div className="text-cardinal font-medium">Test call failed.</div>
+                  <div data-testid="promon-test-status" data-status="FAILED" className="text-cardinal font-medium">Test call failed.</div>
                   <button
                     onClick={handleTestCall}
+                    data-testid="promon-test-retry"
                     className="px-4 py-2 bg-peacock text-crane rounded-[var(--border-radius-base)] text-sm font-medium hover:bg-peacock/90"
                   >
                     Retry
@@ -397,7 +401,7 @@ export default function ProMonitoringPage() {
                       <span className="icon-app-phone-1 text-2xl text-peacock" />
                     </div>
                   </div>
-                  <p className="text-sm text-grouse">Waiting for test call…</p>
+                  <p data-testid="promon-test-status" data-status="WAITING" className="text-sm text-grouse">Waiting for test call…</p>
                   <p className="text-xs text-grouse">
                     You will receive a call from <strong>1-866-958-4450</strong>.
                   </p>
@@ -405,6 +409,7 @@ export default function ProMonitoringPage() {
               ) : (
                 <button
                   onClick={handleTestCall}
+                  data-testid="promon-test-call"
                   disabled={loading}
                   className="px-6 py-2.5 bg-peacock text-crane rounded-[var(--border-radius-base)] text-sm font-medium hover:bg-peacock/90 disabled:opacity-50"
                 >
@@ -414,6 +419,7 @@ export default function ProMonitoringPage() {
               {testStatus === 'SUCCEEDED' && (
                 <button
                   onClick={() => setStep('welcome')}
+                  data-testid="promon-test-continue"
                   className="px-6 py-2.5 bg-peacock text-crane rounded-[var(--border-radius-base)] text-sm font-medium hover:bg-peacock/90"
                 >
                   Continue
@@ -440,6 +446,7 @@ export default function ProMonitoringPage() {
               </div>
               <button
                 onClick={handleFinish}
+                data-testid="promon-done"
                 className="w-full py-2.5 bg-peacock text-crane rounded-[var(--border-radius-base)] text-sm font-medium hover:bg-peacock/90"
               >
                 Done
@@ -470,6 +477,7 @@ function StepNav({
       {onPrev && (
         <button
           onClick={onPrev}
+          data-testid="promon-back"
           className="px-4 py-2.5 border border-heron rounded-[var(--border-radius-base)] text-sm text-coot hover:bg-pigeon"
         >
           Back
@@ -477,6 +485,7 @@ function StepNav({
       )}
       <button
         onClick={onNext}
+        data-testid="promon-next"
         disabled={loading}
         className="flex-1 py-2.5 bg-peacock text-crane rounded-[var(--border-radius-base)] text-sm font-medium hover:bg-peacock/90 disabled:opacity-50"
       >
@@ -498,13 +507,14 @@ function TextField({
   multiline?: boolean;
 }) {
   const cls = "w-full border border-heron rounded-[var(--border-radius-base)] px-3 py-2 text-sm text-swift focus:outline-none focus:border-peacock";
+  const testId = `promon-${testIdSlug(label)}`;
   return (
     <div>
       <label className="block text-sm font-medium text-swift mb-1">{label}</label>
       {multiline ? (
-        <textarea value={value} onChange={(e) => onChange(e.target.value)} rows={2} className={cls} />
+        <textarea data-testid={testId} value={value} onChange={(e) => onChange(e.target.value)} rows={2} className={cls} />
       ) : (
-        <input type="text" value={value} onChange={(e) => onChange(e.target.value)} className={cls} />
+        <input type="text" data-testid={testId} value={value} onChange={(e) => onChange(e.target.value)} className={cls} />
       )}
     </div>
   );
@@ -526,6 +536,7 @@ function NumberField({
       <label className="block text-sm font-medium text-swift mb-1">{label}</label>
       <input
         type="number"
+        data-testid={`promon-${testIdSlug(label)}`}
         min={min}
         value={value}
         onChange={(e) => onChange(Math.max(min, Number(e.target.value)))}

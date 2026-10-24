@@ -1,23 +1,8 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import type { Invitation } from '@arcus/core/services/types';
 
-export interface Invitation {
-  code: string;
-  placeId: string;
-  placeName: string;
-  streetAddress1?: string;
-  streetAddress2?: string;
-  city?: string;
-  stateProv?: string;
-  zipCode?: string;
-  inviteeEmail: string;
-  inviteeFirstName: string;
-  inviteeLastName: string;
-  invitorFirstName: string;
-  invitorLastName: string;
-  invitationText?: string;
-  personalizedGreeting?: string;
-  [key: string]: unknown;
-}
+// Defined in @arcus/core alongside the invitation services; re-exported for the app.
+export type { Invitation };
 
 export interface InvitationsState {
   invitations: Invitation[];

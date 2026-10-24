@@ -40,7 +40,7 @@ export default function ContactInfoPanel() {
 
   return (
     <div className="p-4 space-y-4">
-      <h3 className="text-lg font-semibold text-swift">Edit Contact Info</h3>
+      <h3 data-testid="contact-panel-title" className="text-lg font-semibold text-swift">Edit Contact Info</h3>
       <Field label="First Name" value={firstName} onChange={setFirstName} />
       <Field label="Last Name" value={lastName} onChange={setLastName} />
       <Field label="Phone" value={phone} onChange={setPhone} type="tel" />
@@ -48,6 +48,7 @@ export default function ContactInfoPanel() {
       <div className="flex gap-2 pt-2">
         <button
           onClick={handleSave}
+          data-testid="contact-save"
           disabled={saving}
           className="px-4 py-2 bg-peacock text-crane rounded-[var(--border-radius-base)] text-sm font-medium hover:bg-peacock/90 disabled:opacity-50"
         >

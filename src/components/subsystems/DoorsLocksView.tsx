@@ -11,6 +11,7 @@ import { Base } from '@arcus/core';
 import { useDoorsLocksSubsystem } from '@/hooks/useDoorsLocksSubsystem';
 import { DevicePanel } from '@/components/devices';
 import type { DeviceEntity } from '@/store/entityTypes';
+import { testIdSlug } from '@/lib/testId';
 
 export function DoorsLocksView() {
   const { locks, motorized, contacts, petDoors, unlockedCount, openCount, totalDevices } =
@@ -18,7 +19,7 @@ export function DoorsLocksView() {
 
   if (totalDevices === 0) {
     return (
-      <div className="text-center py-8">
+      <div data-testid="doors-empty" className="text-center py-8">
         <p className="text-grouse">No door or lock devices paired.</p>
       </div>
     );
@@ -32,7 +33,7 @@ export function DoorsLocksView() {
           <div className={`flex-1 rounded-[var(--border-radius-base)] p-4 text-center ${
             unlockedCount > 0 ? 'bg-canary/10 border border-canary/30' : 'bg-pigeon/50'
           }`}>
-            <div className="text-2xl font-light text-swift">{unlockedCount}</div>
+            <div data-testid="doors-unlocked-count" className="text-2xl font-light text-swift">{unlockedCount}</div>
             <p className="text-xs text-grouse mt-1">Unlocked</p>
           </div>
         )}
@@ -40,7 +41,7 @@ export function DoorsLocksView() {
           <div className={`flex-1 rounded-[var(--border-radius-base)] p-4 text-center ${
             openCount > 0 ? 'bg-canary/10 border border-canary/30' : 'bg-pigeon/50'
           }`}>
-            <div className="text-2xl font-light text-swift">{openCount}</div>
+            <div data-testid="doors-open-count" className="text-2xl font-light text-swift">{openCount}</div>
             <p className="text-xs text-grouse mt-1">Open</p>
           </div>
         )}
@@ -71,7 +72,7 @@ export function DoorsLocksView() {
 
 function DeviceSection({ title, devices }: { title: string; devices: DeviceEntity[] }) {
   return (
-    <div>
+    <div data-testid={`doors-section-${testIdSlug(title)}`}>
       <h3 className="text-sm font-medium text-swift mb-3">{title}</h3>
       {devices.map((device) => (
         <DevicePanel key={device.id} address={device[Base.ATTR_ADDRESS]} />

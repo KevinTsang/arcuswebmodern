@@ -25,3 +25,7 @@ src/app/debug/
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# cypress artifacts
+/cypress/screenshots/
+/cypress/videos/

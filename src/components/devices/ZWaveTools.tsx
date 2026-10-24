@@ -126,6 +126,7 @@ export function ZWaveTools() {
       <div className="border border-heron rounded-[var(--border-radius-base)]">
         <button
           onClick={() => setRemoveExpanded(!removeExpanded)}
+          data-testid="zwave-remove-section"
           className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-pigeon transition-colors"
         >
           <span className="font-medium text-swift">Remove Z-Wave Device</span>
@@ -144,6 +145,7 @@ export function ZWaveTools() {
             </p>
             <button
               onClick={startOrphanRemoval}
+              data-testid="zwave-remove-start"
               className="bg-peacock text-crane px-5 py-2 rounded-[var(--border-radius-base)] text-sm hover:opacity-90"
             >
               Remove Z-Wave Devices
@@ -156,6 +158,7 @@ export function ZWaveTools() {
       <div className="border border-heron rounded-[var(--border-radius-base)]">
         <button
           onClick={() => setRebuildExpanded(!rebuildExpanded)}
+          data-testid="zwave-rebuild-section"
           className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-pigeon transition-colors"
         >
           <span className="font-medium text-swift">Rebuild Z-Wave Network</span>
@@ -176,6 +179,7 @@ export function ZWaveTools() {
               <button
                 onClick={handleRebuild}
                 disabled={rebuilding}
+                data-testid="zwave-rebuild-start"
                 className="bg-peacock text-crane px-5 py-2 rounded-[var(--border-radius-base)] text-sm hover:opacity-90 disabled:opacity-50"
               >
                 {rebuilding ? 'Starting...' : 'Rebuild Z-Wave Network'}
@@ -191,7 +195,7 @@ export function ZWaveTools() {
 
       {/* Orphan Removal Modal */}
       {removeModal !== 'closed' && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
+        <div data-testid="zwave-remove-modal" data-state={removeModal} className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="absolute inset-0 bg-swift/50" />
           <div className="relative bg-crane rounded-[var(--border-radius-base)] shadow-lg max-w-md w-full mx-4 p-6">
             {removeModal === 'search' && (

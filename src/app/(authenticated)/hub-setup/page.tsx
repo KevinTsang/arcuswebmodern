@@ -108,7 +108,7 @@ export default function HubSetupPage() {
       <div className="max-w-lg mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
-          <h2 className="text-[length:var(--font-size-h2)] font-[var(--heading-font-weight)] text-swift">
+          <h2 data-testid="hub-setup-title" className="text-[length:var(--font-size-h2)] font-[var(--heading-font-weight)] text-swift">
             Hub Setup
           </h2>
           <p className="text-sm text-grouse mt-2">
@@ -125,6 +125,7 @@ export default function HubSetupPage() {
                 {group.products.map((product) => (
                   <button
                     key={product.productId}
+                    data-testid={`hub-product-${product.productId}`}
                     onClick={() => selectProduct(product.productId)}
                     className="w-full flex items-center gap-4 p-4 border border-heron rounded-[var(--border-radius-base)] hover:border-peacock hover:shadow-sm transition-all text-left"
                   >
@@ -152,6 +153,7 @@ export default function HubSetupPage() {
           </p>
           <button
             onClick={() => router.push('/product-catalog')}
+            data-testid="hub-setup-browse"
             className="text-sm text-peacock hover:underline"
           >
             Browse devices that don&apos;t require a hub &rarr;

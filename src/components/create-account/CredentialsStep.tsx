@@ -111,6 +111,7 @@ export default function CredentialsStep() {
       <label className="flex items-center gap-2 text-sm text-coot">
         <input
           type="checkbox"
+          data-testid="create-account-optin"
           checked={optIn}
           onChange={(e) => dispatch({ type: 'SET_FIELD', field: 'optIn', value: e.target.checked })}
           className="accent-peacock"
@@ -119,6 +120,7 @@ export default function CredentialsStep() {
       </label>
       <button
         type="submit"
+        data-testid="create-account-submit"
         disabled={loading}
         className="w-full py-2.5 bg-peacock text-crane rounded-[var(--border-radius-base)] text-sm font-medium hover:bg-peacock/90 disabled:opacity-50"
       >

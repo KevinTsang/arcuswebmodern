@@ -1,3 +1,6 @@
+import { testIdSlug } from '@/lib/testId';
+import { useTestIdScope } from '@/lib/testIdScope';
+
 export default function StatusBadge({
   label,
   value,
@@ -7,8 +10,10 @@ export default function StatusBadge({
   value: string;
   color: string;
 }) {
-  // transforms label into a slug for test ids, e.g. "Alarm Status" -> "alarm-status"
-  const slug = label.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  // Test ids are scoped by the enclosing card: "Total" on Doors & Locks →
+  // "status-value-doors-locks-total", so badges with the same label stay unique.
+  const card = useTestIdScope();
+  const slug = card ? `${card}-${testIdSlug(label)}` : testIdSlug(label);
 
   return (
     <div data-testid={`status-badge-${slug}`}>

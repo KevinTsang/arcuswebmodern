@@ -40,11 +40,12 @@ export default function HistoryPage() {
     <div className="p-[var(--gutter)]">
       {/* Context bar */}
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-[length:var(--font-size-h2)] font-[var(--heading-font-weight)] text-swift">
+        <h2 data-testid="history-title" className="text-[length:var(--font-size-h2)] font-[var(--heading-font-weight)] text-swift">
           History
         </h2>
         <button
           onClick={refresh}
+          data-testid="history-refresh"
           className="text-peacock hover:text-bluejay transition-colors text-sm"
           title="Refresh"
         >
@@ -58,6 +59,8 @@ export default function HistoryPage() {
           <ul className="space-y-1">
             <li>
               <button
+                data-testid="history-filter-all"
+                data-active={filterMode === 'all'}
                 onClick={() => {
                   setFilterMode('all');
                   setSelectedDevice('');
@@ -75,6 +78,7 @@ export default function HistoryPage() {
                 <div className="px-3 py-2">
                   <label className="block text-sm font-medium text-swift mb-1">By Device</label>
                   <select
+                    data-testid="history-device-select"
                     value={selectedDevice}
                     onChange={(e) => {
                       setSelectedDevice(e.target.value);
@@ -94,7 +98,7 @@ export default function HistoryPage() {
             )}
           </ul>
           {!isPremium && (
-            <p className="text-xs text-grouse mt-4 px-3">
+            <p data-testid="history-limit-note" className="text-xs text-grouse mt-4 px-3">
               Showing last 24 hours. Upgrade to Premium for 14 days of history.
             </p>
           )}

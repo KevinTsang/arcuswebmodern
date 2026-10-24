@@ -1,5 +1,7 @@
 'use client';
 
+import { testIdSlug } from '@/lib/testId';
+
 export default function Field({
   label,
   value,
@@ -18,6 +20,7 @@ export default function Field({
       <label className="block text-sm text-grouse mb-1">{label}</label>
       <input
         type={type}
+        data-testid={`field-${testIdSlug(label)}`}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}

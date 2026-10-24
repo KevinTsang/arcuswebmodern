@@ -119,7 +119,7 @@ export default function PreferencesPage() {
   if (loading) {
     return (
       <div className="p-[var(--gutter)]">
-        <h2 className="text-[length:var(--font-size-h2)] font-[var(--heading-font-weight)] text-swift mb-6">
+        <h2 data-testid="preferences-title" className="text-[length:var(--font-size-h2)] font-[var(--heading-font-weight)] text-swift mb-6">
           Preferences
         </h2>
         <p className="text-grouse">Loading preferences...</p>
@@ -130,12 +130,13 @@ export default function PreferencesPage() {
   return (
     <div className="p-[var(--gutter)]">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-[length:var(--font-size-h2)] font-[var(--heading-font-weight)] text-swift">
+        <h2 data-testid="preferences-title" className="text-[length:var(--font-size-h2)] font-[var(--heading-font-weight)] text-swift">
           Preferences
         </h2>
         {hasChanges && (
           <button
             onClick={handleSave}
+            data-testid="preferences-save"
             disabled={saving}
             className="bg-peacock text-crane px-5 py-2 rounded-[var(--border-radius-base)] hover:opacity-90 disabled:opacity-50 text-sm"
           >
@@ -145,7 +146,7 @@ export default function PreferencesPage() {
       </div>
 
       <div className="max-w-lg">
-        <h3 className="text-base font-medium text-swift mb-3">Dashboard Cards</h3>
+        <h3 data-testid="preferences-cards-title" className="text-base font-medium text-swift mb-3">Dashboard Cards</h3>
         <p className="text-sm text-grouse mb-4">
           Reorder and show/hide cards on your dashboard.
         </p>
@@ -154,6 +155,8 @@ export default function PreferencesPage() {
           {cards.map((card, index) => (
             <div
               key={card.key}
+              data-testid={`preference-card-${card.key}`}
+              data-position={index + 1}
               className={`
                 flex items-center gap-3 px-4 py-3 border rounded-[var(--border-radius-base)]
                 ${card.visible ? 'border-heron bg-crane' : 'border-heron bg-pigeon opacity-60'}
@@ -163,6 +166,7 @@ export default function PreferencesPage() {
               <div className="flex flex-col gap-0.5">
                 <button
                   onClick={() => handleMoveUp(index)}
+                  data-testid={`preference-move-up-${card.key}`}
                   disabled={index === 0}
                   className="text-xs text-grouse hover:text-swift disabled:opacity-30"
                   aria-label="Move up"
@@ -171,6 +175,7 @@ export default function PreferencesPage() {
                 </button>
                 <button
                   onClick={() => handleMoveDown(index)}
+                  data-testid={`preference-move-down-${card.key}`}
                   disabled={index === cards.length - 1}
                   className="text-xs text-grouse hover:text-swift disabled:opacity-30"
                   aria-label="Move down"
@@ -185,6 +190,7 @@ export default function PreferencesPage() {
               {/* Visibility toggle */}
               <button
                 onClick={() => handleToggleVisibility(card.key)}
+                data-testid={`preference-visible-${card.key}`}
                 className={`
                   relative inline-flex h-6 w-11 items-center rounded-full transition-colors
                   ${card.visible ? 'bg-peacock' : 'bg-heron'}

@@ -179,10 +179,11 @@ export default function KitActivatePage() {
 
   if (kitDevices.length === 0) {
     return (
-      <div className="p-[var(--gutter)] text-center py-12">
+      <div data-testid="kit-empty" className="p-[var(--gutter)] text-center py-12">
         <p className="text-grouse mb-4">No kit devices found.</p>
         <button
           onClick={() => router.push('/devices')}
+          data-testid="kit-go-devices"
           className="text-sm text-peacock hover:underline"
         >
           Go to Devices
@@ -196,7 +197,7 @@ export default function KitActivatePage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-[length:var(--font-size-h2)] font-[var(--heading-font-weight)] text-swift">
+          <h2 data-testid="kit-title" className="text-[length:var(--font-size-h2)] font-[var(--heading-font-weight)] text-swift">
             Kit Activation
           </h2>
           <p className="text-sm text-grouse mt-1">
@@ -205,6 +206,8 @@ export default function KitActivatePage() {
         </div>
         <button
           onClick={handleFinish}
+          data-testid="kit-finish"
+          data-complete={counts.isComplete}
           className="px-4 py-2 bg-peacock text-crane rounded-[var(--border-radius-base)] text-sm font-medium hover:bg-peacock/90"
         >
           {counts.isComplete ? 'Done' : 'Finish Later'}
@@ -255,6 +258,7 @@ export default function KitActivatePage() {
             <h3 className="text-lg font-semibold text-swift mb-4">Name Your Device</h3>
             <input
               type="text"
+              data-testid="kit-device-name"
               value={deviceName}
               onChange={(e) => setDeviceName(e.target.value)}
               placeholder="Device name"
@@ -264,6 +268,7 @@ export default function KitActivatePage() {
             <div className="flex gap-2">
               <button
                 onClick={saveCustomization}
+                data-testid="kit-save"
                 className="flex-1 py-2 bg-peacock text-crane rounded-[var(--border-radius-base)] text-sm font-medium hover:bg-peacock/90"
               >
                 Save
@@ -305,20 +310,21 @@ function KitDeviceCard({
   const config = stateConfig[entry.state];
 
   return (
-    <div className={`border rounded-[var(--border-radius-base)] p-4 ${config.bgColor}`}>
+    <div data-testid={`kit-device-${entry.kitDevice.protocolAddress}`} data-state={entry.state} className={`border rounded-[var(--border-radius-base)] p-4 ${config.bgColor}`}>
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 bg-pigeon rounded-[var(--border-radius-base)] flex items-center justify-center flex-shrink-0">
           <span className="icon-app-devices text-lg text-grouse" />
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium text-swift truncate">{entry.name}</p>
-          <p className={`text-xs mt-0.5 ${config.color}`}>{config.label}</p>
+          <p data-testid={`kit-device-state-${entry.kitDevice.protocolAddress}`} className={`text-xs mt-0.5 ${config.color}`}>{config.label}</p>
         </div>
       </div>
 
       {entry.state === 'customizable' && entry.pairingDevice && (
         <button
           onClick={() => onCustomize(entry.pairingDevice!)}
+          data-testid={`kit-setup-${entry.kitDevice.protocolAddress}`}
           className="mt-3 w-full py-1.5 bg-peacock text-crane rounded text-xs font-medium hover:bg-peacock/90"
         >
           Set Up

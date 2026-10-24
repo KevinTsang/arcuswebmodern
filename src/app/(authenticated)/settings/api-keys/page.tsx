@@ -8,6 +8,7 @@ import type { ApiKeyMeta } from '@arcus/core/services/ApiKeyService';
 import { emptyPermSet, permSetToStrings, hasAnyPermission, type PermSet } from '@/components/api-keys/permissions';
 import PermissionsTable from '@/components/api-keys/PermissionsTable';
 import KeyCard from '@/components/api-keys/KeyCard';
+import { TestIdScope } from '@/lib/testIdScope';
 
 export default function ApiKeysPage() {
   const placeId = useAppSelector((s) => s.place.placeId);
@@ -114,29 +115,30 @@ export default function ApiKeysPage() {
           Settings
         </Link>
         <span className="text-grouse text-sm">/</span>
-        <h2 className="text-[length:var(--font-size-h2)] font-[var(--heading-font-weight)] text-swift">
+        <h2 data-testid="apikeys-title" className="text-[length:var(--font-size-h2)] font-[var(--heading-font-weight)] text-swift">
           API Keys
         </h2>
       </div>
 
       {error && (
-        <div className="mb-4 text-sm text-cardinal bg-cardinal/5 border border-cardinal/20 rounded-[var(--border-radius-base)] px-4 py-2">
+        <div data-testid="apikey-error" className="mb-4 text-sm text-cardinal bg-cardinal/5 border border-cardinal/20 rounded-[var(--border-radius-base)] px-4 py-2">
           {error}
         </div>
       )}
 
       {/* Created key banner */}
       {createdKey && (
-        <div className="mb-4 bg-honeycreeper/5 border border-honeycreeper/20 rounded-[var(--border-radius-base)] px-4 py-3">
+        <div data-testid="apikey-created" className="mb-4 bg-honeycreeper/5 border border-honeycreeper/20 rounded-[var(--border-radius-base)] px-4 py-3">
           <p className="text-sm font-medium text-swift mb-1">
             API key created. Copy it now — it will not be shown again.
           </p>
           <div className="flex items-center gap-2">
-            <code className="flex-1 text-sm bg-pigeon/30 px-3 py-1.5 rounded font-mono break-all">
+            <code data-testid="apikey-token" className="flex-1 text-sm bg-pigeon/30 px-3 py-1.5 rounded font-mono break-all">
               {createdKey}
             </code>
             <button
               onClick={() => handleCopy(createdKey)}
+              data-testid="apikey-copy"
               className="px-3 py-1.5 text-sm bg-peacock text-crane rounded-[var(--border-radius-base)] hover:bg-peacock/90 flex-shrink-0"
             >
               {copied ? 'Copied' : 'Copy'}
@@ -144,6 +146,7 @@ export default function ApiKeysPage() {
           </div>
           <button
             onClick={() => setCreatedKey(null)}
+            data-testid="apikey-dismiss"
             className="mt-2 text-xs text-grouse hover:underline"
           >
             Dismiss
@@ -162,6 +165,7 @@ export default function ApiKeysPage() {
               <label className="block text-sm text-grouse mb-1">Name</label>
               <input
                 type="text"
+                data-testid="apikey-label"
                 value={label}
                 onChange={(e) => setLabel(e.target.value)}
                 maxLength={64}
@@ -171,11 +175,14 @@ export default function ApiKeysPage() {
             </div>
             <div>
               <label className="block text-sm text-grouse mb-2">Permissions</label>
-              <PermissionsTable perms={createPerms} onToggle={toggleCreatePerm} />
+              <TestIdScope.Provider value="apikey-new">
+                <PermissionsTable perms={createPerms} onToggle={toggleCreatePerm} />
+              </TestIdScope.Provider>
             </div>
             <div className="flex gap-2 pt-1">
               <button
                 onClick={handleCreate}
+                data-testid="apikey-create"
                 disabled={creating || !label.trim() || !hasAnyPermission(createPerms)}
                 className="px-4 py-2 bg-peacock text-crane rounded-[var(--border-radius-base)] text-sm font-medium hover:bg-peacock/90 disabled:opacity-50"
               >
@@ -183,6 +190,7 @@ export default function ApiKeysPage() {
               </button>
               <button
                 onClick={resetCreate}
+                data-testid="apikey-cancel"
                 className="px-4 py-2 border border-heron rounded-[var(--border-radius-base)] text-sm text-coot hover:bg-pigeon"
               >
                 Cancel
@@ -199,6 +207,7 @@ export default function ApiKeysPage() {
           {!showCreate && (
             <button
               onClick={() => setShowCreate(true)}
+              data-testid="apikey-new"
               className="text-sm text-peacock hover:underline"
             >
               New Key
@@ -209,7 +218,7 @@ export default function ApiKeysPage() {
           {loading ? (
             <p className="text-sm text-grouse">Loading...</p>
           ) : keys.length === 0 ? (
-            <p className="text-sm text-grouse">No API keys created yet.</p>
+            <p data-testid="apikeys-empty" className="text-sm text-grouse">No API keys created yet.</p>
           ) : (
             <div className="space-y-4">
               {keys.map((k) => (

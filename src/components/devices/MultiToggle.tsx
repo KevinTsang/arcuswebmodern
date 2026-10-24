@@ -45,6 +45,7 @@ export default function MultiToggle({ address }: { address: string }) {
               `}
               role="switch"
               aria-checked={on}
+              data-testid={`device-toggle-${address}-${key}`}
               title={`Turn ${formatInstanceName(key)} ${on ? 'off' : 'on'}`}
             >
               <span

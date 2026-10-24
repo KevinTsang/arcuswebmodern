@@ -4,7 +4,7 @@ import type {
   ListAvailablePlacesResponse,
   GetPreferencesResponse,
   Preferences,
-} from '../../../../src/arcus/types';
+} from './types';
 
 const SessionService = {
   onActivePlaceCleared(callback: () => void): void {

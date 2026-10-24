@@ -36,6 +36,7 @@ export default function ToggleOnOff({ address }: { address: string }) {
       `}
       role="switch"
       aria-checked={on}
+      data-testid={`device-toggle-${address}`}
       title={`Turn ${on ? 'off' : 'on'}`}
     >
       <span

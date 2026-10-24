@@ -23,6 +23,7 @@ export default function ContactSettingConfigurator({ address }: { address: strin
           <button
             key={opt.value}
             onClick={() => setAttribute(Contact.ATTR_USEHINT, opt.value)}
+            data-testid={`contact-usehint-${opt.value.toLowerCase()}`}
             className={`
               px-3 py-1.5 text-sm rounded-[var(--border-radius-base)] transition-colors
               ${usehint === opt.value

@@ -15,6 +15,7 @@ export function RuleListItem({ rule, onEdit }: RuleListItemProps) {
   const name = rule[Rule.ATTR_NAME] ?? 'Unnamed Rule';
   const description = rule[Rule.ATTR_DESCRIPTION] ?? '';
   const address = rule[Base.ATTR_ADDRESS];
+  const ruleId = rule[Base.ATTR_ID] ?? address;
   const state = rule[Rule.ATTR_STATE];
   const isEnabled = state === Rule.STATE_ENABLED;
 
@@ -31,12 +32,12 @@ export function RuleListItem({ rule, onEdit }: RuleListItemProps) {
   }, [address, isEnabled, dispatch]);
 
   return (
-    <div className={`border-b border-heron py-4 ${!isEnabled ? 'opacity-60' : ''}`}>
+    <div data-testid={`rule-row-${ruleId}`} data-enabled={isEnabled} className={`border-b border-heron py-4 ${!isEnabled ? 'opacity-60' : ''}`}>
       <div className="flex items-start justify-between">
         <div className="flex-1 min-w-0 mr-4">
-          <h3 className="text-base font-medium text-swift">{name}</h3>
+          <h3 data-testid={`rule-name-${ruleId}`} className="text-base font-medium text-swift">{name}</h3>
           {description && (
-            <p className="text-sm text-grouse mt-1">{description}</p>
+            <p data-testid={`rule-description-${ruleId}`} className="text-sm text-grouse mt-1">{description}</p>
           )}
         </div>
         <div className="flex items-center gap-3 flex-shrink-0">
@@ -48,6 +49,7 @@ export function RuleListItem({ rule, onEdit }: RuleListItemProps) {
             `}
             role="switch"
             aria-checked={isEnabled}
+            data-testid={`rule-toggle-${ruleId}`}
           >
             <span
               className={`
@@ -58,6 +60,7 @@ export function RuleListItem({ rule, onEdit }: RuleListItemProps) {
           </button>
           <button
             onClick={() => onEdit(rule)}
+            data-testid={`rule-edit-${ruleId}`}
             className="text-sm text-peacock hover:underline"
           >
             Edit

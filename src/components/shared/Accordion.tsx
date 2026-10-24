@@ -8,6 +8,7 @@
  */
 
 import { useState, useCallback, createContext, useContext, type ReactNode } from 'react';
+import { testIdSlug } from '@/lib/testId';
 
 interface AccordionContextValue {
   activeIds: Set<string>;
@@ -66,6 +67,8 @@ export function AccordionPanel({ id, title, icon, children }: AccordionPanelProp
     <div>
       <button
         onClick={() => toggle(id)}
+        data-testid={`accordion-${testIdSlug(id)}`}
+        aria-expanded={isOpen}
         className="w-full flex items-center gap-2 px-4 py-3 text-left hover:bg-pigeon/30 transition-colors"
       >
         {icon && <span className={`${icon} text-base text-grouse`} />}

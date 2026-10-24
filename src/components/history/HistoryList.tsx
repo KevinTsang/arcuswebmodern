@@ -56,7 +56,7 @@ export default function HistoryList({
 
   if (entries.length === 0 && !loading) {
     return (
-      <div className="text-center py-12">
+      <div data-testid="history-empty" className="text-center py-12">
         <p className="text-grouse">No recent activity.</p>
       </div>
     );
@@ -76,14 +76,14 @@ export default function HistoryList({
         items.push(<div key={`spacer-${i}`} className="h-4" />);
       }
       items.push(
-        <h3 key={`date-${i}`} className="text-sm font-semibold text-swift mb-2">
+        <h3 key={`date-${i}`} data-testid={`history-date-${i}`} className="text-sm font-semibold text-swift mb-2">
           {date}
         </h3>,
       );
     }
 
     items.push(
-      <div key={i} className="flex gap-3 py-2 border-b border-pigeon">
+      <div key={i} data-testid={`history-entry-${i}`} className="flex gap-3 py-2 border-b border-pigeon">
         <span className="text-xs text-grouse w-16 flex-shrink-0 pt-0.5">
           {formatTime(entry.timestamp)}
         </span>

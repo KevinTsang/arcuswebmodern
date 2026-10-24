@@ -55,6 +55,7 @@ export default function PlaceCard({
       onClick={() =>
         openRight(<PlaceInfoPanel placeData={placeData} onSaved={onRefresh} />)
       }
+      data-testid={`place-edit-${place.placeId}`}
       className="text-sm text-peacock hover:underline"
     >
       Edit
@@ -62,17 +63,18 @@ export default function PlaceCard({
   ) : undefined;
 
   return (
-    <InfoCard title={place.name || 'Unnamed Place'} action={editAction}>
+    <div data-testid={`place-card-${place.placeId}`} data-active={isActive}>
+    <InfoCard title={place.name || 'Unnamed Place'} action={editAction} testId={`place-info-${place.placeId}`}>
       {address && <InfoRow label="Address" value={address} />}
       <InfoRow label="Service Level" value={serviceLevel} />
       <InfoRow label="Role" value={formatRole(place.role)} />
       {isActive && (
-        <span className="inline-block text-xs text-honeycreeper font-medium">Active Place</span>
+        <span data-testid={`place-active-${place.placeId}`} className="inline-block text-xs text-honeycreeper font-medium">Active Place</span>
       )}
       {isOwner && placeData && (
         <div className="flex justify-between text-sm pt-1">
           <span className="text-grouse">API Access</span>
-          <Link href="/settings/api-keys" className="text-peacock hover:underline">
+          <Link href="/settings/api-keys" data-testid={`manage-api-keys-${place.placeId}`} className="text-peacock hover:underline">
             Manage API Keys
           </Link>
         </div>
@@ -91,6 +93,7 @@ export default function PlaceCard({
                   />,
                 )
               }
+              data-testid={`place-invite-${place.placeId}`}
               className="text-xs text-peacock hover:underline"
             >
               + Invite
@@ -99,7 +102,7 @@ export default function PlaceCard({
         </div>
 
         {otherPeople.length === 0 ? (
-          <p className="text-xs text-grouse">No other people at this place.</p>
+          <p data-testid={`place-no-people-${place.placeId}`} className="text-xs text-grouse">No other people at this place.</p>
         ) : (
           <div className="space-y-2">
             {otherPeople.map((person) => {
@@ -109,6 +112,7 @@ export default function PlaceCard({
               return (
                 <PersonRow
                   key={person[Base.ATTR_ADDRESS]}
+                  testId={`person-${place.placeId}-${person[Base.ATTR_ID] ?? person[Base.ATTR_ADDRESS]}`}
                   name={personName || personEmail}
                   email={personName ? personEmail : ''}
                   onEdit={
@@ -130,6 +134,7 @@ export default function PlaceCard({
         )}
       </div>
     </InfoCard>
+    </div>
   );
 }
 

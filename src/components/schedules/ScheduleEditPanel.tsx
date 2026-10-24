@@ -96,7 +96,7 @@ export function ScheduleEditPanel({
 
   return (
     <div>
-      <h3 className="text-lg font-semibold text-swift mb-1">Schedule</h3>
+      <h3 data-testid="schedule-title" className="text-lg font-semibold text-swift mb-1">Schedule</h3>
       <p className="text-sm text-grouse mb-4">{targetName}</p>
 
       {/* Mode selector (for multi-mode devices like thermostats) */}
@@ -128,13 +128,14 @@ export function ScheduleEditPanel({
           <div className="mt-4 flex gap-2">
             <button
               onClick={handleAddNew}
+              data-testid="schedule-add-event"
               className="flex-1 py-2 bg-peacock text-crane rounded-[var(--border-radius-base)] text-sm font-medium hover:bg-peacock/90"
             >
               Add Event
             </button>
           </div>
           {events.length === 0 && (
-            <p className="text-center text-sm text-grouse mt-4">
+            <p data-testid="schedule-empty" className="text-center text-sm text-grouse mt-4">
               No events scheduled.
             </p>
           )}

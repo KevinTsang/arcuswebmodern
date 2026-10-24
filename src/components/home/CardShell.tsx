@@ -1,4 +1,6 @@
 import Link from 'next/link';
+import { testIdSlug } from '@/lib/testId';
+import { TestIdScope } from '@/lib/testIdScope';
 
 export default function CardShell({
   title,
@@ -14,7 +16,7 @@ export default function CardShell({
   children: React.ReactNode;
 }) {
   // transforms title into a slug for test ids, e.g. "Alarm Status" -> "alarm-status"
-  const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  const slug = testIdSlug(title);
 
   const header = (
     <div className="flex items-center gap-2">
@@ -47,7 +49,9 @@ export default function CardShell({
           </Link>
         )}
       </div>
-      <div className="px-4 py-3">{children}</div>
+      <div className="px-4 py-3">
+        <TestIdScope.Provider value={slug}>{children}</TestIdScope.Provider>
+      </div>
     </div>
   );
 }

@@ -50,7 +50,7 @@ export default function AddPlacePanel() {
 
   return (
     <div className="p-4 space-y-4">
-      <h3 className="text-lg font-semibold text-swift">Add a Place</h3>
+      <h3 data-testid="add-place-panel-title" className="text-lg font-semibold text-swift">Add a Place</h3>
       <Field label="Place Name" value={name} onChange={setName} placeholder="e.g. Lake House" />
       <Field label="Street Address" value={street1} onChange={setStreet1} />
       <Field label="City" value={city} onChange={setCity} />
@@ -59,6 +59,7 @@ export default function AddPlacePanel() {
       <div className="flex gap-2 pt-2">
         <button
           onClick={handleCreate}
+          data-testid="place-create"
           disabled={saving || !name.trim()}
           className="px-4 py-2 bg-peacock text-crane rounded-[var(--border-radius-base)] text-sm font-medium hover:bg-peacock/90 disabled:opacity-50"
         >

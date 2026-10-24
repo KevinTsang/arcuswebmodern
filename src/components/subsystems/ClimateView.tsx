@@ -21,7 +21,7 @@ export function ClimateView() {
       <div className="flex gap-4">
         {temperature != null && (
           <div className="flex-1 bg-pigeon/50 rounded-[var(--border-radius-base)] p-4 text-center">
-            <div className="text-3xl font-light text-swift">
+            <div data-testid="climate-temperature" className="text-3xl font-light text-swift">
               {cToF(temperature)}<span className="text-lg">&deg;F</span>
             </div>
             <p className="text-xs text-grouse mt-1">Temperature</p>
@@ -29,7 +29,7 @@ export function ClimateView() {
         )}
         {humidity != null && (
           <div className="flex-1 bg-pigeon/50 rounded-[var(--border-radius-base)] p-4 text-center">
-            <div className="text-3xl font-light text-swift">
+            <div data-testid="climate-humidity" className="text-3xl font-light text-swift">
               {Math.round(humidity)}<span className="text-lg">%</span>
             </div>
             <p className="text-xs text-grouse mt-1">Humidity</p>
@@ -39,7 +39,7 @@ export function ClimateView() {
 
       {/* Thermostat controls */}
       {controlDevices.length > 0 && (
-        <div>
+        <div data-testid="climate-thermostats">
           <h3 className="text-sm font-medium text-swift mb-3">Thermostats</h3>
           {controlDevices.map((device) => (
             <DevicePanel key={device.id} address={device[Base.ATTR_ADDRESS]} />
@@ -49,7 +49,7 @@ export function ClimateView() {
 
       {/* Temperature sensors (non-thermostat) */}
       {tempDevices.length > controlDevices.length && (
-        <div>
+        <div data-testid="climate-sensors">
           <h3 className="text-sm font-medium text-swift mb-3">Temperature Sensors</h3>
           {tempDevices
             .filter((d) => !controlDevices.find((c) => c.id === d.id))
@@ -60,7 +60,7 @@ export function ClimateView() {
       )}
 
       {controlDevices.length === 0 && tempDevices.length === 0 && (
-        <div className="text-center py-8">
+        <div data-testid="climate-empty" className="text-center py-8">
           <p className="text-grouse">No climate devices paired.</p>
         </div>
       )}

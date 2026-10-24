@@ -16,7 +16,7 @@ export default function HubRegistrationSteps({
 }: HubRegistrationStepsProps) {
   return (
     <div>
-      <h3 className="text-lg font-semibold text-swift mb-4">Register Your Hub</h3>
+      <h3 data-testid="hub-register-title" className="text-lg font-semibold text-swift mb-4">Register Your Hub</h3>
       <p className="text-sm text-grouse mb-4">
         Find the Hub ID on the bottom of your hub. It looks like AAA-NNNN.
       </p>
@@ -24,6 +24,7 @@ export default function HubRegistrationSteps({
         <label className="block text-sm font-medium text-swift mb-1">Hub ID</label>
         <input
           type="text"
+          data-testid="hub-id-input"
           value={hubId}
           onChange={(e) => dispatch(setHubId(e.target.value))}
           placeholder="AAA-0000"
@@ -32,6 +33,7 @@ export default function HubRegistrationSteps({
       </div>
       <button
         onClick={onStartHubRegistration}
+        data-testid="hub-register"
         disabled={!hubId.trim() || loading}
         className="w-full py-2.5 bg-peacock text-crane rounded-[var(--border-radius-base)] text-sm font-medium hover:bg-peacock/90 disabled:opacity-50"
       >

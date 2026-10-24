@@ -53,7 +53,7 @@ export default async function SubsystemPage({
           {/* Subsystem header */}
           <div className="flex items-center gap-2 mb-6">
             <span className={`${config.icon} text-xl text-peacock`} />
-            <h3 className="text-lg font-semibold text-swift">{config.name}</h3>
+            <h3 data-testid="subsystem-title" className="text-lg font-semibold text-swift">{config.name}</h3>
           </div>
 
           <SubsystemView config={config} action={activeAction} />

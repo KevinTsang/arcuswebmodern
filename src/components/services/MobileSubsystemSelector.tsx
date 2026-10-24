@@ -15,6 +15,7 @@ export function MobileSubsystemSelector({ activeSlug }: { activeSlug: string }) 
   return (
     <div className="md:hidden mb-4 w-full">
       <select
+        data-testid="subsystem-select"
         value={activeSlug}
         onChange={(e) => router.push(`/services/${e.target.value}/${DEFAULT_ACTION}`)}
         className="w-full text-sm border border-heron rounded-[var(--border-radius-base)] px-3 py-2 focus:outline-none focus:border-peacock"

@@ -14,6 +14,7 @@ export default function ProductCard({ product, onSelect }: ProductCardProps) {
   return (
     <button
       onClick={() => onSelect(product)}
+      data-testid={`product-${product[ProductCap.ATTR_ID]}`}
       className="border border-heron rounded-[var(--border-radius-base)] p-4 text-center hover:border-peacock hover:shadow-sm transition-all flex flex-col items-center gap-2"
     >
       {/* Product icon placeholder */}
@@ -25,7 +26,7 @@ export default function ProductCard({ product, onSelect }: ProductCardProps) {
         {vendor && <p className="text-xs text-grouse mt-0.5">{vendor}</p>}
       </div>
       {hubRequired && (
-        <span className="text-[10px] bg-pigeon text-grouse rounded-full px-2 py-0.5">
+        <span data-testid={`product-hub-required-${product[ProductCap.ATTR_ID]}`} className="text-[10px] bg-pigeon text-grouse rounded-full px-2 py-0.5">
           Hub Required
         </span>
       )}

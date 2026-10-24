@@ -11,6 +11,7 @@ export default function RemoveZWaveDeviceSuccessModal({ onDone }: { onDone: () =
       <div className="flex justify-end">
         <button
           onClick={onDone}
+          data-testid="zwave-remove-done"
           className="px-4 py-2 bg-peacock text-crane rounded-[var(--border-radius-base)] text-sm font-medium hover:opacity-90"
         >
           Done

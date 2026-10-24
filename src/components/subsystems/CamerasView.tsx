@@ -16,7 +16,7 @@ export function CamerasView() {
 
   if (cameras.length === 0) {
     return (
-      <div className="text-center py-8">
+      <div data-testid="cameras-empty" className="text-center py-8">
         <p className="text-grouse mb-2">No cameras paired.</p>
         <p className="text-sm text-grouse">
           Add cameras to monitor your home remotely.
@@ -27,7 +27,7 @@ export function CamerasView() {
 
   return (
     <div>
-      <p className="text-sm text-grouse mb-4">
+      <p data-testid="cameras-count" className="text-sm text-grouse mb-4">
         {cameras.length} camera{cameras.length !== 1 ? 's' : ''} configured
       </p>
       {cameras.map((device) => (

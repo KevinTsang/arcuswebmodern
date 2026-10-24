@@ -28,7 +28,7 @@ export function AlarmSettings() {
     <div className="space-y-8 max-w-lg">
       {/* General settings */}
       <div>
-        <h3 className="text-base font-medium text-swift mb-4">General</h3>
+        <h3 data-testid="alarm-general-title" className="text-base font-medium text-swift mb-4">General</h3>
         <div className="space-y-4">
           <SettingToggle
             label="Record on Security Alarm"

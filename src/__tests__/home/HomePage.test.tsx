@@ -1,6 +1,6 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import HomePage from '@/app/(authenticated)/home/page';
-import { Base, Device, Scene, Place } from '@arcus/core';
+import { Base, Device, Scene, Place, PresenceSubsystem } from '@arcus/core';
 import type { DeviceEntity, SceneEntity, SubsystemEntity, IncidentEntity, PersonEntity, PlaceData } from '@/store/entityTypes';
 
 // ── Mocks ─────────────────────────────────────────────────────────────
@@ -284,7 +284,8 @@ describe('HomePage – card visibility', () => {
 
   it('renders Home & Family card when subsystem exists', () => {
     mockSubsystems = [
-      { id: 'SERV:subpresence:place-1', [Base.ATTR_ADDRESS]: 'SERV:subpresence:place-1', 'subs:available': true },
+      // The platform's presence subsystem namespace is `subspres` (PresenceSubsystem.NAMESPACE).
+      { id: `SERV:${PresenceSubsystem.NAMESPACE}:place-1`, [Base.ATTR_ADDRESS]: `SERV:${PresenceSubsystem.NAMESPACE}:place-1`, 'subs:available': true },
     ];
     render(<HomePage />);
     expect(screen.getByText('Home & Family')).toBeInTheDocument();

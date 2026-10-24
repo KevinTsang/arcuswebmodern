@@ -649,6 +649,25 @@ These are commonly used features that users will expect:
 21. **Mobile device presence tracking** — Phone location for home/away detection.
 22. **Ownership transfer, place deletion, cancel invitations** — Account and place lifecycle.
 23. **Pro monitoring trial & plan selection** — Trial activation, monthly vs annual.
+24. **Consolidate the dashboard card ↔ subsystem mappings** — The home page keeps
+    its own `SERVICE_TO_NAMESPACE` table (`src/app/(authenticated)/home/page.tsx`)
+    alongside `subsystemConfigs` (`src/lib/subsystemConfig.ts`), which already
+    maps each subsystem to its namespace, slug and device attributes. Fold the
+    card's preference key (`serviceName`, e.g. `DOORS_N_LOCKS`) into
+    `SubsystemConfigEntry` so there is one source of truth, and use it from the
+    Preferences page too — it currently has a third list of card keys
+    (`favorites`, `doorsLocks`, …) and writes `dashboard:cards` / `dashboard:hidden`
+    while the home page reads `dashboardCards`, so saved preferences never
+    affect the dashboard.
+25. **Split `login/page.tsx` into per-view components** — The login route
+    (`src/app/login/page.tsx`, ~570 lines) defines four views in one file:
+    `LoginForm`, `SendCodeForm`, `ResetPasswordForm` and `ResetConfirmation`,
+    plus the branding shell, switched on `?view=`. That breaks the
+    one-component-per-file convention in CLAUDE.md and makes each form hard to
+    unit-test in isolation. Move each form into its own file under
+    `src/components/login/` (sharing the validation constraints from a
+    `constraints.ts`), keep `page.tsx` as the thin `?view=` router + layout, and
+    give each component its own test file.
 
 ---
 
@@ -656,3 +675,31 @@ These are commonly used features that users will expect:
 
 Containerized testing (running a production build in Docker against the dev platform),
 authentication setup, and related workflows are documented in [`testing.md`](./testing.md).
+
+### End-to-end coverage
+
+Every area marked **Done** above has Cypress coverage in `cypress/e2e/` (see
+[`testing.md` → End-to-End Tests](./testing.md#end-to-end-tests)). The specs run
+against an in-browser fake of the platform, so they exercise the real UI, the
+Bridge/Cornea round trip and the `base:ValueChange` handling without a backend.
+Objects a test creates are removed after each test.
+
+Bugs found and fixed while writing the suite:
+
+- Home dashboard looked for the presence subsystem under `subpresence`; the
+  platform namespace is `subspres` (`PresenceSubsystem.NAMESPACE`), so the
+  Home & Family card never rendered.
+- Lights & Switches and Water dashboard cards read the device list from
+  `swit:state` / `valv:valvestate` on the subsystem instead of
+  `sublightsnswitches:switchDevices` / `subwater:waterDevices`, so they always
+  showed 0.
+- The invite page read the invitation off the `invite:GetInvitation` wrapper
+  instead of its `invitation` field, so the confirm step showed "Hello!" and an
+  empty inviter/place.
+- Hub registration only treated states starting with `error` as failures, so an
+  invalid Hub ID (`request.param.invalid`) left the wizard spinning.
+- `useFormValidation.formValidates` did not mark fields as visited, so a bare
+  submit of the create-account form showed no validation errors.
+
+Still open (documented by a skipped E2E test): the History device filter
+(§20) sends `place:ListHistoryEntries` to a device address.

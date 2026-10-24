@@ -2,7 +2,7 @@
  * Shared types for the in-browser fake Arcus platform used by the E2E suite.
  */
 
-export type Json = string | number | boolean | null | Json[] | { [key: string]: Json };
+export type Json = string | number | boolean | null | undefined | Json[] | { [key: string]: Json };
 
 /** Attribute map exchanged with the platform (message payloads, entities). */
 export type Attrs = { [key: string]: Json };
@@ -72,12 +72,45 @@ export interface SessionPlaceFixture {
 export interface HistoryEntryFixture {
   timestamp: number;
   subjectName: string;
+  subjectAddress: string;
   longMessage: string;
-  [key: string]: Json;
+}
+
+export interface InvitationFixture {
+  code: string;
+  placeId: string;
+  placeName: string;
+  inviteeEmail: string;
+  inviteeFirstName: string;
+  inviteeLastName: string;
+  invitorFirstName: string;
+  invitorLastName: string;
+  streetAddress1?: string;
+  city?: string;
+  stateProv?: string;
+  zipCode?: string;
+}
+
+export interface ApiKeyFixture {
+  id: string;
+  label: string;
+  keyPrefix: string;
+  permissions: string[];
+  created: number | null;
+  lastUsed: number | null;
+  expiresAt: number | null;
+  expired: boolean;
+}
+
+export interface KitDeviceFixture {
+  productId: string;
+  protocolAddress: string;
 }
 
 /** Everything the fake platform serves for one signed-in person. */
 export interface PlatformData {
+  /** Credentials accepted by `POST /login`. */
+  login: { email: string; password: string };
   personId: string;
   placeId: string;
   accountId: string;
@@ -91,5 +124,10 @@ export interface PlatformData {
   ruleSelectors: { [templateAddress: string]: Attrs };
   /** Raw actions returned for `scenetmpl:ResolveActions`. */
   sceneActions: Attrs[];
-  invitations: Attrs[];
+  /** Pending invitations for the signed-in person (`person:PendingInvitations`). */
+  invitations: InvitationFixture[];
+  /** Invitations that can be looked up by code (`invite:GetInvitation`). */
+  invitationCodes: { [code: string]: InvitationFixture };
+  apiKeys: ApiKeyFixture[];
+  kitInfo: KitDeviceFixture[];
 }

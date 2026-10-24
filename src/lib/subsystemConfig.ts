@@ -5,15 +5,35 @@
  * icon) and defines which subsystems are visible and have custom views.
  */
 
+import {
+  AlarmSubsystem, CamerasSubsystem, CareSubsystem, ClimateSubsystem, DoorsNLocksSubsystem,
+  LawnNGardenSubsystem, LightsNSwitchesSubsystem, PairingSubsystem, PresenceSubsystem,
+  SafetySubsystem, SecuritySubsystem, WaterSubsystem,
+} from '@arcus/core';
+
+/**
+ * Every subsystem capability the client reads. The namespace union derived
+ * from it is the only accepted spelling of a subsystem namespace, so a typo
+ * (`'subpresence'`) or the wrong kind of attribute fails to compile instead
+ * of silently matching nothing.
+ */
+const SUBSYSTEM_CAPABILITIES = [
+  AlarmSubsystem, SecuritySubsystem, SafetySubsystem, CamerasSubsystem, CareSubsystem,
+  ClimateSubsystem, DoorsNLocksSubsystem, PresenceSubsystem, LawnNGardenSubsystem,
+  LightsNSwitchesSubsystem, WaterSubsystem, PairingSubsystem,
+] as const;
+
+export type SubsystemNamespace = (typeof SUBSYSTEM_CAPABILITIES)[number]['NAMESPACE'];
+
 export interface SubsystemConfigEntry {
   name: string;
   slug: string;
   icon: string;
-  namespace: string;
+  namespace: SubsystemNamespace;
   visible: boolean;
   hasCustomView: boolean;
   /** Subsystem attribute keys that contain device address lists */
-  deviceAttributes: string[];
+  deviceAttributes: readonly string[];
 }
 
 /**
@@ -24,82 +44,87 @@ export const subsystemConfigs: SubsystemConfigEntry[] = [
     name: 'Alarms',
     slug: 'alarms',
     icon: 'icon-app-alarm-2',
-    namespace: 'subalarm',
+    namespace: AlarmSubsystem.NAMESPACE,
     visible: true,
     hasCustomView: true,
-    deviceAttributes: ['subsecurity:securityDevices', 'subsafety:totalDevices'],
+    deviceAttributes: [SecuritySubsystem.ATTR_SECURITYDEVICES, SafetySubsystem.ATTR_TOTALDEVICES],
   },
   {
     name: 'Cameras',
     slug: 'cameras',
     icon: 'icon-platform-camera-2',
-    namespace: 'subcameras',
+    namespace: CamerasSubsystem.NAMESPACE,
     visible: true,
     hasCustomView: true,
-    deviceAttributes: ['subcameras:cameras'],
+    deviceAttributes: [CamerasSubsystem.ATTR_CAMERAS],
   },
   {
     name: 'Care',
     slug: 'care',
     icon: 'icon-app-care-heart-2',
-    namespace: 'subcare',
+    namespace: CareSubsystem.NAMESPACE,
     visible: true,
     hasCustomView: true,
-    deviceAttributes: ['subcare:careDevices'],
+    deviceAttributes: [CareSubsystem.ATTR_CAREDEVICES],
   },
   {
     name: 'Climate',
     slug: 'climate',
     icon: 'icon-app-climate-1',
-    namespace: 'subclimate',
+    namespace: ClimateSubsystem.NAMESPACE,
     visible: true,
     hasCustomView: true,
-    deviceAttributes: ['subclimate:controlDevices', 'subclimate:temperatureDevices'],
+    deviceAttributes: [ClimateSubsystem.ATTR_CONTROLDEVICES, ClimateSubsystem.ATTR_TEMPERATUREDEVICES],
   },
   {
     name: 'Doors & Locks',
     slug: 'doors-locks',
     icon: 'icon-platform-lock-2',
-    namespace: 'subdoorsnlocks',
+    namespace: DoorsNLocksSubsystem.NAMESPACE,
     visible: true,
     hasCustomView: true,
-    deviceAttributes: ['subdoorsnlocks:lockDevices', 'subdoorsnlocks:motorizedDoorDevices', 'subdoorsnlocks:contactSensorDevices', 'subdoorsnlocks:petDoorDevices'],
+    deviceAttributes: [
+      DoorsNLocksSubsystem.ATTR_LOCKDEVICES,
+      DoorsNLocksSubsystem.ATTR_MOTORIZEDDOORDEVICES,
+      DoorsNLocksSubsystem.ATTR_CONTACTSENSORDEVICES,
+      DoorsNLocksSubsystem.ATTR_PETDOORDEVICES,
+    ],
   },
   {
     name: 'Home & Family',
     slug: 'home-family',
     icon: 'icon-app-family-2',
-    namespace: 'subspres',
+    namespace: PresenceSubsystem.NAMESPACE,
     visible: true,
     hasCustomView: true,
-    deviceAttributes: ['subspres:allDevices'],
+    deviceAttributes: [PresenceSubsystem.ATTR_ALLDEVICES],
   },
   {
     name: 'Lawn & Garden',
     slug: 'lawn-garden',
     icon: 'icon-app-lawn-1',
-    namespace: 'sublawnngarden',
+    namespace: LawnNGardenSubsystem.NAMESPACE,
     visible: true,
     hasCustomView: true,
-    deviceAttributes: ['sublawnngarden:controllers'],
+    deviceAttributes: [LawnNGardenSubsystem.ATTR_CONTROLLERS],
   },
   {
     name: 'Lights & Switches',
     slug: 'lights-switches',
     icon: 'icon-platform-light-2',
-    namespace: 'sublightsnswitches',
+    namespace: LightsNSwitchesSubsystem.NAMESPACE,
     visible: true,
     hasCustomView: false,
-    deviceAttributes: ['sublightsnswitches:switchDevices'],
+    deviceAttributes: [LightsNSwitchesSubsystem.ATTR_SWITCHDEVICES],
   },
   {
     name: 'Water',
     slug: 'water',
     icon: 'icon-platform-irrigation-2',
-    namespace: 'subwater',
+    namespace: WaterSubsystem.NAMESPACE,
     visible: true,
     hasCustomView: false,
-    deviceAttributes: ['subwater:waterDevices'],
+    deviceAttributes: [WaterSubsystem.ATTR_WATERDEVICES],
   },
 ];
 
@@ -113,6 +138,6 @@ export function getSubsystemConfigBySlug(slug: string): SubsystemConfigEntry | u
 /**
  * Look up config by namespace prefix (e.g., 'subalarm').
  */
-export function getSubsystemConfigByNamespace(ns: string): SubsystemConfigEntry | undefined {
+export function getSubsystemConfigByNamespace(ns: SubsystemNamespace): SubsystemConfigEntry | undefined {
   return subsystemConfigs.find((c) => c.namespace === ns);
 }

@@ -88,6 +88,9 @@ export function AlarmNotificationList() {
           return (
             <div
               key={entry.person ?? index}
+              data-testid={`calltree-entry-${entry.person ?? index}`}
+              data-position={index + 1}
+              data-enabled={entry.enabled ?? false}
               className={`flex items-center gap-3 px-3 py-2.5 rounded border border-heron ${
                 !entry.enabled ? 'opacity-50' : ''
               }`}
@@ -97,6 +100,7 @@ export function AlarmNotificationList() {
               <div className="flex items-center gap-1">
                 <button
                   onClick={() => handleMoveUp(index)}
+                  data-testid={`calltree-move-up-${entry.person ?? index}`}
                   disabled={index === 0 || saving}
                   className="p-1 text-grouse hover:text-swift disabled:opacity-30"
                   aria-label={`Move ${name} up`}
@@ -107,6 +111,7 @@ export function AlarmNotificationList() {
                 </button>
                 <button
                   onClick={() => handleMoveDown(index)}
+                  data-testid={`calltree-move-down-${entry.person ?? index}`}
                   disabled={index >= callTree.length - 1 || saving}
                   className="p-1 text-grouse hover:text-swift disabled:opacity-30"
                   aria-label={`Move ${name} down`}
@@ -118,6 +123,7 @@ export function AlarmNotificationList() {
               </div>
               <button
                 onClick={() => handleToggle(index)}
+                data-testid={`calltree-toggle-${entry.person ?? index}`}
                 disabled={saving}
                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 ${
                   entry.enabled ? 'bg-peacock' : 'bg-heron'

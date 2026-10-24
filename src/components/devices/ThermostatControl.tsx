@@ -43,17 +43,17 @@ export default function ThermostatControl({ address }: { address: string }) {
     <div className="flex items-center gap-3">
       {(mode === Thermostat.HVACMODE_HEAT || mode === Thermostat.HVACMODE_AUTO) && heatSp != null && (
         <div className="flex items-center gap-1">
-          <button onClick={() => handleHeatChange(-1)} className="w-6 h-6 rounded bg-pigeon text-swift text-sm hover:bg-heron">-</button>
-          <span className="text-sm font-medium text-cardinal w-10 text-center">{toF(heatSp)}&deg;</span>
-          <button onClick={() => handleHeatChange(1)} className="w-6 h-6 rounded bg-pigeon text-swift text-sm hover:bg-heron">+</button>
+          <button onClick={() => handleHeatChange(-1)} data-testid={`thermostat-heat-down-${address}`} className="w-6 h-6 rounded bg-pigeon text-swift text-sm hover:bg-heron">-</button>
+          <span data-testid={`thermostat-heat-value-${address}`} className="text-sm font-medium text-cardinal w-10 text-center">{toF(heatSp)}&deg;</span>
+          <button onClick={() => handleHeatChange(1)} data-testid={`thermostat-heat-up-${address}`} className="w-6 h-6 rounded bg-pigeon text-swift text-sm hover:bg-heron">+</button>
         </div>
       )}
       {mode === Thermostat.HVACMODE_AUTO && <span className="text-grouse text-xs">to</span>}
       {(mode === Thermostat.HVACMODE_COOL || mode === Thermostat.HVACMODE_AUTO) && coolSp != null && (
         <div className="flex items-center gap-1">
-          <button onClick={() => handleCoolChange(-1)} className="w-6 h-6 rounded bg-pigeon text-swift text-sm hover:bg-heron">-</button>
-          <span className="text-sm font-medium text-peacock w-10 text-center">{toF(coolSp)}&deg;</span>
-          <button onClick={() => handleCoolChange(1)} className="w-6 h-6 rounded bg-pigeon text-swift text-sm hover:bg-heron">+</button>
+          <button onClick={() => handleCoolChange(-1)} data-testid={`thermostat-cool-down-${address}`} className="w-6 h-6 rounded bg-pigeon text-swift text-sm hover:bg-heron">-</button>
+          <span data-testid={`thermostat-cool-value-${address}`} className="text-sm font-medium text-peacock w-10 text-center">{toF(coolSp)}&deg;</span>
+          <button onClick={() => handleCoolChange(1)} data-testid={`thermostat-cool-up-${address}`} className="w-6 h-6 rounded bg-pigeon text-swift text-sm hover:bg-heron">+</button>
         </div>
       )}
     </div>

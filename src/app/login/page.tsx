@@ -111,12 +111,12 @@ function LoginForm() {
   return (
     <form onSubmit={handleSubmit} className="w-full max-w-sm">
       {expired && (
-        <div className="mb-4 rounded-[var(--border-radius-base)] border border-heron bg-pigeon px-4 py-3 text-sm text-swift">
+        <div data-testid="session-expired-notice" className="mb-4 rounded-[var(--border-radius-base)] border border-heron bg-pigeon px-4 py-3 text-sm text-swift">
           Your session has expired. Please log in again.
         </div>
       )}
       {form.formError && (
-        <div className="mb-4 text-cardinal text-sm">{form.formError}</div>
+        <div data-testid="login-error" className="mb-4 text-cardinal text-sm">{form.formError}</div>
       )}
 
       <div className="mb-4">
@@ -187,6 +187,7 @@ function LoginForm() {
       <div className="flex items-center gap-4 mb-6">
         <button
           type="submit"
+          data-testid="login-submit"
           disabled={saving}
           className="bg-peacock text-crane px-6 py-2.5 rounded-[var(--border-radius-base)] hover:opacity-90 transition-opacity disabled:opacity-50"
         >
@@ -294,6 +295,7 @@ function SendCodeForm() {
         <div className="flex gap-4">
           <button
             type="submit"
+            data-testid="reset-send"
             disabled={saving}
             className="bg-peacock text-crane px-6 py-2.5 rounded-[var(--border-radius-base)] hover:opacity-90 transition-opacity disabled:opacity-50"
           >
@@ -357,7 +359,7 @@ function ResetPasswordForm() {
     <div className="w-full max-w-sm">
       {fromSendCode ? (
         <>
-          <h3 className="text-xl font-semibold text-swift mb-2">Check Your Inbox</h3>
+          <h3 data-testid="reset-check-inbox" className="text-xl font-semibold text-swift mb-2">Check Your Inbox</h3>
           <p className="text-coot mb-1">
             We&apos;ve sent an email to <strong>{emailAddress}</strong> with a code to reset your password.
           </p>
@@ -481,12 +483,13 @@ function ResetPasswordForm() {
         </ul>
 
         {form.formError && (
-          <div className="mb-4 text-cardinal text-sm">{form.formError}</div>
+          <div data-testid="reset-error" className="mb-4 text-cardinal text-sm">{form.formError}</div>
         )}
 
         <div className="flex gap-4">
           <button
             type="submit"
+            data-testid="reset-submit"
             disabled={saving}
             className="bg-peacock text-crane px-6 py-2.5 rounded-[var(--border-radius-base)] hover:opacity-90 transition-opacity disabled:opacity-50"
           >
@@ -509,7 +512,7 @@ function ResetPasswordForm() {
 
 function ResetConfirmation() {
   return (
-    <div className="w-full max-w-sm">
+    <div data-testid="reset-confirmation" className="w-full max-w-sm">
       <h3 className="text-xl font-semibold text-swift mb-2">Password Reset</h3>
       <p className="text-coot mb-6">Your password has successfully been reset.</p>
       <Link

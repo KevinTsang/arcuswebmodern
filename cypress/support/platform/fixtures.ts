@@ -1,35 +1,43 @@
 /**
  * Default data set served by the fake platform: one household ("Maple Street")
  * with a hub, a handful of devices spanning the main device families, every
- * subsystem the dashboard knows about, two scenes and three rules.
+ * subsystem the dashboard knows about, two scenes, three rules, a scene
+ * schedule, a second place the person is a guest at, and the odds and ends
+ * the settings pages need (pro-monitoring settings, API keys, invitations).
  *
- * Specs get a fresh deep copy for every test and may mutate it through
- * `cy.signIn({ customize })` or the `platform` engine.
+ * Specs get a fresh deep copy for every test and may mutate it through the
+ * `platform` engine (`cy.platform()`).
  */
 
 import {
-  AlarmSubsystem, Base, CamerasSubsystem, CareSubsystem, ClimateSubsystem, Contact,
-  Device, DeviceConnection, DevicePower, Dimmer, DoorLock, DoorsNLocksSubsystem, Hub,
-  HubConnection, IrrigationController, LawnNGardenSubsystem, LeakH2O,
-  LightsNSwitchesSubsystem, Motion, PairingSubsystem, Person, Place, PresenceSubsystem,
-  RelativeHumidity, Rule, RuleTemplate, SafetySubsystem, Scene, SecurityAlarmMode,
+  Account, AlarmSubsystem, Base, CamerasSubsystem, CareSubsystem, ClimateSubsystem, Contact,
+  Device, DeviceAdvanced, DeviceConnection, DevicePower, Dimmer, DoorLock, DoorsNLocksSubsystem,
+  Hub, HubAdvanced, HubConnection, HubZwave, IrrigationController, LawnNGardenSubsystem, LeakH2O,
+  LightsNSwitchesSubsystem, Motion, PairingSubsystem, Person, Place, PresenceSubsystem, Product,
+  RelativeHumidity, Rule, RuleTemplate, SafetySubsystem, Scene, Scheduler, SecurityAlarmMode,
   SecuritySubsystem, Subsystem, Switch, Temperature, Thermostat, Valve, WaterSubsystem,
-  Product, Account,
 } from '../../../packages/arcus-core/src/capabilities/capabilities';
 import type { Attrs, HistoryEntryFixture, PlatformData } from './types';
 
 // ── Ids & addresses ───────────────────────────────────────────────────
 
 export const PLACE_ID = 'place-maple';
+export const LAKE_PLACE_ID = 'place-lake';
 export const PERSON_ID = 'person-alex';
+export const GUEST_PERSON_ID = 'person-sam';
 export const ACCOUNT_ID = 'account-maple';
 export const HUB_ID = 'LWF-1234';
 
+export const LOGIN = { email: 'alex@example.com', password: 'Password1' };
+
 export const addr = {
   place: `SERV:place:${PLACE_ID}`,
+  lakePlace: `SERV:place:${LAKE_PLACE_ID}`,
   person: `SERV:person:${PERSON_ID}`,
+  guest: `SERV:person:${GUEST_PERSON_ID}`,
   account: `SERV:account:${ACCOUNT_ID}`,
   hub: `SERV:${HUB_ID}:hub`,
+  promon: `SERV:promon:${PLACE_ID}`,
   device: (id: string) => `DRIV:dev:${id}`,
   subsystem: (ns: string) => `SERV:${ns}:${PLACE_ID}`,
   scene: (id: string) => `SERV:scene:${PLACE_ID}.${id}`,
@@ -37,6 +45,7 @@ export const addr = {
   ruleTemplate: (id: string) => `SERV:ruletmpl:${id}`,
   scheduler: (id: string) => `SERV:scheduler:${id}`,
   incident: (id: string) => `SERV:incident:${id}`,
+  pairingDevice: (id: string) => `SERV:pairdev:${id}`,
 };
 
 /** Device ids → addresses, exported so specs can refer to devices by name. */
@@ -50,6 +59,7 @@ export const DEVICE = {
   valve: addr.device('valve'),
   sprinkler: addr.device('sprinkler'),
   motion: addr.device('motion'),
+  relay: addr.device('relay'),
 };
 
 export const DEVICE_NAME = {
@@ -62,6 +72,7 @@ export const DEVICE_NAME = {
   valve: 'Main Water Valve',
   sprinkler: 'Backyard Sprinklers',
   motion: 'Hallway Motion',
+  relay: 'Garage Relay',
 };
 
 export const SCENE = {
@@ -69,10 +80,32 @@ export const SCENE = {
   movieTime: addr.scene('movie'),
 };
 
+export const SCENE_NAME = {
+  goodNight: 'Good Night',
+  movieTime: 'Movie Time',
+};
+
 export const RULE = {
   lightsOnMotion: addr.rule('1'),
   lockAtNight: addr.rule('2'),
   leakAlert: addr.rule('3'),
+};
+
+export const RULE_NAME = {
+  lightsOnMotion: 'Hallway lights on motion',
+  lockAtNight: 'Lock up at night',
+  leakAlert: 'Leak alert',
+};
+
+export const SCHEDULER = {
+  goodNight: addr.scheduler('sched-goodnight'),
+};
+
+export const PRODUCT = {
+  plug: 'acme-plug',
+  lock: 'globex-lock',
+  camera: 'initech-cam',
+  hubV3: 'dee001',
 };
 
 // ── Builders ──────────────────────────────────────────────────────────
@@ -92,12 +125,16 @@ function device(
     [Base.ATTR_ID]: id,
     [Base.ATTR_TYPE]: 'dev',
     [Base.ATTR_CAPS]: [...BASE_DEVICE_CAPS, ...extraCaps],
+    [Base.ATTR_TAGS]: [],
     [Device.ATTR_NAME]: name,
     [Device.ATTR_DEVTYPEHINT]: typeHint,
     [Device.ATTR_VENDOR]: 'Acme',
     [Device.ATTR_MODEL]: `${typeHint}-1`,
     [Device.ATTR_PLACE]: PLACE_ID,
     [Device.ATTR_PRODUCTID]: `prod-${id}`,
+    [DeviceAdvanced.ATTR_PROTOCOL]: 'ZIGB',
+    [DeviceAdvanced.ATTR_PROTOCOLID]: `proto-${id}`,
+    [DeviceAdvanced.ATTR_FIRMWAREVERSION]: '1.2.3',
     [DeviceConnection.ATTR_STATE]: DeviceConnection.STATE_ONLINE,
     [DevicePower.ATTR_SOURCE]: 'LINE',
     ...attrs,
@@ -125,7 +162,7 @@ function minutesAgo(minutes: number): number {
 
 export function createFixture(): PlatformData {
   const devices: Attrs[] = [
-    device('lamp', DEVICE_NAME.lamp, 'Dimmer', ['swit', 'dim'], {
+    device('lamp', DEVICE_NAME.lamp, 'Dimmer', ['swit', 'dim', 'ident'], {
       [Switch.ATTR_STATE]: Switch.STATE_ON,
       [Dimmer.ATTR_BRIGHTNESS]: 75,
     }),
@@ -170,14 +207,27 @@ export function createFixture(): PlatformData {
       [DevicePower.ATTR_SOURCE]: 'BATTERY',
       [DevicePower.ATTR_BATTERY]: 60,
     }),
+    // Dual-relay module: two switch instances on one device.
+    device('relay', DEVICE_NAME.relay, 'Switch', ['swit'], {
+      [Base.ATTR_INSTANCES]: { relay1: ['swit'], relay2: ['swit'] },
+      [`${Switch.ATTR_STATE}:relay1`]: Switch.STATE_ON,
+      [`${Switch.ATTR_STATE}:relay2`]: Switch.STATE_OFF,
+      [DeviceAdvanced.ATTR_PROTOCOL]: 'ZWAV',
+    }),
   ];
 
   const subsystems: Attrs[] = [
     subsystem('subalarm', {
       [AlarmSubsystem.ATTR_ALARMSTATE]: AlarmSubsystem.ALARMSTATE_READY,
-      [AlarmSubsystem.ATTR_CALLTREE]: [],
+      [AlarmSubsystem.ATTR_CALLTREE]: [
+        { person: addr.person, enabled: true },
+        { person: addr.guest, enabled: false },
+      ],
       [AlarmSubsystem.ATTR_AVAILABLEALERTS]: ['SECURITY', 'SMOKE', 'CO', 'WATER', 'PANIC'],
       [AlarmSubsystem.ATTR_ACTIVEALERTS]: [],
+      [AlarmSubsystem.ATTR_RECORDONSECURITY]: false,
+      [AlarmSubsystem.ATTR_FANSHUTOFFONSMOKE]: true,
+      [AlarmSubsystem.ATTR_FANSHUTOFFONCO]: false,
     }),
     subsystem('subsecurity', {
       [SecuritySubsystem.ATTR_ALARMMODE]: SecuritySubsystem.ALARMMODE_OFF,
@@ -189,8 +239,12 @@ export function createFixture(): PlatformData {
       [`${SecurityAlarmMode.ATTR_DEVICES}:PARTIAL`]: [DEVICE.frontDoor],
       [`${SecurityAlarmMode.ATTR_ENTRANCEDELAYSEC}:ON`]: 30,
       [`${SecurityAlarmMode.ATTR_EXITDELAYSEC}:ON`]: 30,
+      [`${SecurityAlarmMode.ATTR_SOUNDSENABLED}:ON`]: true,
+      [`${SecurityAlarmMode.ATTR_SILENT}:ON`]: false,
       [`${SecurityAlarmMode.ATTR_ENTRANCEDELAYSEC}:PARTIAL`]: 15,
       [`${SecurityAlarmMode.ATTR_EXITDELAYSEC}:PARTIAL`]: 15,
+      [`${SecurityAlarmMode.ATTR_SOUNDSENABLED}:PARTIAL`]: true,
+      [`${SecurityAlarmMode.ATTR_SILENT}:PARTIAL`]: false,
     }),
     subsystem('subsafety', {
       [SafetySubsystem.ATTR_TOTALDEVICES]: [DEVICE.leak],
@@ -213,7 +267,7 @@ export function createFixture(): PlatformData {
       [DoorsNLocksSubsystem.ATTR_CHIMECONFIG]: {},
     }),
     subsystem('sublightsnswitches', {
-      [LightsNSwitchesSubsystem.ATTR_SWITCHDEVICES]: [DEVICE.lamp, DEVICE.coffee],
+      [LightsNSwitchesSubsystem.ATTR_SWITCHDEVICES]: [DEVICE.lamp, DEVICE.coffee, DEVICE.relay],
     }),
     subsystem('subwater', {
       [WaterSubsystem.ATTR_WATERDEVICES]: [DEVICE.leak, DEVICE.valve],
@@ -230,20 +284,27 @@ export function createFixture(): PlatformData {
           trigger: 'SCHEDULED',
         },
       },
+      [LawnNGardenSubsystem.ATTR_NEXTEVENT]: { zoneName: 'Front Lawn', startTime: minutesAgo(-60), duration: 15 },
     }),
     subsystem('subcameras', {
       [CamerasSubsystem.ATTR_CAMERAS]: [],
       [CamerasSubsystem.ATTR_OFFLINECAMERAS]: [],
     }),
     subsystem('subcare', {
-      [CareSubsystem.ATTR_CAREDEVICES]: [],
-      [CareSubsystem.ATTR_BEHAVIORS]: {},
+      [CareSubsystem.ATTR_CAREDEVICES]: [DEVICE.motion],
+      [CareSubsystem.ATTR_BEHAVIORS]: [
+        { name: 'Morning activity', description: 'Expect motion in the hallway by 9 AM', enabled: true, type: 'INACTIVITY' },
+        { name: 'Night wandering', description: 'Alert on door activity overnight', enabled: false, type: 'OPEN' },
+      ],
       [CareSubsystem.ATTR_ALARMSTATE]: CareSubsystem.ALARMSTATE_READY,
       [CareSubsystem.ATTR_ALARMMODE]: CareSubsystem.ALARMMODE_ON,
+      [CareSubsystem.ATTR_SILENT]: false,
     }),
-    subsystem('subspres', {
+    subsystem(PresenceSubsystem.NAMESPACE, {
       [PresenceSubsystem.ATTR_PEOPLEATHOME]: [addr.person],
-      [PresenceSubsystem.ATTR_PEOPLEAWAY]: [],
+      [PresenceSubsystem.ATTR_PEOPLEAWAY]: [addr.guest],
+      [PresenceSubsystem.ATTR_DEVICESATHOME]: [],
+      [PresenceSubsystem.ATTR_DEVICESAWAY]: [],
       [PresenceSubsystem.ATTR_ALLDEVICES]: [],
       [PresenceSubsystem.ATTR_OCCUPIED]: true,
     }),
@@ -258,28 +319,55 @@ export function createFixture(): PlatformData {
       [Base.ATTR_ADDRESS]: SCENE.goodNight,
       [Base.ATTR_ID]: 'goodnight',
       [Base.ATTR_TYPE]: 'scene',
-      [Scene.ATTR_NAME]: 'Good Night',
+      [Base.ATTR_TAGS]: ['FAVORITE'],
+      [Scene.ATTR_NAME]: SCENE_NAME.goodNight,
       [Scene.ATTR_ENABLED]: true,
       [Scene.ATTR_NOTIFICATION]: false,
       [Scene.ATTR_TEMPLATE]: 'custom',
       [Scene.ATTR_FILTERUNCHANGED]: false,
+      [Scene.ATTR_SCHEDULER]: SCHEDULER.goodNight,
       [Scene.ATTR_ACTIONS]: [
-        { name: 'Lights & Switches', template: 'switch', context: { [DEVICE.lamp]: { state: 'OFF' } } },
+        { name: 'Lights & Switches', template: 'switch', context: { [DEVICE.lamp]: { switch: 'OFF' } } },
       ],
     },
     {
       [Base.ATTR_ADDRESS]: SCENE.movieTime,
       [Base.ATTR_ID]: 'movie',
       [Base.ATTR_TYPE]: 'scene',
-      [Scene.ATTR_NAME]: 'Movie Time',
+      [Base.ATTR_TAGS]: [],
+      [Scene.ATTR_NAME]: SCENE_NAME.movieTime,
       [Scene.ATTR_ENABLED]: true,
       [Scene.ATTR_NOTIFICATION]: true,
       [Scene.ATTR_TEMPLATE]: 'custom',
       [Scene.ATTR_FILTERUNCHANGED]: false,
       [Scene.ATTR_ACTIONS]: [
-        { name: 'Lights & Switches', template: 'switch', context: { [DEVICE.lamp]: { state: 'ON' } } },
-        { name: 'Lights & Switches', template: 'switch', context: { [DEVICE.coffee]: { state: 'OFF' } } },
+        {
+          name: 'Lights & Switches',
+          template: 'switch',
+          context: { [DEVICE.lamp]: { switch: 'ON' }, [DEVICE.coffee]: { switch: 'OFF' } },
+        },
       ],
+    },
+  ];
+
+  const schedulers: Attrs[] = [
+    {
+      [Base.ATTR_ADDRESS]: SCHEDULER.goodNight,
+      [Base.ATTR_ID]: 'sched-goodnight',
+      [Base.ATTR_TYPE]: 'scheduler',
+      [Scheduler.ATTR_TARGET]: SCENE.goodNight,
+      [Scheduler.ATTR_PLACEID]: PLACE_ID,
+      [Scheduler.ATTR_COMMANDS]: {
+        'cmd-1': {
+          id: 'cmd-1',
+          scheduleId: 'FIRE',
+          time: '22:00:00',
+          days: ['MON', 'TUE', 'WED', 'THU', 'FRI'],
+          mode: 'ABSOLUTE',
+          messageType: Scene.CMD_FIRE,
+          attributes: {},
+        },
+      },
     },
   ];
 
@@ -288,7 +376,7 @@ export function createFixture(): PlatformData {
       [Base.ATTR_ADDRESS]: RULE.lightsOnMotion,
       [Base.ATTR_ID]: '1',
       [Base.ATTR_TYPE]: 'rule',
-      [Rule.ATTR_NAME]: 'Hallway lights on motion',
+      [Rule.ATTR_NAME]: RULE_NAME.lightsOnMotion,
       [Rule.ATTR_DESCRIPTION]: 'Turn on the Living Room Lamp when Hallway Motion detects motion',
       [Rule.ATTR_STATE]: Rule.STATE_ENABLED,
       [Rule.ATTR_TEMPLATE]: 'motion-light',
@@ -298,7 +386,7 @@ export function createFixture(): PlatformData {
       [Base.ATTR_ADDRESS]: RULE.lockAtNight,
       [Base.ATTR_ID]: '2',
       [Base.ATTR_TYPE]: 'rule',
-      [Rule.ATTR_NAME]: 'Lock up at night',
+      [Rule.ATTR_NAME]: RULE_NAME.lockAtNight,
       [Rule.ATTR_DESCRIPTION]: 'Lock the Front Door Lock at 10:00 PM',
       [Rule.ATTR_STATE]: Rule.STATE_DISABLED,
       [Rule.ATTR_TEMPLATE]: 'lock-at-time',
@@ -308,7 +396,7 @@ export function createFixture(): PlatformData {
       [Base.ATTR_ADDRESS]: RULE.leakAlert,
       [Base.ATTR_ID]: '3',
       [Base.ATTR_TYPE]: 'rule',
-      [Rule.ATTR_NAME]: 'Leak alert',
+      [Rule.ATTR_NAME]: RULE_NAME.leakAlert,
       [Rule.ATTR_DESCRIPTION]: 'Notify me if Basement Leak Sensor detects water',
       [Rule.ATTR_STATE]: Rule.STATE_ENABLED,
       [Rule.ATTR_TEMPLATE]: 'leak-notify',
@@ -320,6 +408,7 @@ export function createFixture(): PlatformData {
     {
       [Base.ATTR_ADDRESS]: addr.ruleTemplate('motion-light'),
       [Base.ATTR_ID]: 'motion-light',
+      [Base.ATTR_TYPE]: 'ruletmpl',
       [RuleTemplate.ATTR_NAME]: 'Lights on motion',
       [RuleTemplate.ATTR_DESCRIPTION]: 'Turn a light on when motion is detected',
       [RuleTemplate.ATTR_TEMPLATE]: 'Turn on ${light} when ${motion} detects motion',
@@ -330,6 +419,7 @@ export function createFixture(): PlatformData {
     {
       [Base.ATTR_ADDRESS]: addr.ruleTemplate('lock-at-time'),
       [Base.ATTR_ID]: 'lock-at-time',
+      [Base.ATTR_TYPE]: 'ruletmpl',
       [RuleTemplate.ATTR_NAME]: 'Lock at a set time',
       [RuleTemplate.ATTR_DESCRIPTION]: 'Lock a door every day at a time you choose',
       [RuleTemplate.ATTR_TEMPLATE]: 'Lock ${lock} every day',
@@ -340,6 +430,7 @@ export function createFixture(): PlatformData {
     {
       [Base.ATTR_ADDRESS]: addr.ruleTemplate('leak-notify'),
       [Base.ATTR_ID]: 'leak-notify',
+      [Base.ATTR_TYPE]: 'ruletmpl',
       [RuleTemplate.ATTR_NAME]: 'Leak notification',
       [RuleTemplate.ATTR_DESCRIPTION]: 'Get notified when a leak sensor trips',
       [RuleTemplate.ATTR_TEMPLATE]: 'Notify me if ${sensor} detects water',
@@ -362,6 +453,19 @@ export function createFixture(): PlatformData {
     [Place.ATTR_ACCOUNT]: ACCOUNT_ID,
   };
 
+  const lakePlace: Attrs = {
+    [Base.ATTR_ADDRESS]: addr.lakePlace,
+    [Base.ATTR_ID]: LAKE_PLACE_ID,
+    [Base.ATTR_TYPE]: 'place',
+    [Place.ATTR_NAME]: 'Lake House',
+    [Place.ATTR_STREETADDRESS1]: '9 Shoreline Drive',
+    [Place.ATTR_CITY]: 'Lakeview',
+    [Place.ATTR_STATEPROV]: 'WI',
+    [Place.ATTR_ZIPCODE]: '54001',
+    [Place.ATTR_SERVICELEVEL]: Place.SERVICELEVEL_PREMIUM,
+    [Place.ATTR_ACCOUNT]: 'account-lake',
+  };
+
   const hub: Attrs = {
     [Base.ATTR_ADDRESS]: addr.hub,
     [Base.ATTR_ID]: HUB_ID,
@@ -371,6 +475,8 @@ export function createFixture(): PlatformData {
     [Hub.ATTR_STATE]: Hub.STATE_NORMAL,
     [Hub.ATTR_REGISTRATIONSTATE]: Hub.REGISTRATIONSTATE_REGISTERED,
     [HubConnection.ATTR_STATE]: HubConnection.STATE_ONLINE,
+    [HubAdvanced.ATTR_OSVER]: '3.1.0',
+    [HubZwave.ATTR_NUMDEVICES]: 2,
     [Hub.ATTR_MODEL]: 'IH300',
     [Hub.ATTR_VENDOR]: 'Arcus',
     [Hub.ATTR_PLACE]: PLACE_ID,
@@ -382,14 +488,14 @@ export function createFixture(): PlatformData {
     [Base.ATTR_TYPE]: 'person',
     [Person.ATTR_FIRSTNAME]: 'Alex',
     [Person.ATTR_LASTNAME]: 'Rivera',
-    [Person.ATTR_EMAIL]: 'alex@example.com',
+    [Person.ATTR_EMAIL]: LOGIN.email,
     [Person.ATTR_MOBILENUMBER]: '5551234567',
     [Person.ATTR_HASPIN]: true,
   };
 
   const guest: Attrs = {
-    [Base.ATTR_ADDRESS]: 'SERV:person:person-sam',
-    [Base.ATTR_ID]: 'person-sam',
+    [Base.ATTR_ADDRESS]: addr.guest,
+    [Base.ATTR_ID]: GUEST_PERSON_ID,
     [Base.ATTR_TYPE]: 'person',
     [Person.ATTR_FIRSTNAME]: 'Sam',
     [Person.ATTR_LASTNAME]: 'Rivera',
@@ -406,23 +512,39 @@ export function createFixture(): PlatformData {
     [Account.ATTR_OWNER]: PERSON_ID,
   };
 
+  const promonSettings: Attrs = {
+    [Base.ATTR_ADDRESS]: addr.promon,
+    [Base.ATTR_ID]: PLACE_ID,
+    [Base.ATTR_TYPE]: 'promon',
+    'promon:adults': 2,
+    'promon:children': 1,
+    'promon:pets': 0,
+    'promon:directions': '',
+    'promon:gateCode': '',
+    'promon:instructions': '',
+    'promon:permitNumber': '',
+    'promon:testCallStatus': 'IDLE',
+  };
+
   const entities: PlatformData['entities'] = {};
   for (const entity of [
-    ...devices, ...subsystems, ...scenes, ...rules, ...ruleTemplates,
-    place, hub, owner, guest, account,
+    ...devices, ...subsystems, ...scenes, ...schedulers, ...rules, ...ruleTemplates,
+    place, lakePlace, hub, owner, guest, account, promonSettings,
   ]) {
     entities[entity[Base.ATTR_ADDRESS] as string] = entity;
   }
 
   const history: HistoryEntryFixture[] = [
-    { timestamp: minutesAgo(5), subjectName: DEVICE_NAME.lock, longMessage: 'Front Door Lock was locked.' },
-    { timestamp: minutesAgo(25), subjectName: DEVICE_NAME.lamp, longMessage: 'Living Room Lamp was turned on.' },
-    { timestamp: minutesAgo(90), subjectName: DEVICE_NAME.motion, longMessage: 'Hallway Motion detected motion.' },
+    { timestamp: minutesAgo(5), subjectName: DEVICE_NAME.lock, subjectAddress: DEVICE.lock, longMessage: 'Front Door Lock was locked.' },
+    { timestamp: minutesAgo(25), subjectName: DEVICE_NAME.lamp, subjectAddress: DEVICE.lamp, longMessage: 'Living Room Lamp was turned on.' },
+    { timestamp: minutesAgo(90), subjectName: DEVICE_NAME.motion, subjectAddress: DEVICE.motion, longMessage: 'Hallway Motion detected motion.' },
+    { timestamp: minutesAgo(60 * 26), subjectName: DEVICE_NAME.lamp, subjectAddress: DEVICE.lamp, longMessage: 'Living Room Lamp was turned off.' },
   ];
 
   const products: Attrs[] = [
     {
-      [Product.ATTR_ID]: 'acme-plug',
+      [Base.ATTR_ADDRESS]: `SERV:product:${PRODUCT.plug}`,
+      [Product.ATTR_ID]: PRODUCT.plug,
       [Product.ATTR_NAME]: 'Acme Smart Plug',
       [Product.ATTR_VENDOR]: 'Acme',
       [Product.ATTR_HUBREQUIRED]: true,
@@ -431,10 +553,10 @@ export function createFixture(): PlatformData {
       [Product.ATTR_CANSEARCH]: true,
       [Product.ATTR_CATEGORIES]: ['Lights & Switches'],
       [Product.ATTR_SHORTNAME]: 'Smart Plug',
-      [Product.ATTR_DESCRIPTION]: 'A plug-in outlet switch.',
     },
     {
-      [Product.ATTR_ID]: 'globex-lock',
+      [Base.ATTR_ADDRESS]: `SERV:product:${PRODUCT.lock}`,
+      [Product.ATTR_ID]: PRODUCT.lock,
       [Product.ATTR_NAME]: 'Globex Deadbolt',
       [Product.ATTR_VENDOR]: 'Globex',
       [Product.ATTR_HUBREQUIRED]: true,
@@ -443,10 +565,10 @@ export function createFixture(): PlatformData {
       [Product.ATTR_CANSEARCH]: true,
       [Product.ATTR_CATEGORIES]: ['Doors & Locks'],
       [Product.ATTR_SHORTNAME]: 'Deadbolt',
-      [Product.ATTR_DESCRIPTION]: 'A keyless deadbolt.',
     },
     {
-      [Product.ATTR_ID]: 'initech-cam',
+      [Base.ATTR_ADDRESS]: `SERV:product:${PRODUCT.camera}`,
+      [Product.ATTR_ID]: PRODUCT.camera,
       [Product.ATTR_NAME]: 'Initech WiFi Camera',
       [Product.ATTR_VENDOR]: 'Initech',
       [Product.ATTR_HUBREQUIRED]: false,
@@ -455,17 +577,28 @@ export function createFixture(): PlatformData {
       [Product.ATTR_CANSEARCH]: true,
       [Product.ATTR_CATEGORIES]: ['Cameras'],
       [Product.ATTR_SHORTNAME]: 'WiFi Camera',
-      [Product.ATTR_DESCRIPTION]: 'An indoor WiFi camera.',
+    },
+    {
+      [Base.ATTR_ADDRESS]: `SERV:product:${PRODUCT.hubV3}`,
+      [Product.ATTR_ID]: PRODUCT.hubV3,
+      [Product.ATTR_NAME]: 'Wi-Fi Smart Hub',
+      [Product.ATTR_VENDOR]: 'Arcus',
+      [Product.ATTR_HUBREQUIRED]: false,
+      [Product.ATTR_CANBROWSE]: false,
+      [Product.ATTR_CANSEARCH]: false,
+      [Product.ATTR_CATEGORIES]: ['Hubs'],
+      [Product.ATTR_SHORTNAME]: 'Smart Hub',
     },
   ];
 
   return {
+    login: { ...LOGIN },
     personId: PERSON_ID,
     placeId: PLACE_ID,
     accountId: ACCOUNT_ID,
     places: [
       { placeId: PLACE_ID, placeName: 'Maple Street', accountId: ACCOUNT_ID, role: 'OWNER' },
-      { placeId: 'place-lake', placeName: 'Lake House', accountId: ACCOUNT_ID, role: 'FAMILY' },
+      { placeId: LAKE_PLACE_ID, placeName: 'Lake House', accountId: 'account-lake', role: 'FULL_ACCESS' },
     ],
     entities,
     preferences: {},
@@ -507,7 +640,55 @@ export function createFixture(): PlatformData {
           ],
         },
       },
+      {
+        id: 'doorlocks',
+        name: 'Doors & Locks',
+        satisfiable: true,
+        premium: false,
+        typehint: 'lock',
+        selectors: {
+          [DEVICE.lock]: [
+            { type: 'GROUP', name: 'lockstate', value: [['LOCKED', []], ['UNLOCKED', []]] },
+          ],
+        },
+      },
+      {
+        id: 'cameras',
+        name: 'Cameras',
+        satisfiable: false,
+        premium: false,
+        selectors: {},
+      },
     ],
     invitations: [],
+    invitationCodes: {
+      'INVITE-42': {
+        code: 'INVITE-42',
+        placeId: 'place-river',
+        placeName: 'River Cabin',
+        inviteeEmail: 'jordan@example.com',
+        inviteeFirstName: 'Jordan',
+        inviteeLastName: 'Lee',
+        invitorFirstName: 'Casey',
+        invitorLastName: 'Nguyen',
+        streetAddress1: '1 River Road',
+        city: 'Riverton',
+        stateProv: 'OR',
+        zipCode: '97001',
+      },
+    },
+    apiKeys: [
+      {
+        id: 'key-1',
+        label: 'Home Assistant',
+        keyPrefix: 'ak_home',
+        permissions: ['dev:*', 'scene:x'],
+        created: minutesAgo(60 * 24 * 30),
+        lastUsed: minutesAgo(30),
+        expiresAt: null,
+        expired: false,
+      },
+    ],
+    kitInfo: [],
   };
 }

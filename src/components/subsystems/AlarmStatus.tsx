@@ -89,19 +89,19 @@ export function AlarmStatus() {
           isArmed ? 'bg-honeycreeper/10 border border-honeycreeper/30' :
           'bg-pigeon border border-heron'}
       `}>
-        <div className={`text-2xl font-bold mb-2 ${
+        <div data-testid="alarm-state" data-state={alarm.securityState} className={`text-2xl font-bold mb-2 ${
           isAlert ? 'text-cardinal' : isArmed ? 'text-honeycreeper' : 'text-swift'
         }`}>
           {stateLabel}
         </div>
-        <p className="text-sm text-grouse">
+        <p data-testid="alarm-summary" className="text-sm text-grouse">
           {alarm.securityMode === SecuritySubsystem.ALARMMODE_ON ? 'Full' : alarm.securityMode === SecuritySubsystem.ALARMMODE_PARTIAL ? 'Partial' : ''}
           {securityDevices.length > 0 && ` \u00B7 ${securityDevices.length} device${securityDevices.length !== 1 ? 's' : ''}`}
         </p>
 
         {/* Triggered devices */}
         {triggeredDevices.length > 0 && (
-          <div className="mt-3 text-sm text-cardinal">
+          <div data-testid="alarm-triggered" className="mt-3 text-sm text-cardinal">
             Triggered: {triggeredDevices.map((d) => (d[Device.ATTR_NAME] as string) ?? 'Unknown').join(', ')}
           </div>
         )}
@@ -113,6 +113,7 @@ export function AlarmStatus() {
           <>
             <button
               onClick={() => handleArm('ON')}
+              data-testid="alarm-arm-on"
               disabled={arming}
               className="bg-peacock text-crane px-6 py-2.5 rounded-[var(--border-radius-base)] text-sm font-medium hover:opacity-90 disabled:opacity-50"
             >
@@ -120,6 +121,7 @@ export function AlarmStatus() {
             </button>
             <button
               onClick={() => handleArm('PARTIAL')}
+              data-testid="alarm-arm-partial"
               disabled={arming}
               className="border border-peacock text-peacock px-6 py-2.5 rounded-[var(--border-radius-base)] text-sm font-medium hover:bg-peacock/5 disabled:opacity-50"
             >
@@ -129,6 +131,7 @@ export function AlarmStatus() {
         ) : (
           <button
             onClick={handleDisarm}
+            data-testid="alarm-disarm"
             disabled={arming}
             className="bg-cardinal text-crane px-6 py-2.5 rounded-[var(--border-radius-base)] text-sm font-medium hover:opacity-90 disabled:opacity-50"
           >
@@ -142,6 +145,7 @@ export function AlarmStatus() {
         <div className="flex justify-center">
           <button
             onClick={handlePanic}
+            data-testid="alarm-panic"
             className="border border-cardinal text-cardinal px-6 py-2 rounded-[var(--border-radius-base)] text-sm font-medium hover:bg-cardinal/5"
           >
             Panic
@@ -161,6 +165,7 @@ export function AlarmStatus() {
               return (
                 <div
                   key={device.id}
+                  data-testid={`alarm-device-${device[Base.ATTR_ADDRESS]}`}
                   className={`flex items-center justify-between px-3 py-2 rounded border ${
                     triggered ? 'border-cardinal/30 bg-cardinal/5' :
                     offline ? 'border-heron bg-pigeon opacity-60' :
@@ -168,7 +173,7 @@ export function AlarmStatus() {
                   }`}
                 >
                   <span className="text-sm text-swift">{name}</span>
-                  <span className={`text-xs ${
+                  <span data-testid={`alarm-device-status-${device[Base.ATTR_ADDRESS]}`} className={`text-xs ${
                     triggered ? 'text-cardinal font-medium' :
                     offline ? 'text-grouse' : 'text-honeycreeper'
                   }`}>

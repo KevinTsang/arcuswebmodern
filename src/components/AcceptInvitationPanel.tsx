@@ -157,7 +157,7 @@ export default function AcceptInvitationPanel() {
   if (view === 'pin') {
     return (
       <div className="p-4 space-y-4">
-        <h3 className="text-lg font-semibold text-swift">Create a PIN Code</h3>
+        <h3 data-testid="invitation-pin-title" className="text-lg font-semibold text-swift">Create a PIN Code</h3>
         <ChangePinForm
           onSave={handleSavePin}
           onSkip={handleSkipPin}
@@ -174,18 +174,18 @@ export default function AcceptInvitationPanel() {
   // ── Invitations list view ───────────────────────────────────────────
   return (
     <div className="p-4 space-y-4">
-      <h3 className="text-lg font-semibold text-swift">Invitations</h3>
+      <h3 data-testid="invitations-panel-title" className="text-lg font-semibold text-swift">Invitations</h3>
       <hr className="border-heron" />
 
       {formError && (
-        <p className="text-sm text-cardinal">{formError}</p>
+        <p data-testid="invitation-form-error" className="text-sm text-cardinal">{formError}</p>
       )}
 
       {invitations.length === 0 ? (
-        <p className="text-sm text-grouse">You have no pending invitations.</p>
+        <p data-testid="pending-invitations-empty" className="text-sm text-grouse">You have no pending invitations.</p>
       ) : (
         invitations.map((inv) => (
-          <div key={inv.code} className="space-y-2">
+          <div key={inv.code} data-testid={`pending-invitation-${inv.code}`} className="space-y-2">
             <div className="flex items-start gap-3">
               <div className="w-10 h-10 rounded-full bg-peacock/10 flex items-center justify-center flex-shrink-0 mt-0.5">
                 <svg className="w-5 h-5 text-peacock" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -214,6 +214,7 @@ export default function AcceptInvitationPanel() {
             <div className="flex gap-2 pl-13">
               <button
                 onClick={() => handleAccept(inv)}
+                data-testid={`pending-invitation-accept-${inv.code}`}
                 disabled={busy}
                 className="px-4 py-1.5 bg-peacock text-crane rounded-[var(--border-radius-base)] text-sm font-medium hover:bg-peacock/90 disabled:opacity-50"
               >
@@ -221,6 +222,7 @@ export default function AcceptInvitationPanel() {
               </button>
               <button
                 onClick={() => handleDecline(inv)}
+                data-testid={`pending-invitation-decline-${inv.code}`}
                 disabled={busy}
                 className="px-4 py-1.5 border border-heron rounded-[var(--border-radius-base)] text-sm text-coot hover:bg-pigeon disabled:opacity-50"
               >

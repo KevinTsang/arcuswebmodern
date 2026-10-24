@@ -23,12 +23,13 @@ export function ActionDeviceConfigurator({
     <div>
       <button
         onClick={onBack}
+        data-testid="scene-action-back"
         className="flex items-center gap-1 text-sm text-peacock hover:underline mb-4"
       >
         &larr; Back
       </button>
 
-      <h3 className="text-lg font-semibold text-swift mb-4">{action.name}</h3>
+      <h3 data-testid="scene-action-title" className="text-lg font-semibold text-swift mb-4">{action.name}</h3>
 
       <div>
         {deviceAddrs.map((addr) => {

@@ -25,7 +25,7 @@ export default function SettingsPage() {
   return (
     <div className="p-[var(--gutter)]">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-[length:var(--font-size-h2)] font-[var(--heading-font-weight)] text-swift">
+        <h2 data-testid="settings-title" className="text-[length:var(--font-size-h2)] font-[var(--heading-font-weight)] text-swift">
           Settings
         </h2>
       </div>
@@ -35,6 +35,7 @@ export default function SettingsPage() {
         {sections.map((s) => (
           <button
             key={s.key}
+            data-testid={`settings-tab-${s.key}`}
             onClick={() => setSection(s.key)}
             className={`px-4 py-1.5 rounded text-sm font-medium transition-colors flex items-center gap-1.5 ${
               section === s.key

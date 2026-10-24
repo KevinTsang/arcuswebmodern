@@ -52,7 +52,7 @@ describe('LightsSwitchesCard', () => {
 
   it('counts lights that are ON', () => {
     mockSubsystems = [
-      { id: 'SERV:sublightsnswitches:place-1', [Base.ATTR_ADDRESS]: 'SERV:sublightsnswitches:place-1', 'swit:state': ['DRIV:dev:sw1', 'DRIV:dev:sw2', 'DRIV:dev:sw3'] },
+      { id: 'SERV:sublightsnswitches:place-1', [Base.ATTR_ADDRESS]: 'SERV:sublightsnswitches:place-1', 'sublightsnswitches:switchDevices': ['DRIV:dev:sw1', 'DRIV:dev:sw2', 'DRIV:dev:sw3'] },
     ];
     mockDevices = [
       { id: 'DRIV:dev:sw1', [Base.ATTR_ADDRESS]: 'DRIV:dev:sw1', 'swit:state': 'ON' },
@@ -60,8 +60,8 @@ describe('LightsSwitchesCard', () => {
       { id: 'DRIV:dev:sw3', [Base.ATTR_ADDRESS]: 'DRIV:dev:sw3', 'swit:state': 'ON' },
     ];
     render(<LightsSwitchesCard />);
-    expect(screen.getByTestId('status-value-on')).toHaveTextContent('2');
-    expect(screen.getByTestId('status-value-total')).toHaveTextContent('3');
+    expect(screen.getByTestId('status-value-lights-switches-on')).toHaveTextContent('2');
+    expect(screen.getByTestId('status-value-lights-switches-total')).toHaveTextContent('3');
   });
 
   it('links to /services', () => {

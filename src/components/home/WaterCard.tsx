@@ -4,7 +4,7 @@ import CardShell from './CardShell';
 import StatusBadge from './StatusBadge';
 
 export default function WaterCard() {
-  const waterDevices = useSubsystemDevices(WaterSubsystem.NAMESPACE, [Valve.ATTR_VALVESTATE]);
+  const waterDevices = useSubsystemDevices(WaterSubsystem.NAMESPACE);
 
   const closedCount = waterDevices.filter(
     (d) => d[Valve.ATTR_VALVESTATE] === Valve.VALVESTATE_CLOSED,

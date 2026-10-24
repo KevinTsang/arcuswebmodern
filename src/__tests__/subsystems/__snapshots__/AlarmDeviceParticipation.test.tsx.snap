@@ -17,6 +17,7 @@ exports[`AlarmDeviceParticipation matches snapshot 1`] = `
   >
     <div
       class="flex items-center justify-between gap-3 px-3 py-2.5 rounded border border-heron"
+      data-testid="participation-DRIV:dev:motion-1"
     >
       <span
         class="text-sm text-swift flex-1 min-w-0 truncate"
@@ -25,6 +26,7 @@ exports[`AlarmDeviceParticipation matches snapshot 1`] = `
       </span>
       <select
         class="text-sm border border-heron rounded px-2 py-1 bg-crane text-swift disabled:opacity-50"
+        data-testid="participation-select-DRIV:dev:motion-1"
       >
         <option
           value="both"
@@ -50,6 +52,7 @@ exports[`AlarmDeviceParticipation matches snapshot 1`] = `
     </div>
     <div
       class="flex items-center justify-between gap-3 px-3 py-2.5 rounded border border-heron"
+      data-testid="participation-DRIV:dev:contact-2"
     >
       <span
         class="text-sm text-swift flex-1 min-w-0 truncate"
@@ -58,6 +61,7 @@ exports[`AlarmDeviceParticipation matches snapshot 1`] = `
       </span>
       <select
         class="text-sm border border-heron rounded px-2 py-1 bg-crane text-swift disabled:opacity-50"
+        data-testid="participation-select-DRIV:dev:contact-2"
       >
         <option
           value="both"
@@ -83,6 +87,7 @@ exports[`AlarmDeviceParticipation matches snapshot 1`] = `
     </div>
     <div
       class="flex items-center justify-between gap-3 px-3 py-2.5 rounded border border-heron"
+      data-testid="participation-DRIV:dev:glass-3"
     >
       <span
         class="text-sm text-swift flex-1 min-w-0 truncate"
@@ -91,6 +96,7 @@ exports[`AlarmDeviceParticipation matches snapshot 1`] = `
       </span>
       <select
         class="text-sm border border-heron rounded px-2 py-1 bg-crane text-swift disabled:opacity-50"
+        data-testid="participation-select-DRIV:dev:glass-3"
       >
         <option
           value="both"

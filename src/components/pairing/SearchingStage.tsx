@@ -29,13 +29,13 @@ export default function SearchingStage({
   // Hub registration searching
   if (isHubPairing) {
     return (
-      <div className="text-center py-6">
+      <div data-testid="hub-registration" data-state={hubRegistrationState ?? ''} className="text-center py-6">
         <h3 className="text-lg font-semibold text-swift mb-4">Registering Hub</h3>
         {hubRegistrationState === 'REGISTERED' ? (
           <p className="text-sm text-honeycreeper font-medium">Hub registered successfully!</p>
-        ) : hubRegistrationState?.startsWith('error') ? (
+        ) : hubRegistrationState?.startsWith('error') || hubRegistrationState === HUB_REGISTRATION_ERRORS.INVALID_PARAM ? (
           <>
-            <p className="text-sm text-cardinal mb-4">
+            <p data-testid="hub-registration-error" className="text-sm text-cardinal mb-4">
               {hubRegistrationState === HUB_REGISTRATION_ERRORS.ALREADY_REGISTERED
                 ? 'This hub is already registered to another account.'
                 : hubRegistrationState === HUB_REGISTRATION_ERRORS.ORPHANED_HUB
@@ -44,6 +44,7 @@ export default function SearchingStage({
             </p>
             <button
               onClick={() => dispatch(hubRetry())}
+              data-testid="hub-retry"
               className="px-4 py-2 bg-peacock text-crane rounded-[var(--border-radius-base)] text-sm font-medium"
             >
               Try Again
@@ -72,7 +73,7 @@ export default function SearchingStage({
 
   // Device searching
   return (
-    <div className="text-center py-6">
+    <div data-testid="pairing-searching" data-timed-out={searchTimedOut} className="text-center py-6">
       <h3 className="text-lg font-semibold text-swift mb-4">Searching for Device</h3>
       {!searchTimedOut ? (
         <>
@@ -95,6 +96,7 @@ export default function SearchingStage({
           )}
           <button
             onClick={onCancel}
+            data-testid="pairing-cancel"
             className="mt-4 px-4 py-2 border border-heron rounded-[var(--border-radius-base)] text-sm text-coot hover:bg-pigeon"
           >
             Cancel

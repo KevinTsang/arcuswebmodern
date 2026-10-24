@@ -5,14 +5,17 @@ export default function PersonRow({
   email,
   role,
   onEdit,
+  testId,
 }: {
   name: string;
   email: string;
   role?: string;
   onEdit?: () => void;
+  /** `data-testid` for the row (e.g. `person-<id>`). */
+  testId?: string;
 }) {
   return (
-    <div className="flex items-center justify-between px-3 py-2 rounded border border-heron">
+    <div data-testid={testId} className="flex items-center justify-between px-3 py-2 rounded border border-heron">
       <div className="flex items-center gap-3 min-w-0">
         <div className="w-8 h-8 rounded-full bg-peacock/10 text-peacock flex items-center justify-center text-sm font-medium flex-shrink-0">
           {(name[0] ?? '?').toUpperCase()}
@@ -27,7 +30,7 @@ export default function PersonRow({
           <span className="text-xs text-grouse capitalize">{role}</span>
         )}
         {onEdit && (
-          <button onClick={onEdit} className="text-xs text-peacock hover:underline">
+          <button onClick={onEdit} data-testid={testId ? `${testId}-details` : undefined} className="text-xs text-peacock hover:underline">
             Details
           </button>
         )}

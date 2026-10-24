@@ -76,10 +76,10 @@ function CreateAccountInner() {
 
         {/* Step content */}
         <div className="bg-crane rounded-[var(--border-radius-lg)] shadow-sm border border-heron p-6">
-          <h2 className="text-lg font-semibold text-swift mb-1">{STEP_LABELS[step]}</h2>
+          <h2 data-testid="create-account-step" data-step={step} className="text-lg font-semibold text-swift mb-1">{STEP_LABELS[step]}</h2>
 
           {error && (
-            <div className="mb-4 text-cardinal text-sm bg-cardinal/5 border border-cardinal/20 rounded px-3 py-2">
+            <div data-testid="create-account-error" className="mb-4 text-cardinal text-sm bg-cardinal/5 border border-cardinal/20 rounded px-3 py-2">
               {error}
             </div>
           )}

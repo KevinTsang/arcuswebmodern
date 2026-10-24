@@ -61,7 +61,7 @@ export function ModeDelaySettings({ mode, label, securityAddr, entranceDelaySec,
   }, [mode, securityAddr, dispatch]);
 
   return (
-    <div className="p-4 rounded-[var(--border-radius-base)] border border-heron">
+    <div data-testid={`alarm-mode-${mode.toLowerCase()}`} className="p-4 rounded-[var(--border-radius-base)] border border-heron">
       <h4 className="text-sm font-medium text-swift mb-3">{label}</h4>
 
       <div className="space-y-3">
@@ -71,6 +71,7 @@ export function ModeDelaySettings({ mode, label, securityAddr, entranceDelaySec,
             <p className="text-xs text-grouse">Time to exit before alarm arms.</p>
           </div>
           <select
+            data-testid={`exit-delay-${mode.toLowerCase()}`}
             value={exitDelaySec}
             onChange={(e) => handleDelayChange(SecurityAlarmMode.ATTR_EXITDELAYSEC, Number(e.target.value))}
             disabled={saving}
@@ -88,6 +89,7 @@ export function ModeDelaySettings({ mode, label, securityAddr, entranceDelaySec,
             <p className="text-xs text-grouse">Grace period to disarm after entering.</p>
           </div>
           <select
+            data-testid={`entrance-delay-${mode.toLowerCase()}`}
             value={entranceDelaySec}
             onChange={(e) => handleDelayChange(SecurityAlarmMode.ATTR_ENTRANCEDELAYSEC, Number(e.target.value))}
             disabled={saving}
@@ -101,6 +103,7 @@ export function ModeDelaySettings({ mode, label, securityAddr, entranceDelaySec,
 
         <SettingToggle
           label="Arming Sounds"
+          testId={`arming-sounds-${mode.toLowerCase()}`}
           description="Play sounds on hub/keypad during arming countdown."
           enabled={soundsEnabled}
           onToggle={() => handleToggle(SecurityAlarmMode.ATTR_SOUNDSENABLED, soundsEnabled)}
@@ -108,6 +111,7 @@ export function ModeDelaySettings({ mode, label, securityAddr, entranceDelaySec,
 
         <SettingToggle
           label="Silent Alarm"
+          testId={`silent-alarm-${mode.toLowerCase()}`}
           description="Suppress siren when alarm triggers in this mode."
           enabled={silent}
           onToggle={() => handleToggle(SecurityAlarmMode.ATTR_SILENT, silent)}

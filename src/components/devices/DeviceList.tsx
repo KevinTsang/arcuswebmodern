@@ -39,6 +39,7 @@ export function DeviceList() {
         return (
           <div
             key={device.id}
+            data-testid={`device-row-${address}`}
             data-device-address={address}
             ref={registerItem(address)}
             className={`rounded-[var(--border-radius-base)] transition-shadow ${

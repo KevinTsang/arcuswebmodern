@@ -26,6 +26,7 @@ export function SceneCard({
 
   const name = scene[Scene.ATTR_NAME] ?? 'Unnamed Scene';
   const address = scene[Base.ATTR_ADDRESS];
+  const sceneId = scene[Base.ATTR_ID] ?? address;
   const enabled = scene[Scene.ATTR_ENABLED] !== false;
   const actionCount = Array.isArray(scene[Scene.ATTR_ACTIONS])
     ? scene[Scene.ATTR_ACTIONS]?.length
@@ -84,6 +85,7 @@ export function SceneCard({
 
   return (
     <div
+      data-testid={`scene-card-${sceneId}`}
       className={`
         border rounded-[var(--border-radius-base)] p-4
         ${enabled ? 'border-heron bg-crane' : 'border-heron bg-pigeon opacity-60'}
@@ -91,8 +93,8 @@ export function SceneCard({
     >
       <div className="flex items-start justify-between mb-3">
         <div className="flex-1 min-w-0">
-          <h3 className="text-base font-medium text-swift truncate">{name}</h3>
-          <p className="text-sm text-grouse mt-1">
+          <h3 data-testid={`scene-name-${sceneId}`} className="text-base font-medium text-swift truncate">{name}</h3>
+          <p data-testid={`scene-meta-${sceneId}`} className="text-sm text-grouse mt-1">
             {actionCount} action{actionCount !== 1 ? 's' : ''}
             {hasSchedule && ' \u00B7 Scheduled'}
           </p>
@@ -100,6 +102,7 @@ export function SceneCard({
         <div className="flex items-center gap-2 ml-3">
           <button
             onClick={handleOpenSchedule}
+            data-testid={`scene-schedule-${sceneId}`}
             className={`p-1.5 rounded transition-colors ${
               hasSchedule ? 'text-peacock' : 'text-heron hover:text-grouse'
             }`}
@@ -111,6 +114,8 @@ export function SceneCard({
           </button>
           <button
             onClick={handleToggleNotification}
+            data-testid={`scene-notification-${sceneId}`}
+            data-enabled={hasNotification}
             className={`p-1.5 rounded transition-colors ${
               hasNotification ? 'text-peacock' : 'text-heron hover:text-grouse'
             }`}
@@ -128,12 +133,14 @@ export function SceneCard({
           checked={forceDeviceState}
           onChange={handleToggleForce}
           label="Force Device State"
+          testId={`scene-force-state-${sceneId}`}
         />
       </div>
 
       <div className="flex items-center gap-2">
         <button
           onClick={handleFire}
+          data-testid={`scene-run-${sceneId}`}
           disabled={!enabled || firing}
           className={`
             flex-1 px-4 py-2 rounded-[var(--border-radius-base)] text-sm font-medium
@@ -148,6 +155,7 @@ export function SceneCard({
         </button>
         <button
           onClick={() => onEdit(scene)}
+          data-testid={`scene-edit-${sceneId}`}
           className="px-4 py-2 rounded-[var(--border-radius-base)] text-sm font-medium border border-heron text-coot hover:bg-pigeon transition-colors"
         >
           Edit

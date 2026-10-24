@@ -16,6 +16,7 @@ import { useSidePanel } from '@/components/SidePanel';
 import { useAppDispatch } from '@/store/hooks';
 import { addNotification } from '@/store/slices/uiSlice';
 import { useDeviceActions } from '@/hooks/useDeviceActions';
+import { testIdSlug } from '@/lib/testId';
 
 interface DeviceDetailPanelProps {
   address: string;
@@ -74,7 +75,7 @@ export function DeviceDetailPanel({ address }: DeviceDetailPanelProps) {
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-swift">Device Details</h3>
+        <h3 data-testid="device-details-title" className="text-lg font-semibold text-swift">Device Details</h3>
         <button onClick={closeRight} className="text-grouse hover:text-swift text-sm">Done</button>
       </div>
 
@@ -84,6 +85,7 @@ export function DeviceDetailPanel({ address }: DeviceDetailPanelProps) {
           <button
             onClick={handleIdentify}
             disabled={identifying}
+            data-testid="device-identify"
             className="text-sm text-kingfisher hover:underline disabled:opacity-50"
           >
             {identifying ? 'Identifying...' : 'Identify'}
@@ -132,6 +134,7 @@ export function DeviceDetailPanel({ address }: DeviceDetailPanelProps) {
       {!confirmRemove ? (
         <button
           onClick={() => setConfirmRemove(true)}
+          data-testid="device-remove"
           className="text-sm text-cardinal hover:underline"
         >
           Remove Device
@@ -146,12 +149,14 @@ export function DeviceDetailPanel({ address }: DeviceDetailPanelProps) {
             <button
               onClick={handleRemove}
               disabled={removing}
+              data-testid="device-remove-confirm"
               className="bg-cardinal text-crane px-4 py-2 rounded-[var(--border-radius-base)] text-sm disabled:opacity-50"
             >
               {removing ? 'Removing...' : 'Yes, Remove'}
             </button>
             <button
               onClick={() => setConfirmRemove(false)}
+              data-testid="device-remove-cancel"
               className="border border-heron text-coot px-4 py-2 rounded-[var(--border-radius-base)] text-sm"
             >
               Cancel
@@ -167,7 +172,7 @@ function InfoRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex justify-between">
       <dt className="text-sm text-grouse">{label}</dt>
-      <dd className="text-sm text-swift text-right">{value}</dd>
+      <dd data-testid={`device-detail-${testIdSlug(label)}`} className="text-sm text-swift text-right">{value}</dd>
     </div>
   );
 }

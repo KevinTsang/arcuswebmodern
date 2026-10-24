@@ -324,7 +324,7 @@ export default function PairingPage() {
         >
           &larr; Product Catalog
         </button>
-        <h2 className="text-[length:var(--font-size-h2)] font-[var(--heading-font-weight)] text-swift">
+        <h2 data-testid="pairing-title" className="text-[length:var(--font-size-h2)] font-[var(--heading-font-weight)] text-swift">
           {productName ? `Pair ${productName}` : 'Pair a Device'}
         </h2>
       </div>

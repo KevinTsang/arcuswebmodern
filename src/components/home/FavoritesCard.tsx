@@ -27,7 +27,7 @@ export default function FavoritesCard() {
     <CardShell title="Favorites" icon="icon-app-heart-2">
       {count > 0 ? (
         <>
-          <p className="text-xs text-grouse mb-3">{count} favorite{count !== 1 ? 's' : ''}</p>
+          <p data-testid="favorites-count" className="text-xs text-grouse mb-3">{count} favorite{count !== 1 ? 's' : ''}</p>
           <div className="flex gap-3 overflow-x-auto pb-2">
             {favoriteScenes.map((scene) => (
               <FavoriteSceneChip key={scene.id} scene={scene} />
@@ -38,7 +38,7 @@ export default function FavoritesCard() {
           </div>
         </>
       ) : (
-        <p className="text-sm text-grouse">
+        <p data-testid="favorites-empty" className="text-sm text-grouse">
           Mark devices and scenes as favorites to see them here.
         </p>
       )}

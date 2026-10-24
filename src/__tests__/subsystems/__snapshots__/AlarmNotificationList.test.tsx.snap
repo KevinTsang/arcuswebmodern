@@ -17,6 +17,9 @@ exports[`AlarmNotificationList matches snapshot 1`] = `
   >
     <div
       class="flex items-center gap-3 px-3 py-2.5 rounded border border-heron "
+      data-enabled="true"
+      data-position="1"
+      data-testid="calltree-entry-SERV:person:person-1"
     >
       <span
         class="text-xs font-medium text-grouse w-5 text-center"
@@ -34,6 +37,7 @@ exports[`AlarmNotificationList matches snapshot 1`] = `
         <button
           aria-label="Move Alice Johnson up"
           class="p-1 text-grouse hover:text-swift disabled:opacity-30"
+          data-testid="calltree-move-up-SERV:person:person-1"
           disabled=""
         >
           <svg
@@ -51,6 +55,7 @@ exports[`AlarmNotificationList matches snapshot 1`] = `
         <button
           aria-label="Move Alice Johnson down"
           class="p-1 text-grouse hover:text-swift disabled:opacity-30"
+          data-testid="calltree-move-down-SERV:person:person-1"
         >
           <svg
             class="w-4 h-4"
@@ -69,6 +74,7 @@ exports[`AlarmNotificationList matches snapshot 1`] = `
         aria-checked="true"
         aria-label="Disable notifications for Alice Johnson"
         class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 bg-peacock"
+        data-testid="calltree-toggle-SERV:person:person-1"
         role="switch"
       >
         <span
@@ -78,6 +84,9 @@ exports[`AlarmNotificationList matches snapshot 1`] = `
     </div>
     <div
       class="flex items-center gap-3 px-3 py-2.5 rounded border border-heron "
+      data-enabled="true"
+      data-position="2"
+      data-testid="calltree-entry-SERV:person:person-2"
     >
       <span
         class="text-xs font-medium text-grouse w-5 text-center"
@@ -95,6 +104,7 @@ exports[`AlarmNotificationList matches snapshot 1`] = `
         <button
           aria-label="Move Bob Smith up"
           class="p-1 text-grouse hover:text-swift disabled:opacity-30"
+          data-testid="calltree-move-up-SERV:person:person-2"
         >
           <svg
             class="w-4 h-4"
@@ -111,6 +121,7 @@ exports[`AlarmNotificationList matches snapshot 1`] = `
         <button
           aria-label="Move Bob Smith down"
           class="p-1 text-grouse hover:text-swift disabled:opacity-30"
+          data-testid="calltree-move-down-SERV:person:person-2"
         >
           <svg
             class="w-4 h-4"
@@ -129,6 +140,7 @@ exports[`AlarmNotificationList matches snapshot 1`] = `
         aria-checked="true"
         aria-label="Disable notifications for Bob Smith"
         class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 bg-peacock"
+        data-testid="calltree-toggle-SERV:person:person-2"
         role="switch"
       >
         <span
@@ -138,6 +150,9 @@ exports[`AlarmNotificationList matches snapshot 1`] = `
     </div>
     <div
       class="flex items-center gap-3 px-3 py-2.5 rounded border border-heron opacity-50"
+      data-enabled="false"
+      data-position="3"
+      data-testid="calltree-entry-SERV:person:person-3"
     >
       <span
         class="text-xs font-medium text-grouse w-5 text-center"
@@ -155,6 +170,7 @@ exports[`AlarmNotificationList matches snapshot 1`] = `
         <button
           aria-label="Move Carol Davis up"
           class="p-1 text-grouse hover:text-swift disabled:opacity-30"
+          data-testid="calltree-move-up-SERV:person:person-3"
         >
           <svg
             class="w-4 h-4"
@@ -171,6 +187,7 @@ exports[`AlarmNotificationList matches snapshot 1`] = `
         <button
           aria-label="Move Carol Davis down"
           class="p-1 text-grouse hover:text-swift disabled:opacity-30"
+          data-testid="calltree-move-down-SERV:person:person-3"
           disabled=""
         >
           <svg
@@ -190,6 +207,7 @@ exports[`AlarmNotificationList matches snapshot 1`] = `
         aria-checked="false"
         aria-label="Enable notifications for Carol Davis"
         class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 bg-heron"
+        data-testid="calltree-toggle-SERV:person:person-3"
         role="switch"
       >
         <span

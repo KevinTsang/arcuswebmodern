@@ -85,6 +85,7 @@ function DevicePanelInner({ address }: DevicePanelProps) {
 
   return (
     <div
+      data-testid={`device-panel-${address}`}
       className={`
         border-b border-heron py-4 px-2
         ${offline ? 'opacity-50' : ''}
@@ -99,6 +100,7 @@ function DevicePanelInner({ address }: DevicePanelProps) {
           {editingName ? (
             <input
               type="text"
+              data-testid={`device-name-input-${address}`}
               value={nameValue}
               onChange={(e) => setNameValue(e.target.value)}
               onBlur={handleSaveName}
@@ -112,13 +114,14 @@ function DevicePanelInner({ address }: DevicePanelProps) {
           ) : (
             <button
               onClick={handleStartRename}
+              data-testid={`device-name-${address}`}
               className="text-sm font-medium text-swift hover:text-peacock text-left truncate block w-full"
               title="Click to rename"
             >
               {name}
             </button>
           )}
-          <p className="text-xs text-grouse mt-0.5">
+          <p data-testid={`device-status-${address}`} className="text-xs text-grouse mt-0.5">
             {offline ? 'Offline' : status}
           </p>
         </div>
@@ -135,6 +138,8 @@ function DevicePanelInner({ address }: DevicePanelProps) {
           {/* Favorite */}
           <button
             onClick={handleToggleFavorite}
+            data-testid={`device-favorite-${address}`}
+            data-favorite={isFav}
             className={`p-1.5 rounded transition-colors ${
               isFav ? 'text-canary' : 'text-heron hover:text-grouse'
             }`}
@@ -152,6 +157,7 @@ function DevicePanelInner({ address }: DevicePanelProps) {
           {/* Config gear */}
           <button
             onClick={handleOpenConfig}
+            data-testid={`device-config-${address}`}
             className="p-1.5 rounded text-grouse hover:text-swift transition-colors"
             title="Configuration"
           >
@@ -164,6 +170,7 @@ function DevicePanelInner({ address }: DevicePanelProps) {
           {/* Details info */}
           <button
             onClick={handleOpenDetails}
+            data-testid={`device-details-${address}`}
             className="p-1.5 rounded text-grouse hover:text-swift transition-colors"
             title="Details"
           >

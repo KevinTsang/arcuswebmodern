@@ -26,6 +26,8 @@ function HubPanelInner() {
 
   return (
     <div
+      data-testid="hub-panel"
+      data-online={online}
       className={`
         border rounded-[var(--border-radius-base)] p-4 mb-4
         ${online ? 'border-heron bg-crane' : 'border-cardinal/30 bg-cardinal/5'}
@@ -46,8 +48,8 @@ function HubPanelInner() {
 
         {/* Hub info */}
         <div className="flex-1 min-w-0">
-          <h3 className="text-sm font-medium text-swift">{name}</h3>
-          <p className="text-xs text-grouse">
+          <h3 data-testid="hub-name" className="text-sm font-medium text-swift">{name}</h3>
+          <p data-testid="hub-status" className="text-xs text-grouse">
             {online ? 'Online' : 'Offline'}
             {firmwareVersion && ` \u00B7 v${firmwareVersion}`}
             {batteryPowered && battery != null && ` \u00B7 Battery: ${Math.round(battery)}%`}

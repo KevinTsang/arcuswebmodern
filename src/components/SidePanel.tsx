@@ -188,6 +188,7 @@ function SidePanelOverlay() {
           <div className="relative h-full">
             <button
               onClick={closeLeft}
+              data-testid="side-panel-left-close"
               className="absolute top-4 right-4 text-2xl text-grouse hover:text-swift z-10"
               aria-label="Close panel"
             >
@@ -211,12 +212,13 @@ function SidePanelOverlay() {
           <div className="relative h-full">
             <button
               onClick={closeRight}
+              data-testid="side-panel-right-close"
               className="absolute top-4 right-4 text-2xl text-grouse hover:text-swift z-10"
               aria-label="Close panel"
             >
               &times;
             </button>
-            <div className="p-6 pt-14">{rightContent}</div>
+            <div data-testid="side-panel-right" className="p-6 pt-14">{rightContent}</div>
           </div>
         )}
       </div>

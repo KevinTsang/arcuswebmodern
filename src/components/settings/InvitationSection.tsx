@@ -67,9 +67,10 @@ export default function InvitationSection() {
           <>
             <Field label="Invitation Code" value={code} onChange={setCode} placeholder="Enter code" />
             <Field label="Email Address" value={email} onChange={setEmail} type="email" placeholder="Email used for invitation" />
-            {error && <p className="text-sm text-cardinal mt-2">{error}</p>}
+            {error && <p data-testid="invitation-error" className="text-sm text-cardinal mt-2">{error}</p>}
             <button
               onClick={handleLookup}
+              data-testid="invitation-lookup"
               disabled={loading || !code.trim() || !email.trim()}
               className="mt-4 px-4 py-2 bg-peacock text-crane rounded-[var(--border-radius-base)] text-sm font-medium hover:bg-peacock/90 disabled:opacity-50"
             >
@@ -78,7 +79,7 @@ export default function InvitationSection() {
           </>
         ) : (
           <div className="space-y-4">
-            <div className="bg-honeycreeper/5 border border-honeycreeper/20 rounded-[var(--border-radius-base)] p-4">
+            <div data-testid="invitation-summary" className="bg-honeycreeper/5 border border-honeycreeper/20 rounded-[var(--border-radius-base)] p-4">
               <p className="text-sm text-swift">
                 You&apos;ve been invited to{' '}
                 <strong>
@@ -91,6 +92,7 @@ export default function InvitationSection() {
             <div className="flex gap-2">
               <button
                 onClick={handleAccept}
+                data-testid="invitation-accept"
                 disabled={loading}
                 className="px-4 py-2 bg-peacock text-crane rounded-[var(--border-radius-base)] text-sm font-medium hover:bg-peacock/90 disabled:opacity-50"
               >

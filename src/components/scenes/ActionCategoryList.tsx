@@ -33,7 +33,7 @@ export function ActionCategoryList({
 }: ActionCategoryListProps) {
   return (
     <div>
-      <h3 className="text-lg font-semibold text-swift mb-4">{heading}</h3>
+      <h3 data-testid="scene-panel-title" className="text-lg font-semibold text-swift mb-4">{heading}</h3>
 
       <div className="mb-4">
         <label htmlFor="newSceneName" className="block text-sm font-medium text-swift mb-1">
@@ -41,6 +41,7 @@ export function ActionCategoryList({
         </label>
         <input
           id="newSceneName"
+          data-testid="scene-name-input"
           type="text"
           value={name}
           onChange={(e) => onNameChange(e.target.value)}
@@ -58,6 +59,7 @@ export function ActionCategoryList({
               <button
                 key={action.id}
                 onClick={() => onSelectAction(action.id)}
+                data-testid={`scene-action-${action.id}`}
                 className="w-full flex items-center justify-between px-3 py-3 border border-heron rounded-[var(--border-radius-base)] hover:bg-pigeon/50 transition-colors text-left"
               >
                 <div className="flex items-center gap-2">
@@ -66,7 +68,7 @@ export function ActionCategoryList({
                 </div>
                 <div className="flex items-center gap-2">
                   {configuredCount > 0 && (
-                    <span className="bg-lovebird text-crane text-xs font-medium px-2 py-0.5 rounded-full">
+                    <span data-testid={`scene-action-count-${action.id}`} className="bg-lovebird text-crane text-xs font-medium px-2 py-0.5 rounded-full">
                       {configuredCount}
                     </span>
                   )}
@@ -85,6 +87,7 @@ export function ActionCategoryList({
             {unsatisfiableActions.map((action) => (
               <div
                 key={action.id}
+                data-testid={`scene-action-unavailable-${action.id}`}
                 className="px-3 py-3 border border-heron rounded-[var(--border-radius-base)] text-left"
               >
                 <span className="text-sm text-grouse">{action.name}</span>
@@ -98,6 +101,7 @@ export function ActionCategoryList({
       <div className="flex gap-3">
         <button
           onClick={onSave}
+          data-testid="scene-save"
           disabled={saving || !name.trim() || !hasAnyConfigured}
           className="bg-peacock text-crane px-5 py-2 rounded-[var(--border-radius-base)] hover:opacity-90 disabled:opacity-50 text-sm"
         >
@@ -105,6 +109,7 @@ export function ActionCategoryList({
         </button>
         <button
           onClick={onCancel}
+          data-testid="scene-cancel"
           className="border border-heron text-coot px-5 py-2 rounded-[var(--border-radius-base)] hover:bg-pigeon text-sm"
         >
           Cancel

@@ -23,6 +23,7 @@ export default function BrightnessConfigurator({ address }: { address: string })
         Brightness: {brightness}%
         <input
           type="range"
+          data-testid="brightness-slider"
           min={0}
           max={100}
           value={brightness}

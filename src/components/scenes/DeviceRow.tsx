@@ -57,11 +57,12 @@ export function DeviceRow({
   );
 
   return (
-    <div className="py-2 border-b border-pigeon last:border-b-0">
+    <div data-testid={`scene-device-${deviceAddr}`} className="py-2 border-b border-pigeon last:border-b-0">
       <div className="flex items-center justify-between">
         <span className="text-sm text-swift">{deviceName}</span>
         <button
           onClick={onToggle}
+          data-testid={`scene-device-toggle-${deviceAddr}`}
           className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${enabled ? 'bg-peacock' : 'bg-heron'}`}
           role="switch"
           aria-checked={enabled}

@@ -32,6 +32,7 @@ export default function CustomizeStage({
           </label>
           <input
             type="text"
+            data-testid="pairing-device-name"
             value={deviceName}
             onChange={(e) => dispatch(setDeviceName(e.target.value))}
             placeholder={isHubPairing ? 'My Hub' : (product?.[Product.ATTR_NAME] ?? 'New Device')}
@@ -42,6 +43,7 @@ export default function CustomizeStage({
           <label className="flex items-center gap-2 text-sm text-coot">
             <input
               type="checkbox"
+              data-testid="pairing-favorite"
               checked={isFavorite}
               onChange={(e) => dispatch(setFavorite(e.target.checked))}
               className="accent-peacock"
@@ -51,6 +53,7 @@ export default function CustomizeStage({
         )}
         <button
           onClick={onCustomize}
+          data-testid="pairing-customize-save"
           className="w-full py-2.5 bg-peacock text-crane rounded-[var(--border-radius-base)] text-sm font-medium hover:bg-peacock/90"
         >
           {isHubPairing ? 'Save & Continue' : 'Save & Finish'}

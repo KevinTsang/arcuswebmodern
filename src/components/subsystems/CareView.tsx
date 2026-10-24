@@ -13,6 +13,7 @@ import { Base, CareSubsystem } from '@arcus/core';
 import { useCareSubsystem } from '@/hooks/useCareSubsystem';
 import { useAppDispatch } from '@/store/hooks';
 import { addNotification } from '@/store/slices/uiSlice';
+import { testIdSlug } from '@/lib/testId';
 
 type CareViewTab = 'status' | 'behaviors';
 
@@ -24,6 +25,7 @@ export function CareView() {
       <div className="flex gap-1 bg-pigeon rounded-[var(--border-radius-base)] p-1 mb-6 w-fit">
         <button
           onClick={() => setTab('status')}
+          data-testid="care-tab-status"
           className={`px-4 py-1.5 rounded text-sm font-medium transition-colors ${
             tab === 'status' ? 'bg-crane text-swift shadow-sm' : 'text-grouse hover:text-coot'
           }`}
@@ -32,6 +34,7 @@ export function CareView() {
         </button>
         <button
           onClick={() => setTab('behaviors')}
+          data-testid="care-tab-behaviors"
           className={`px-4 py-1.5 rounded text-sm font-medium transition-colors ${
             tab === 'behaviors' ? 'bg-crane text-swift shadow-sm' : 'text-grouse hover:text-coot'
           }`}
@@ -68,10 +71,10 @@ function CareStatus() {
       <div className={`rounded-[var(--border-radius-base)] p-6 text-center ${
         isAlert ? 'bg-cardinal/10 border border-cardinal/30' : 'bg-pigeon/50'
       }`}>
-        <div className={`text-xl font-bold mb-1 ${isAlert ? 'text-cardinal' : 'text-honeycreeper'}`}>
+        <div data-testid="care-state" data-alert={isAlert} className={`text-xl font-bold mb-1 ${isAlert ? 'text-cardinal' : 'text-honeycreeper'}`}>
           {isAlert ? 'CARE ALERT' : 'All Clear'}
         </div>
-        <p className="text-sm text-grouse">
+        <p data-testid="care-summary" className="text-sm text-grouse">
           {isAlert && care.lastAlertCause
             ? care.lastAlertCause
             : care.alarmMode === CareSubsystem.ALARMMODE_ON ? 'Care is active' : 'Care is monitoring'}
@@ -79,6 +82,7 @@ function CareStatus() {
         {isAlert && (
           <button
             onClick={handleClear}
+            data-testid="care-clear"
             className="mt-3 bg-peacock text-crane px-5 py-2 rounded-[var(--border-radius-base)] text-sm hover:opacity-90"
           >
             Clear Alert
@@ -95,9 +99,9 @@ function CareStatus() {
               const name = (behavior['name'] as string) ?? `Behavior ${i + 1}`;
               const enabled = behavior['enabled'] !== false;
               return (
-                <div key={i} className={`flex items-center justify-between px-3 py-2 rounded border border-heron ${!enabled ? 'opacity-50' : ''}`}>
+                <div key={i} data-testid={`care-behavior-${testIdSlug(name)}`} className={`flex items-center justify-between px-3 py-2 rounded border border-heron ${!enabled ? 'opacity-50' : ''}`}>
                   <span className="text-sm text-swift">{name}</span>
-                  <span className={`text-xs ${enabled ? 'text-honeycreeper' : 'text-grouse'}`}>
+                  <span data-testid={`care-behavior-status-${testIdSlug(name)}`} className={`text-xs ${enabled ? 'text-honeycreeper' : 'text-grouse'}`}>
                     {enabled ? 'Active' : 'Disabled'}
                   </span>
                 </div>
@@ -109,8 +113,8 @@ function CareStatus() {
 
       {/* Info */}
       <div className="text-sm text-grouse">
-        <p>{care.careDevices.length} care device{care.careDevices.length !== 1 ? 's' : ''} monitored</p>
-        {care.silent && <p className="mt-1">Silent mode is on</p>}
+        <p data-testid="care-device-count">{care.careDevices.length} care device{care.careDevices.length !== 1 ? 's' : ''} monitored</p>
+        {care.silent && <p data-testid="care-silent" className="mt-1">Silent mode is on</p>}
       </div>
     </div>
   );
@@ -142,7 +146,7 @@ function CareBehaviors() {
         const type = (behavior['type'] as string) ?? '';
 
         return (
-          <div key={i} className={`border rounded-[var(--border-radius-base)] p-4 ${
+          <div key={i} data-testid={`care-behavior-detail-${testIdSlug(name)}`} className={`border rounded-[var(--border-radius-base)] p-4 ${
             enabled ? 'border-heron' : 'border-heron opacity-60'
           }`}>
             <div className="flex items-start justify-between">

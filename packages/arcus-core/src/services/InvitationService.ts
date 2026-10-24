@@ -1,8 +1,9 @@
 import Bridge from '../bridge';
+import type { GetInvitationResponse } from './types';
 
 const InvitationService = {
-  GetInvitation(code: string, inviteeEmail: string): Promise<Record<string, unknown>> {
-    return Bridge.restfulRequest('invite:GetInvitation', 'SERV:invite:', { code, inviteeEmail });
+  GetInvitation(code: string, inviteeEmail: string): Promise<GetInvitationResponse> {
+    return Bridge.restfulRequest<GetInvitationResponse>('invite:GetInvitation', 'SERV:invite:', { code, inviteeEmail });
   },
 
   AcceptInvitationCreateLogin(

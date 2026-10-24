@@ -99,6 +99,9 @@ export function ScheduleCalendar({ events, scheduleId, onEventClick }: ScheduleC
               return (
                 <button
                   key={evt.id}
+                  data-testid={`schedule-event-${evt.id}-${day.toLowerCase()}`}
+                  data-day={day}
+                  data-time={evt.time}
                   onClick={() => onEventClick?.(evt)}
                   className="absolute left-0.5 right-0.5 h-2 rounded-full cursor-pointer hover:opacity-80"
                   style={{

@@ -1,8 +1,14 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import PermissionsTable from '@/components/api-keys/PermissionsTable';
 import { emptyPermSet, PERMISSION_CATEGORIES } from '@/components/api-keys/permissions';
+import { TestIdScope } from '@/lib/testIdScope';
 
 describe('PermissionsTable', () => {
+  it('matches snapshot', () => {
+    const { container } = render(<PermissionsTable perms={emptyPermSet()} />);
+    expect(container.firstChild).toMatchSnapshot();
+  });
+
   it('renders all category labels', () => {
     render(<PermissionsTable perms={emptyPermSet()} />);
     for (const cat of PERMISSION_CATEGORIES) {
@@ -19,6 +25,15 @@ describe('PermissionsTable', () => {
     expect(screen.getByText('All')).toBeInTheDocument();
   });
 
+  it('gives every checkbox an accessible name of category + action', () => {
+    render(<PermissionsTable perms={emptyPermSet()} />);
+    for (const cat of PERMISSION_CATEGORIES) {
+      for (const action of ['read', 'write', 'execute', 'all']) {
+        expect(screen.getByLabelText(`${cat.label} ${action}`)).toBeInTheDocument();
+      }
+    }
+  });
+
   it('renders checkboxes as unchecked for empty perm set', () => {
     render(<PermissionsTable perms={emptyPermSet()} />);
     const checkboxes = screen.getAllByRole('checkbox');
@@ -33,25 +48,20 @@ describe('PermissionsTable', () => {
     const perms = emptyPermSet();
     perms.dev = { r: true, w: false, x: false };
     render(<PermissionsTable perms={perms} />);
-    const devicesRow = screen.getByText('Devices').closest('tr')!;
-    const checkboxes = devicesRow.querySelectorAll('input[type="checkbox"]');
-    // r, w, x, all
-    expect(checkboxes[0]).toBeChecked();      // read
-    expect(checkboxes[1]).not.toBeChecked();   // write
-    expect(checkboxes[2]).not.toBeChecked();   // execute
-    expect(checkboxes[3]).not.toBeChecked();   // all
+    expect(screen.getByLabelText('Devices read')).toBeChecked();
+    expect(screen.getByLabelText('Devices write')).not.toBeChecked();
+    expect(screen.getByLabelText('Devices execute')).not.toBeChecked();
+    expect(screen.getByLabelText('Devices all')).not.toBeChecked();
   });
 
   it('checks the All column when all three flags are set', () => {
     const perms = emptyPermSet();
     perms.scene = { r: true, w: true, x: true };
     render(<PermissionsTable perms={perms} />);
-    const scenesRow = screen.getByText('Scenes').closest('tr')!;
-    const checkboxes = scenesRow.querySelectorAll('input[type="checkbox"]');
-    expect(checkboxes[0]).toBeChecked();  // read
-    expect(checkboxes[1]).toBeChecked();  // write
-    expect(checkboxes[2]).toBeChecked();  // execute
-    expect(checkboxes[3]).toBeChecked();  // all
+    expect(screen.getByLabelText('Scenes read')).toBeChecked();
+    expect(screen.getByLabelText('Scenes write')).toBeChecked();
+    expect(screen.getByLabelText('Scenes execute')).toBeChecked();
+    expect(screen.getByLabelText('Scenes all')).toBeChecked();
   });
 
   it('disables all checkboxes when no onToggle is provided', () => {
@@ -73,19 +83,40 @@ describe('PermissionsTable', () => {
     const onToggle = jest.fn();
     render(<PermissionsTable perms={emptyPermSet()} onToggle={onToggle} />);
 
-    const rulesRow = screen.getByText('Rules').closest('tr')!;
-    const checkboxes = rulesRow.querySelectorAll('input[type="checkbox"]');
-
-    fireEvent.click(checkboxes[0]); // read
+    fireEvent.click(screen.getByLabelText('Rules read'));
     expect(onToggle).toHaveBeenCalledWith('rule', 'r');
 
-    fireEvent.click(checkboxes[1]); // write
+    fireEvent.click(screen.getByLabelText('Rules write'));
     expect(onToggle).toHaveBeenCalledWith('rule', 'w');
 
-    fireEvent.click(checkboxes[2]); // execute
+    fireEvent.click(screen.getByLabelText('Rules execute'));
     expect(onToggle).toHaveBeenCalledWith('rule', 'x');
 
-    fireEvent.click(checkboxes[3]); // all
+    fireEvent.click(screen.getByLabelText('Rules all'));
     expect(onToggle).toHaveBeenCalledWith('rule', '*');
+  });
+
+  describe('test ids', () => {
+    it('uses unscoped ids outside a TestIdScope', () => {
+      render(<PermissionsTable perms={emptyPermSet()} />);
+      expect(screen.getByTestId('perm-dev-r')).toBe(screen.getByLabelText('Devices read'));
+      expect(screen.getByTestId('perm-place-all')).toBe(screen.getByLabelText('Place all'));
+    });
+
+    it('prefixes ids with the enclosing TestIdScope so two tables stay unique', () => {
+      render(
+        <>
+          <TestIdScope.Provider value="apikey-new">
+            <PermissionsTable perms={emptyPermSet()} />
+          </TestIdScope.Provider>
+          <TestIdScope.Provider value="apikey-key-1">
+            <PermissionsTable perms={emptyPermSet()} />
+          </TestIdScope.Provider>
+        </>,
+      );
+      expect(screen.getByTestId('apikey-new-perm-dev-r')).toBeInTheDocument();
+      expect(screen.getByTestId('apikey-key-1-perm-dev-r')).toBeInTheDocument();
+      expect(screen.queryByTestId('perm-dev-r')).not.toBeInTheDocument();
+    });
   });
 });

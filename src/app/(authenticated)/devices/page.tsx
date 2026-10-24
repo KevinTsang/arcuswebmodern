@@ -86,7 +86,7 @@ export default function DevicesPage() {
     <div className="p-[var(--gutter)]">
       {/* Context bar */}
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-[length:var(--font-size-h2)] font-[var(--heading-font-weight)] text-swift">
+        <h2 data-testid="devices-title" className="text-[length:var(--font-size-h2)] font-[var(--heading-font-weight)] text-swift">
           Devices
         </h2>
         <span className="text-sm text-grouse">{placeName}</span>
@@ -97,6 +97,7 @@ export default function DevicesPage() {
         <div className="flex gap-1 bg-pigeon rounded-[var(--border-radius-base)] p-1">
           <button
             onClick={() => setView('devices')}
+            data-testid="devices-view-devices"
             className={`
               px-4 py-1.5 rounded text-sm font-medium transition-colors
               ${view === 'devices' ? 'bg-crane text-swift shadow-sm' : 'text-grouse hover:text-coot'}
@@ -106,6 +107,7 @@ export default function DevicesPage() {
           </button>
           <button
             onClick={() => setView('zwave')}
+            data-testid="devices-view-zwave"
             className={`
               px-4 py-1.5 rounded text-sm font-medium transition-colors
               ${view === 'zwave' ? 'bg-crane text-swift shadow-sm' : 'text-grouse hover:text-coot'}
@@ -118,6 +120,7 @@ export default function DevicesPage() {
         {hasHub && view === 'devices' && (
           <Link
             href="/pairing"
+            data-testid="add-device-link"
             className="bg-peacock text-crane px-5 py-2 rounded-[var(--border-radius-base)] text-sm hover:opacity-90 transition-opacity"
           >
             + Add Device
@@ -129,7 +132,7 @@ export default function DevicesPage() {
       {view === 'devices' ? (
         !hasHub && !hasDevices ? (
           // No devices upsell
-          <div className="text-center py-12">
+          <div data-testid="devices-empty" className="text-center py-12">
             <div className="w-16 h-16 rounded-full bg-pigeon flex items-center justify-center mx-auto mb-4">
               <svg className="w-8 h-8 text-grouse" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M8.288 15.038a5.25 5.25 0 017.424 0M5.106 11.856c3.807-3.808 9.98-3.808 13.788 0M1.924 8.674c5.565-5.565 14.587-5.565 20.152 0M12.53 18.22l-.53.53-.53-.53a.75.75 0 011.06 0z" />
@@ -143,12 +146,14 @@ export default function DevicesPage() {
             <div className="flex justify-center gap-3">
               <button
                 onClick={handleAddHubOrKit}
+                data-testid="add-hub-or-kit"
                 className="bg-peacock text-crane px-6 py-2.5 rounded-[var(--border-radius-base)] text-sm hover:opacity-90 transition-opacity"
               >
                 Add a Hub or Smart Kit
               </button>
               <Link
                 href="/product-catalog"
+                data-testid="shop-devices"
                 className="inline-block bg-heron text-swift px-6 py-2.5 rounded-[var(--border-radius-base)] text-sm border border-grouse hover:bg-crane transition-colors"
               >
                 Shop Devices

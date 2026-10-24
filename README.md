@@ -95,9 +95,10 @@ See PRD.md's **Priority Summary** for the full tiered breakdown of remaining wor
 ## Running locally
 
 ```bash
-npm run dev          # HTTPS dev server on localhost.myDevUrl.com:8443
+npm run dev          # HTTPS dev server on localhost.arcus.wl-net.net:8443
 npm test             # Jest unit tests
-npm run test:e2e     # Cypress E2E (headless)
+npm run test:e2e:ci  # Cypress E2E against an in-browser fake platform (starts/stops the app)
+npm run test:e2e     # Cypress E2E (headless; needs `npm run dev:e2e` running)
 npm run build         # Production build
 npm run lint          # ESLint
 ```

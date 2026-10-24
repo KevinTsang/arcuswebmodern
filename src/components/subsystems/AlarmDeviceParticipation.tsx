@@ -92,9 +92,10 @@ export function AlarmDeviceParticipation() {
           const isSaving = saving === addr;
 
           return (
-            <div key={device.id} className="flex items-center justify-between gap-3 px-3 py-2.5 rounded border border-heron">
+            <div key={device.id} data-testid={`participation-${addr}`} className="flex items-center justify-between gap-3 px-3 py-2.5 rounded border border-heron">
               <span className="text-sm text-swift flex-1 min-w-0 truncate">{name}</span>
               <select
+                data-testid={`participation-select-${addr}`}
                 value={current}
                 onChange={(e) => handleChange(addr, e.target.value as ParticipationLevel)}
                 disabled={isSaving}

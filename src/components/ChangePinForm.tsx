@@ -67,7 +67,7 @@ export default function ChangePinForm({
       <p className="text-sm text-grouse">{description}</p>
 
       {displayError && (
-        <p className="text-sm text-cardinal">{displayError}</p>
+        <p data-testid="pin-error" className="text-sm text-cardinal">{displayError}</p>
       )}
 
       <div>
@@ -105,6 +105,7 @@ export default function ChangePinForm({
       <div className="flex gap-2">
         <button
           type="submit"
+          data-testid="pin-save"
           disabled={loading}
           className="flex-1 py-2.5 bg-peacock text-crane rounded-[var(--border-radius-base)] text-sm font-medium hover:bg-peacock/90 disabled:opacity-50"
         >
@@ -112,6 +113,7 @@ export default function ChangePinForm({
         </button>
         <button
           type="button"
+          data-testid="pin-skip"
           onClick={onSkip}
           className="px-4 py-2.5 border border-heron rounded-[var(--border-radius-base)] text-sm text-coot hover:bg-pigeon"
         >

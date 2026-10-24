@@ -25,6 +25,7 @@ export default function OpenCloseValve({ address }: { address: string }) {
     <button
       onClick={handleToggle}
       disabled={pending}
+      data-testid={`device-valve-toggle-${address}`}
       className="px-4 py-1.5 rounded-[var(--border-radius-base)] text-sm font-medium bg-peacock text-crane disabled:opacity-50"
     >
       {pending ? '...' : open ? 'Close' : 'Open'}

@@ -14,6 +14,7 @@ import { Base, Hub, Product as ProductCap } from '@arcus/core';
 import { ProductCatalogService } from '@arcus/core/services';
 import { useAppSelector } from '@/store/hooks';
 import { ProductCard } from '@/components/products';
+import { testIdSlug } from '@/lib/testId';
 
 type FilterMode = 'all' | 'hub-required' | 'no-hub-required';
 
@@ -138,7 +139,7 @@ export default function ProductCatalogPage() {
     <div className="p-[var(--gutter)]">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-[length:var(--font-size-h2)] font-[var(--heading-font-weight)] text-swift">
+        <h2 data-testid="catalog-title" className="text-[length:var(--font-size-h2)] font-[var(--heading-font-weight)] text-swift">
           Product Catalog
         </h2>
       </div>
@@ -148,6 +149,7 @@ export default function ProductCatalogPage() {
         <div className="flex-1 flex gap-2">
           <input
             type="text"
+            data-testid="catalog-search"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
@@ -156,6 +158,7 @@ export default function ProductCatalogPage() {
           />
           <button
             onClick={handleSearch}
+            data-testid="catalog-search-button"
             className="px-4 py-2 bg-peacock text-crane rounded-[var(--border-radius-base)] text-sm font-medium hover:bg-peacock/90"
           >
             Search
@@ -163,6 +166,7 @@ export default function ProductCatalogPage() {
           {searchResults && (
             <button
               onClick={clearSearch}
+              data-testid="catalog-search-clear"
               className="px-3 py-2 border border-heron rounded-[var(--border-radius-base)] text-sm text-coot hover:bg-pigeon"
             >
               Clear
@@ -173,6 +177,7 @@ export default function ProductCatalogPage() {
           {(['all', 'hub-required', 'no-hub-required'] as FilterMode[]).map((mode) => (
             <button
               key={mode}
+              data-testid={`catalog-filter-${mode}`}
               onClick={() => setFilterMode(mode)}
               className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
                 filterMode === mode
@@ -200,6 +205,7 @@ export default function ProductCatalogPage() {
           <div className="flex flex-wrap gap-2">
             <button
               onClick={() => setSelectedBrand(null)}
+              data-testid="catalog-brand-all"
               className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
                 !selectedBrand
                   ? 'bg-peacock text-crane border-peacock'
@@ -211,6 +217,7 @@ export default function ProductCatalogPage() {
             {brands.map((brand) => (
               <button
                 key={brand.name}
+                data-testid={`catalog-brand-${testIdSlug(brand.name)}`}
                 onClick={() => setSelectedBrand(brand.name)}
                 className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
                   selectedBrand === brand.name
@@ -229,12 +236,12 @@ export default function ProductCatalogPage() {
       {!loading && (
         <>
           <div className="flex items-center gap-3 mb-4">
-            <h3 className="text-sm font-medium text-swift">
+            <h3 data-testid="catalog-heading" className="text-sm font-medium text-swift">
               {searchResults
                 ? `Search results for "${searchTerm}"`
                 : selectedBrand ?? 'All Products'}
             </h3>
-            <span className="text-xs text-grouse">
+            <span data-testid="catalog-count" className="text-xs text-grouse">
               {filteredProducts.length} product{filteredProducts.length !== 1 ? 's' : ''}
             </span>
           </div>

@@ -8,7 +8,7 @@
  * and Java handler implementations.
  */
 
-import type { Invitation } from '@/store/slices/invitationsSlice';
+import type { Invitation } from '@arcus/core/services/types';
 import type {
   PersonData, PlaceData, AccountData,
   DeviceData, SceneData, RuleData, RuleTemplateData,
@@ -141,41 +141,13 @@ export interface ListRuleTemplatesResponse {
 
 // ── Session service responses ─────────────────────────────────────
 
-export interface ListAvailablePlacesResponse {
-  places: AvailablePlace[];
-}
-
-export interface AvailablePlace {
-  placeId: string;
-  name: string;
-  role: string;
-}
-
-/** CardPreference from the platform Preferences type. */
-export interface CardPreference {
-  serviceName: string;
-  hideCard: boolean;
-}
-
-/**
- * Preferences stored per-person per-place.
- *
- * The platform allows arbitrary keys but these are the known fields
- * used by the web and mobile clients.
- */
-export interface Preferences {
-  hideTutorials?: boolean;
-  dashboardCards?: CardPreference[];
-  /** Web client: ordered card keys for the dashboard. */
-  'dashboard:cards'?: string[];
-  /** Web client: card keys hidden from the dashboard. */
-  'dashboard:hidden'?: string[];
-  [key: string]: unknown;
-}
-
-export interface GetPreferencesResponse {
-  prefs: Preferences;
-}
+export type {
+  AvailablePlace,
+  CardPreference,
+  GetPreferencesResponse,
+  ListAvailablePlacesResponse,
+  Preferences,
+} from '@arcus/core/services/types';
 
 // ── Account capability responses ──────────────────────────────────
 
@@ -191,9 +163,7 @@ export interface PendingInvitationsResponse {
 
 // ── Invitation service responses ──────────────────────────────────
 
-export interface GetInvitationResponse {
-  invitation: Invitation;
-}
+export type { GetInvitationResponse } from '@arcus/core/services/types';
 
 // ── Pairing subsystem responses ───────────────────────────────────
 

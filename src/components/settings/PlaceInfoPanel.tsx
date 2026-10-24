@@ -62,7 +62,7 @@ export default function PlaceInfoPanel({ placeData, onSaved }: PlaceInfoPanelPro
 
   return (
     <div className="p-4 space-y-4">
-      <h3 className="text-lg font-semibold text-swift">Edit Place</h3>
+      <h3 data-testid="place-panel-title" className="text-lg font-semibold text-swift">Edit Place</h3>
       <Field label="Place Name" value={name} onChange={setName} />
       <Field label="Street Address" value={street1} onChange={setStreet1} />
       <Field label="Street Address 2" value={street2} onChange={setStreet2} />
@@ -72,6 +72,7 @@ export default function PlaceInfoPanel({ placeData, onSaved }: PlaceInfoPanelPro
       <div className="flex gap-2 pt-2">
         <button
           onClick={handleSave}
+          data-testid="place-save"
           disabled={saving}
           className="px-4 py-2 bg-peacock text-crane rounded-[var(--border-radius-base)] text-sm font-medium hover:bg-peacock/90 disabled:opacity-50"
         >

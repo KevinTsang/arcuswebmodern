@@ -147,6 +147,7 @@ export function ScheduleEventEditor({
           {(['ABSOLUTE', 'SUNRISE', 'SUNSET'] as TimeMode[]).map((m) => (
             <button
               key={m}
+              data-testid={`schedule-mode-${m.toLowerCase()}`}
               onClick={() => setMode(m)}
               className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
                 mode === m ? 'bg-crane text-swift shadow-sm' : 'text-grouse hover:text-coot'
@@ -160,6 +161,7 @@ export function ScheduleEventEditor({
         {mode === 'ABSOLUTE' ? (
           <div className="flex items-center gap-2">
             <select
+              data-testid="schedule-hour"
               value={hour12}
               onChange={(e) => setHour(Number(e.target.value))}
               className="border border-heron rounded px-2 py-1.5 text-sm text-swift"
@@ -170,6 +172,7 @@ export function ScheduleEventEditor({
             </select>
             <span className="text-swift">:</span>
             <select
+              data-testid="schedule-minute"
               value={m}
               onChange={(e) => setMinute(Number(e.target.value))}
               className="border border-heron rounded px-2 py-1.5 text-sm text-swift"
@@ -180,6 +183,7 @@ export function ScheduleEventEditor({
             </select>
             <button
               onClick={toggleAMPM}
+              data-testid="schedule-ampm"
               className="px-3 py-1.5 border border-heron rounded text-sm text-swift hover:bg-pigeon"
             >
               {isPM ? 'PM' : 'AM'}
@@ -189,6 +193,7 @@ export function ScheduleEventEditor({
           <div className="flex items-center gap-2">
             <input
               type="number"
+              data-testid="schedule-offset"
               value={Math.abs(offsetMinutes)}
               onChange={(e) => {
                 const val = Math.abs(Number(e.target.value));
@@ -201,6 +206,7 @@ export function ScheduleEventEditor({
             <span className="text-sm text-grouse">minutes</span>
             <div className="flex gap-1">
               <button
+                data-testid="schedule-offset-before"
                 onClick={() => setOffsetMinutes(-Math.abs(offsetMinutes || 30))}
                 className={`px-2 py-1 rounded text-xs ${
                   offsetMinutes < 0 ? 'bg-peacock text-crane' : 'border border-heron text-coot'
@@ -209,6 +215,7 @@ export function ScheduleEventEditor({
                 Before
               </button>
               <button
+                data-testid="schedule-offset-after"
                 onClick={() => setOffsetMinutes(Math.abs(offsetMinutes || 30))}
                 className={`px-2 py-1 rounded text-xs ${
                   offsetMinutes >= 0 ? 'bg-peacock text-crane' : 'border border-heron text-coot'
@@ -229,6 +236,8 @@ export function ScheduleEventEditor({
           {DAYS.map((day) => (
             <button
               key={day}
+              data-testid={`schedule-day-${day.toLowerCase()}`}
+              aria-pressed={selectedDays.has(day)}
               onClick={() => toggleDay(day)}
               className={`w-10 h-10 rounded-full text-xs font-medium transition-colors ${
                 selectedDays.has(day)
@@ -249,6 +258,7 @@ export function ScheduleEventEditor({
       <div className="flex gap-2 pt-2">
         <button
           onClick={handleSave}
+          data-testid="schedule-save"
           disabled={saving}
           className="flex-1 py-2 bg-peacock text-crane rounded-[var(--border-radius-base)] text-sm font-medium hover:bg-peacock/90 disabled:opacity-50"
         >
@@ -257,6 +267,7 @@ export function ScheduleEventEditor({
         {onCancel && (
           <button
             onClick={onCancel}
+            data-testid="schedule-cancel"
             className="px-4 py-2 border border-heron rounded-[var(--border-radius-base)] text-sm text-coot hover:bg-pigeon"
           >
             Cancel
@@ -265,6 +276,7 @@ export function ScheduleEventEditor({
         {isEditing && (
           <button
             onClick={handleDelete}
+            data-testid="schedule-delete"
             disabled={saving}
             className="px-4 py-2 text-sm text-cardinal hover:underline disabled:opacity-50"
           >

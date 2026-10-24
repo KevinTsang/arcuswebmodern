@@ -125,8 +125,15 @@ export class Cornea extends EventEmitter {
       throw new Error('URL must be defined to establish a web socket connection');
     }
 
-    // Clean up any existing connection before starting a new one
+    // Clean up any existing connection before starting a new one.
+    // Detach handlers first so the old socket's async close event
+    // doesn't emit WebSocketClosed / authentication:fail into the
+    // new connection's listeners.
     if (this.socket) {
+      this.socket.onclose = null;
+      this.socket.onerror = null;
+      this.socket.onmessage = null;
+      this.socket.onopen = null;
       this.cleanup();
     }
 
@@ -196,6 +203,7 @@ export class Cornea extends EventEmitter {
       };
 
       this.log(`--> ${msg.type}`, msg);
+      this.emit('traffic', { direction: 'out', message: msg, timestamp: Date.now() });
 
       try {
         socket.send(JSON.stringify(msg));
@@ -240,6 +248,7 @@ export class Cornea extends EventEmitter {
       data[0] === '{' || data[0] === '[' ? JSON.parse(data) : data;
 
     this.log(`<-- ${message.type}`, message);
+    this.emit('traffic', { direction: 'in', message, timestamp: Date.now() });
 
     const eventType = message.type;
     const subject = this.getEventSubject(message.headers.source);

@@ -61,13 +61,13 @@ export default function IncidentTracker({ incident }: { incident: IncidentEntity
   }, [address, dispatch]);
 
   return (
-    <div className="rounded-[var(--border-radius-base)] border-2 border-cardinal bg-cardinal/5 p-6">
+    <div data-testid="incident-tracker" data-alert-state={alertState} className="rounded-[var(--border-radius-base)] border-2 border-cardinal bg-cardinal/5 p-6">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
           {config?.icon && <span className={`${config.icon} text-2xl text-cardinal`} />}
           <div>
-            <h3 className="text-lg font-bold text-cardinal">{label}</h3>
-            <p className="text-xs text-grouse">
+            <h3 data-testid="incident-label" className="text-lg font-bold text-cardinal">{label}</h3>
+            <p data-testid="incident-state" className="text-xs text-grouse">
               {alertState === AlarmIncident.ALERTSTATE_PREALERT
                 ? 'Pre-alert — alarm will sound shortly'
                 : 'Alarm is active'}
@@ -79,6 +79,7 @@ export default function IncidentTracker({ incident }: { incident: IncidentEntity
       <div className="flex gap-3">
         <button
           onClick={handleCancel}
+          data-testid="incident-cancel"
           disabled={isCancelling}
           className="bg-cardinal text-crane px-6 py-2.5 rounded-[var(--border-radius-base)] text-sm font-medium hover:opacity-90 disabled:opacity-50 flex items-center gap-2"
         >

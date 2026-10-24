@@ -185,7 +185,7 @@ export function RulePanel({ rule, template, placeId }: RulePanelProps) {
   if (loading) {
     return (
       <div>
-        <h3 className="text-lg font-semibold text-swift mb-4">{heading}</h3>
+        <h3 data-testid="rule-panel-title" className="text-lg font-semibold text-swift mb-4">{heading}</h3>
         <p className="text-sm text-grouse">Loading template...</p>
       </div>
     );
@@ -193,7 +193,7 @@ export function RulePanel({ rule, template, placeId }: RulePanelProps) {
 
   return (
     <div>
-      <h3 className="text-lg font-semibold text-swift mb-4">{heading}</h3>
+      <h3 data-testid="rule-panel-title" className="text-lg font-semibold text-swift mb-4">{heading}</h3>
 
       <div className="mb-4">
         <label htmlFor="ruleName" className="block text-sm font-medium text-swift mb-1">
@@ -201,6 +201,7 @@ export function RulePanel({ rule, template, placeId }: RulePanelProps) {
         </label>
         <input
           id="ruleName"
+          data-testid="rule-name-input"
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
@@ -224,6 +225,7 @@ export function RulePanel({ rule, template, placeId }: RulePanelProps) {
               return (
                 <button
                   key={i}
+                  data-testid={`rule-var-${seg.name}`}
                   onClick={() => setActiveSelector(isActive ? null : seg.name)}
                   className={`
                     px-2 py-0.5 rounded text-sm font-medium border transition-colors
@@ -258,6 +260,7 @@ export function RulePanel({ rule, template, placeId }: RulePanelProps) {
       <div className="flex gap-3 mb-8">
         <button
           onClick={handleSave}
+          data-testid="rule-save"
           disabled={saving || !name.trim() || (!isEdit && !allFilled)}
           className="bg-peacock text-crane px-5 py-2 rounded-[var(--border-radius-base)] hover:opacity-90 disabled:opacity-50 text-sm"
         >
@@ -278,6 +281,7 @@ export function RulePanel({ rule, template, placeId }: RulePanelProps) {
           {!confirmDelete ? (
             <button
               onClick={() => setConfirmDelete(true)}
+              data-testid="rule-delete"
               className="text-sm text-cardinal hover:underline"
             >
               Delete Rule
@@ -289,6 +293,7 @@ export function RulePanel({ rule, template, placeId }: RulePanelProps) {
                 <button
                   onClick={handleDelete}
                   disabled={deleting}
+                  data-testid="rule-delete-confirm"
                   className="bg-cardinal text-crane px-4 py-2 rounded-[var(--border-radius-base)] text-sm disabled:opacity-50"
                 >
                   {deleting ? 'Deleting...' : 'Yes, Delete'}

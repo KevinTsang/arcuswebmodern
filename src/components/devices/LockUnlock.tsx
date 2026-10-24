@@ -25,6 +25,7 @@ export default function LockUnlock({ address }: { address: string }) {
     <button
       onClick={handleToggle}
       disabled={pending}
+      data-testid={`device-lock-toggle-${address}`}
       className={`
         px-4 py-1.5 rounded-[var(--border-radius-base)] text-sm font-medium transition-colors
         ${locked ? 'bg-peacock text-crane' : 'bg-cardinal/10 text-cardinal border border-cardinal/30'}

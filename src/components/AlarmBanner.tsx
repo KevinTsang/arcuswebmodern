@@ -37,6 +37,7 @@ export default function AlarmBanner() {
   return (
     <Link
       href="/services"
+      data-testid="alarm-banner"
       className="w-full bg-cardinal text-crane px-4 py-2.5 text-sm font-medium flex items-center justify-center gap-2 hover:bg-cardinal/90 transition-colors"
     >
       <svg className="w-5 h-5 flex-shrink-0 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">

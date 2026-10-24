@@ -53,13 +53,14 @@ export function RuleSelectorSection({ activeSelector, selector, selectedValue, o
   if (getSelectorKind(selector) === 'device') {
     return (
       <div className="mb-6">
-        <h4 className="text-sm font-semibold text-swift mb-3">Choose Device</h4>
+        <h4 data-testid="rule-choose-device-title" className="text-sm font-semibold text-swift mb-3">Choose Device</h4>
         <ul className="space-y-1">
           {selector.options.map((opt, j) => {
             const isSelected = selectedValue === opt.value;
             return (
               <li key={j}>
                 <label
+                  data-testid={`rule-option-${opt.value}`}
                   className={`flex items-center gap-3 px-3 py-2.5 rounded-[var(--border-radius-base)] cursor-pointer transition-colors ${
                     isSelected ? 'bg-peacock/10' : 'hover:bg-pigeon'
                   }`}
@@ -87,6 +88,7 @@ export function RuleSelectorSection({ activeSelector, selector, selectedValue, o
         Choose <span className="capitalize">{selector.name}</span>
       </h4>
       <select
+        data-testid="rule-option-select"
         value={selectedValue}
         onChange={(e) => onSelect(e.target.value)}
         className="w-full px-3 py-2 border border-grouse rounded-[var(--border-radius-base)] focus:outline-none focus:border-peacock text-sm text-swift bg-crane"

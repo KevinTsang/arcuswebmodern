@@ -40,7 +40,7 @@ export default function ChangePinPanel() {
 
   return (
     <div className="p-4 space-y-4">
-      <h3 className="text-lg font-semibold text-swift">Change PIN Code</h3>
+      <h3 data-testid="pin-panel-title" className="text-lg font-semibold text-swift">Change PIN Code</h3>
       <ChangePinForm
         onSave={handleSave}
         onSkip={closeRight}

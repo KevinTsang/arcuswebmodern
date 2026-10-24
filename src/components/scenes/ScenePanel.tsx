@@ -168,7 +168,7 @@ export function ScenePanel({ scene }: ScenePanelProps) {
   if (loading) {
     return (
       <div>
-        <h3 className="text-lg font-semibold text-swift mb-4">{isEdit ? 'Edit Scene' : 'Create Scene'}</h3>
+        <h3 data-testid="scene-panel-title" className="text-lg font-semibold text-swift mb-4">{isEdit ? 'Edit Scene' : 'Create Scene'}</h3>
         <p className="text-sm text-grouse">Loading actions...</p>
       </div>
     );
@@ -216,6 +216,7 @@ export function ScenePanel({ scene }: ScenePanelProps) {
           {!confirmDelete ? (
             <button
               onClick={() => setConfirmDelete(true)}
+              data-testid="scene-delete"
               className="text-sm text-cardinal hover:underline"
             >
               Delete Scene
@@ -227,6 +228,7 @@ export function ScenePanel({ scene }: ScenePanelProps) {
                 <button
                   onClick={handleDelete}
                   disabled={deleting}
+                  data-testid="scene-delete-confirm"
                   className="bg-cardinal text-crane px-4 py-2 rounded-[var(--border-radius-base)] text-sm disabled:opacity-50"
                 >
                   {deleting ? 'Deleting...' : 'Yes, Delete'}

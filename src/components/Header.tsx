@@ -94,12 +94,13 @@ export default function Header() {
         {/* Right utilities */}
         <div className="flex items-center gap-4 ml-auto">
           {firstName && (
-            <span className="hidden sm:inline text-sm text-grouse">
+            <span data-testid="header-greeting" className="hidden sm:inline text-sm text-grouse">
               Hello, {firstName}
             </span>
           )}
           <button
             onClick={handlePlaceSelector}
+            data-testid="header-places"
             className="text-coot hover:text-swift transition-colors"
             aria-label="Places & Logout"
             title="Places & Logout"

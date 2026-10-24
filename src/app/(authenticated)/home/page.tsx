@@ -14,10 +14,14 @@ import { useMemo, useCallback, useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import Bridge from '@arcus/core/bridge';
-import { Base, Place, Subsystem } from '@arcus/core';
+import {
+  AlarmSubsystem, Base, CamerasSubsystem, CareSubsystem, ClimateSubsystem, DoorsNLocksSubsystem,
+  LawnNGardenSubsystem, LightsNSwitchesSubsystem, Place, PresenceSubsystem, Subsystem, WaterSubsystem,
+} from '@arcus/core';
 import type { ListHistoryEntriesResponse } from '@/arcus/types';
 import type { HistoryEntry } from '@/components/history/HistoryList';
 import { useAppSelector } from '@/store/hooks';
+import type { SubsystemNamespace } from '@/lib/subsystemConfig';
 import { selectAllSubsystems } from '@/store/slices/subsystemsSlice';
 import {
   FavoritesCard,
@@ -50,16 +54,16 @@ const DEFAULT_CARDS: DashboardCard[] = [
   { serviceName: 'WATER', hideCard: false },
 ];
 
-const SERVICE_TO_NAMESPACE: Record<string, string> = {
-  ALARMS: 'subalarm',
-  CLIMATE: 'subclimate',
-  DOORS_N_LOCKS: 'subdoorsnlocks',
-  CAMERAS: 'subcameras',
-  CARE: 'subcare',
-  HOME_N_FAMILY: 'subpresence',
-  LAWN_N_GARDEN: 'sublawnngarden',
-  LIGHTS_N_SWITCHES: 'sublightsnswitches',
-  WATER: 'subwater',
+const SERVICE_TO_NAMESPACE: Record<string, SubsystemNamespace> = {
+  ALARMS: AlarmSubsystem.NAMESPACE,
+  CLIMATE: ClimateSubsystem.NAMESPACE,
+  DOORS_N_LOCKS: DoorsNLocksSubsystem.NAMESPACE,
+  CAMERAS: CamerasSubsystem.NAMESPACE,
+  CARE: CareSubsystem.NAMESPACE,
+  HOME_N_FAMILY: PresenceSubsystem.NAMESPACE,
+  LAWN_N_GARDEN: LawnNGardenSubsystem.NAMESPACE,
+  LIGHTS_N_SWITCHES: LightsNSwitchesSubsystem.NAMESPACE,
+  WATER: WaterSubsystem.NAMESPACE,
 };
 
 
@@ -148,7 +152,7 @@ export default function HomePage() {
         );
       }
       items.push(
-        <div key={i} className="flex gap-3 py-2">
+        <div key={i} data-testid={`dashboard-history-entry-${i}`} className="flex gap-3 py-2">
           <span className="text-xs text-swift font-semibold w-[90px] flex-shrink-0 text-right uppercase pt-0.5">
             {formatTime(entry.timestamp)}
           </span>
@@ -166,21 +170,22 @@ export default function HomePage() {
     <div className="flex flex-col-reverse md:flex-row">
       {/* History Sidebar */}
       {showSidebar && (
-        <div className="bg-pigeon md:border-r border-heron w-full md:max-w-[350px] flex-shrink-0 overflow-hidden">
+        <div data-testid="dashboard-sidebar" className="bg-pigeon md:border-r border-heron w-full md:max-w-[350px] flex-shrink-0 overflow-hidden">
           <Image src="/default-home.jpg" width={350} height={240} alt={placeName} />
           <div className="flex justify-center items-center py-4 mx-[var(--gutter)] border-b border-heron">
-            <h2 className="text-[length:var(--font-size-h3)] font-[var(--heading-font-weight)] text-swift text-center">
+            <h2 data-testid="dashboard-place-name" className="text-[length:var(--font-size-h3)] font-[var(--heading-font-weight)] text-swift text-center">
               <span className="icon-app-location-2 mr-2" />
               {placeName}
             </h2>
           </div>
 
           <div className="flex justify-center items-center gap-2 pt-4 pb-2">
-            <h2 className="text-[length:var(--font-size-h4)] font-[var(--heading-font-weight)] text-swift">
+            <h2 data-testid="dashboard-history-title" className="text-[length:var(--font-size-h4)] font-[var(--heading-font-weight)] text-swift">
               History
             </h2>
             <button
               onClick={fetchHistory}
+              data-testid="dashboard-history-refresh"
               className="text-peacock hover:opacity-75 transition-opacity"
               title="Refresh history"
             >
@@ -188,9 +193,9 @@ export default function HomePage() {
             </button>
           </div>
 
-          <div className="px-[var(--gutter)] pb-2">
+          <div data-testid="dashboard-history" className="px-[var(--gutter)] pb-2">
             {events.length === 0 ? (
-              <p className="text-sm text-grouse py-4 text-center">No recent activity.</p>
+              <p data-testid="dashboard-history-empty" className="text-sm text-grouse py-4 text-center">No recent activity.</p>
             ) : (
               historyItems
             )}
@@ -214,6 +219,7 @@ export default function HomePage() {
         <div className="hidden md:flex items-center px-[var(--gutter)] pt-4 pb-2">
           <button
             onClick={() => setShowSidebar(!showSidebar)}
+            data-testid="dashboard-sidebar-toggle"
             className="text-peacock hover:opacity-75 transition-opacity"
             title={showSidebar ? 'Hide sidebar' : 'Show sidebar'}
           >

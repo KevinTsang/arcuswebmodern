@@ -61,7 +61,7 @@ export default function PlaceSelector() {
 
   return (
     <div>
-      <h3 className="text-lg font-semibold text-swift mb-4">Choose a Place</h3>
+      <h3 data-testid="place-selector-title" className="text-lg font-semibold text-swift mb-4">Choose a Place</h3>
 
       {loading ? (
         <p className="text-grouse">Loading places...</p>
@@ -75,6 +75,8 @@ export default function PlaceSelector() {
               <li key={place.placeId}>
                 <button
                   onClick={() => handleSelectPlace(place)}
+                  data-testid={`place-option-${place.placeId}`}
+                  data-current={isCurrent}
                   disabled={switching}
                   className={`
                     w-full flex items-center gap-3 px-4 py-3 rounded-[var(--border-radius-base)]
@@ -108,6 +110,7 @@ export default function PlaceSelector() {
 
       <button
         onClick={handleLogout}
+        data-testid="logout"
         className="w-full text-center px-4 py-2.5 text-cardinal border border-cardinal rounded-[var(--border-radius-base)] hover:bg-cardinal/5 transition-colors"
       >
         Log Out

@@ -49,14 +49,15 @@ export default function ChangePasswordPanel() {
 
   return (
     <div className="p-4 space-y-4">
-      <h3 className="text-lg font-semibold text-swift">Change Password</h3>
+      <h3 data-testid="password-panel-title" className="text-lg font-semibold text-swift">Change Password</h3>
       <Field label="Current Password" value={currentPw} onChange={setCurrentPw} type="password" />
       <Field label="New Password" value={newPw} onChange={setNewPw} type="password" />
       <Field label="Confirm New Password" value={confirmPw} onChange={setConfirmPw} type="password" />
-      {error && <p className="text-sm text-cardinal">{error}</p>}
+      {error && <p data-testid="password-error" className="text-sm text-cardinal">{error}</p>}
       <div className="flex gap-2 pt-2">
         <button
           onClick={handleChange}
+          data-testid="password-change"
           disabled={saving || !currentPw || !newPw || !confirmPw}
           className="px-4 py-2 bg-peacock text-crane rounded-[var(--border-radius-base)] text-sm font-medium hover:bg-peacock/90 disabled:opacity-50"
         >

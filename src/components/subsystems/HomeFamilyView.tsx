@@ -22,11 +22,11 @@ export function HomeFamilyView() {
       {/* Summary cards */}
       <div className="flex gap-4">
         <div className="flex-1 bg-honeycreeper/5 rounded-[var(--border-radius-base)] p-4 text-center border border-honeycreeper/20">
-          <div className="text-2xl font-light text-swift">{peopleAtHome.length}</div>
+          <div data-testid="presence-home-count" className="text-2xl font-light text-swift">{peopleAtHome.length}</div>
           <p className="text-xs text-grouse mt-1">People Home</p>
         </div>
         <div className="flex-1 bg-pigeon/50 rounded-[var(--border-radius-base)] p-4 text-center">
-          <div className="text-2xl font-light text-swift">{peopleAway.length}</div>
+          <div data-testid="presence-away-count" className="text-2xl font-light text-swift">{peopleAway.length}</div>
           <p className="text-xs text-grouse mt-1">People Away</p>
         </div>
       </div>
@@ -71,7 +71,7 @@ function PersonList({
   status: 'home' | 'away';
 }) {
   return (
-    <div>
+    <div data-testid={`presence-list-${status}`}>
       <h3 className="text-sm font-medium text-swift mb-3">{title}</h3>
       <div className="space-y-2">
         {people.map((person) => {
@@ -80,6 +80,7 @@ function PersonList({
           return (
             <div
               key={person.id as string}
+              data-testid={`presence-person-${person.id}`}
               className="flex items-center gap-3 px-3 py-2 rounded border border-heron"
             >
               <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${

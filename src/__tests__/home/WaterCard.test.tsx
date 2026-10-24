@@ -55,12 +55,12 @@ describe('WaterCard', () => {
       {
         id: 'SERV:subwater:place-1',
         [Base.ATTR_ADDRESS]: 'SERV:subwater:place-1',
-        'waterval:valvestate': ['DRIV:dev:v1', 'DRIV:dev:v2'],
+        'subwater:waterDevices': ['DRIV:dev:v1', 'DRIV:dev:v2'],
       },
     ];
     mockDevices = [
-      { id: 'DRIV:dev:v1', [Base.ATTR_ADDRESS]: 'DRIV:dev:v1', 'waterval:valvestate': 'CLOSED' },
-      { id: 'DRIV:dev:v2', [Base.ATTR_ADDRESS]: 'DRIV:dev:v2', 'waterval:valvestate': 'OPEN' },
+      { id: 'DRIV:dev:v1', [Base.ATTR_ADDRESS]: 'DRIV:dev:v1', 'valv:valvestate': 'CLOSED' },
+      { id: 'DRIV:dev:v2', [Base.ATTR_ADDRESS]: 'DRIV:dev:v2', 'valv:valvestate': 'OPEN' },
     ];
     render(<WaterCard />);
     expect(screen.getByText('Water')).toBeInTheDocument();

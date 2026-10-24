@@ -3,6 +3,7 @@
 exports[`ModeDelaySettings matches snapshot 1`] = `
 <div
   class="p-4 rounded-[var(--border-radius-base)] border border-heron"
+  data-testid="alarm-mode-on"
 >
   <h4
     class="text-sm font-medium text-swift mb-3"
@@ -29,6 +30,7 @@ exports[`ModeDelaySettings matches snapshot 1`] = `
       </div>
       <select
         class="text-sm border border-heron rounded px-2 py-1 bg-crane text-swift disabled:opacity-50"
+        data-testid="exit-delay-on"
       >
         <option
           value="0"
@@ -89,6 +91,7 @@ exports[`ModeDelaySettings matches snapshot 1`] = `
       </div>
       <select
         class="text-sm border border-heron rounded px-2 py-1 bg-crane text-swift disabled:opacity-50"
+        data-testid="entrance-delay-on"
       >
         <option
           value="0"
@@ -149,7 +152,9 @@ exports[`ModeDelaySettings matches snapshot 1`] = `
       </div>
       <button
         aria-checked="true"
+        aria-label="Arming Sounds"
         class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 bg-peacock"
+        data-testid="arming-sounds-on"
         role="switch"
       >
         <span
@@ -174,7 +179,9 @@ exports[`ModeDelaySettings matches snapshot 1`] = `
       </div>
       <button
         aria-checked="false"
+        aria-label="Silent Alarm"
         class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 bg-heron"
+        data-testid="silent-alarm-on"
         role="switch"
       >
         <span

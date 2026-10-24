@@ -22,6 +22,7 @@ export default function InvitationBanner() {
   return (
     <button
       onClick={() => openRight(<AcceptInvitationPanel />)}
+      data-testid="invitation-banner"
       className="w-full bg-peacock text-crane px-4 py-2.5 text-sm font-medium flex items-center justify-center gap-2 hover:bg-peacock/90 transition-colors"
     >
       <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
