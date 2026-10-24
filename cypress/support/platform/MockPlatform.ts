@@ -102,6 +102,15 @@ export class MockSocket {
     this.emitClose(code, reason);
   }
 
+  /** Connection failure (network drop, proxy error): `error`, then an abnormal close. */
+  serverFail(): void {
+    if (this.readyState === WS_CLOSED) return;
+    this.readyState = WS_CLOSED;
+    this.platform.detach(this);
+    this.dispatchEvent(new this.win.Event('error'));
+    this.emitClose(1006, 'connection failed');
+  }
+
   /** Silently discard the connection (no events) — used between tests. */
   kill(): void {
     this.readyState = WS_CLOSED;
@@ -132,6 +141,8 @@ export class MockSocket {
 export class MockPlatform {
   /** True while the browser holds a valid platform session (the `irisAuthToken` cookie). */
   authenticated = false;
+  /** Platform WebSocket upgrade attempts since the last reset, accepted or not. */
+  connectionAttempts = 0;
   data: PlatformData = createFixture();
   requests: LoggedRequest[] = [];
   /** Addresses of objects created during the current test, removed by `cleanupCreated()`. */
@@ -149,6 +160,7 @@ export class MockPlatform {
     for (const timer of this.timers) clearTimeout(timer);
     this.timers = [];
     this.authenticated = false;
+    this.connectionAttempts = 0;
     this.data = createFixture();
     this.requests = [];
     this.created.clear();
@@ -182,6 +194,7 @@ export class MockPlatform {
   }
 
   acceptsConnection(): boolean {
+    this.connectionAttempts++;
     return this.authenticated;
   }
 
@@ -262,6 +275,11 @@ export class MockPlatform {
   /** Simulate the platform closing every socket with the given close code. */
   dropConnections(code: number): void {
     for (const socket of [...this.sockets]) socket.serverClose(code);
+  }
+
+  /** Simulate a network failure on every socket; the session itself stays valid. */
+  failConnections(): void {
+    for (const socket of [...this.sockets]) socket.serverFail();
   }
 
   /** Make the next `times` requests of `type` fail with a platform error. */
