@@ -5,7 +5,7 @@
  */
 
 import {
-  Base, Contact, Device, DeviceConnection, Dimmer, DoorLock, Hub, HubZwave, Switch, Thermostat, Valve,
+  Base, Contact, Device, DeviceConnection, Dimmer, DoorLock, Hub, HubAdvanced, HubZwave, Switch, Thermostat, Valve,
 } from '../../packages/arcus-core/src/capabilities/capabilities';
 import { DEVICE, DEVICE_NAME, addr } from '../support/platform/fixtures';
 import { tid } from '../support/selectors';
@@ -291,14 +291,32 @@ describe('Z-Wave tools', () => {
     cy.get('[data-testid="zwave-remove-modal"]').should('have.attr', 'data-state', 'search');
     cy.expectRequestAttrs(Hub.CMD_UNPAIRINGREQUEST, { actionType: 'START_UNPAIRING' });
 
-    cy.platform().invoke('emit', undefined, 'hubadv:UnpairedDeviceRemoved', {});
+    // Cornea delivers hub events as `hub <type>`, so the event comes from the hub.
+    cy.platform().invoke('emit', addr.hub, HubAdvanced.EVENT_UNPAIREDDEVICEREMOVED, { devTypeGuess: 'Switch' });
     cy.toast('A device was removed.');
-    // The hub keeps excluding until it leaves unpairing mode, so keep searching until then.
-    cy.get('[data-testid="zwave-remove-modal"]').should('have.attr', 'data-state', 'search');
-    cy.platform().invoke('updateEntity', addr.hub, { [Hub.ATTR_STATE]: Hub.STATE_NORMAL });
     cy.get('[data-testid="zwave-remove-modal"]').should('have.attr', 'data-state', 'success');
+    // The search found its device, so the hub stops excluding straight away.
+    cy.expectRequestAttrs(Hub.CMD_UNPAIRINGREQUEST, { actionType: 'STOP_UNPAIRING' });
     cy.get('[data-testid="zwave-remove-done"]').click();
     cy.get('[data-testid="zwave-remove-modal"]').should('not.exist');
+  });
+
+  it('removes an orphan reported through hubzwave:numDevices', () => {
+    cy.get('[data-testid="zwave-remove-section"]').click();
+    cy.get('[data-testid="zwave-remove-start"]').click();
+    cy.get('[data-testid="zwave-remove-modal"]').should('have.attr', 'data-state', 'search');
+    cy.platform().invoke('updateEntity', addr.hub, { [HubZwave.ATTR_NUMDEVICES]: 1 });
+    cy.toast('A device was removed.');
+    cy.get('[data-testid="zwave-remove-modal"]').should('have.attr', 'data-state', 'success');
+    cy.expectRequestAttrs(Hub.CMD_UNPAIRINGREQUEST, { actionType: 'STOP_UNPAIRING' });
+  });
+
+  it('shows the timeout screen when the hub leaves unpairing mode on its own', () => {
+    cy.get('[data-testid="zwave-remove-section"]').click();
+    cy.get('[data-testid="zwave-remove-start"]').click();
+    cy.get('[data-testid="zwave-remove-modal"]').should('have.attr', 'data-state', 'search');
+    cy.platform().invoke('updateEntity', addr.hub, { [Hub.ATTR_STATE]: Hub.STATE_NORMAL });
+    cy.get('[data-testid="zwave-remove-modal"]').should('have.attr', 'data-state', 'failure');
   });
 
   it('cancels an orphan search', () => {

@@ -1,0 +1,130 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`ZWaveTools – snapshots matches snapshot 1`] = `
+<div
+  class="space-y-2"
+>
+  <div
+    class="border border-heron rounded-[var(--border-radius-base)]"
+  >
+    <button
+      class="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-pigeon transition-colors"
+      data-testid="zwave-remove-section"
+    >
+      <span
+        class="font-medium text-swift"
+      >
+        Remove Z-Wave Device
+      </span>
+      <span
+        class="text-grouse"
+      >
+        ▼
+      </span>
+    </button>
+  </div>
+  <div
+    class="border border-heron rounded-[var(--border-radius-base)]"
+  >
+    <button
+      class="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-pigeon transition-colors"
+      data-testid="zwave-rebuild-section"
+    >
+      <span
+        class="font-medium text-swift"
+      >
+        Rebuild Z-Wave Network
+      </span>
+      <span
+        class="text-grouse"
+      >
+        ▼
+      </span>
+    </button>
+  </div>
+</div>
+`;
+
+exports[`ZWaveTools – snapshots matches snapshot with the stop retry offered 1`] = `
+<div
+  class="space-y-2"
+>
+  <div
+    class="border border-heron rounded-[var(--border-radius-base)]"
+  >
+    <button
+      class="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-pigeon transition-colors"
+      data-testid="zwave-remove-section"
+    >
+      <span
+        class="font-medium text-swift"
+      >
+        Remove Z-Wave Device
+      </span>
+      <span
+        class="text-grouse"
+      >
+        ▲
+      </span>
+    </button>
+    <div
+      class="border-t border-heron px-4 py-4"
+      data-testid="zwave-remove-stop-failed"
+    >
+      <p
+        class="text-sm text-swift mb-3"
+      >
+        The hub may still be removing Z-Wave devices. It stops on its own within 2 minutes.
+      </p>
+      <button
+        class="bg-peacock text-crane px-5 py-2 rounded-[var(--border-radius-base)] text-sm hover:opacity-90 disabled:opacity-50"
+        data-testid="zwave-remove-stop-retry"
+      >
+        Stop Removal Mode
+      </button>
+    </div>
+    <div
+      class="border-t border-heron px-4 py-4"
+    >
+      <p
+        class="text-sm text-grouse mb-3"
+      >
+        Search for orphaned Z-Wave devices that are no longer connected to your hub. During the search, put the device in "learn mode" (usually by pressing the Z-Wave button on the device).
+      </p>
+      <p
+        class="text-sm text-grouse mb-4"
+      >
+        <strong>
+          Note:
+        </strong>
+         Do not use any other Z-Wave devices during this process as they may be removed inadvertently.
+      </p>
+      <button
+        class="bg-peacock text-crane px-5 py-2 rounded-[var(--border-radius-base)] text-sm hover:opacity-90"
+        data-testid="zwave-remove-start"
+      >
+        Remove Z-Wave Devices
+      </button>
+    </div>
+  </div>
+  <div
+    class="border border-heron rounded-[var(--border-radius-base)]"
+  >
+    <button
+      class="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-pigeon transition-colors"
+      data-testid="zwave-rebuild-section"
+    >
+      <span
+        class="font-medium text-swift"
+      >
+        Rebuild Z-Wave Network
+      </span>
+      <span
+        class="text-grouse"
+      >
+        ▼
+      </span>
+    </button>
+  </div>
+</div>
+`;
