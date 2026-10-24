@@ -9,7 +9,7 @@
 
 import { useState, useCallback } from 'react';
 import Bridge from '@arcus/core/bridge';
-import { Base, Device, DeviceAdvanced, DeviceConnection, DevicePower, Identify } from '@arcus/core';
+import { Base, Device, DeviceAdvanced, DevicePower, Identify } from '@arcus/core';
 import { useDevice } from '@/hooks/useDeviceCapability';
 import { isDeviceOffline, formatTemp } from '@/hooks/useDeviceConfig';
 import { useSidePanel } from '@/components/SidePanel';
@@ -66,7 +66,6 @@ export function DeviceDetailPanel({ address }: DeviceDetailPanelProps) {
   const model = (device[Device.ATTR_MODEL] as string) ?? '';
   const productId = (device[Device.ATTR_PRODUCTID] as string) ?? '';
   const offline = isDeviceOffline(device);
-  const connState = (device[DeviceConnection.ATTR_STATE] as string) ?? '';
   const protocol = (device[DeviceAdvanced.ATTR_PROTOCOL] as string) ?? '';
   const firmwareVersion = (device[DeviceAdvanced.ATTR_FIRMWAREVERSION] as string) ?? '';
   const battery = device[DevicePower.ATTR_BATTERY] as number | undefined;
@@ -108,12 +107,12 @@ export function DeviceDetailPanel({ address }: DeviceDetailPanelProps) {
           <InfoRow label="Product ID" value={productId} />
         )}
         {protocol && (
-          <InfoRow label="Protocol" value={protocol} />
+          <InfoRow label="Protocol" value={formatProtocol(protocol)} />
         )}
         {firmwareVersion && (
           <InfoRow label="Firmware" value={firmwareVersion} />
         )}
-        <InfoRow label="Connection" value={offline ? 'Offline' : connState || 'Online'} />
+        <InfoRow label="Connection" value={offline ? 'Offline' : 'Online'} />
         {powerSource && (
           <InfoRow
             label="Power"
@@ -166,6 +165,20 @@ export function DeviceDetailPanel({ address }: DeviceDetailPanelProps) {
       )}
     </div>
   );
+}
+
+/** Platform protocol codes (devadv:protocol) → display names. */
+function formatProtocol(protocol: string): string {
+  switch (protocol) {
+    case 'ZIGB':
+      return 'Zigbee';
+    case 'ZWAV':
+      return 'Z-Wave';
+    case 'IPCD':
+      return 'Wi-Fi';
+    default:
+      return protocol;
+  }
 }
 
 function InfoRow({ label, value }: { label: string; value: string }) {
