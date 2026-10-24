@@ -36,7 +36,7 @@
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "cypress": "^15.11.0",
-    "eslint": "^9.0.0",
+    "eslint": "^10.13.0",
     "eslint-config-next": "^16.4.2",
     "jest": "^30.5.2",
     "jest-environment-jsdom": "^30.5.2",
