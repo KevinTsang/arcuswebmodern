@@ -42,7 +42,7 @@ const ALARM_TYPES = [
   { key: 'SECURITY', label: 'Security', icon: 'icon-platform-lock-1', description: 'Intruder detection' },
   { key: 'SMOKE', label: 'Smoke', icon: 'icon-app-flame', description: 'Smoke detector alerts' },
   { key: 'CO', label: 'Carbon Monoxide', icon: 'icon-platform-warning-1', description: 'CO detector alerts' },
-  { key: 'PANIC', label: 'Panic', icon: 'icon-app-alarm-1', description: 'Emergency panic button' },
+  { key: 'PANIC', label: 'Panic', icon: 'icon-app-alarm-1', description: 'Panic raised from a keypad, pendant or rule' },
 ];
 
 export default function ProMonitoringPage() {

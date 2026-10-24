@@ -906,7 +906,6 @@ export class MockPlatform {
       });
       return {};
     },
-    [AlarmSubsystem.CMD_PANIC]: () => ({}),
     [AlarmIncident.CMD_CANCEL]: ({ destination }) => {
       this.mustGet(destination);
       this.updateEntity(destination, { [AlarmIncident.ATTR_ALERTSTATE]: AlarmIncident.ALERTSTATE_COMPLETE });
