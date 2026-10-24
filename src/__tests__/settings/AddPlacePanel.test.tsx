@@ -1,6 +1,6 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act, cleanup } from '@testing-library/react';
 import { Base, Account, Place } from '@arcus/core';
-import AddPlacePanel from '@/components/settings/AddPlacePanel';
+import { AddPlacePanel } from '@/components/settings/AddPlacePanel';
 import type { PlaceData } from '@/store/entityTypes';
 
 // ── Mocks ─────────────────────────────────────────────────────────────
@@ -48,6 +48,15 @@ const mockOnSaved = jest.fn();
 
 function renderPanel() {
   return render(<AddPlacePanel accountId={OWN_ACCOUNT_ID} onSaved={mockOnSaved} />);
+}
+
+/** A promise the test resolves by hand. */
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>((res) => {
+    resolve = res;
+  });
+  return { promise, resolve };
 }
 
 function createPlace(name = 'Beach House') {
@@ -132,7 +141,7 @@ describe('AddPlacePanel – creating a place', () => {
             [Place.ATTR_STATEPROV]: 'CA',
             [Place.ATTR_ZIPCODE]: '90265',
           },
-          serviceLevel: 'BASIC',
+          serviceLevel: Place.SERVICELEVEL_BASIC,
         },
       ),
     );
@@ -181,6 +190,46 @@ describe('AddPlacePanel – creating a place', () => {
     await waitFor(() => expect(screen.getByTestId('add-place-added')).toHaveTextContent(
       'Cabin has been added to your account.',
     ));
+  });
+
+  it('reports success without a Switch button when the reply has no place', async () => {
+    // The platform created the place; a malformed reply must not read as a
+    // failure, or a retry would create a second place.
+    mockBridgeRequest.mockResolvedValue({});
+    renderPanel();
+    createPlace('Cabin');
+
+    await waitFor(() => expect(screen.getByTestId('add-place-added')).toHaveTextContent(
+      'Cabin has been added to your account.',
+    ));
+    expect(mockDispatch).toHaveBeenCalledWith({
+      type: 'ui/addNotification',
+      payload: { type: 'success', message: 'Place created!' },
+    });
+    expect(mockDispatch).not.toHaveBeenCalledWith(expect.objectContaining({
+      payload: expect.objectContaining({ type: 'error' }),
+    }));
+    expect(mockOnSaved).toHaveBeenCalledTimes(1);
+    expect(screen.queryByTestId('add-place-switch')).not.toBeInTheDocument();
+    expect(screen.getByTestId('add-place-done')).toBeInTheDocument();
+  });
+
+  it('still reports success when refreshing the places list throws', async () => {
+    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+    const onSaved = jest.fn(() => {
+      throw new Error('refresh failed');
+    });
+    render(<AddPlacePanel accountId={OWN_ACCOUNT_ID} onSaved={onSaved} />);
+    createPlace();
+
+    await waitFor(() => expect(onSaved).toHaveBeenCalled());
+    expect(screen.getByTestId('add-place-added')).toBeInTheDocument();
+    expect(mockDispatch).not.toHaveBeenCalledWith({
+      type: 'ui/addNotification',
+      payload: { type: 'error', message: 'Failed to create place.' },
+    });
+    expect(consoleError).toHaveBeenCalled();
+    consoleError.mockRestore();
   });
 
   it('shows an error and keeps the form on failure', async () => {
@@ -237,6 +286,22 @@ describe('AddPlacePanel – after the place is added', () => {
     );
     expect(mockCloseRight).not.toHaveBeenCalled();
     expect(screen.getByTestId('add-place-switch')).not.toBeDisabled();
+  });
+
+  it('does not close another panel if this one was closed during the switch', async () => {
+    const switchDone = deferred<string>();
+    mockSwitchUnwrap.mockReturnValue(switchDone.promise);
+    renderPanel();
+    createPlace();
+    await waitFor(() => expect(screen.getByTestId('add-place-switch')).toBeInTheDocument());
+
+    fireEvent.click(screen.getByTestId('add-place-switch'));
+    expect(screen.getByTestId('add-place-switch')).toHaveTextContent('Switching…');
+    // The user closes this panel (and may open another) before the switch ends
+    cleanup();
+    await act(async () => switchDone.resolve('place-new'));
+
+    expect(mockCloseRight).not.toHaveBeenCalled();
   });
 
   it('closes without switching on Done', async () => {

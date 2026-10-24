@@ -172,7 +172,7 @@ describe('People & Places', () => {
 
     cy.expectRequest(Account.CMD_ADDPLACE, (r) => r.destination === addr.account).then((r) => {
       expect(r.attributes.place).to.deep.include({ 'place:name': 'Beach Condo', 'place:city': 'Seaside' });
-      expect(r.attributes.serviceLevel).to.eq('BASIC');
+      expect(r.attributes.serviceLevel).to.eq(Place.SERVICELEVEL_BASIC);
     });
     cy.toast('Place created!');
     tid('add-place-added').should('contain', 'Beach Condo');

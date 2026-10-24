@@ -2,7 +2,7 @@ import { render, screen, waitFor, fireEvent, act } from '@testing-library/react'
 import type { ReactElement } from 'react';
 import { Base, Person, Place } from '@arcus/core';
 import PeoplePlacesSection from '@/components/settings/PeoplePlacesSection';
-import AddPlacePanel from '@/components/settings/AddPlacePanel';
+import { AddPlacePanel } from '@/components/settings/AddPlacePanel';
 import type { PlaceData, PersonData } from '@/store/entityTypes';
 import type { SessionPlace } from '@/arcus/types';
 
@@ -34,8 +34,7 @@ jest.mock('@/store/slices/placeSlice', () => ({
 }));
 
 jest.mock('@/components/settings/AddPlacePanel', () => ({
-  __esModule: true,
-  default: () => null,
+  AddPlacePanel: () => null,
 }));
 
 // Session places from SessionCreated: the user owns place-1 (their own
@@ -44,12 +43,13 @@ const ownSessionPlace: SessionPlace = { placeId: 'place-1', placeName: 'My Home'
 const guestSessionPlace: SessionPlace = { placeId: 'place-2', placeName: 'Beach House', accountId: 'acct-other', role: 'FULL_ACCESS' };
 
 let mockActivePlaceId = 'place-1';
+let mockActivePlace: PlaceData | null = null;
 let mockSessionPlaces: SessionPlace[] = [];
 
 jest.mock('@/store/hooks', () => ({
   useAppSelector: (sel: (s: any) => any) =>
     sel({
-      place: { placeId: mockActivePlaceId },
+      place: { placeId: mockActivePlaceId, place: mockActivePlace },
       auth: {
         person: { [Base.ATTR_ADDRESS]: 'SERV:person:p1', personId: 'p1', places: mockSessionPlaces },
         // The active place's account — must not be used as the AddPlace target.
@@ -79,7 +79,8 @@ const ownerPlaceData: PlaceData = {
   [Place.ATTR_CITY]: 'Springfield',
   [Place.ATTR_STATEPROV]: 'IL',
   [Place.ATTR_ZIPCODE]: '62701',
-  [Place.ATTR_SERVICELEVEL]: 'PREMIUM',
+  [Place.ATTR_SERVICELEVEL]: Place.SERVICELEVEL_PREMIUM,
+  [Place.ATTR_ACCOUNT]: 'acct-own',
 };
 
 const guestPlaceData: PlaceData = {
@@ -90,7 +91,8 @@ const guestPlaceData: PlaceData = {
   [Place.ATTR_CITY]: 'Malibu',
   [Place.ATTR_STATEPROV]: 'CA',
   [Place.ATTR_ZIPCODE]: '90265',
-  [Place.ATTR_SERVICELEVEL]: 'BASIC',
+  [Place.ATTR_SERVICELEVEL]: Place.SERVICELEVEL_BASIC,
+  [Place.ATTR_ACCOUNT]: 'acct-other',
 };
 
 const person1: PersonData = {
@@ -118,6 +120,7 @@ const person3: PersonData = {
 beforeEach(() => {
   jest.clearAllMocks();
   mockActivePlaceId = 'place-1';
+  mockActivePlace = ownerPlaceData;
   mockSessionPlaces = [ownSessionPlace, guestSessionPlace];
 
   mockListAvailablePlaces.mockResolvedValue({
@@ -294,6 +297,32 @@ describe('PeoplePlacesSection – only guest places', () => {
 });
 
 describe('PeoplePlacesSection – add place', () => {
+  // A place the user added (or joined) after signing in: it isn't in the
+  // SessionCreated snapshot, only in the fetched places list.
+  const cabinPlace = { placeId: 'place-3', name: 'Cabin', role: 'OWNER' };
+  const cabinPlaceData: PlaceData = {
+    [Base.ATTR_ADDRESS]: 'SERV:place:place-3',
+    [Base.ATTR_ID]: 'place-3',
+    [Place.ATTR_NAME]: 'Cabin',
+    [Place.ATTR_ACCOUNT]: 'acct-own',
+  };
+
+  function openedPanel() {
+    return mockOpenRight.mock.calls[0][0] as ReactElement<{ accountId: string; onSaved: () => void }>;
+  }
+
+  it('matches snapshot at a place the user owns', async () => {
+    render(<PeoplePlacesSection />);
+    expect(await screen.findByTestId('add-place-section')).toMatchSnapshot();
+  });
+
+  it('matches snapshot while a guest place is active', async () => {
+    mockActivePlaceId = 'place-2';
+    mockActivePlace = guestPlaceData;
+    render(<PeoplePlacesSection />);
+    expect(await screen.findByTestId('add-place-section')).toMatchSnapshot();
+  });
+
   it('enables Add Place when the active place is one the user owns', async () => {
     render(<PeoplePlacesSection />);
     await waitFor(() => expect(screen.getByTestId('add-place')).toBeInTheDocument());
@@ -301,36 +330,91 @@ describe('PeoplePlacesSection – add place', () => {
     expect(screen.queryByTestId('add-place-hint')).not.toBeInTheDocument();
   });
 
-  it("opens AddPlacePanel for the user's own account, not the active place's account", async () => {
+  it("opens AddPlacePanel for the active place's account", async () => {
     render(<PeoplePlacesSection />);
     await waitFor(() => expect(screen.getByTestId('add-place')).toBeInTheDocument());
     fireEvent.click(screen.getByTestId('add-place'));
 
-    const panel = mockOpenRight.mock.calls[0][0] as ReactElement<{ accountId: string; onSaved: () => void }>;
+    const panel = openedPanel();
     expect(panel.type).toBe(AddPlacePanel);
+    // place:account of the active place, not s.auth.account (acct-other)
     expect(panel.props.accountId).toBe('acct-own');
     expect(panel.props.onSaved).toEqual(expect.any(Function));
   });
 
-  it('reloads the places list when a place is added', async () => {
+  it.each([
+    ['fails to load', () => mockListAvailablePlaces.mockRejectedValue(new Error('timeout'))],
+    ['is empty', () => mockListAvailablePlaces.mockResolvedValue({ places: [] })],
+  ])('keeps Add Place enabled at an owned place when the places list %s', async (_, setUp) => {
+    setUp();
+    render(<PeoplePlacesSection />);
+    await waitFor(() => expect(screen.getByText('No places found.')).toBeInTheDocument());
+
+    expect(screen.getByTestId('add-place')).not.toBeDisabled();
+    expect(screen.queryByTestId('add-place-hint')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByTestId('add-place'));
+    expect(openedPanel().props.accountId).toBe('acct-own');
+  });
+
+  it('enables Add Place at an owned place added since sign-in', async () => {
+    mockActivePlaceId = 'place-3';
+    mockActivePlace = cabinPlaceData;
+    mockListAvailablePlaces.mockResolvedValue({ places: [ownerPlace, guestPlace, cabinPlace] });
+    render(<PeoplePlacesSection />);
+    await waitFor(() => expect(screen.getByTestId('add-place')).toBeInTheDocument());
+
+    expect(screen.getByTestId('add-place')).not.toBeDisabled();
+    fireEvent.click(screen.getByTestId('add-place'));
+    expect(openedPanel().props.accountId).toBe('acct-own');
+  });
+
+  it("shows no Add Place or hint when the active place's role is unknown", async () => {
+    mockActivePlaceId = 'place-3';
+    mockActivePlace = cabinPlaceData;
+    mockListAvailablePlaces.mockRejectedValue(new Error('timeout'));
+    render(<PeoplePlacesSection />);
+    await waitFor(() => expect(screen.getByText('No places found.')).toBeInTheDocument());
+
+    expect(screen.queryByTestId('add-place')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('add-place-hint')).not.toBeInTheDocument();
+  });
+
+  it.each([
+    ['has not loaded', null],
+    ['is still the previous place', guestPlaceData],
+  ])("hides Add Place while the active place's record %s", async (_, record) => {
+    mockActivePlace = record;
+    render(<PeoplePlacesSection />);
+    await waitFor(() => expect(screen.getByText('My Home')).toBeInTheDocument());
+
+    expect(screen.queryByTestId('add-place')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('add-place-hint')).not.toBeInTheDocument();
+  });
+
+  it('reloads the places list when a place is added, keeping the current list on screen', async () => {
     render(<PeoplePlacesSection />);
     await waitFor(() => expect(screen.getByTestId('add-place')).toBeInTheDocument());
     expect(mockListAvailablePlaces).toHaveBeenCalledTimes(1);
 
     fireEvent.click(screen.getByTestId('add-place'));
-    const panel = mockOpenRight.mock.calls[0][0] as ReactElement<{ onSaved: () => void }>;
+    let resolveList!: (value: { places: typeof ownerPlace[] }) => void;
+    mockListAvailablePlaces.mockReturnValue(new Promise((resolve) => {
+      resolveList = resolve;
+    }));
+    act(() => openedPanel().props.onSaved());
 
-    mockListAvailablePlaces.mockResolvedValue({
-      places: [ownerPlace, guestPlace, { placeId: 'place-3', name: 'Cabin', role: 'OWNER' }],
-    });
-    act(() => panel.props.onSaved());
-
-    await waitFor(() => expect(screen.getByTestId('place-card-place-3')).toBeInTheDocument());
+    // While the reload runs, the existing places stay visible
     expect(mockListAvailablePlaces).toHaveBeenCalledTimes(2);
+    expect(screen.queryByText('Loading places…')).not.toBeInTheDocument();
+    expect(screen.getByTestId('place-card-place-1')).toBeInTheDocument();
+
+    await act(async () => resolveList({ places: [ownerPlace, guestPlace, cabinPlace] }));
+    await waitFor(() => expect(screen.getByTestId('place-card-place-3')).toBeInTheDocument());
   });
 
   it('disables Add Place with a hint while a guest place is active', async () => {
     mockActivePlaceId = 'place-2';
+    mockActivePlace = guestPlaceData;
     render(<PeoplePlacesSection />);
     await waitFor(() => expect(screen.getByTestId('add-place')).toBeInTheDocument());
 
@@ -342,6 +426,7 @@ describe('PeoplePlacesSection – add place', () => {
 
   it('hides Add Place when the user owns no account', async () => {
     mockActivePlaceId = 'place-2';
+    mockActivePlace = guestPlaceData;
     mockSessionPlaces = [guestSessionPlace];
     mockListAvailablePlaces.mockResolvedValue({ places: [guestPlace] });
     render(<PeoplePlacesSection />);

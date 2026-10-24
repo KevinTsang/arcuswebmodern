@@ -1,5 +1,3 @@
-import type { SessionPlace } from '@/arcus/types';
-
 export function formatServiceLevel(level: string | undefined | null): string {
   switch (level) {
     case 'BASIC':
@@ -30,13 +28,4 @@ export function formatRole(role: string): string {
     default:
       return role || '—';
   }
-}
-
-/**
- * The signed-in person's own account id — the account of any place where
- * they are the account owner (role OWNER). A person owns at most one account,
- * so every OWNER place carries the same id. Undefined for guest-only users.
- */
-export function getOwnAccountId(places: SessionPlace[]): string | undefined {
-  return places.find((p) => p.role === 'OWNER')?.accountId;
 }

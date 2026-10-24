@@ -1,5 +1,4 @@
-import { formatRole, formatServiceLevel, getOwnAccountId } from '@/components/settings/settingsHelper';
-import type { SessionPlace } from '@/arcus/types';
+import { formatRole, formatServiceLevel } from '@/components/settings/settingsHelper';
 
 describe('formatServiceLevel', () => {
   it('formats known service levels', () => {
@@ -34,22 +33,5 @@ describe('formatRole', () => {
 
   it('returns dash for empty role', () => {
     expect(formatRole('')).toBe('—');
-  });
-});
-
-describe('getOwnAccountId', () => {
-  const guest: SessionPlace = { placeId: 'p2', placeName: 'Lake House', accountId: 'acct-other', role: 'FULL_ACCESS' };
-  const owned: SessionPlace = { placeId: 'p1', placeName: 'Home', accountId: 'acct-own', role: 'OWNER' };
-
-  it('returns the account of a place the person owns', () => {
-    expect(getOwnAccountId([guest, owned])).toBe('acct-own');
-  });
-
-  it('returns undefined when the person only has guest places', () => {
-    expect(getOwnAccountId([guest])).toBeUndefined();
-  });
-
-  it('returns undefined when there are no places', () => {
-    expect(getOwnAccountId([])).toBeUndefined();
   });
 });
