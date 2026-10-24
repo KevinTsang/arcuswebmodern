@@ -1,7 +1,10 @@
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent, act } from '@testing-library/react';
+import type { ReactElement } from 'react';
 import { Base, Person, Place } from '@arcus/core';
 import PeoplePlacesSection from '@/components/settings/PeoplePlacesSection';
+import AddPlacePanel from '@/components/settings/AddPlacePanel';
 import type { PlaceData, PersonData } from '@/store/entityTypes';
+import type { SessionPlace } from '@/arcus/types';
 
 const mockOpenRight = jest.fn();
 const mockBridgeRequest = jest.fn();
@@ -30,11 +33,28 @@ jest.mock('@/store/slices/placeSlice', () => ({
   setPlace: (payload: unknown) => ({ type: 'place/setPlace', payload }),
 }));
 
+jest.mock('@/components/settings/AddPlacePanel', () => ({
+  __esModule: true,
+  default: () => null,
+}));
+
+// Session places from SessionCreated: the user owns place-1 (their own
+// account) and is a guest at place-2 (someone else's account).
+const ownSessionPlace: SessionPlace = { placeId: 'place-1', placeName: 'My Home', accountId: 'acct-own', role: 'OWNER' };
+const guestSessionPlace: SessionPlace = { placeId: 'place-2', placeName: 'Beach House', accountId: 'acct-other', role: 'FULL_ACCESS' };
+
+let mockActivePlaceId = 'place-1';
+let mockSessionPlaces: SessionPlace[] = [];
+
 jest.mock('@/store/hooks', () => ({
   useAppSelector: (sel: (s: any) => any) =>
     sel({
-      place: { placeId: 'place-1' },
-      auth: { person: { [Base.ATTR_ADDRESS]: 'SERV:person:p1', personId: 'p1' } },
+      place: { placeId: mockActivePlaceId },
+      auth: {
+        person: { [Base.ATTR_ADDRESS]: 'SERV:person:p1', personId: 'p1', places: mockSessionPlaces },
+        // The active place's account — must not be used as the AddPlace target.
+        account: { [Base.ATTR_ADDRESS]: 'SERV:account:acct-other' },
+      },
     }),
   useAppDispatch: () => jest.fn(),
 }));
@@ -97,6 +117,8 @@ const person3: PersonData = {
 
 beforeEach(() => {
   jest.clearAllMocks();
+  mockActivePlaceId = 'place-1';
+  mockSessionPlaces = [ownSessionPlace, guestSessionPlace];
 
   mockListAvailablePlaces.mockResolvedValue({
     places: [ownerPlace, guestPlace],
@@ -268,5 +290,64 @@ describe('PeoplePlacesSection – only guest places', () => {
       expect(screen.getByText('Beach House')).toBeInTheDocument();
     });
     expect(screen.queryByText('Your Places')).not.toBeInTheDocument();
+  });
+});
+
+describe('PeoplePlacesSection – add place', () => {
+  it('enables Add Place when the active place is one the user owns', async () => {
+    render(<PeoplePlacesSection />);
+    await waitFor(() => expect(screen.getByTestId('add-place')).toBeInTheDocument());
+    expect(screen.getByTestId('add-place')).not.toBeDisabled();
+    expect(screen.queryByTestId('add-place-hint')).not.toBeInTheDocument();
+  });
+
+  it("opens AddPlacePanel for the user's own account, not the active place's account", async () => {
+    render(<PeoplePlacesSection />);
+    await waitFor(() => expect(screen.getByTestId('add-place')).toBeInTheDocument());
+    fireEvent.click(screen.getByTestId('add-place'));
+
+    const panel = mockOpenRight.mock.calls[0][0] as ReactElement<{ accountId: string; onSaved: () => void }>;
+    expect(panel.type).toBe(AddPlacePanel);
+    expect(panel.props.accountId).toBe('acct-own');
+    expect(panel.props.onSaved).toEqual(expect.any(Function));
+  });
+
+  it('reloads the places list when a place is added', async () => {
+    render(<PeoplePlacesSection />);
+    await waitFor(() => expect(screen.getByTestId('add-place')).toBeInTheDocument());
+    expect(mockListAvailablePlaces).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(screen.getByTestId('add-place'));
+    const panel = mockOpenRight.mock.calls[0][0] as ReactElement<{ onSaved: () => void }>;
+
+    mockListAvailablePlaces.mockResolvedValue({
+      places: [ownerPlace, guestPlace, { placeId: 'place-3', name: 'Cabin', role: 'OWNER' }],
+    });
+    act(() => panel.props.onSaved());
+
+    await waitFor(() => expect(screen.getByTestId('place-card-place-3')).toBeInTheDocument());
+    expect(mockListAvailablePlaces).toHaveBeenCalledTimes(2);
+  });
+
+  it('disables Add Place with a hint while a guest place is active', async () => {
+    mockActivePlaceId = 'place-2';
+    render(<PeoplePlacesSection />);
+    await waitFor(() => expect(screen.getByTestId('add-place')).toBeInTheDocument());
+
+    expect(screen.getByTestId('add-place')).toBeDisabled();
+    expect(screen.getByTestId('add-place-hint')).toHaveTextContent('To add a place, first switch to a place you own.');
+    fireEvent.click(screen.getByTestId('add-place'));
+    expect(mockOpenRight).not.toHaveBeenCalled();
+  });
+
+  it('hides Add Place when the user owns no account', async () => {
+    mockActivePlaceId = 'place-2';
+    mockSessionPlaces = [guestSessionPlace];
+    mockListAvailablePlaces.mockResolvedValue({ places: [guestPlace] });
+    render(<PeoplePlacesSection />);
+    await waitFor(() => expect(screen.getByText('Beach House')).toBeInTheDocument());
+
+    expect(screen.queryByTestId('add-place')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('add-place-hint')).not.toBeInTheDocument();
   });
 });

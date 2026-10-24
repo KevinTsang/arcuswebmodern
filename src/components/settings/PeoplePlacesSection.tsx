@@ -18,6 +18,7 @@ import { Base, Place } from '@arcus/core';
 import { useAppSelector } from '@/store/hooks';
 import { useSidePanel } from '@/components/SidePanel';
 import PlaceCard from './PlaceCard';
+import { getOwnAccountId } from './settingsHelper';
 import { type PlaceWithPeople, type PlaceData } from './types';
 import type { ListPersonsResponse } from '@/arcus/types';
 import AddPlacePanel from './AddPlacePanel';
@@ -32,6 +33,15 @@ export default function PeoplePlacesSection() {
   const [refreshKey, setRefreshKey] = useState(0);
 
   const refresh = useCallback(() => setRefreshKey((k) => k + 1), []);
+
+  // New places go on the signed-in person's own account — not the account of
+  // whichever place is active, which for a guest place is someone else's.
+  const ownAccountId = getOwnAccountId(currentPerson?.places ?? []);
+
+  const handleAddPlace = useCallback(() => {
+    if (!ownAccountId) return;
+    openRight(<AddPlacePanel accountId={ownAccountId} onSaved={refresh} />);
+  }, [ownAccountId, openRight, refresh]);
 
   useEffect(() => {
     let cancelled = false;
@@ -82,6 +92,9 @@ export default function PeoplePlacesSection() {
 
   const ownerPlaces = places.filter((p) => p.role === 'OWNER');
   const guestPlaces = places.filter((p) => p.role !== 'OWNER');
+  // The platform only authorizes account:AddPlace while the session's active
+  // place is one the person owns (RoleAuthorizer checks the active place).
+  const activePlaceOwned = ownerPlaces.some((p) => p.placeId === activePlaceId);
 
   return (
     <div className="space-y-8">
@@ -123,14 +136,24 @@ export default function PeoplePlacesSection() {
         <p className="text-sm text-grouse">No places found.</p>
       )}
 
-      {/* Add place */}
-      <button
-        onClick={() => openRight(<AddPlacePanel />)}
-        data-testid="add-place"
-        className="px-4 py-2 bg-peacock text-crane rounded-[var(--border-radius-base)] text-sm font-medium hover:bg-peacock/90"
-      >
-        + Add Place
-      </button>
+      {/* Add place — only for people who own an account */}
+      {ownAccountId && (
+        <div className="space-y-2">
+          <button
+            onClick={handleAddPlace}
+            data-testid="add-place"
+            disabled={!activePlaceOwned}
+            className="px-4 py-2 bg-peacock text-crane rounded-[var(--border-radius-base)] text-sm font-medium hover:bg-peacock/90 disabled:opacity-50"
+          >
+            + Add Place
+          </button>
+          {!activePlaceOwned && (
+            <p data-testid="add-place-hint" className="text-xs text-grouse">
+              To add a place, first switch to a place you own.
+            </p>
+          )}
+        </div>
+      )}
     </div>
   );
 }

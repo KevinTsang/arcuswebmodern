@@ -175,10 +175,16 @@ describe('People & Places', () => {
       expect(r.attributes.serviceLevel).to.eq('BASIC');
     });
     cy.toast('Place created!');
+    tid('add-place-added').should('contain', 'Beach Condo');
+    tid('add-place-switch').should('have.text', 'Switch to Beach Condo');
+    tid('add-place-done').click();
     cy.platform().then((p) => {
       expect(p.data.places.map((pl) => pl.placeName)).to.include('Beach Condo');
       expect(p.created.size).to.eq(1);
       const newPlaceId = p.data.places.find((pl) => pl.placeName === 'Beach Condo')!.placeId;
+      // The places list reloads with the new place; the active place is unchanged.
+      placeCard(newPlaceId).should('have.attr', 'data-active', 'false');
+      placeCard(PLACE_ID).should('have.attr', 'data-active', 'true');
       // The new place is offered in the place selector.
       tid('header-places').click();
       tid(`place-option-${newPlaceId}`).should('contain', 'Beach Condo');
