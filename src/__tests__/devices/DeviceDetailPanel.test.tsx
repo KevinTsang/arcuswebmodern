@@ -1,5 +1,5 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { Base, Device, DeviceConnection } from '@arcus/core';
+import { Base, Device, DeviceAdvanced, DeviceConnection } from '@arcus/core';
 import { DeviceDetailPanel } from '@/components/devices/DeviceDetailPanel';
 import type { DeviceEntity } from '@/store/entityTypes';
 
@@ -150,5 +150,38 @@ describe('DeviceDetailPanel – Identify button', () => {
     mockDevice = undefined;
     const { container } = render(<DeviceDetailPanel address="DRIV:dev:missing" />);
     expect(container.innerHTML).toBe('');
+  });
+});
+
+describe('DeviceDetailPanel – info rows', () => {
+  function renderWith(attrs: Partial<DeviceEntity>) {
+    mockDevice = {
+      id: 'DRIV:dev:test',
+      [Base.ATTR_ADDRESS]: 'DRIV:dev:test',
+      [Device.ATTR_NAME]: 'Motion Sensor',
+      [DeviceConnection.ATTR_STATE]: 'ONLINE',
+      ...attrs,
+    };
+    render(<DeviceDetailPanel address="DRIV:dev:test" />);
+  }
+
+  it.each([
+    ['ZIGB', 'Zigbee'],
+    ['ZWAV', 'Z-Wave'],
+    ['IPCD', 'Wi-Fi'],
+    ['MOCK', 'MOCK'],
+  ])('shows protocol %s as %s', (code, label) => {
+    renderWith({ [DeviceAdvanced.ATTR_PROTOCOL]: code });
+    expect(screen.getByTestId('device-detail-protocol')).toHaveTextContent(label);
+  });
+
+  it('shows Online for a connected device', () => {
+    renderWith({});
+    expect(screen.getByTestId('device-detail-connection')).toHaveTextContent('Online');
+  });
+
+  it('shows Offline for a disconnected device', () => {
+    renderWith({ [DeviceConnection.ATTR_STATE]: 'OFFLINE' });
+    expect(screen.getByTestId('device-detail-connection')).toHaveTextContent('Offline');
   });
 });
