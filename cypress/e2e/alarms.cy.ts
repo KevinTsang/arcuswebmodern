@@ -24,6 +24,7 @@ describe('Alarm status', () => {
     tid('alarm-summary').should('contain', '2 devices');
     tid(`alarm-device-status-${DEVICE.contact}`).should('have.text', 'Ready');
     tid(`alarm-device-status-${DEVICE.motion}`).should('have.text', 'Ready');
+    tid('alarm-panic').should('not.exist');
   });
 
   it('arms fully, then disarms', () => {
@@ -32,6 +33,7 @@ describe('Alarm status', () => {
     cy.toast('Alarm armed');
     tid('alarm-state').should('have.text', 'Armed');
     tid('alarm-summary').should('contain', 'Full');
+    tid('alarm-panic').should('not.exist');
 
     tid('alarm-disarm').click();
     cy.expectRequest(SecuritySubsystem.CMD_DISARM, (r) => r.destination === SECURITY);
@@ -51,11 +53,6 @@ describe('Alarm status', () => {
     tid('alarm-arm-on').click();
     cy.toast('Failed to arm alarm');
     tid('alarm-state').should('have.text', 'Disarmed');
-  });
-
-  it('does not offer a panic button', () => {
-    tid('alarm-state').should('have.text', 'Disarmed');
-    tid('alarm-panic').should('not.exist');
   });
 
   it('shows triggered devices during an alert', () => {

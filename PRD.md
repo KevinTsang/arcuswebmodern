@@ -4,7 +4,7 @@
 
 This document catalogs the full feature set of the legacy Arcus web client (`~/arcusweb`, DoneJS/CanJS) and maps it against the modern client (`~/arcuswebmodern`, Next.js 16 / React 19) to identify gaps that must be closed for feature parity.
 
-Status legend: **Done** = fully implemented, **Partial** = core flow works but missing sub-features, **Missing** = not yet built, **Broken** = built but not functioning correctly (regression / bug to fix).
+Status legend: **Done** = fully implemented, **Partial** = core flow works but missing sub-features, **Missing** = not yet built, **Broken** = built but not functioning correctly (regression / bug to fix), **N/A** = deliberately not offered by either client.
 
 ---
 
