@@ -11,6 +11,7 @@
 import { useCallback } from 'react';
 import Link from 'next/link';
 import { CreateAccountProvider, useCreateAccount, CredentialsStep, AddressStep, WelcomeStep, STEPS, STEP_LABELS } from '@/components/create-account';
+import { setStep, setLoading, setPinError } from '@/components/create-account';
 import ChangePinForm from '@/components/ChangePinForm';
 import Bridge from '@arcus/core/bridge';
 
@@ -22,22 +23,22 @@ function CreateAccountInner() {
   const handlePin = useCallback(
     async (pinValue: string) => {
       if (!personData) {
-        dispatch({ type: 'SET_STEP', step: 'welcome' });
+        dispatch(setStep('welcome'));
         return;
       }
 
-      dispatch({ type: 'SET_LOADING', loading: true });
+      dispatch(setLoading(true));
 
       try {
         await Bridge.restfulRequest('person:ChangePinV2', `SERV:person:${personData.personId}`, {
           place: placeId,
           pin: pinValue,
         });
-        dispatch({ type: 'SET_STEP', step: 'welcome' });
+        dispatch(setStep('welcome'));
       } catch {
-        dispatch({ type: 'SET_PIN_ERROR', pinError: 'Failed to save PIN code. Please try again.' });
+        dispatch(setPinError('Failed to save PIN code. Please try again.'));
       } finally {
-        dispatch({ type: 'SET_LOADING', loading: false });
+        dispatch(setLoading(false));
       }
     },
     [personData, placeId, dispatch],
@@ -89,7 +90,7 @@ function CreateAccountInner() {
           {step === 'pin' && (
             <ChangePinForm
               onSave={handlePin}
-              onSkip={() => dispatch({ type: 'SET_STEP', step: 'welcome' })}
+              onSkip={() => dispatch(setStep('welcome'))}
               loading={loading}
               error={pinError}
             />
