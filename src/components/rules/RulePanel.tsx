@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import Bridge from '@arcus/core/bridge';
 import { Base, Rule, RuleTemplate } from '@arcus/core';
@@ -27,6 +29,41 @@ export function parseTemplateString(template: string): TemplateSegment[] {
     segments.push({ type: 'text', text: template.slice(lastIndex) });
   }
   return segments;
+}
+
+/**
+ * Fill each ${variable} with the name of its selected option. Returns undefined when there is
+ * no template text or any variable has no selected, named option (Resolve failed, a selection
+ * is empty, or the variable is one this panel cannot pick), so a saved description never ends
+ * up blank or holding variable names or raw addresses.
+ */
+function describeSelections(
+  segments: TemplateSegment[],
+  selectors: Record<string, ResolvedSelector>,
+  context: Record<string, string>,
+): string | undefined {
+  if (segments.length === 0) return undefined;
+  let description = '';
+  for (const seg of segments) {
+    if (seg.type === 'text') {
+      description += seg.text;
+      continue;
+    }
+    const value = context[seg.name];
+    const label = value ? selectors[seg.name]?.options.find((o) => o.value === value)?.name : undefined;
+    if (!label) return undefined;
+    description += label;
+  }
+  return description;
+}
+
+/** The rule's saved selections, without the platform-managed keys (_placeId, _accountId, _ruleName). */
+function savedSelections(rule: RuleEntity | undefined): Record<string, string> {
+  const result: Record<string, string> = {};
+  for (const [key, value] of Object.entries(rule?.[Rule.ATTR_CONTEXT] ?? {})) {
+    if (typeof value === 'string' && !key.startsWith('_')) result[key] = value;
+  }
+  return result;
 }
 
 interface RulePanelProps {
@@ -61,16 +98,7 @@ export function RulePanel({ rule, template, placeId }: RulePanelProps) {
   );
   const [selectors, setSelectors] = useState<Record<string, ResolvedSelector>>({});
   // The rule's saved selections, kept to tell whether the user changed any of them
-  const [savedContext] = useState<Record<string, string>>(() => {
-    if (!rule) return {};
-    const ctx = rule[Rule.ATTR_CONTEXT] as Record<string, unknown> | undefined;
-    if (!ctx) return {};
-    const result: Record<string, string> = {};
-    for (const [k, v] of Object.entries(ctx)) {
-      if (typeof v === 'string') result[k] = v;
-    }
-    return result;
-  });
+  const savedContext = useMemo(() => savedSelections(rule), [rule]);
   const [context, setContext] = useState<Record<string, string>>(savedContext);
   const [activeSelector, setActiveSelector] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -105,6 +133,14 @@ export function RulePanel({ rule, template, placeId }: RulePanelProps) {
           };
         }
         setSelectors(parsed);
+        // A saved selection that is no longer offered (e.g. a removed device) must be picked again
+        setContext((prev) => {
+          const next = { ...prev };
+          for (const [key, sel] of Object.entries(parsed)) {
+            if (next[key] && !sel.options.some((o) => o.value === next[key])) next[key] = '';
+          }
+          return next;
+        });
       } catch {
         dispatch(addNotification({ type: 'error', message: 'Failed to resolve rule template' }));
       }
@@ -114,65 +150,49 @@ export function RulePanel({ rule, template, placeId }: RulePanelProps) {
   }, [templateAddress, placeId, dispatch]);
 
   const selectorKeys = Object.keys(selectors);
-  const allFilled = selectorKeys.length > 0 && selectorKeys.every((k) => context[k]);
-
-  /** Replace ${variable} placeholders with the selected option's display name. */
-  const resolveDescription = useCallback((): string => {
-    return templateString.replace(/\$\{([^}]+)\}/g, (_match, varName: string) => {
-      const value = context[varName];
-      if (!value) return varName;
-      const option = selectors[varName]?.options.find((o) => o.value === value);
-      return option?.name ?? value;
-    });
-  }, [templateString, context, selectors]);
-
-  /**
-   * New description for an edited rule, or undefined to keep the saved one. The platform
-   * only rewrites rule:description when SetAttributes sends it (UpdateContext leaves it
-   * alone), so it is sent only when a selection changed and every variable maps to an
-   * option name. Otherwise (template missing from the catalog, Resolve failed, or a saved
-   * selection is no longer offered) it would be saved blank or with raw addresses.
-   */
-  const editedDescription = useMemo((): string | undefined => {
-    const changed = Object.keys(selectors).some((k) => context[k] !== savedContext[k]);
-    if (!changed) return undefined;
-    let complete = true;
-    const description = templateString.replace(/\$\{([^}]+)\}/g, (_match, varName: string) => {
-      const option = selectors[varName]?.options.find((o) => o.value === context[varName]);
-      if (!option?.name) complete = false;
-      return option?.name ?? '';
-    });
-    return complete ? description : undefined;
-  }, [templateString, context, savedContext, selectors]);
+  const missingSelections = selectorKeys.filter((k) => !context[k]);
+  // Creating needs every selection. Editing needs every offered selection, but can still
+  // rename a rule whose template could not be resolved (no selectors).
+  const canSave = !!name.trim() && missingSelections.length === 0 && (isEdit || selectorKeys.length > 0);
 
   const handleSave = useCallback(async () => {
-    if (!name.trim()) return;
+    if (!canSave) return;
+    const trimmedName = name.trim();
+    const description = describeSelections(segments, selectors, context);
     setSaving(true);
     try {
-      if (isEdit && address) {
-        // Name first: UpdateContext regenerates the rule's actions with the saved rule name
-        await Bridge.request(Base.CMD_SETATTRIBUTES, address, {
-          [Rule.ATTR_NAME]: name.trim(),
-          ...(editedDescription !== undefined ? { [Rule.ATTR_DESCRIPTION]: editedDescription } : {}),
-        });
-        if (selectorKeys.length > 0) {
-          const updateContext: Record<string, string> = {};
-          for (const key of selectorKeys) {
-            if (context[key]) updateContext[key] = context[key];
-          }
+      if (rule && address) {
+        const nameChanged = trimmedName !== rule[Rule.ATTR_NAME];
+        const contextChanged = Object.keys(selectors).some((k) => context[k] !== savedContext[k]);
+        // Also repairs a description an earlier save left blank or full of addresses
+        const newDescription = description !== rule[Rule.ATTR_DESCRIPTION] ? description : undefined;
+        // Name first: UpdateContext copies the saved name into the actions' _ruleName
+        if (nameChanged) {
+          await Bridge.request(Base.CMD_SETATTRIBUTES, address, { [Rule.ATTR_NAME]: trimmedName });
+        }
+        // The platform merges this into the saved context, so it also re-applies the name when
+        // Resolve failed. It rejects a template missing from its catalog; rules.ruleTemplates holds
+        // that whole catalog, so UpdateContext is skipped when the template is not there.
+        if ((nameChanged || contextChanged) && resolvedTemplate) {
           await Bridge.request(Rule.CMD_UPDATECONTEXT, address, {
-            context: updateContext,
-            template: resolvedTemplate?.[Base.ATTR_ID] ?? '',
+            context: { ...context },
+            template: resolvedTemplate[Base.ATTR_ID] ?? '',
           });
         }
-        dispatch(addNotification({ type: 'success', message: 'Rule saved' }));
+        // Last, so a failed UpdateContext never leaves a description of selections it did not apply
+        if (newDescription !== undefined) {
+          await Bridge.request(Base.CMD_SETATTRIBUTES, address, { [Rule.ATTR_DESCRIPTION]: newDescription });
+        }
+        if (nameChanged || contextChanged || newDescription !== undefined) {
+          dispatch(addNotification({ type: 'success', message: 'Rule saved' }));
+        }
       } else if (templateAddress) {
-        if (!allFilled) return;
         await Bridge.request(RuleTemplate.CMD_CREATERULE, templateAddress, {
           placeId,
-          name: name.trim(),
-          description: resolveDescription(),
-          context,
+          name: trimmedName,
+          // Without one the platform uses the template's own description
+          ...(description !== undefined ? { description } : {}),
+          context: { ...context },
         });
         dispatch(addNotification({ type: 'success', message: 'Rule created' }));
       }
@@ -181,7 +201,7 @@ export function RulePanel({ rule, template, placeId }: RulePanelProps) {
       dispatch(addNotification({ type: 'error', message: isEdit ? 'Failed to save rule' : 'Failed to create rule' }));
     }
     setSaving(false);
-  }, [isEdit, address, name, templateAddress, placeId, context, allFilled, selectorKeys, resolvedTemplate, resolveDescription, editedDescription, dispatch, closeRight]);
+  }, [canSave, name, segments, selectors, context, rule, address, savedContext, resolvedTemplate, templateAddress, placeId, isEdit, dispatch, closeRight]);
 
   const handleDelete = useCallback(async () => {
     if (!address) return;
@@ -279,11 +299,17 @@ export function RulePanel({ rule, template, placeId }: RulePanelProps) {
         </>
       )}
 
+      {isEdit && missingSelections.length > 0 && (
+        <p data-testid="rule-incomplete" className="text-sm text-cardinal mb-4">
+          The rule is incomplete. Please choose a setting for {missingSelections.map((k) => k.toUpperCase()).join(', ')}.
+        </p>
+      )}
+
       <div className="flex gap-3 mb-8">
         <button
           onClick={handleSave}
           data-testid="rule-save"
-          disabled={saving || !name.trim() || (!isEdit && !allFilled)}
+          disabled={saving || !canSave}
           className="bg-peacock text-crane px-5 py-2 rounded-[var(--border-radius-base)] hover:opacity-90 disabled:opacity-50 text-sm"
         >
           {saving ? (isEdit ? 'Saving...' : 'Creating...') : (isEdit ? 'Save' : 'Create Rule')}
