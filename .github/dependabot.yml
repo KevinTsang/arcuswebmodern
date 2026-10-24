@@ -4,15 +4,27 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    # Let new releases age before proposing them, in case one is compromised.
+    cooldown:
+      default-days: 7
     groups:
       # Batch minor/patch bumps into one PR; majors still get their own.
       npm-minor-patch:
         update-types: [minor, patch]
+    ignore:
+      # uuid 12+ is ESM-only, and Jest loads it as CommonJS via ts-jest.
+      - dependency-name: uuid
+        update-types: [version-update:semver-major]
+      # Major should track the Node runtime (.nvmrc / Dockerfile), not npm.
+      - dependency-name: "@types/node"
+        update-types: [version-update:semver-major]
 
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: weekly
+    cooldown:
+      default-days: 7
     groups:
       github-actions:
         patterns: ["*"]
