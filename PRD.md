@@ -207,7 +207,7 @@ None.
 | Alarm delays / grace period configuration | Yes | Yes (exit/entrance delay per mode) | **Done** |
 | Strobe / siren settings | Yes | Yes (silent alarm toggle per mode) | **Done** |
 | Silent / audible mode toggle | Yes | Yes (per mode) | **Done** |
-| Panic button | Yes | Yes | **Done** |
+| Panic button | No (keypad / pendant / rules only) | Yes (two-step confirm; disabled while sending) | **Done** |
 
 ### Gaps
 

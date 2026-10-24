@@ -1,0 +1,75 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`AlarmPanicControl matches snapshot 1`] = `
+<section
+  class="border-t border-heron pt-6"
+  data-testid="alarm-panic-section"
+>
+  <div
+    class="flex items-center justify-between gap-4"
+  >
+    <div>
+      <h3
+        class="text-sm font-medium text-swift"
+      >
+        Emergency
+      </h3>
+      <p
+        class="text-xs text-grouse mt-0.5"
+      >
+        Trigger a panic alarm if you need help.
+      </p>
+    </div>
+    <button
+      class="shrink-0 border border-cardinal text-cardinal px-6 py-2 rounded-[var(--border-radius-base)] text-sm font-medium hover:bg-cardinal/5"
+      data-testid="alarm-panic"
+    >
+      Panic
+    </button>
+  </div>
+</section>
+`;
+
+exports[`AlarmPanicControl matches snapshot with the confirm prompt open 1`] = `
+<section
+  class="border-t border-heron pt-6"
+  data-testid="alarm-panic-section"
+>
+  <div
+    aria-describedby="alarm-panic-confirm-message"
+    aria-labelledby="alarm-panic-confirm-title"
+    class="rounded-[var(--border-radius-base)] border border-cardinal/30 bg-cardinal/5 p-4"
+    data-testid="alarm-panic-confirm-prompt"
+    role="group"
+  >
+    <h3
+      class="text-sm font-semibold text-cardinal mb-1"
+      id="alarm-panic-confirm-title"
+    >
+      Trigger a panic alarm?
+    </h3>
+    <p
+      class="text-sm text-swift mb-4"
+      id="alarm-panic-confirm-message"
+    >
+      This sets off your alarm right away and notifies the people on your notification list. If you have professional monitoring, the monitoring center may dispatch emergency responders.
+    </p>
+    <div
+      class="flex flex-wrap gap-3"
+    >
+      <button
+        class="border border-heron text-coot px-4 py-2 rounded-[var(--border-radius-base)] text-sm hover:bg-pigeon disabled:opacity-50"
+        data-testid="alarm-panic-cancel"
+      >
+        Cancel
+      </button>
+      <button
+        class="bg-cardinal text-crane px-4 py-2 rounded-[var(--border-radius-base)] text-sm font-medium hover:opacity-90 disabled:opacity-50"
+        data-testid="alarm-panic-confirm"
+      >
+        Yes, Trigger Panic Alarm
+      </button>
+    </div>
+  </div>
+</section>
+`;

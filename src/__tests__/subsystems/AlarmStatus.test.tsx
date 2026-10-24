@@ -352,11 +352,31 @@ describe('AlarmStatus', () => {
     expect(screen.getByText('Panic')).toBeInTheDocument();
   });
 
-  it('calls AlarmSubsystem.CMD_PANIC on Panic click', async () => {
+  it('shows Panic button during the entry delay', () => {
+    mockAlarm = { ...defaultAlarm, securityState: SecuritySubsystem.ALARMSTATE_SOAKING };
+    render(<AlarmStatus />);
+    expect(screen.getByTestId('alarm-disarm')).toBeInTheDocument();
+    expect(screen.getByTestId('alarm-panic')).toBeInTheDocument();
+  });
+
+  it('does not send AlarmSubsystem.CMD_PANIC on Panic click alone', async () => {
     mockBridgeRequest.mockResolvedValue({});
     render(<AlarmStatus />);
 
-    fireEvent.click(screen.getByText('Panic'));
+    fireEvent.click(screen.getByTestId('alarm-panic'));
+
+    expect(screen.getByTestId('alarm-panic-confirm-prompt')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(mockBridgeRequest).not.toHaveBeenCalled();
+    });
+  });
+
+  it('sends AlarmSubsystem.CMD_PANIC once after confirming', async () => {
+    mockBridgeRequest.mockResolvedValue({});
+    render(<AlarmStatus />);
+
+    fireEvent.click(screen.getByTestId('alarm-panic'));
+    fireEvent.click(screen.getByTestId('alarm-panic-confirm'));
 
     await waitFor(() => {
       expect(mockBridgeRequest).toHaveBeenCalledWith(
@@ -365,6 +385,7 @@ describe('AlarmStatus', () => {
         {},
       );
     });
+    expect(mockBridgeRequest).toHaveBeenCalledTimes(1);
   });
 
   it('hides Panic button during active alert', () => {
@@ -373,11 +394,18 @@ describe('AlarmStatus', () => {
     expect(screen.queryByText('Panic')).not.toBeInTheDocument();
   });
 
+  it('hides Panic button when there is no alarm subsystem', () => {
+    mockAlarm = { ...defaultAlarm, alarmSubsystem: undefined as any };
+    render(<AlarmStatus />);
+    expect(screen.queryByTestId('alarm-panic')).not.toBeInTheDocument();
+  });
+
   it('dispatches error notification on panic failure', async () => {
     mockBridgeRequest.mockRejectedValue(new Error('network'));
     render(<AlarmStatus />);
 
-    fireEvent.click(screen.getByText('Panic'));
+    fireEvent.click(screen.getByTestId('alarm-panic'));
+    fireEvent.click(screen.getByTestId('alarm-panic-confirm'));
 
     await waitFor(() => {
       expect(mockDispatch).toHaveBeenCalledWith({

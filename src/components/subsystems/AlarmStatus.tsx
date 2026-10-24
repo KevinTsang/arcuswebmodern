@@ -3,8 +3,9 @@ import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { selectAllDevices } from "@/store/slices/devicesSlice";
 import { selectAllIncidents } from "@/store/slices/incidentsSlice";
 import { addNotification } from "@/store/slices/uiSlice";
-import { AlarmIncident, AlarmSubsystem, Base, Bridge, SecuritySubsystem, Device, DeviceConnection } from "@arcus/core";
+import { AlarmIncident, Base, Bridge, SecuritySubsystem, Device, DeviceConnection } from "@arcus/core";
 import { useState, useCallback } from "react";
+import { AlarmPanicControl } from "./AlarmPanicControl";
 import IncidentTracker from "./IncidentTracker";
 
 export function AlarmStatus() {
@@ -61,16 +62,7 @@ export function AlarmStatus() {
     SOAKING: 'Entry Delay',
   }[alarm.securityState] ?? alarm.securityState;
 
-  const handlePanic = useCallback(async () => {
-    if (!alarm.alarmSubsystem) return;
-    const addr = alarm.alarmSubsystem[Base.ATTR_ADDRESS] as string;
-    try {
-      await Bridge.request(AlarmSubsystem.CMD_PANIC, addr, {});
-    } catch {
-      dispatch(addNotification({ type: 'error', message: 'Failed to trigger panic alarm' }));
-    }
-  }, [alarm.alarmSubsystem, dispatch]);
-
+  const alarmAddress = alarm.alarmSubsystem?.[Base.ATTR_ADDRESS];
   const isArmed = alarm.securityState === SecuritySubsystem.ALARMSTATE_ARMED;
   const isAlert = alarm.securityState === SecuritySubsystem.ALARMSTATE_ALERT;
   const isDisarmed = alarm.securityState === SecuritySubsystem.ALARMSTATE_DISARMED;
@@ -140,17 +132,9 @@ export function AlarmStatus() {
         )}
       </div>
 
-      {/* Panic button */}
-      {!isAlert && (
-        <div className="flex justify-center">
-          <button
-            onClick={handlePanic}
-            data-testid="alarm-panic"
-            className="border border-cardinal text-cardinal px-6 py-2 rounded-[var(--border-radius-base)] text-sm font-medium hover:bg-cardinal/5"
-          >
-            Panic
-          </button>
-        </div>
+      {/* Panic — its own section, set apart from Arm/Disarm, with a confirm step */}
+      {!isAlert && alarmAddress && (
+        <AlarmPanicControl address={alarmAddress} />
       )}
 
       {/* Device list */}

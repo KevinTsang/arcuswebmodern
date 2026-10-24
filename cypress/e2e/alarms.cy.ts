@@ -53,9 +53,22 @@ describe('Alarm status', () => {
     tid('alarm-state').should('have.text', 'Disarmed');
   });
 
-  it('triggers a panic alarm', () => {
+  it('triggers a panic alarm only after confirming', () => {
     tid('alarm-panic').click();
+    tid('alarm-panic-confirm-prompt').should('be.visible');
+    cy.platform().then((p) => expect(p.requestsOf(AlarmSubsystem.CMD_PANIC)).to.be.empty);
+
+    tid('alarm-panic-confirm').click();
     cy.expectRequest(AlarmSubsystem.CMD_PANIC, (r) => r.destination === ALARM);
+    tid('alarm-panic-confirm-prompt').should('not.exist');
+    cy.platform().then((p) => expect(p.requestsOf(AlarmSubsystem.CMD_PANIC)).to.have.length(1));
+  });
+
+  it('sends no panic when the confirmation is cancelled', () => {
+    tid('alarm-panic').click();
+    tid('alarm-panic-cancel').click();
+    tid('alarm-panic').should('be.visible');
+    cy.platform().then((p) => expect(p.requestsOf(AlarmSubsystem.CMD_PANIC)).to.be.empty);
   });
 
   it('shows triggered devices during an alert', () => {
