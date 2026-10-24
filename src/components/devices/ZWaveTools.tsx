@@ -37,10 +37,39 @@ export function ZWaveTools() {
 
   // Track whether a device was removed during the current search session
   const deviceRemovedRef = useRef(false);
+  // Whether the hub may still be in unpairing (exclusion) mode from our
+  // START_UNPAIRING. While it is, any Z-Wave device that sends a node-info
+  // frame is excluded, so every way out of the modal stops it.
+  const unpairingRef = useRef(false);
+  const hubAddressRef = useRef(hubAddress);
+  useEffect(() => {
+    hubAddressRef.current = hubAddress;
+  }, [hubAddress]);
+
+  /** Send STOP_UNPAIRING unless the hub has already left unpairing mode. */
+  const stopUnpairing = useCallback(async () => {
+    const address = hubAddressRef.current;
+    if (!unpairingRef.current || !address) return;
+    unpairingRef.current = false;
+    try {
+      await Bridge.request(Hub.CMD_UNPAIRINGREQUEST, address, {
+        actionType: 'STOP_UNPAIRING',
+      });
+    } catch {
+      dispatch(addNotification({ type: 'error', message: 'Failed to stop Z-Wave device removal' }));
+    }
+  }, [dispatch]);
+
+  // Leaving the page mid-search must not leave the hub excluding devices.
+  useEffect(() => () => {
+    void stopUnpairing();
+  }, [stopUnpairing]);
 
   const startOrphanRemoval = useCallback(async () => {
     if (!hubAddress) return;
     deviceRemovedRef.current = false;
+    // Set before sending: even a failed request may have reached the hub.
+    unpairingRef.current = true;
     setRemoveModal('search');
     try {
       await Bridge.request(Hub.CMD_UNPAIRINGREQUEST, hubAddress, {
@@ -55,35 +84,31 @@ export function ZWaveTools() {
     }
   }, [hubAddress]);
 
-  const cancelOrphanRemoval = useCallback(async () => {
-    if (hubAddress) {
-      try {
-        await Bridge.request(Hub.CMD_UNPAIRINGREQUEST, hubAddress, {
-          actionType: 'STOP_UNPAIRING',
-        });
-      } catch (e) {
-        // Log but don't block cancellation — hub may have already returned to NORMAL
-        console.error('Failed to stop unpairing:', e);
-      }
-    }
+  /** Cancel / Done: stop unpairing if it's still running, then close. */
+  const closeOrphanRemoval = useCallback(async () => {
+    await stopUnpairing();
     setRemoveModal('closed');
-  }, [hubAddress]);
+  }, [stopUnpairing]);
 
   // Listen for hub state changes and device removal events while modal is open
   useEffect(() => {
     if (removeModal === 'closed') return;
 
-    const hubNs = hubAddress ? hubAddress.replace(/:.*$/, '') : 'SERV:hub';
+    const onDeviceRemoved = () => {
+      // The hub stays in unpairing mode (and keeps excluding) after removing a
+      // device, so stay on the search screen until hub:state returns to NORMAL.
+      deviceRemovedRef.current = true;
+      dispatch(addNotification({ type: 'success', message: 'A device was removed.' }));
+    };
 
     const onHubValueChange = (obj: Record<string, unknown>) => {
-      // numDevices decreased → device removed
+      // numDevices changed → device removed
       if (HubZwave.ATTR_NUMDEVICES in obj) {
-        deviceRemovedRef.current = true;
-        dispatch(addNotification({ type: 'success', message: 'A device was removed.' }));
-        setRemoveModal('success');
+        onDeviceRemoved();
       }
       // hub:state went from UNPAIRING back to NORMAL → search finished
       if (obj[Hub.ATTR_STATE] === Hub.STATE_NORMAL) {
+        unpairingRef.current = false;
         setRemoveModal((prev) => {
           if (prev === 'search') {
             return deviceRemovedRef.current ? 'success' : 'failure';
@@ -93,20 +118,15 @@ export function ZWaveTools() {
       }
     };
 
-    const onUnpairedDeviceRemoved = () => {
-      deviceRemovedRef.current = true;
-      dispatch(addNotification({ type: 'success', message: 'A device was removed.' }));
-      setRemoveModal('success');
-    };
-
-    cornea.on(`${hubNs} ${Base.EVENT_VALUECHANGE}`, onHubValueChange);
-    cornea.on(HubAdvanced.EVENT_UNPAIREDDEVICEREMOVED, onUnpairedDeviceRemoved);
+    // Hub events arrive under the `hub` namespace (address SERV:<hubId>:hub).
+    cornea.on(`${Hub.NAMESPACE} ${Base.EVENT_VALUECHANGE}`, onHubValueChange);
+    cornea.on(HubAdvanced.EVENT_UNPAIREDDEVICEREMOVED, onDeviceRemoved);
 
     return () => {
-      cornea.off(`${hubNs} ${Base.EVENT_VALUECHANGE}`, onHubValueChange);
-      cornea.off(HubAdvanced.EVENT_UNPAIREDDEVICEREMOVED, onUnpairedDeviceRemoved);
+      cornea.off(`${Hub.NAMESPACE} ${Base.EVENT_VALUECHANGE}`, onHubValueChange);
+      cornea.off(HubAdvanced.EVENT_UNPAIREDDEVICEREMOVED, onDeviceRemoved);
     };
-  }, [removeModal, hubAddress, dispatch]);
+  }, [removeModal, dispatch]);
 
   const handleRebuild = useCallback(async () => {
     if (!hubAddress) return;
@@ -199,15 +219,15 @@ export function ZWaveTools() {
           <div className="absolute inset-0 bg-swift/50" />
           <div className="relative bg-crane rounded-[var(--border-radius-base)] shadow-lg max-w-md w-full mx-4 p-6">
             {removeModal === 'search' && (
-              <RemoveZWaveDeviceModal onCancel={cancelOrphanRemoval} />
+              <RemoveZWaveDeviceModal onCancel={closeOrphanRemoval} />
             )}
             {removeModal === 'success' && (
-              <RemoveZWaveDeviceSuccessModal onDone={() => setRemoveModal('closed')} />
+              <RemoveZWaveDeviceSuccessModal onDone={closeOrphanRemoval} />
             )}
             {removeModal === 'failure' && (
               <RemoveZWaveDeviceFailureModal
                 onKeepSearching={startOrphanRemoval}
-                onCancel={() => setRemoveModal('closed')}
+                onCancel={closeOrphanRemoval}
               />
             )}
           </div>

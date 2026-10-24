@@ -1,5 +1,5 @@
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
-import { Base } from '@arcus/core';
+import { Base, Hub, HubAdvanced, HubZwave } from '@arcus/core';
 import { ZWaveTools } from '@/components/devices/ZWaveTools';
 import type { ArcusEntity } from '@/store/entityTypes';
 
@@ -49,14 +49,30 @@ function emitCornea(event: string, ...args: any[]) {
   (corneaListeners[event] ?? []).forEach((l) => l(...args));
 }
 
+// Hub events are emitted under the `hub` namespace (address SERV:<hubId>:hub).
+const HUB_ADDRESS = 'SERV:hub-1:hub';
+const HUB_VALUECHANGE = `${Hub.NAMESPACE} ${Base.EVENT_VALUECHANGE}`;
+
+function emitHubChange(attrs: Record<string, unknown>) {
+  act(() => {
+    emitCornea(HUB_VALUECHANGE, { [Base.ATTR_ADDRESS]: HUB_ADDRESS, ...attrs });
+  });
+}
+
+function stopCalls() {
+  return mockBridgeRequest.mock.calls.filter(
+    ([cmd, , attrs]) => cmd === Hub.CMD_UNPAIRINGREQUEST && attrs.actionType === 'STOP_UNPAIRING',
+  );
+}
+
 beforeEach(() => {
   jest.clearAllMocks();
   // Clear cornea listeners
   Object.keys(corneaListeners).forEach((k) => delete corneaListeners[k]);
   mockHub = {
-    [Base.ATTR_ADDRESS]: 'SERV:hub:hub-1',
-    'hubzwave:numDevices': 5,
-    'hub:state': 'NORMAL',
+    [Base.ATTR_ADDRESS]: HUB_ADDRESS,
+    [HubZwave.ATTR_NUMDEVICES]: 5,
+    [Hub.ATTR_STATE]: Hub.STATE_NORMAL,
   };
   mockBridgeRequest.mockResolvedValue({});
 });
@@ -103,7 +119,7 @@ describe('ZWaveTools – Orphan removal modal', () => {
     await waitFor(() =>
       expect(mockBridgeRequest).toHaveBeenCalledWith(
         'hub:UnpairingRequest',
-        'SERV:hub:hub-1',
+        HUB_ADDRESS,
         expect.objectContaining({
           actionType: 'START_UNPAIRING',
           timeout: 120000,
@@ -139,43 +155,65 @@ describe('ZWaveTools – Orphan removal modal', () => {
     await waitFor(() => {
       expect(mockBridgeRequest).toHaveBeenCalledWith(
         'hub:UnpairingRequest',
-        'SERV:hub:hub-1',
+        HUB_ADDRESS,
         expect.objectContaining({ actionType: 'STOP_UNPAIRING' }),
       );
       expect(screen.queryByText('Searching...')).not.toBeInTheDocument();
     });
   });
 
-  it('logs error and still closes modal when STOP_UNPAIRING fails', async () => {
-    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+  it('notifies and still closes modal when STOP_UNPAIRING fails', async () => {
     openRemoveModal();
     await waitFor(() =>
       expect(screen.getByText('Cancel')).toBeInTheDocument(),
     );
 
-    mockBridgeRequest.mockRejectedValueOnce(new Error('hub already normal'));
+    mockBridgeRequest.mockRejectedValueOnce(new Error('hub offline'));
     fireEvent.click(screen.getByText('Cancel'));
 
     await waitFor(() => {
-      expect(consoleSpy).toHaveBeenCalledWith('Failed to stop unpairing:', expect.any(Error));
+      expect(mockDispatch).toHaveBeenCalledWith({
+        type: 'ui/addNotification',
+        payload: { type: 'error', message: 'Failed to stop Z-Wave device removal' },
+      });
       expect(screen.queryByText('Searching...')).not.toBeInTheDocument();
     });
-    consoleSpy.mockRestore();
   });
 
-  it('shows success when hubzwave:numDevices changes', async () => {
+  it('keeps searching when hubzwave:numDevices changes, until the hub returns to NORMAL', async () => {
     openRemoveModal();
     await waitFor(() =>
       expect(screen.getByText('Searching...')).toBeInTheDocument(),
     );
 
-    act(() => {
-      emitCornea('SERV base:ValueChange', { 'hubzwave:numDevices': 4 });
-    });
+    emitHubChange({ [HubZwave.ATTR_NUMDEVICES]: 4 });
+    expect(screen.getByText('Searching...')).toBeInTheDocument();
+    expect(screen.getByTestId('zwave-remove-cancel')).toBeInTheDocument();
 
+    emitHubChange({ [Hub.ATTR_STATE]: Hub.STATE_NORMAL });
     expect(screen.getByText('Success!')).toBeInTheDocument();
     expect(screen.getByText(/successfully removed/)).toBeInTheDocument();
     expect(screen.getByText('Done')).toBeInTheDocument();
+  });
+
+  it('shows success when the removal and NORMAL arrive in one change', async () => {
+    openRemoveModal();
+    await waitFor(() =>
+      expect(screen.getByText('Searching...')).toBeInTheDocument(),
+    );
+
+    emitHubChange({ [HubZwave.ATTR_NUMDEVICES]: 4, [Hub.ATTR_STATE]: Hub.STATE_NORMAL });
+    expect(screen.getByText('Success!')).toBeInTheDocument();
+  });
+
+  it('ignores the hub entering UNPAIRING', async () => {
+    openRemoveModal();
+    await waitFor(() =>
+      expect(screen.getByText('Searching...')).toBeInTheDocument(),
+    );
+
+    emitHubChange({ [Hub.ATTR_STATE]: Hub.STATE_UNPAIRING });
+    expect(screen.getByText('Searching...')).toBeInTheDocument();
   });
 
   it('dispatches success notification when device is removed', async () => {
@@ -184,9 +222,7 @@ describe('ZWaveTools – Orphan removal modal', () => {
       expect(screen.getByText('Searching...')).toBeInTheDocument(),
     );
 
-    act(() => {
-      emitCornea('SERV base:ValueChange', { 'hubzwave:numDevices': 4 });
-    });
+    emitHubChange({ [HubZwave.ATTR_NUMDEVICES]: 4 });
 
     expect(mockDispatch).toHaveBeenCalledWith({
       type: 'ui/addNotification',
@@ -194,31 +230,37 @@ describe('ZWaveTools – Orphan removal modal', () => {
     });
   });
 
-  it('shows success when UnpairedDeviceRemoved event fires', async () => {
+  it('notifies on UnpairedDeviceRemoved and shows success once the hub returns to NORMAL', async () => {
     openRemoveModal();
     await waitFor(() =>
       expect(screen.getByText('Searching...')).toBeInTheDocument(),
     );
 
     act(() => {
-      emitCornea('hubadv:UnpairedDeviceRemoved');
+      emitCornea(HubAdvanced.EVENT_UNPAIREDDEVICEREMOVED);
     });
+    expect(mockDispatch).toHaveBeenCalledWith({
+      type: 'ui/addNotification',
+      payload: { type: 'success', message: 'A device was removed.' },
+    });
+    expect(screen.getByText('Searching...')).toBeInTheDocument();
 
+    emitHubChange({ [Hub.ATTR_STATE]: Hub.STATE_NORMAL });
     expect(screen.getByText('Success!')).toBeInTheDocument();
   });
 
-  it('closes modal when Done is clicked on success screen', async () => {
+  it('closes modal when Done is clicked on success screen, without stopping a finished search', async () => {
     openRemoveModal();
     await waitFor(() =>
       expect(screen.getByText('Searching...')).toBeInTheDocument(),
     );
 
-    act(() => {
-      emitCornea('SERV base:ValueChange', { 'hubzwave:numDevices': 4 });
-    });
+    emitHubChange({ [HubZwave.ATTR_NUMDEVICES]: 4 });
+    emitHubChange({ [Hub.ATTR_STATE]: Hub.STATE_NORMAL });
 
     fireEvent.click(screen.getByText('Done'));
-    expect(screen.queryByText('Success!')).not.toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByText('Success!')).not.toBeInTheDocument());
+    expect(stopCalls()).toHaveLength(0);
   });
 
   it('shows failure when hub returns to NORMAL without device removal', async () => {
@@ -227,9 +269,7 @@ describe('ZWaveTools – Orphan removal modal', () => {
       expect(screen.getByText('Searching...')).toBeInTheDocument(),
     );
 
-    act(() => {
-      emitCornea('SERV base:ValueChange', { 'hub:state': 'NORMAL' });
-    });
+    emitHubChange({ [Hub.ATTR_STATE]: Hub.STATE_NORMAL });
 
     expect(screen.getByText('Removal Timed Out')).toBeInTheDocument();
     expect(screen.getByText(/A device was not removed/)).toBeInTheDocument();
@@ -241,9 +281,7 @@ describe('ZWaveTools – Orphan removal modal', () => {
       expect(screen.getByText('Searching...')).toBeInTheDocument(),
     );
 
-    act(() => {
-      emitCornea('SERV base:ValueChange', { 'hub:state': 'NORMAL' });
-    });
+    emitHubChange({ [Hub.ATTR_STATE]: Hub.STATE_NORMAL });
 
     expect(screen.getByText('Keep Searching')).toBeInTheDocument();
     expect(screen.getByText('Cancel')).toBeInTheDocument();
@@ -255,9 +293,7 @@ describe('ZWaveTools – Orphan removal modal', () => {
       expect(screen.getByText('Searching...')).toBeInTheDocument(),
     );
 
-    act(() => {
-      emitCornea('SERV base:ValueChange', { 'hub:state': 'NORMAL' });
-    });
+    emitHubChange({ [Hub.ATTR_STATE]: Hub.STATE_NORMAL });
 
     mockBridgeRequest.mockClear();
     fireEvent.click(screen.getByText('Keep Searching'));
@@ -266,7 +302,7 @@ describe('ZWaveTools – Orphan removal modal', () => {
       expect(screen.getByText('Searching...')).toBeInTheDocument();
       expect(mockBridgeRequest).toHaveBeenCalledWith(
         'hub:UnpairingRequest',
-        'SERV:hub:hub-1',
+        HUB_ADDRESS,
         expect.objectContaining({ actionType: 'START_UNPAIRING' }),
       );
     });
@@ -278,12 +314,12 @@ describe('ZWaveTools – Orphan removal modal', () => {
       expect(screen.getByText('Searching...')).toBeInTheDocument(),
     );
 
-    act(() => {
-      emitCornea('SERV base:ValueChange', { 'hub:state': 'NORMAL' });
-    });
+    emitHubChange({ [Hub.ATTR_STATE]: Hub.STATE_NORMAL });
 
     fireEvent.click(screen.getByText('Cancel'));
-    expect(screen.queryByText('Removal Timed Out')).not.toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByText('Removal Timed Out')).not.toBeInTheDocument());
+    // The hub already left unpairing mode.
+    expect(stopCalls()).toHaveLength(0);
   });
 
   it('shows failure modal when UnpairingRequest fails', async () => {
@@ -292,5 +328,85 @@ describe('ZWaveTools – Orphan removal modal', () => {
     await waitFor(() =>
       expect(screen.getByText('Removal Timed Out')).toBeInTheDocument(),
     );
+  });
+});
+
+describe('ZWaveTools – stopping unpairing', () => {
+  async function openSearch() {
+    const utils = render(<ZWaveTools />);
+    fireEvent.click(screen.getByText('Remove Z-Wave Device'));
+    fireEvent.click(screen.getByText('Remove Z-Wave Devices'));
+    await waitFor(() => expect(screen.getByText('Searching...')).toBeInTheDocument());
+    return utils;
+  }
+
+  it('stops unpairing when unmounted mid-search', async () => {
+    const { unmount } = await openSearch();
+    unmount();
+
+    expect(mockBridgeRequest).toHaveBeenCalledWith(Hub.CMD_UNPAIRINGREQUEST, HUB_ADDRESS, {
+      actionType: 'STOP_UNPAIRING',
+    });
+  });
+
+  it('stops unpairing when unmounted after a device was removed but the hub is still unpairing', async () => {
+    const { unmount } = await openSearch();
+    emitHubChange({ [HubZwave.ATTR_NUMDEVICES]: 4 });
+    unmount();
+    expect(stopCalls()).toHaveLength(1);
+  });
+
+  it('does not stop unpairing on unmount once the hub returned to NORMAL', async () => {
+    const { unmount } = await openSearch();
+    emitHubChange({ [Hub.ATTR_STATE]: Hub.STATE_NORMAL });
+    unmount();
+    expect(stopCalls()).toHaveLength(0);
+  });
+
+  it('does not send STOP_UNPAIRING again on unmount after Cancel', async () => {
+    const { unmount } = await openSearch();
+    fireEvent.click(screen.getByTestId('zwave-remove-cancel'));
+    await waitFor(() => expect(screen.queryByText('Searching...')).not.toBeInTheDocument());
+    unmount();
+    expect(stopCalls()).toHaveLength(1);
+  });
+
+  it('sends nothing on unmount when no search was started', () => {
+    const { unmount } = render(<ZWaveTools />);
+    unmount();
+    expect(mockBridgeRequest).not.toHaveBeenCalled();
+  });
+
+  it('stops unpairing from the failure screen when START_UNPAIRING failed', async () => {
+    mockBridgeRequest.mockRejectedValueOnce(new Error('timeout'));
+    render(<ZWaveTools />);
+    fireEvent.click(screen.getByText('Remove Z-Wave Device'));
+    fireEvent.click(screen.getByText('Remove Z-Wave Devices'));
+    await waitFor(() => expect(screen.getByText('Removal Timed Out')).toBeInTheDocument());
+
+    fireEvent.click(screen.getByText('Cancel'));
+    await waitFor(() => expect(screen.queryByText('Removal Timed Out')).not.toBeInTheDocument());
+    expect(stopCalls()).toHaveLength(1);
+  });
+
+  it('stops a restarted search on unmount', async () => {
+    const { unmount } = await openSearch();
+    emitHubChange({ [Hub.ATTR_STATE]: Hub.STATE_NORMAL });
+    fireEvent.click(screen.getByText('Keep Searching'));
+    await waitFor(() => expect(screen.getByText('Searching...')).toBeInTheDocument());
+
+    unmount();
+    expect(stopCalls()).toHaveLength(1);
+  });
+
+  it('notifies when STOP_UNPAIRING fails on unmount', async () => {
+    const { unmount } = await openSearch();
+    mockBridgeRequest.mockRejectedValueOnce(new Error('hub offline'));
+    await act(async () => { unmount(); });
+
+    expect(mockDispatch).toHaveBeenCalledWith({
+      type: 'ui/addNotification',
+      payload: { type: 'error', message: 'Failed to stop Z-Wave device removal' },
+    });
   });
 });

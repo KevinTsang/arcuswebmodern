@@ -292,8 +292,11 @@ describe('Z-Wave tools', () => {
     cy.expectRequestAttrs(Hub.CMD_UNPAIRINGREQUEST, { actionType: 'START_UNPAIRING' });
 
     cy.platform().invoke('emit', undefined, 'hubadv:UnpairedDeviceRemoved', {});
-    cy.get('[data-testid="zwave-remove-modal"]').should('have.attr', 'data-state', 'success');
     cy.toast('A device was removed.');
+    // The hub keeps excluding until it leaves unpairing mode, so keep searching until then.
+    cy.get('[data-testid="zwave-remove-modal"]').should('have.attr', 'data-state', 'search');
+    cy.platform().invoke('updateEntity', addr.hub, { [Hub.ATTR_STATE]: Hub.STATE_NORMAL });
+    cy.get('[data-testid="zwave-remove-modal"]').should('have.attr', 'data-state', 'success');
     cy.get('[data-testid="zwave-remove-done"]').click();
     cy.get('[data-testid="zwave-remove-modal"]').should('not.exist');
   });
