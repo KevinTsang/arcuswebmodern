@@ -1,0 +1,29 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`OpenCloseDoor snapshots matches snapshot 1`] = `
+<button
+  class="
+        px-4 py-1.5 rounded-[var(--border-radius-base)] text-sm font-medium
+        bg-peacock text-crane
+        disabled:opacity-50
+      "
+  data-testid="device-door-toggle-DRIV:dev:garage"
+>
+  Open
+</button>
+`;
+
+exports[`OpenCloseDoor snapshots matches snapshot when obstructed 1`] = `
+<button
+  class="
+        px-4 py-1.5 rounded-[var(--border-radius-base)] text-sm font-medium
+        bg-cardinal/10 text-cardinal border border-cardinal/30
+        disabled:opacity-50
+      "
+  data-testid="device-door-toggle-DRIV:dev:garage"
+  disabled=""
+  title="Obstruction detected. Clear it and operate the door manually to restore control."
+>
+  Obstructed
+</button>
+`;
