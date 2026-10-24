@@ -2,6 +2,9 @@
   "name": "arcus-next",
   "version": "0.1.0",
   "private": true,
+  "workspaces": [
+    "packages/arcus-core"
+  ],
   "scripts": {
     "dev": "next dev --experimental-https --experimental-https-key certs/key.pem --experimental-https-cert certs/cert.pem --hostname localdev.myDevUrl.com --port 8443",
     "build": "next build",
@@ -19,8 +22,7 @@
     "partysocket": "^1.1.16",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "react-redux": "^9.2.0",
-    "uuid": "^11.1.1"
+    "react-redux": "^9.2.0"
   },
   "devDependencies": {
     "@jest/globals": "^30.2.0",
