@@ -15,6 +15,7 @@ jest.mock('@arcus/core/services', () => ({
 
 let authListeners: Record<string, ((...args: any[]) => void)[]> = {};
 const mockLogin = jest.fn();
+const mockReset = jest.fn();
 
 jest.mock('@arcus/core/auth', () => ({
   __esModule: true,
@@ -26,6 +27,7 @@ jest.mock('@arcus/core/auth', () => ({
       authListeners[event] = (authListeners[event] ?? []).filter((l) => l !== fn);
     },
     login: (...args: any[]) => mockLogin(...args),
+    reset: (...args: any[]) => mockReset(...args),
   },
 }));
 
@@ -178,6 +180,37 @@ describe('loginThunk', () => {
     await loginThunk(creds)(dispatch, () => ({}), undefined).catch(() => {});
 
     expect(dispatched).toContainEqual(loginFailed());
+  });
+
+  it('tears down the socket when login fails', async () => {
+    mockLogin.mockImplementation(() => {
+      emitAuth('authentication:fail');
+      return Promise.resolve();
+    });
+
+    await loginThunk(creds)(dispatch, () => ({}), undefined).catch(() => {});
+
+    expect(mockReset).toHaveBeenCalled();
+  });
+
+  it('removes its auth listeners when login() rejects', async () => {
+    mockLogin.mockRejectedValue(new Error('Login failed: 401'));
+
+    await loginThunk(creds)(dispatch, () => ({}), undefined).catch(() => {});
+
+    expect(authListeners['authentication:success']).toHaveLength(0);
+    expect(authListeners['authentication:fail']).toHaveLength(0);
+  });
+
+  it('keeps the socket when login succeeds', async () => {
+    mockLogin.mockImplementation(() => {
+      emitAuth('authentication:success', sessionPayload);
+      return Promise.resolve();
+    });
+
+    await loginThunk(creds)(dispatch, () => ({}), undefined);
+
+    expect(mockReset).not.toHaveBeenCalled();
   });
 
   it('passes isPublic flag to auth.login', async () => {

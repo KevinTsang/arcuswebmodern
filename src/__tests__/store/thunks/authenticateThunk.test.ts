@@ -16,6 +16,7 @@ jest.mock('@arcus/core/services', () => ({
 // Capture auth event listeners so we can fire them in tests
 let authListeners: Record<string, ((...args: any[]) => void)[]> = {};
 const mockAuthenticate = jest.fn();
+const mockReset = jest.fn();
 
 jest.mock('@arcus/core/auth', () => ({
   __esModule: true,
@@ -27,6 +28,7 @@ jest.mock('@arcus/core/auth', () => ({
       authListeners[event] = (authListeners[event] ?? []).filter((l) => l !== fn);
     },
     authenticate: (...args: any[]) => mockAuthenticate(...args),
+    reset: (...args: any[]) => mockReset(...args),
   },
 }));
 
@@ -69,12 +71,21 @@ beforeAll(async () => {
   authenticateThunk = (await import('@/store/thunks/authenticateThunk')).authenticateThunk;
 });
 
+let consoleWarn: jest.SpyInstance;
+
 beforeEach(() => {
   jest.clearAllMocks();
   authListeners = {};
   dispatched.length = 0;
   mockBridgeRequest.mockResolvedValue({});
   mockAuthenticate.mockResolvedValue(undefined);
+  localStorage.clear();
+  // Failed restores log why; keep the expected warnings out of the output.
+  consoleWarn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+});
+
+afterEach(() => {
+  consoleWarn.mockRestore();
 });
 
 describe('authenticateThunk', () => {
@@ -151,6 +162,65 @@ describe('authenticateThunk', () => {
     await authenticateThunk()(dispatch, () => ({}), undefined);
 
     expect(dispatched).toContainEqual(loginFailed());
+  });
+
+  it('tears down the socket when the restore fails', async () => {
+    mockAuthenticate.mockImplementation(() => {
+      emitAuth('authentication:fail');
+      return Promise.resolve();
+    });
+
+    await authenticateThunk()(dispatch, () => ({}), undefined);
+
+    expect(mockReset).toHaveBeenCalled();
+  });
+
+  it('removes its auth listeners when authenticate() rejects', async () => {
+    mockAuthenticate.mockRejectedValue(new Error('WebSocket error'));
+
+    await authenticateThunk()(dispatch, () => ({}), undefined);
+
+    expect(authListeners['authentication:success']).toHaveLength(0);
+    expect(authListeners['authentication:fail']).toHaveLength(0);
+  });
+
+  it('logs the failing step and the raw rejection when a restore step fails', async () => {
+    mockSetActivePlace.mockRejectedValueOnce({});
+    mockAuthenticate.mockImplementation(() => {
+      emitAuth('authentication:success', sessionPayload);
+      return Promise.resolve();
+    });
+
+    await authenticateThunk()(dispatch, () => ({}), undefined);
+
+    expect(consoleWarn).toHaveBeenCalledWith('Session restore failed during SetActivePlace:', {});
+    expect(dispatched).toContainEqual(loginFailed());
+  });
+
+  it('logs when no session could be established', async () => {
+    mockAuthenticate.mockImplementation(() => {
+      emitAuth('authentication:fail');
+      return Promise.resolve();
+    });
+
+    await authenticateThunk()(dispatch, () => ({}), undefined);
+
+    expect(consoleWarn).toHaveBeenCalledWith(
+      'Session restore failed during SessionCreated:',
+      new Error('No valid session'),
+    );
+  });
+
+  it('keeps the socket and stores the placeId when the restore succeeds', async () => {
+    mockAuthenticate.mockImplementation(() => {
+      emitAuth('authentication:success', sessionPayload);
+      return Promise.resolve();
+    });
+
+    await authenticateThunk()(dispatch, () => ({}), undefined);
+
+    expect(mockReset).not.toHaveBeenCalled();
+    expect(localStorage.getItem('arcus:placeId')).toBe('place-1');
   });
 
   it('returns { session, placeId } on success', async () => {
