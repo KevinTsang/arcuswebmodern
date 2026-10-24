@@ -60,7 +60,8 @@ export function RulePanel({ rule, template, placeId }: RulePanelProps) {
     isEdit ? ((rule[Rule.ATTR_NAME] as string) ?? '') : ((resolvedTemplate?.[RuleTemplate.ATTR_NAME] as string) ?? ''),
   );
   const [selectors, setSelectors] = useState<Record<string, ResolvedSelector>>({});
-  const [context, setContext] = useState<Record<string, string>>(() => {
+  // The rule's saved selections, kept to tell whether the user changed any of them
+  const [savedContext] = useState<Record<string, string>>(() => {
     if (!rule) return {};
     const ctx = rule[Rule.ATTR_CONTEXT] as Record<string, unknown> | undefined;
     if (!ctx) return {};
@@ -70,6 +71,7 @@ export function RulePanel({ rule, template, placeId }: RulePanelProps) {
     }
     return result;
   });
+  const [context, setContext] = useState<Record<string, string>>(savedContext);
   const [activeSelector, setActiveSelector] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -124,14 +126,34 @@ export function RulePanel({ rule, template, placeId }: RulePanelProps) {
     });
   }, [templateString, context, selectors]);
 
+  /**
+   * New description for an edited rule, or undefined to keep the saved one. The platform
+   * only rewrites rule:description when SetAttributes sends it (UpdateContext leaves it
+   * alone), so it is sent only when a selection changed and every variable maps to an
+   * option name. Otherwise (template missing from the catalog, Resolve failed, or a saved
+   * selection is no longer offered) it would be saved blank or with raw addresses.
+   */
+  const editedDescription = useMemo((): string | undefined => {
+    const changed = Object.keys(selectors).some((k) => context[k] !== savedContext[k]);
+    if (!changed) return undefined;
+    let complete = true;
+    const description = templateString.replace(/\$\{([^}]+)\}/g, (_match, varName: string) => {
+      const option = selectors[varName]?.options.find((o) => o.value === context[varName]);
+      if (!option?.name) complete = false;
+      return option?.name ?? '';
+    });
+    return complete ? description : undefined;
+  }, [templateString, context, savedContext, selectors]);
+
   const handleSave = useCallback(async () => {
     if (!name.trim()) return;
     setSaving(true);
     try {
       if (isEdit && address) {
+        // Name first: UpdateContext regenerates the rule's actions with the saved rule name
         await Bridge.request(Base.CMD_SETATTRIBUTES, address, {
           [Rule.ATTR_NAME]: name.trim(),
-          [Rule.ATTR_DESCRIPTION]: resolveDescription(),
+          ...(editedDescription !== undefined ? { [Rule.ATTR_DESCRIPTION]: editedDescription } : {}),
         });
         if (selectorKeys.length > 0) {
           const updateContext: Record<string, string> = {};
@@ -159,7 +181,7 @@ export function RulePanel({ rule, template, placeId }: RulePanelProps) {
       dispatch(addNotification({ type: 'error', message: isEdit ? 'Failed to save rule' : 'Failed to create rule' }));
     }
     setSaving(false);
-  }, [isEdit, address, name, templateAddress, placeId, context, allFilled, selectorKeys, resolvedTemplate, resolveDescription, dispatch, closeRight]);
+  }, [isEdit, address, name, templateAddress, placeId, context, allFilled, selectorKeys, resolvedTemplate, resolveDescription, editedDescription, dispatch, closeRight]);
 
   const handleDelete = useCallback(async () => {
     if (!address) return;

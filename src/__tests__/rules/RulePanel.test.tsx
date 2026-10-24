@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import { RulePanel, parseTemplateString } from '@/components/rules/RulePanel';
 import Bridge from '@arcus/core/bridge';
 import { Base, Rule, RuleTemplate } from '@arcus/core';
@@ -86,6 +86,16 @@ const resolvedSelectors = {
     },
   },
 };
+
+// ── Helpers ───────────────────────────────────────────────────────────
+
+const waitForLoad = () =>
+  waitFor(() => {
+    expect(screen.queryByText('Loading template...')).not.toBeInTheDocument();
+  });
+
+/** Bridge commands sent so far, in order. */
+const bridgeCommands = () => mockBridge.mock.calls.map(([command]) => command);
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -307,30 +317,122 @@ describe('RulePanel (edit mode)', () => {
     });
   });
 
-  it('saves name via SetAttributes and context via UpdateContext', async () => {
+  it('saves only the name, then UpdateContext, when no selection changed', async () => {
     render(<RulePanel rule={mockRule} placeId="place-1" />);
+    await waitForLoad();
+    fireEvent.change(screen.getByTestId('rule-name-input'), { target: { value: 'Front Door Chime' } });
+    fireEvent.click(screen.getByTestId('rule-save'));
     await waitFor(() => {
-      expect(screen.queryByText('Loading template...')).not.toBeInTheDocument();
+      expect(mockCloseRight).toHaveBeenCalled();
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+    expect(bridgeCommands()).toEqual([RuleTemplate.CMD_RESOLVE, Base.CMD_SETATTRIBUTES, Rule.CMD_UPDATECONTEXT]);
+    expect(mockBridge).toHaveBeenCalledWith(Base.CMD_SETATTRIBUTES, 'SERV:rule:place-1.1', {
+      [Rule.ATTR_NAME]: 'Front Door Chime',
+    });
+    expect(mockBridge).toHaveBeenCalledWith(Rule.CMD_UPDATECONTEXT, 'SERV:rule:place-1.1', {
+      context: { button: 'DRIV:dev:btn-1', chime: 'DING_DONG' },
+      template: 'button-chime',
+    });
+    expect(mockDispatch).toHaveBeenCalledWith(
+      expect.objectContaining({ payload: { type: 'success', message: 'Rule saved' } }),
+    );
+  });
+
+  it('saves the regenerated description with the name before UpdateContext when a selection changed', async () => {
+    render(<RulePanel rule={mockRule} placeId="place-1" />);
+    await waitForLoad();
+    fireEvent.click(screen.getByTestId('rule-var-button'));
+    fireEvent.click(within(screen.getByTestId('rule-option-DRIV:dev:btn-2')).getByRole('radio'));
+    fireEvent.click(screen.getByTestId('rule-save'));
     await waitFor(() => {
-      expect(mockBridge).toHaveBeenCalledWith(
-        Base.CMD_SETATTRIBUTES,
-        'SERV:rule:place-1.1',
-        {
-          [Rule.ATTR_NAME]: 'Door Bell Button',
-          [Rule.ATTR_DESCRIPTION]: 'When Smart Button 1 is pressed, play Ding Dong',
-        },
-      );
-      expect(mockBridge).toHaveBeenCalledWith(
-        Rule.CMD_UPDATECONTEXT,
-        'SERV:rule:place-1.1',
-        expect.objectContaining({
-          context: expect.objectContaining({ button: 'DRIV:dev:btn-1', chime: 'DING_DONG' }),
-          template: 'button-chime',
-        }),
+      expect(mockCloseRight).toHaveBeenCalled();
+    });
+    expect(bridgeCommands()).toEqual([RuleTemplate.CMD_RESOLVE, Base.CMD_SETATTRIBUTES, Rule.CMD_UPDATECONTEXT]);
+    expect(mockBridge).toHaveBeenCalledWith(Base.CMD_SETATTRIBUTES, 'SERV:rule:place-1.1', {
+      [Rule.ATTR_NAME]: 'Door Bell Button',
+      [Rule.ATTR_DESCRIPTION]: 'When Smart Button 2 is pressed, play Ding Dong',
+    });
+    expect(mockBridge).toHaveBeenCalledWith(Rule.CMD_UPDATECONTEXT, 'SERV:rule:place-1.1', {
+      context: { button: 'DRIV:dev:btn-2', chime: 'DING_DONG' },
+      template: 'button-chime',
+    });
+  });
+
+  it('does not send a blank description when the rule template is not in the catalog', async () => {
+    const ruleWithRetiredTemplate: RuleEntity = { ...mockRule, [Rule.ATTR_TEMPLATE]: 'retired-template' };
+    render(<RulePanel rule={ruleWithRetiredTemplate} placeId="place-1" />);
+    await waitForLoad();
+    fireEvent.change(screen.getByTestId('rule-name-input'), { target: { value: 'Front Door Chime' } });
+    fireEvent.click(screen.getByTestId('rule-save'));
+    await waitFor(() => {
+      expect(mockBridge).toHaveBeenCalledWith(Base.CMD_SETATTRIBUTES, 'SERV:rule:place-1.1', {
+        [Rule.ATTR_NAME]: 'Front Door Chime',
+      });
+    });
+    expect(mockBridge).not.toHaveBeenCalledWith(
+      Base.CMD_SETATTRIBUTES,
+      expect.anything(),
+      expect.objectContaining({ [Rule.ATTR_DESCRIPTION]: expect.anything() }),
+    );
+  });
+
+  it('does not write raw addresses into the description when Resolve fails', async () => {
+    mockBridge.mockImplementation((command: string) =>
+      command === RuleTemplate.CMD_RESOLVE ? Promise.reject(new Error('fail')) : Promise.resolve({}),
+    );
+    render(<RulePanel rule={mockRule} placeId="place-1" />);
+    await waitForLoad();
+    fireEvent.change(screen.getByTestId('rule-name-input'), { target: { value: 'Front Door Chime' } });
+    fireEvent.click(screen.getByTestId('rule-save'));
+    await waitFor(() => {
+      expect(mockBridge).toHaveBeenCalledWith(Base.CMD_SETATTRIBUTES, 'SERV:rule:place-1.1', {
+        [Rule.ATTR_NAME]: 'Front Door Chime',
+      });
+    });
+    expect(mockBridge).not.toHaveBeenCalledWith(
+      Base.CMD_SETATTRIBUTES,
+      expect.anything(),
+      expect.objectContaining({ [Rule.ATTR_DESCRIPTION]: expect.anything() }),
+    );
+  });
+
+  it('keeps the saved description when a changed rule still has a selection that is no longer offered', async () => {
+    mockBridge.mockResolvedValue({
+      selectors: {
+        button: { type: 'LIST', options: [['Smart Button 2', 'DRIV:dev:btn-2']] },
+        chime: resolvedSelectors.selectors.chime,
+      },
+    });
+    render(<RulePanel rule={mockRule} placeId="place-1" />);
+    await waitForLoad();
+    fireEvent.click(screen.getByTestId('rule-var-chime'));
+    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'CHIME' } });
+    fireEvent.click(screen.getByTestId('rule-save'));
+    await waitFor(() => {
+      expect(mockBridge).toHaveBeenCalledWith(Base.CMD_SETATTRIBUTES, 'SERV:rule:place-1.1', {
+        [Rule.ATTR_NAME]: 'Door Bell Button',
+      });
+    });
+    expect(mockBridge).toHaveBeenCalledWith(Rule.CMD_UPDATECONTEXT, 'SERV:rule:place-1.1', {
+      context: { button: 'DRIV:dev:btn-1', chime: 'CHIME' },
+      template: 'button-chime',
+    });
+  });
+
+  it('shows an error and stays open when UpdateContext fails', async () => {
+    mockBridge.mockImplementation((command: string) =>
+      command === Rule.CMD_UPDATECONTEXT ? Promise.reject(new Error('fail')) : Promise.resolve(resolvedSelectors),
+    );
+    render(<RulePanel rule={mockRule} placeId="place-1" />);
+    await waitForLoad();
+    fireEvent.click(screen.getByTestId('rule-save'));
+    await waitFor(() => {
+      expect(mockDispatch).toHaveBeenCalledWith(
+        expect.objectContaining({ payload: { type: 'error', message: 'Failed to save rule' } }),
       );
     });
+    expect(mockCloseRight).not.toHaveBeenCalled();
+    expect(screen.getByTestId('rule-save')).toHaveTextContent('Save');
   });
 
   it('shows delete button', async () => {
