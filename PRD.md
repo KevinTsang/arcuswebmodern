@@ -55,7 +55,7 @@ None.
 | Device naming | Yes | Yes | **Done** |
 | Device favorite toggle | Yes | Yes | **Done** |
 | Device identification (blink/beep) | Yes | Yes | **Done** |
-| Device removal with confirmation | Yes | Yes | **Done** |
+| Device removal with confirmation | Yes (removal steps, Cancel, Force Remove after timeout) | Yes (removal steps, waits for `base:Deleted`, Cancel/close stops hub unpairing, Force Remove after 4 min) | **Done** |
 | Device settings/configuration panel | Yes | Yes (enum, range, text parameter types) | **Done** |
 | Power usage display (instantaneous) | Yes | No | **Missing** |
 | OTA firmware update status | Yes | No | **Missing** |
