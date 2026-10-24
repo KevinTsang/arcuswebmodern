@@ -46,6 +46,15 @@ export const authenticateThunk = createAsyncThunk(
 
       const { personId, places = [] } = session;
 
+      // SessionCreated only carries personId, not name/email/phone. Start the
+      // person fetch now (it doesn't need the active place, as in arcusweb's
+      // app.js); it's optional, so a failure falls back to the session payload.
+      const personRequest = Bridge.request<PersonData>(Base.CMD_GETATTRIBUTES, `SERV:person:${personId}`, {})
+        .catch((e) => {
+          console.error('Failed to load person attributes:', e);
+          return null;
+        });
+
       // Determine default place (same logic as arcusweb PlaceManager)
       const placeId = getDefaultPlaceId(places, personId);
 
@@ -54,16 +63,17 @@ export const authenticateThunk = createAsyncThunk(
         await SessionService.SetActivePlace(placeId);
       }
 
-      // Fetch the account for the selected place, plus the person's own
-      // attributes — SessionCreated only carries personId, not name/email/phone.
+      // Fetch the account object for the selected place
       const selectedPlace = places.find((p) => p.placeId === placeId);
       if (!selectedPlace?.accountId) {
         throw new Error('No account found for the selected place');
       }
-      const [account, person] = await Promise.all([
-        Bridge.request<Account>(Base.CMD_GETATTRIBUTES, `SERV:account:${selectedPlace.accountId}`, {}),
-        Bridge.request<PersonData>(Base.CMD_GETATTRIBUTES, `SERV:person:${personId}`, {}),
-      ]);
+      const account = await Bridge.request<Account>(
+        Base.CMD_GETATTRIBUTES,
+        `SERV:account:${selectedPlace.accountId}`,
+        {},
+      );
+      const person = await personRequest;
 
       dispatch(loginSuccess({ person: { ...session, ...person }, account }));
       return { session, placeId };
