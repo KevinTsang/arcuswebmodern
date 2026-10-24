@@ -99,11 +99,19 @@ export const loadPlaceDataThunk = createAsyncThunk<string, string, { state: Root
         return { ruleTemplates: [] };
       }),
 
-      // Place (then load devices, persons, hub from place)
-      Bridge.request<PlaceData>(Base.CMD_GETATTRIBUTES, placeAddress, {}).catch((e) => {
-        console.error('Failed to load place:', e);
-        return null;
-      }),
+      // Place (then load devices, persons, hub from place). Store it as soon
+      // as it arrives: place ValueChanges are merged into the stored record,
+      // so any that arrive while the other requests are still running would
+      // otherwise be dropped and then overwritten by this older snapshot.
+      Bridge.request<PlaceData>(Base.CMD_GETATTRIBUTES, placeAddress, {})
+        .then((place) => {
+          dispatch(setPlace(place));
+          return place;
+        })
+        .catch((e) => {
+          console.error('Failed to load place:', e);
+          return null;
+        }),
     ]);
 
     // Dispatch products (including hub gen2/gen3 products)
@@ -167,10 +175,8 @@ export const loadPlaceDataThunk = createAsyncThunk<string, string, { state: Root
     const ruleTemplates = (ruleTemplatesResult as ListRuleTemplatesResponse).ruleTemplates ?? [];
     dispatch(setRuleTemplates(ruleTemplates));
 
-    // Dispatch place and load dependent data (devices, persons, hub)
+    // Load the place's dependent data (devices, persons, hub)
     if (placeResult) {
-      dispatch(setPlace(placeResult));
-
       // Load devices, persons, hub from place in parallel
       // These are place capability methods (not service methods)
       const [devicesResult, personsResult, hubResult] = await Promise.all([

@@ -22,7 +22,7 @@ import { schedulerAdded, schedulerUpdated, schedulerRemoved } from '../slices/sc
 import { incidentAdded, incidentUpdated, incidentRemoved, setCurrentIncident } from '../slices/incidentsSlice';
 import { personAdded, personUpdated, personRemoved } from '../slices/peopleSlice';
 import { setHub, updateHub, clearHub } from '../slices/hubSlice';
-import { updatePlace } from '../slices/placeSlice';
+import { updatePlace, type PlaceChange } from '../slices/placeSlice';
 import { setInvitations } from '../slices/invitationsSlice';
 import Bridge from '@arcus/core/bridge';
 import type { PendingInvitationsResponse } from '@/arcus/types';
@@ -170,7 +170,7 @@ function subscribeToCorneaEvents(dispatch: (action: { type: string }) => void, g
   // the changed attributes, and may be for a place other than the active one,
   // so it is merged into the active place rather than replacing it.
   const onPlaceValueChange = (obj: ArcusPayload) => {
-    dispatch(updatePlace(obj));
+    dispatch(updatePlace(obj as PlaceChange));
   };
 
   cornea.on(`${PLACE_NAMESPACE} ${Base.EVENT_VALUECHANGE}`, onPlaceValueChange);

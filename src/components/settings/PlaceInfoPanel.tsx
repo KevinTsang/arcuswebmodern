@@ -4,7 +4,7 @@ import { useState, useCallback } from 'react';
 import Bridge from '@arcus/core/bridge';
 import { Base, Place } from '@arcus/core';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
-import { setPlace } from '@/store/slices/placeSlice';
+import { updatePlace } from '@/store/slices/placeSlice';
 import { addNotification } from '@/store/slices/uiSlice';
 import { useSidePanel } from '@/components/SidePanel';
 import Field from './Field';
@@ -45,9 +45,11 @@ export default function PlaceInfoPanel({ placeData, onSaved }: PlaceInfoPanelPro
       };
       await Bridge.request(Base.CMD_SETATTRIBUTES, address, attrs);
 
-      // Update Redux if this is the active place
+      // Merge just the saved attributes into the active place. placeData is
+      // the snapshot this panel opened with, so writing it back would revert
+      // anything that changed since.
       if (isActivePlace) {
-        dispatch(setPlace({ ...placeData, ...attrs }));
+        dispatch(updatePlace({ [Base.ATTR_ADDRESS]: address, ...attrs }));
       }
 
       dispatch(addNotification({ type: 'success', message: 'Place info updated.' }));

@@ -43,16 +43,40 @@ describe('placeSlice', () => {
     expect(state.ready).toBe(false);
   });
 
-  it('setPlace stores place record', () => {
-    const place = { [Place.ATTR_NAME]: 'Home', [Base.ATTR_ADDRESS]: 'SERV:place:p1' };
-    const state = reducer(initial, setPlace(place));
-    expect(state.place).toEqual(place);
+  it("setPlaceId drops the previous place's record when switching places", () => {
+    // If the new place then fails to load, nothing is left pointing at the old one.
+    const state = reducer(loaded, setPlaceId('p2'));
+    expect(state.place).toBeNull();
   });
 
-  it('setPlace replaces the existing place record', () => {
-    const replacement = { [Base.ATTR_ADDRESS]: LAKE_ADDRESS, [Base.ATTR_ID]: 'p2' };
-    const state = reducer(loaded, setPlace(replacement));
-    expect(state.place).toEqual(replacement);
+  it('setPlaceId keeps the record when reloading the same place', () => {
+    const state = reducer(loaded, setPlaceId('p1'));
+    expect(state.place).toEqual(homePlace);
+  });
+
+  describe('setPlace', () => {
+    it("stores the active place's record", () => {
+      const state = reducer({ ...initial, placeId: 'p1' }, setPlace(homePlace));
+      expect(state.place).toEqual(homePlace);
+    });
+
+    it('replaces the record with a fresh load of the same place', () => {
+      const reloaded = { [Base.ATTR_ADDRESS]: HOME_ADDRESS, [Base.ATTR_ID]: 'p1', [Place.ATTR_NAME]: 'Main House' };
+      const state = reducer(loaded, setPlace(reloaded));
+      expect(state.place).toEqual(reloaded);
+    });
+
+    it('ignores a record for a place other than the active one', () => {
+      // e.g. an earlier place load that finished after the user switched again
+      const lake = { [Base.ATTR_ADDRESS]: LAKE_ADDRESS, [Base.ATTR_ID]: 'p2', [Place.ATTR_NAME]: 'Lake House' };
+      const state = reducer(loaded, setPlace(lake));
+      expect(state).toBe(loaded);
+    });
+
+    it('ignores a record when no place is active', () => {
+      const state = reducer(initial, setPlace(homePlace));
+      expect(state).toEqual(initial);
+    });
   });
 
   describe('updatePlace', () => {
@@ -69,7 +93,6 @@ describe('placeSlice', () => {
         [Base.ATTR_ADDRESS]: LAKE_ADDRESS,
         [Place.ATTR_NAME]: 'Lake House',
       }));
-      expect(state.place).toEqual(homePlace);
       expect(state).toBe(loaded);
     });
 
@@ -90,15 +113,13 @@ describe('placeSlice', () => {
       expect(state).toEqual(initial);
     });
 
-    it('ignores a ValueChange for the new place while its record is still loading', () => {
-      // setPlaceId runs before the new place's GetAttributes resolves, so the
-      // stored record still belongs to the previous place.
-      const switching = reducer(loaded, setPlaceId('p2'));
-      const state = reducer(switching, updatePlace({
-        [Base.ATTR_ADDRESS]: LAKE_ADDRESS,
-        [Place.ATTR_NAME]: 'Lake House',
-      }));
-      expect(state.place).toEqual(homePlace);
+    it('merges into the new place after a switch, and ignores the previous one', () => {
+      const lake = { [Base.ATTR_ADDRESS]: LAKE_ADDRESS, [Base.ATTR_ID]: 'p2', [Place.ATTR_NAME]: 'Lake House' };
+      let state = reducer(loaded, setPlaceId('p2'));
+      state = reducer(state, setPlace(lake));
+      state = reducer(state, updatePlace({ [Base.ATTR_ADDRESS]: HOME_ADDRESS, [Place.ATTR_NAME]: 'Main House' }));
+      state = reducer(state, updatePlace({ [Base.ATTR_ADDRESS]: LAKE_ADDRESS, [Place.ATTR_CITY]: 'Lakeside' }));
+      expect(state.place).toEqual({ ...lake, [Place.ATTR_CITY]: 'Lakeside' });
     });
   });
 
