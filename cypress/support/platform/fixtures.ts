@@ -10,10 +10,10 @@
  */
 
 import {
-  Account, AlarmSubsystem, Base, CamerasSubsystem, CareSubsystem, ClimateSubsystem, Contact,
+  Account, Alarm, AlarmSubsystem, Base, CamerasSubsystem, CareSubsystem, ClimateSubsystem, Contact,
   Device, DeviceAdvanced, DeviceConnection, DevicePower, Dimmer, DoorLock, DoorsNLocksSubsystem,
   Hub, HubAdvanced, HubConnection, HubZwave, IrrigationController, LawnNGardenSubsystem, LeakH2O,
-  LightsNSwitchesSubsystem, Motion, PairingSubsystem, Person, Place, PresenceSubsystem, Product,
+  LightsNSwitchesSubsystem, Motion, MotorizedDoor, PairingSubsystem, Person, Place, PresenceSubsystem, Product,
   RelativeHumidity, Rule, RuleTemplate, SafetySubsystem, Scene, Scheduler, SecurityAlarmMode,
   SecuritySubsystem, Subsystem, Switch, Temperature, Thermostat, Valve, WaterSubsystem,
 } from '../../../packages/arcus-core/src/capabilities/capabilities';
@@ -52,8 +52,9 @@ export const addr = {
 export const DEVICE = {
   lamp: addr.device('lamp'),
   coffee: addr.device('coffee'),
-  lock: addr.device('frontlock'),
-  frontDoor: addr.device('frontdoor'),
+  lock: addr.device('lock'),
+  contact: addr.device('contact'),
+  garageDoor: addr.device('garagedoor'),
   thermostat: addr.device('thermostat'),
   leak: addr.device('leak'),
   valve: addr.device('valve'),
@@ -66,7 +67,8 @@ export const DEVICE_NAME = {
   lamp: 'Living Room Lamp',
   coffee: 'Coffee Maker',
   lock: 'Front Door Lock',
-  frontDoor: 'Front Door Sensor',
+  contact: 'Front Door Sensor',
+  garageDoor: 'Garage Door',
   thermostat: 'Hallway Thermostat',
   leak: 'Basement Leak Sensor',
   valve: 'Main Water Valve',
@@ -169,17 +171,21 @@ export function createFixture(): PlatformData {
     device('coffee', DEVICE_NAME.coffee, 'Switch', ['swit'], {
       [Switch.ATTR_STATE]: Switch.STATE_OFF,
     }),
-    device('frontlock', DEVICE_NAME.lock, 'Lock', ['doorlock'], {
+    device('lock', DEVICE_NAME.lock, 'Lock', ['doorlock'], {
       [DoorLock.ATTR_LOCKSTATE]: DoorLock.LOCKSTATE_LOCKED,
       [DevicePower.ATTR_SOURCE]: 'BATTERY',
       [DevicePower.ATTR_BATTERY]: 88,
     }),
-    device('frontdoor', DEVICE_NAME.frontDoor, 'Contact', ['cont', 'temp'], {
+    device('contact', DEVICE_NAME.contact, 'Contact', ['cont', 'temp'], {
       [Contact.ATTR_CONTACT]: Contact.CONTACT_CLOSED,
       [Contact.ATTR_USEHINT]: Contact.USEHINT_DOOR,
       [Temperature.ATTR_TEMPERATURE]: 21,
       [DevicePower.ATTR_SOURCE]: 'BATTERY',
       [DevicePower.ATTR_BATTERY]: 95,
+    }),
+    device('garagedoor', DEVICE_NAME.garageDoor, 'Garage Door', ['motdoor'], {
+      [MotorizedDoor.ATTR_DOORSTATE]: MotorizedDoor.DOORSTATE_CLOSED,
+      [MotorizedDoor.ATTR_DOORLEVEL]: 0,
     }),
     device('thermostat', DEVICE_NAME.thermostat, 'Thermostat', ['therm', 'temp', 'humid'], {
       [Thermostat.ATTR_HVACMODE]: Thermostat.HVACMODE_HEAT,
@@ -224,6 +230,8 @@ export function createFixture(): PlatformData {
         { person: addr.guest, enabled: false },
       ],
       [AlarmSubsystem.ATTR_AVAILABLEALERTS]: ['SECURITY', 'SMOKE', 'CO', 'WATER', 'PANIC'],
+      [`${Alarm.ATTR_DEVICES}:SECURITY`]: [DEVICE.contact, DEVICE.motion],
+      [`${Alarm.ATTR_DEVICES}:WATER`]: [DEVICE.leak],
       [AlarmSubsystem.ATTR_ACTIVEALERTS]: [],
       [AlarmSubsystem.ATTR_RECORDONSECURITY]: false,
       [AlarmSubsystem.ATTR_FANSHUTOFFONSMOKE]: true,
@@ -232,11 +240,11 @@ export function createFixture(): PlatformData {
     subsystem('subsecurity', {
       [SecuritySubsystem.ATTR_ALARMMODE]: SecuritySubsystem.ALARMMODE_OFF,
       [SecuritySubsystem.ATTR_ALARMSTATE]: SecuritySubsystem.ALARMSTATE_DISARMED,
-      [SecuritySubsystem.ATTR_SECURITYDEVICES]: [DEVICE.frontDoor, DEVICE.motion],
+      [SecuritySubsystem.ATTR_SECURITYDEVICES]: [DEVICE.contact, DEVICE.motion],
       [SecuritySubsystem.ATTR_TRIGGEREDDEVICES]: [],
       [SecuritySubsystem.ATTR_OFFLINEDEVICES]: [],
-      [`${SecurityAlarmMode.ATTR_DEVICES}:ON`]: [DEVICE.frontDoor, DEVICE.motion],
-      [`${SecurityAlarmMode.ATTR_DEVICES}:PARTIAL`]: [DEVICE.frontDoor],
+      [`${SecurityAlarmMode.ATTR_DEVICES}:ON`]: [DEVICE.contact, DEVICE.motion],
+      [`${SecurityAlarmMode.ATTR_DEVICES}:PARTIAL`]: [DEVICE.contact],
       [`${SecurityAlarmMode.ATTR_ENTRANCEDELAYSEC}:ON`]: 30,
       [`${SecurityAlarmMode.ATTR_EXITDELAYSEC}:ON`]: 30,
       [`${SecurityAlarmMode.ATTR_SOUNDSENABLED}:ON`]: true,
@@ -253,7 +261,7 @@ export function createFixture(): PlatformData {
     }),
     subsystem('subclimate', {
       [ClimateSubsystem.ATTR_CONTROLDEVICES]: [DEVICE.thermostat],
-      [ClimateSubsystem.ATTR_TEMPERATUREDEVICES]: [DEVICE.thermostat, DEVICE.frontDoor],
+      [ClimateSubsystem.ATTR_TEMPERATUREDEVICES]: [DEVICE.thermostat, DEVICE.contact],
       [ClimateSubsystem.ATTR_HUMIDITYDEVICES]: [DEVICE.thermostat],
       [ClimateSubsystem.ATTR_PRIMARYTEMPERATUREDEVICE]: DEVICE.thermostat,
       [ClimateSubsystem.ATTR_PRIMARYHUMIDITYDEVICE]: DEVICE.thermostat,
@@ -261,8 +269,8 @@ export function createFixture(): PlatformData {
     }),
     subsystem('subdoorsnlocks', {
       [DoorsNLocksSubsystem.ATTR_LOCKDEVICES]: [DEVICE.lock],
-      [DoorsNLocksSubsystem.ATTR_CONTACTSENSORDEVICES]: [DEVICE.frontDoor],
-      [DoorsNLocksSubsystem.ATTR_MOTORIZEDDOORDEVICES]: [],
+      [DoorsNLocksSubsystem.ATTR_CONTACTSENSORDEVICES]: [DEVICE.contact],
+      [DoorsNLocksSubsystem.ATTR_MOTORIZEDDOORDEVICES]: [DEVICE.garageDoor],
       [DoorsNLocksSubsystem.ATTR_PETDOORDEVICES]: [],
       [DoorsNLocksSubsystem.ATTR_CHIMECONFIG]: {},
     }),

@@ -14,6 +14,7 @@ import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { switchPlaceThunk } from '@/store/thunks/switchPlaceThunk';
 import { logoutThunk } from '@/store/thunks/logoutThunk';
 import { useSidePanel } from '@/components/SidePanel';
+import { formatRole } from '@/components/settings/settingsHelper';
 import type { AvailablePlace } from '@/arcus/types';
 
 export default function PlaceSelector() {
@@ -96,7 +97,7 @@ export default function PlaceSelector() {
                   <div>
                     <span className="block font-medium">{place.name ?? 'Unnamed Place'}</span>
                     {place.role && (
-                      <span className="text-xs text-grouse capitalize">{place.role}</span>
+                      <span className="text-xs text-grouse">{formatRole(place.role)}</span>
                     )}
                   </div>
                 </button>

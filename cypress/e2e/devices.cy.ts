@@ -5,7 +5,7 @@
  */
 
 import {
-  Base, Contact, Device, DeviceConnection, Dimmer, DoorLock, Hub, HubZwave, Switch, Thermostat, Valve,
+  Base, Contact, Device, DeviceConnection, Dimmer, DoorLock, Hub, HubAdvanced, HubZwave, Switch, Thermostat, Valve,
 } from '../../packages/arcus-core/src/capabilities/capabilities';
 import { DEVICE, DEVICE_NAME, addr } from '../support/platform/fixtures';
 import { tid } from '../support/selectors';
@@ -29,7 +29,7 @@ describe('Devices page', () => {
     status(DEVICE.lamp).should('have.text', '75% Brightness');
     status(DEVICE.coffee).should('have.text', 'Off');
     status(DEVICE.lock).should('have.text', 'Locked');
-    status(DEVICE.frontDoor).should('have.text', 'Closed');
+    status(DEVICE.contact).should('have.text', 'Closed');
     status(DEVICE.thermostat).should('have.text', 'Heat to 68°');
     status(DEVICE.valve).should('have.text', 'Open');
     status(DEVICE.relay).should('have.text', 'Relay 1 On, Relay 2 Off');
@@ -40,7 +40,7 @@ describe('Devices page', () => {
     cy.signIn({ path: '/devices' });
     deviceRow(DEVICE.lock).should('contain', 'Battery:').and('contain', '88%');
     deviceRow(DEVICE.lamp).should('contain', 'Brightness:').and('contain', '75%');
-    deviceRow(DEVICE.frontDoor).should('contain', 'Status:').and('contain', 'Closed');
+    deviceRow(DEVICE.contact).should('contain', 'Status:').and('contain', 'Closed');
   });
 
   it('marks offline devices', () => {
@@ -210,10 +210,10 @@ describe('Devices page', () => {
 
     it('changes a contact sensor type', () => {
       cy.signIn({ path: '/devices' });
-      tid(`device-config-${DEVICE.frontDoor}`).click();
+      tid(`device-config-${DEVICE.contact}`).click();
       cy.get('[data-testid="contact-usehint-window"]').click();
       cy.expectRequest(Base.CMD_SETATTRIBUTES, (r) =>
-        r.destination === DEVICE.frontDoor && r.attributes[Contact.ATTR_USEHINT] === Contact.USEHINT_WINDOW);
+        r.destination === DEVICE.contact && r.attributes[Contact.ATTR_USEHINT] === Contact.USEHINT_WINDOW);
     });
 
     it('explains when a device has nothing to configure', () => {
@@ -225,8 +225,8 @@ describe('Devices page', () => {
 
   it('reflects device changes pushed by the platform', () => {
     cy.signIn({ path: '/devices' });
-    cy.platform().invoke('updateEntity', DEVICE.frontDoor, { [Contact.ATTR_CONTACT]: Contact.CONTACT_OPENED });
-    status(DEVICE.frontDoor).should('have.text', 'Open');
+    cy.platform().invoke('updateEntity', DEVICE.contact, { [Contact.ATTR_CONTACT]: Contact.CONTACT_OPENED });
+    status(DEVICE.contact).should('have.text', 'Open');
 
     const porch = addr.device('porch');
     cy.platform().invoke('addEntity', {
@@ -291,11 +291,32 @@ describe('Z-Wave tools', () => {
     cy.get('[data-testid="zwave-remove-modal"]').should('have.attr', 'data-state', 'search');
     cy.expectRequestAttrs(Hub.CMD_UNPAIRINGREQUEST, { actionType: 'START_UNPAIRING' });
 
-    cy.platform().invoke('emit', undefined, 'hubadv:UnpairedDeviceRemoved', {});
-    cy.get('[data-testid="zwave-remove-modal"]').should('have.attr', 'data-state', 'success');
+    // Cornea delivers hub events as `hub <type>`, so the event comes from the hub.
+    cy.platform().invoke('emit', addr.hub, HubAdvanced.EVENT_UNPAIREDDEVICEREMOVED, { devTypeGuess: 'Switch' });
     cy.toast('A device was removed.');
+    cy.get('[data-testid="zwave-remove-modal"]').should('have.attr', 'data-state', 'success');
+    // The search found its device, so the hub stops excluding straight away.
+    cy.expectRequestAttrs(Hub.CMD_UNPAIRINGREQUEST, { actionType: 'STOP_UNPAIRING' });
     cy.get('[data-testid="zwave-remove-done"]').click();
     cy.get('[data-testid="zwave-remove-modal"]').should('not.exist');
+  });
+
+  it('removes an orphan reported through hubzwave:numDevices', () => {
+    cy.get('[data-testid="zwave-remove-section"]').click();
+    cy.get('[data-testid="zwave-remove-start"]').click();
+    cy.get('[data-testid="zwave-remove-modal"]').should('have.attr', 'data-state', 'search');
+    cy.platform().invoke('updateEntity', addr.hub, { [HubZwave.ATTR_NUMDEVICES]: 1 });
+    cy.toast('A device was removed.');
+    cy.get('[data-testid="zwave-remove-modal"]').should('have.attr', 'data-state', 'success');
+    cy.expectRequestAttrs(Hub.CMD_UNPAIRINGREQUEST, { actionType: 'STOP_UNPAIRING' });
+  });
+
+  it('shows the timeout screen when the hub leaves unpairing mode on its own', () => {
+    cy.get('[data-testid="zwave-remove-section"]').click();
+    cy.get('[data-testid="zwave-remove-start"]').click();
+    cy.get('[data-testid="zwave-remove-modal"]').should('have.attr', 'data-state', 'search');
+    cy.platform().invoke('updateEntity', addr.hub, { [Hub.ATTR_STATE]: Hub.STATE_NORMAL });
+    cy.get('[data-testid="zwave-remove-modal"]').should('have.attr', 'data-state', 'failure');
   });
 
   it('cancels an orphan search', () => {

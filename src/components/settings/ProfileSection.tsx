@@ -1,7 +1,7 @@
 'use client';
 
 import { useAppSelector } from '@/store/hooks';
-import { Person, Account, Place } from '@arcus/core';
+import { Person, Place } from '@arcus/core';
 import { useSidePanel } from '@/components/SidePanel';
 import InfoCard from './InfoCard';
 import InfoRow from './InfoRow';
@@ -12,7 +12,6 @@ import ChangePinPanel from './ChangePinPanel';
 
 export default function ProfileSection() {
   const person = useAppSelector((s) => s.auth.person);
-  const account = useAppSelector((s) => s.auth.account);
   const place = useAppSelector((s) => s.place.place);
   const { openRight } = useSidePanel();
 
@@ -75,12 +74,6 @@ export default function ProfileSection() {
       <InfoCard title="Service Plan">
         <InfoRow label="Current Plan" value={serviceLevel} />
       </InfoCard>
-
-      {account && (
-        <InfoCard title="Account">
-          <InfoRow label="Account State" value={String(account[Account.ATTR_STATE] ?? '—')} />
-        </InfoCard>
-      )}
     </div>
   );
 }

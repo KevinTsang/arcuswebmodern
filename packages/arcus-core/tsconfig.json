@@ -9,6 +9,7 @@
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
+    "types": ["node"],
     "declaration": true,
     "outDir": "./dist",
     "rootDir": "./src"

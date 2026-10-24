@@ -18,6 +18,7 @@ import { loginThunk } from '@/store/thunks/loginThunk';
 import { loadPlaceDataThunk } from '@/store/thunks/loadPlaceDataThunk';
 import { useFormValidation, type ValidationConstraints } from '@/hooks/useFormValidation';
 import { PersonService } from '@arcus/core/services';
+import { ArcusLogo } from '@/components/shared/ArcusLogo';
 
 // ── Validation constraints ────────────────────────────────────────────
 
@@ -550,6 +551,7 @@ function LoginPageContent() {
     <main className="flex min-h-screen">
       {/* Branding panel */}
       <div className="hidden md:flex flex-col items-center justify-center flex-[0_0_35%] bg-gradient-to-b from-crane to-heron border-r border-grouse px-8">
+        <ArcusLogo className="w-28 h-28 mb-6" />
         <div className="text-2xl font-bold text-swift mb-2">Arcus</div>
         <div className="text-sm text-grouse uppercase tracking-wider">
           Smart Home

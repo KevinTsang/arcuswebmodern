@@ -1,0 +1,81 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`ArcusLogo matches snapshot 1`] = `
+<svg
+  aria-hidden="true"
+  class="w-8 h-8"
+  data-testid="arcus-logo"
+  viewBox="-101 -101 202 202"
+>
+  <path
+    d="M0 0L86.6 -50A100 100 0 0 0 0 -100Z"
+    fill="#F28E5C"
+    stroke="#F28E5C"
+    stroke-linejoin="round"
+    stroke-width="0.6"
+  />
+  <path
+    d="M0 0L0 -100A100 100 0 0 0 -86.6 -50Z"
+    fill="#ECCF59"
+    stroke="#ECCF59"
+    stroke-linejoin="round"
+    stroke-width="0.6"
+  />
+  <path
+    d="M0 0L-86.6 -50A100 100 0 0 0 -86.6 50Z"
+    fill="#68CD81"
+    stroke="#68CD81"
+    stroke-linejoin="round"
+    stroke-width="0.6"
+  />
+  <path
+    d="M0 0L-86.6 50A100 100 0 0 0 0 100Z"
+    fill="#6287E0"
+    stroke="#6287E0"
+    stroke-linejoin="round"
+    stroke-width="0.6"
+  />
+  <path
+    d="M0 0L0 100A100 100 0 0 0 86.6 50Z"
+    fill="#493475"
+    stroke="#493475"
+    stroke-linejoin="round"
+    stroke-width="0.6"
+  />
+  <path
+    d="M0 0L86.6 50A100 100 0 0 0 86.6 -50Z"
+    fill="#EB5D5F"
+    stroke="#EB5D5F"
+    stroke-linejoin="round"
+    stroke-width="0.6"
+  />
+  <path
+    d="M0 0L53.7 -31L0 -62Z"
+    fill="#FFFFFF"
+    stroke="#FFFFFF"
+    stroke-linejoin="round"
+    stroke-width="0.6"
+  />
+  <path
+    d="M0 0L0 -62L-53.7 -31Z"
+    fill="#E8E8E8"
+    stroke="#E8E8E8"
+    stroke-linejoin="round"
+    stroke-width="0.6"
+  />
+  <path
+    d="M0 0L-53.7 -31L-53.7 31L0 62Z"
+    fill="#D1D1D1"
+    stroke="#D1D1D1"
+    stroke-linejoin="round"
+    stroke-width="0.6"
+  />
+  <path
+    d="M0 0L0 62L53.7 31L53.7 -31Z"
+    fill="#F6F6F6"
+    stroke="#F6F6F6"
+    stroke-linejoin="round"
+    stroke-width="0.6"
+  />
+</svg>
+`;

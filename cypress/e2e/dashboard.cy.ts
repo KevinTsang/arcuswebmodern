@@ -56,7 +56,7 @@ describe('Dashboard', () => {
   it('updates card values in real time from platform events', () => {
     cy.signIn();
     value('doors-locks', 'open').should('have.text', '0');
-    cy.platform().invoke('updateEntity', DEVICE.frontDoor, { 'cont:contact': 'OPENED' });
+    cy.platform().invoke('updateEntity', DEVICE.contact, { 'cont:contact': 'OPENED' });
     value('doors-locks', 'open').should('have.text', '1');
   });
 
