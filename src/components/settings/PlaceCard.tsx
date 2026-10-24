@@ -6,7 +6,7 @@ import { useSidePanel } from '@/components/SidePanel';
 import InfoCard from './InfoCard';
 import InfoRow from './InfoRow';
 import PersonRow from './PersonRow';
-import { formatServiceLevel } from './settingsHelper';
+import { formatRole, formatServiceLevel } from './settingsHelper';
 import PlaceInfoPanel from './PlaceInfoPanel';
 import PersonDetailPanel from './PersonDetailPanel';
 import { type PlaceWithPeople } from './types';
@@ -136,17 +136,4 @@ export default function PlaceCard({
     </InfoCard>
     </div>
   );
-}
-
-export function formatRole(role: string): string {
-  switch (role) {
-    case 'OWNER':
-      return 'Owner';
-    case 'FULL_ACCESS':
-      return 'Full Access';
-    case 'HOBBIT':
-      return 'Partial Access';
-    default:
-      return role || '—';
-  }
 }
