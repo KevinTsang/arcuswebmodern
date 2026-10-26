@@ -621,6 +621,7 @@ This is a new feature in the modern client with no legacy equivalent.
 | `static-server` image (nginx, `:8097`, device/brand images) | Yes | No (the legacy image is still deployed) | **Missing** |
 | Platform URLs set at runtime from `ARCUS_HTTP_URI` / `ARCUS_WS_URI` / `ARCUS_REDIRECT_URI` | Yes (`server.json`) | Yes (same `server.json` path and keys, read by `initializeCoreConfig`) | **Done** |
 | Runs read-only as uid 1000 under the arcus-k8s mounts and limits | Yes | Yes | **Done** |
+| Browsers still running the legacy page move to this client | — | Yes (legacy `/build/dist/*.js` bundle requests get a script that reloads the page once) | **Done** |
 | Build / tag / push | Yes (gradle `:tools:khakis:pushDocker`) | Yes (`docker/bin/build.sh [--push]`) | **Done** |
 | CI image publishing | No | No | **Missing** |
 
