@@ -27,7 +27,7 @@ export default function CredentialsStep() {
       dispatch({ type: 'CLEAR_ERROR' });
 
       try {
-        initializeCoreConfig();
+        await initializeCoreConfig();
 
         const result = await AccountService.CreateAccount({
           email,

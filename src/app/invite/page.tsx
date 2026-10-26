@@ -86,7 +86,7 @@ export default function InvitePage() {
     setError('');
 
     try {
-      initializeCoreConfig();
+      await initializeCoreConfig();
       const { invitation: found } = await InvitationService.GetInvitation(inviteCode.trim(), inviteeEmail.trim());
       setInvitation(found);
       setFirstName(found.inviteeFirstName ?? '');

@@ -33,7 +33,7 @@ cutover. [`PRD.md`](./PRD.md) is the living source of truth for what's **Done**,
 | Unit testing | QUnit | Jest 30 + React Testing Library |
 | E2E testing | — | Cypress |
 | Platform transport | Bridge over WebSocket | Bridge over WebSocket (same protocol) |
-| Deployment | — | Docker (multi-stage `standalone` build) + Caddy TLS proxy |
+| Deployment | nginx `ui-server` + `static-server` images | Drop-in `ui-server` image (Next static export served by nginx); `static-server` still the legacy image |
 
 ## What carried over vs. what changed
 
@@ -47,7 +47,7 @@ cutover. [`PRD.md`](./PRD.md) is the living source of truth for what's **Done**,
 - State moved from CanJS observables to Redux Toolkit slices (`src/store/slices/`), with typed hooks (`useAppDispatch`/`useAppSelector`) replacing direct store access.
 - A new shared core package, `packages/arcus-core`, centralizes the Bridge client, capability constants, and auth/config logic so they aren't duplicated across the app (`@arcus/core` path alias).
 - Testing moved from QUnit to Jest + React Testing Library with enforced coverage conventions (snapshot + rendering + interaction + edge-case tests per component — see [`testing.md`](./testing.md)), plus Cypress for E2E, replacing whatever the legacy suite used.
-- New deployment path: a Dockerized production build behind a Caddy TLS proxy, versus however the legacy client was previously hosted.
+- Deployment keeps legacy's nginx `ui-server` image and its contract (ports, `ARCUS_*` environment, `server.json`), but the UI is now a Next.js static export instead of a StealJS bundle — see [Docker images](#docker-images).
 - One capability with **no legacy equivalent**: API key generation with role-based permissions, added for `arcus-mqtt-server` integration.
 
 ## Architecture
@@ -99,10 +99,49 @@ npm run dev          # HTTPS dev server on localhost.arcus.wl-net.net:8443
 npm test             # Jest unit tests
 npm run test:e2e:ci  # Cypress E2E against an in-browser fake platform (starts/stops the app)
 npm run test:e2e     # Cypress E2E (headless; needs `npm run dev:e2e` running)
-npm run build         # Production build
+npm run build         # Production build (static export to out/)
 npm run lint          # ESLint
 ```
 
 Requires an `/etc/hosts` entry for `localhost.myDevUrl.com:8443` and local TLS certs
 — see [`testing.md`](./testing.md) for setup, containerized (Docker + Caddy)
 testing, and pointing the client at a different backend.
+
+## Docker images
+
+`docker/` builds a drop-in replacement for the legacy arcusweb `ui-server` image, so an
+existing deployment (e.g. arcus-k8s) only needs the new image tag:
+
+| Image | Port | Serves |
+|-------|------|--------|
+| `arcus/ui-server` | 8096 | The app: `next build` static export, served by nginx |
+
+It uses legacy's base image (`nginx:1.30-trixie`) and runs with a read-only root
+filesystem as a non-root user, given writable mounts at `/tmp`, `/var/cache/nginx`
+and `/var/run`.
+
+The ui-server reads its platform URLs when the container starts, from the same
+environment variables as legacy. `run-nginx` writes them to
+`/usr/share/nginx/html/build/dist/config/server.json` (that directory must be
+writable), and the app fetches that file before it talks to the platform:
+
+| Variable | Purpose |
+|----------|---------|
+| `ARCUS_HTTP_URI` | Platform HTTP base, e.g. `https://client.arcussmarthome.com` |
+| `ARCUS_WS_URI` | Platform WebSocket base, e.g. `wss://client.arcussmarthome.com` |
+| `ARCUS_REDIRECT_URI` | Redirect base (optional) |
+| `ARCUS_ENABLE_HUB_WIFI_SCAN`, `ARCUS_ENABLE_BATTERY_PERCENTAGE`, `ARCUS_ENABLE_YEARLY_SUBSCRIPTION`, `ARCUS_IOS_DOWNLOAD_URI`, `ARCUS_ANDROID_DOWNLOAD_URI` | Written to `server.json` for parity; not used by the UI yet |
+
+```bash
+docker/bin/build.sh                    # build arcus/ui-server:<version>-<sha> and :latest
+REGISTRY_NAME=us-west1-docker.pkg.dev/<project>/<repo> docker/bin/build.sh --push
+DOCKER_DEFAULT_PLATFORM=linux/amd64 docker/bin/build.sh   # build for another architecture
+```
+
+**TODO:** the `static-server` image (device, brand and product images at the platform's
+`staticResourceBaseUrl`) still comes from legacy arcusweb, which only ships a small part of
+what the mobile apps and platform emails request. Where the full image set should live is
+still open; see PRD.md §26.
+
+To run the ui-server against the dev platform locally, see
+[`testing.md` → Containerized Testing](./testing.md#containerized-testing).

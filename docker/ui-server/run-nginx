@@ -1,0 +1,36 @@
+#!/bin/bash
+# Writes the runtime config the app reads on start (see src/store/thunks/initConfig.ts)
+# from the same ARCUS_* environment, to the same path, as the legacy ui-server.
+# Deployments mount a writable volume at CONF_DIR because the rest of the
+# filesystem is read-only.
+
+CONF_DIR=/usr/share/nginx/html/build/dist/config/
+SERVER_CONF="$CONF_DIR/server.json"
+if [[ "${ARCUS_ENABLE_YEARLY_SUBSCRIPTION}" == "" ]]; then
+    ARCUS_ENABLE_YEARLY_SUBSCRIPTION="0"
+fi
+if [[ "${ARCUS_ENABLE_HUB_WIFI_SCAN}" == "" ]]; then
+    ARCUS_ENABLE_HUB_WIFI_SCAN="0"
+fi
+if [[ "${ARCUS_ENABLE_BATTERY_PERCENTAGE}" == "" ]]; then
+    ARCUS_ENABLE_BATTERY_PERCENTAGE="0"
+fi
+
+mkdir -p $CONF_DIR
+# Overwrite (not append) so container restarts don't produce duplicate entries
+cat > "$SERVER_CONF.tmp" <<EOF
+{
+   "apiUrl" : "$ARCUS_HTTP_URI",
+   "redirectUrl" : "$ARCUS_REDIRECT_URI",
+   "wsUrl"  : "$ARCUS_WS_URI",
+   "iosDownloadUrl"  : "$ARCUS_IOS_DOWNLOAD_URI",
+   "androidDownloadUrl"  : "$ARCUS_ANDROID_DOWNLOAD_URI",
+   "enableYearlySubscription"  : $ARCUS_ENABLE_YEARLY_SUBSCRIPTION,
+   "enableHubWifiScan"  : $ARCUS_ENABLE_HUB_WIFI_SCAN,
+   "enableBatteryPercentage"  : $ARCUS_ENABLE_BATTERY_PERCENTAGE
+}
+EOF
+mv "$SERVER_CONF.tmp" "$SERVER_CONF"
+
+# exec so nginx receives the container's stop signal directly.
+exec nginx -g 'daemon off;'

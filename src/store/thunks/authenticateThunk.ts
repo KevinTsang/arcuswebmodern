@@ -21,8 +21,8 @@ import { getDefaultPlaceId } from './placeSelection';
 export const authenticateThunk = createAsyncThunk(
   'auth/authenticate',
   async (_, { dispatch }) => {
-    initializeCoreConfig();
     dispatch(setAuthenticating(true));
+    await initializeCoreConfig();
 
     try {
       const session = await new Promise<SessionCreatedEvent>((resolve, reject) => {
