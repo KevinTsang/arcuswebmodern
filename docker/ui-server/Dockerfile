@@ -5,9 +5,7 @@
 # Build from the repository root:
 #   docker build -f docker/ui-server/Dockerfile .
 
-# The export is plain HTML/JS/CSS, so build it on the host's architecture even
-# when the image targets another.
-FROM --platform=$BUILDPLATFORM node:24-alpine AS builder
+FROM node:24-alpine AS builder
 WORKDIR /app
 
 COPY package.json package-lock.json ./
