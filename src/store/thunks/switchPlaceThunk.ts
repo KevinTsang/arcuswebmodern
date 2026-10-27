@@ -3,7 +3,7 @@
  *
  * Calls SessionService.SetActivePlace, remembers the place for session
  * restore, refreshes the account if the new place belongs to a different
- * one, then loads all data for the new place.
+ * account, then loads all data for the new place.
  */
 
 import { createAsyncThunk } from '@reduxjs/toolkit';
