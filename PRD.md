@@ -494,13 +494,13 @@ None.
 | Hub WiFi configuration during setup | Yes | No | **Missing** |
 | Cloud device pairing (Nest, Hue, Lutron) | Yes | No | **Missing** |
 | Care alarm interrupt (cancel pairing on alert) | Yes | No | **Missing** |
-| Incident interrupt (cancel pairing on alarm) | Yes | No | **Missing** |
+| Incident interrupt (cancel pairing on alarm) | Yes | Yes (the incident redirect to the alarms page stops searching and keeps the pairing flow) | **Done** |
 
 ### Gaps
 
 - Hub WiFi configuration during pairing.
 - Cloud device / third-party bridge pairing flows.
-- Pairing interruption on alarm/care events.
+- Pairing interruption on care alarm events.
 
 ---
 

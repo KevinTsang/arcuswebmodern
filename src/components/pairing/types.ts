@@ -9,9 +9,11 @@ export interface PairingStep {
 }
 
 /**
- * One pairing flow: from the first search after entering pairing until Finish
- * (DismissAll). It spans Pair Another and trips back to the product catalog,
- * so a device that joins during one search can still be customized on the next.
+ * One pairing flow: from the first search after entering pairing until Go to
+ * Devices or Kit Activation's Finish (DismissAll), or until the user leaves the
+ * pairing pages (usePairingFlowExit). It spans Pair Another and trips back to
+ * the product catalog, so a device that joins during one search can still be
+ * customized on the next.
  */
 export interface PairingFlow {
   /** The pairing subsystem (and so the place) the flow belongs to. */

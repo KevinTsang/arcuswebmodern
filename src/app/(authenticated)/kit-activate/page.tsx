@@ -160,6 +160,10 @@ export default function KitActivatePage() {
 
   // Finish kit activation
   const handleFinish = useCallback(async () => {
+    // DismissAll ends pairing, so the next pairing starts a new flow. The flow
+    // ends before DismissAll is sent, so leaving while the request is in
+    // flight doesn't send DismissAll again (usePairingFlowExit).
+    dispatch(endPairingFlow());
     if (pairingSubAddr) {
       try {
         await Bridge.request(PairingSubsystem.CMD_DISMISSALL, pairingSubAddr, {});
@@ -167,8 +171,6 @@ export default function KitActivatePage() {
         // OK
       }
     }
-    // DismissAll ends pairing, so the next pairing starts a new flow.
-    dispatch(endPairingFlow());
     router.push('/devices');
   }, [pairingSubAddr, router, dispatch]);
 

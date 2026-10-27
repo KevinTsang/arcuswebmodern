@@ -142,6 +142,8 @@ export default function PairingPage() {
     if (current?.pairingSubsystem === subAddr) return current;
     const resp = await Bridge.request<ListPairingDevicesResponse>(PairingSubsystem.CMD_LISTPAIRINGDEVICES, subAddr, {});
     const flow = newPairingFlow(subAddr, resp.devices ?? []);
+    // The page left while the list loaded, so nothing was started: don't start a flow.
+    if (liveSubsystemRef.current !== subAddr) return flow;
     flowRef.current = flow;
     dispatch(startPairingFlow(flow));
     return flow;
@@ -391,6 +393,11 @@ export default function PairingPage() {
     if (busyRef.current) return;
     busyRef.current = true;
     setBusy(true);
+    // The pairing flow ends here; the next pairing starts a new one. It ends
+    // before DismissAll is sent, so leaving pairing while the request is in
+    // flight doesn't send DismissAll again (usePairingFlowExit).
+    flowRef.current = null;
+    dispatch(endPairingFlow());
     if (pairingSubAddr) {
       try {
         await Bridge.request(PairingSubsystem.CMD_DISMISSALL, pairingSubAddr, {});
@@ -398,9 +405,6 @@ export default function PairingPage() {
         // OK
       }
     }
-    // The pairing flow ends here; the next pairing starts a new one.
-    flowRef.current = null;
-    dispatch(endPairingFlow());
     sessionStorage.removeItem('pairing:product');
     router.push('/devices');
   }, [pairingSubAddr, router, dispatch]);

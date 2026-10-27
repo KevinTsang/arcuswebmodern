@@ -1052,6 +1052,21 @@ describe('PairingPage – leaving while pairing starts', () => {
     expect(commandsSent()).toEqual([PairingSubsystem.CMD_LISTPAIRINGDEVICES, PairingSubsystem.CMD_STOPSEARCHING]);
   });
 
+  it('starts no flow when the page unmounts during the flow snapshot', async () => {
+    const snapshot = deferred<{ devices: PairingDeviceData[] }>();
+    mockBridgeRequest.mockImplementation((command: string) =>
+      command === PairingSubsystem.CMD_LISTPAIRINGDEVICES ? snapshot.promise : Promise.resolve({}));
+
+    const { unmount } = render(<PairingPage />);
+    await settle();
+    unmount();
+
+    snapshot.resolve({ devices: [motionSensor] });
+    await settle();
+    // Nothing was started, so there is no flow for leaving pairing to end.
+    expect(dispatchesOf('pairing/startPairingFlow')).toHaveLength(0);
+  });
+
   it('does not search when the page unmounts while StartPairing is in flight', async () => {
     sessionStorage.setItem('pairing:product', JSON.stringify(product));
     mockPairingState = { ...mockPairingState, product };
