@@ -32,11 +32,12 @@ export interface LockStatus {
   /** Locked, Unlocked, Locking, Unlocking, Jammed or Unknown. */
   label: string;
   /**
-   * lockstate the control should write, or null without a device. Lock is
-   * offered in every state except LOCKED, jammed or not (LOCKING, UNLOCKING,
-   * UNLOCKED and unknown; the drivers send the command in every state), so a
-   * jammed or stuck lock can always be locked remotely and a stale WARN_JAM
-   * never offers Unlock mid-lock.
+   * lockstate the single toggle writes, or null without a device. Lock is
+   * offered in every state except LOCKED (LOCKING, UNLOCKING, UNLOCKED and
+   * unknown; the drivers send the command in every state), so a stuck lock
+   * can always be locked remotely and a tap never reverses a lock in progress.
+   * A jammed lock shows both Lock and Unlock instead (see LockUnlock), so
+   * this is not used while jammed.
    */
   target: LockTarget | null;
 }
