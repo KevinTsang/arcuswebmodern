@@ -1,0 +1,177 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`RulePanel (create mode) matches snapshot 1`] = `
+<div>
+  <h3
+    class="text-lg font-semibold text-swift mb-4"
+    data-testid="rule-panel-title"
+  >
+    Create Rule
+  </h3>
+  <div
+    class="mb-4"
+  >
+    <label
+      class="block text-sm font-medium text-swift mb-1"
+      for="ruleName"
+    >
+      Rule Name
+    </label>
+    <input
+      class="w-full px-3 py-2 border border-grouse rounded-[var(--border-radius-base)] focus:outline-none focus:border-peacock"
+      data-testid="rule-name-input"
+      id="ruleName"
+      type="text"
+      value="Chime on Button Press"
+    />
+  </div>
+  <div
+    class="mb-4 p-4 bg-pigeon rounded-[var(--border-radius-base)]"
+  >
+    <div
+      class="text-sm text-swift leading-relaxed flex flex-wrap items-center gap-1"
+    >
+      <span>
+        When 
+      </span>
+      <button
+        class="
+                    px-2 py-0.5 rounded text-sm font-medium border transition-colors
+                    bg-crane border-heron text-grouse hover:border-peacock
+                  "
+        data-testid="rule-var-button"
+      >
+        button
+      </button>
+      <span>
+         is pressed, play 
+      </span>
+      <button
+        class="
+                    px-2 py-0.5 rounded text-sm font-medium border transition-colors
+                    bg-crane border-heron text-grouse hover:border-peacock
+                  "
+        data-testid="rule-var-chime"
+      >
+        chime
+      </button>
+    </div>
+  </div>
+  <hr
+    class="border-heron mb-4"
+  />
+  <p
+    class="text-sm text-grouse mb-6"
+  >
+    Click a word or phrase above to edit.
+  </p>
+  <div
+    class="flex gap-3 mb-8"
+  >
+    <button
+      class="bg-peacock text-crane px-5 py-2 rounded-[var(--border-radius-base)] hover:opacity-90 disabled:opacity-50 text-sm"
+      data-testid="rule-save"
+      disabled=""
+    >
+      Create Rule
+    </button>
+    <button
+      class="border border-heron text-coot px-5 py-2 rounded-[var(--border-radius-base)] hover:bg-pigeon text-sm"
+    >
+      Cancel
+    </button>
+  </div>
+</div>
+`;
+
+exports[`RulePanel (edit mode) matches snapshot 1`] = `
+<div>
+  <h3
+    class="text-lg font-semibold text-swift mb-4"
+    data-testid="rule-panel-title"
+  >
+    Edit Rule
+  </h3>
+  <div
+    class="mb-4"
+  >
+    <label
+      class="block text-sm font-medium text-swift mb-1"
+      for="ruleName"
+    >
+      Rule Name
+    </label>
+    <input
+      class="w-full px-3 py-2 border border-grouse rounded-[var(--border-radius-base)] focus:outline-none focus:border-peacock"
+      data-testid="rule-name-input"
+      id="ruleName"
+      type="text"
+      value="Door Bell Button"
+    />
+  </div>
+  <div
+    class="mb-4 p-4 bg-pigeon rounded-[var(--border-radius-base)]"
+  >
+    <div
+      class="text-sm text-swift leading-relaxed flex flex-wrap items-center gap-1"
+    >
+      <span>
+        When 
+      </span>
+      <button
+        class="
+                    px-2 py-0.5 rounded text-sm font-medium border transition-colors
+                    bg-peacock/10 border-peacock text-peacock
+                  "
+        data-testid="rule-var-button"
+      >
+        Smart Button 1
+      </button>
+      <span>
+         is pressed, play 
+      </span>
+      <button
+        class="
+                    px-2 py-0.5 rounded text-sm font-medium border transition-colors
+                    bg-peacock/10 border-peacock text-peacock
+                  "
+        data-testid="rule-var-chime"
+      >
+        Ding Dong
+      </button>
+    </div>
+  </div>
+  <hr
+    class="border-heron mb-4"
+  />
+  <p
+    class="text-sm text-grouse mb-6"
+  >
+    Click a word or phrase above to edit.
+  </p>
+  <div
+    class="flex gap-3 mb-8"
+  >
+    <button
+      class="bg-peacock text-crane px-5 py-2 rounded-[var(--border-radius-base)] hover:opacity-90 disabled:opacity-50 text-sm"
+      data-testid="rule-save"
+    >
+      Save
+    </button>
+    <button
+      class="border border-heron text-coot px-5 py-2 rounded-[var(--border-radius-base)] hover:bg-pigeon text-sm"
+    >
+      Cancel
+    </button>
+  </div>
+  <hr
+    class="border-heron mb-4"
+  />
+  <button
+    class="text-sm text-cardinal hover:underline"
+    data-testid="rule-delete"
+  >
+    Delete Rule
+  </button>
+</div>
+`;
