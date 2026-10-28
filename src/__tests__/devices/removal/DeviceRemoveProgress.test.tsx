@@ -1,6 +1,6 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { PairingDevice } from '@arcus/core';
-import { DeviceRemoveProgress } from '@/components/devices/DeviceRemoveProgress';
+import { DeviceRemoveProgress } from '@/components/devices/removal/DeviceRemoveProgress';
 import type { PairingStep } from '@/components/pairing/types';
 import type { RemovalMode } from '@/arcus/types';
 

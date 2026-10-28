@@ -34,7 +34,8 @@
 
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import type { RemovalMode } from '@/arcus/types';
-import { initialRemovalState, type DeviceRemovalState, type PairingStep, type RemovalStage } from './types';
+import type { PairingStep } from '@/components/pairing/types';
+import { initialRemovalState, type DeviceRemovalState, type RemovalStage } from './types';
 
 /** Payload of `removeAccepted`: the parts of the dev:Remove response the UI shows. */
 export interface RemoveAccepted {

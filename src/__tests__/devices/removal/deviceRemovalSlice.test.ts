@@ -1,10 +1,10 @@
 import { PairingDevice } from '@arcus/core';
+import type { PairingStep } from '@/components/pairing/types';
 import {
   initialRemovalState,
   type DeviceRemovalState,
-  type PairingStep,
   type RemovalStage,
-} from '@/components/pairing/types';
+} from '@/components/devices/removal/types';
 import {
   deviceRemovalReducer,
   canTransition,
@@ -22,7 +22,7 @@ import {
   cancelFinished,
   deviceChanged,
   type DeviceRemovalAction,
-} from '@/components/pairing/deviceRemovalSlice';
+} from '@/components/devices/removal/deviceRemovalSlice';
 
 // ── Helpers ───────────────────────────────────────────────────────────
 

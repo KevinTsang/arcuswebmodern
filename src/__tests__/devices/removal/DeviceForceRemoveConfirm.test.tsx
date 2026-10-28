@@ -1,5 +1,5 @@
 import { render, screen, fireEvent } from '@testing-library/react';
-import { DeviceForceRemoveConfirm } from '@/components/devices/DeviceForceRemoveConfirm';
+import { DeviceForceRemoveConfirm } from '@/components/devices/removal/DeviceForceRemoveConfirm';
 
 // ── Helpers ───────────────────────────────────────────────────────────
 

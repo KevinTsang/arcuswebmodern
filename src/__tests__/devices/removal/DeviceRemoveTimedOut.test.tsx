@@ -1,5 +1,5 @@
 import { render, screen, fireEvent } from '@testing-library/react';
-import { DeviceRemoveTimedOut } from '@/components/devices/DeviceRemoveTimedOut';
+import { DeviceRemoveTimedOut } from '@/components/devices/removal/DeviceRemoveTimedOut';
 
 // ── Helpers ───────────────────────────────────────────────────────────
 

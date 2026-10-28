@@ -17,7 +17,7 @@ import { addNotification } from '@/store/slices/uiSlice';
 import { useDeviceActions } from '@/hooks/useDeviceActions';
 import { useDeviceRemoval } from '@/hooks/useDeviceRemoval';
 import { testIdSlug } from '@/lib/testId';
-import { DeviceRemovalSection } from './DeviceRemovalSection';
+import { DeviceRemovalSection } from './removal/DeviceRemovalSection';
 
 interface DeviceDetailPanelProps {
   address: string;

@@ -11,7 +11,7 @@
  * Replaces src/components/device/remove-panel/remove-panel.stache.
  */
 
-import type { DeviceRemovalFlow } from '@/components/pairing/types';
+import type { DeviceRemovalFlow } from './types';
 import { DeviceRemoveButton } from './DeviceRemoveButton';
 import { DeviceRemoveConfirm } from './DeviceRemoveConfirm';
 import { DeviceRemoveProgress } from './DeviceRemoveProgress';

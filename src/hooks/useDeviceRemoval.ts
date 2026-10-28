@@ -27,12 +27,7 @@ import { addNotification } from '@/store/slices/uiSlice';
 import { stopHubUnpairing } from '@/lib/hubUnpairing';
 import type { AppDispatch } from '@/store/store';
 import type { ArcusPayload } from '@/store/entityTypes';
-import {
-  initialRemovalState,
-  type DeviceRemovalFlow,
-  type RemovalOutcome,
-  type RemovalSession,
-} from '@/components/pairing/types';
+import { initialRemovalState, type DeviceRemovalFlow } from '@/components/devices/removal/types';
 import {
   deviceRemovalReducer,
   canTransition,
@@ -49,7 +44,7 @@ import {
   cancelStarted,
   cancelFinished,
   deviceChanged,
-} from '@/components/pairing/deviceRemovalSlice';
+} from '@/components/devices/removal/deviceRemovalSlice';
 import type { RemovalMode, RemoveResponse } from '@/arcus/types';
 
 /** How long to wait for base:Deleted before offering Force Remove (legacy: 4 minutes). */
@@ -68,6 +63,36 @@ const DELETED_EVENT = `${Device.NAMESPACE} ${Base.EVENT_DELETED}`;
 
 const HUB_MAY_STAY_UNPAIRING = 'The hub may stay in removal mode for a few minutes.';
 const STOP_FAILED_MESSAGE = `Couldn't take the hub out of removal mode. ${HUB_MAY_STAY_UNPAIRING}`;
+
+/**
+ * How a removal attempt ended: `active` until the device is removed,
+ * dev:Remove fails, the user cancels, or the panel closes or switches device
+ * (`abandoned`).
+ */
+type RemovalOutcome = 'active' | 'removed' | 'failed' | 'cancelled' | 'abandoned';
+
+/**
+ * One dev:Remove attempt, from Yes, Remove until the device is removed or the
+ * flow ends. Bookkeeping for the hook's side effects, not UI state, so it
+ * lives in a ref rather than in deviceRemovalSlice.
+ */
+interface RemovalSession {
+  name: string;
+  /** Hub in the store when dev:Remove was sent; STOP_UNPAIRING goes to it. */
+  hub: string | null;
+  /** Hub-attached device by protocol: a dev:Remove that failed may still have started unpairing. */
+  hubDevice: boolean;
+  /** Mode from the dev:Remove response, null until it arrives. */
+  mode: RemovalMode | null;
+  /** The hub may be unpairing because of this removal; cleared once STOP_UNPAIRING succeeds. */
+  unpairing: boolean;
+  /** STOP_UNPAIRING in flight, shared by everyone waiting on it. */
+  stopping: Promise<boolean> | null;
+  /** dev:ForceRemove sent: the platform deletes the record whether or not the panel stays open. */
+  forced: boolean;
+  outcome: RemovalOutcome;
+  timer: ReturnType<typeof setTimeout> | null;
+}
 
 /** Whether a dev:Remove mode puts the hub into unpairing mode. */
 export function isHubRemovalMode(mode: RemovalMode | null | undefined): boolean {

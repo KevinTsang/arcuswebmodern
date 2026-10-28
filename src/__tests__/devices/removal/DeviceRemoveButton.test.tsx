@@ -1,5 +1,5 @@
 import { render, screen, fireEvent } from '@testing-library/react';
-import { DeviceRemoveButton } from '@/components/devices/DeviceRemoveButton';
+import { DeviceRemoveButton } from '@/components/devices/removal/DeviceRemoveButton';
 
 // ── Helpers ───────────────────────────────────────────────────────────
 
