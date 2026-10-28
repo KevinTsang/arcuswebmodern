@@ -17,7 +17,7 @@ import { SessionService } from '@arcus/core/services';
 import type { SessionCreatedEvent, Account } from '@/arcus/types';
 import type { PersonData } from '@/store/entityTypes';
 import { loginSuccess } from '../slices/authSlice';
-import { getDefaultPlaceId } from './placeSelection';
+import { getDefaultPlaceId } from '../thunks/placeSelection';
 
 /**
  * Start an auth attempt and resolve with the platform's SessionCreated

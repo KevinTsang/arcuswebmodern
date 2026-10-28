@@ -3,7 +3,7 @@
  *
  * auth.login() POSTs the credentials and opens the WebSocket; the rest of the
  * flow (SessionCreated → SetActivePlace → account/person → loginSuccess) is
- * shared with session restore in ./sessionFlow.
+ * shared with session restore in ../utils/sessionFlow.
  * Returns { session, placeId }.
  */
 
@@ -11,7 +11,7 @@ import { createAsyncThunk } from '@reduxjs/toolkit';
 import auth from '@arcus/core/auth';
 import { setAuthenticating, loginFailed } from '../slices/authSlice';
 import { initializeCoreConfig } from './initConfig';
-import { waitForSession, completeSession } from './sessionFlow';
+import { waitForSession, completeSession } from '../utils/sessionFlow';
 
 export const loginThunk = createAsyncThunk(
   'auth/login',
