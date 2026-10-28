@@ -4,6 +4,7 @@ import { useCallback, type FormEvent } from 'react';
 import { Base, Place } from '@arcus/core';
 import Bridge from '@arcus/core/bridge';
 import { useCreateAccount } from './CreateAccountContext';
+import { setField, setStep, setLoading, setError, clearError } from './createAccountSlice';
 import FormField from './FormField';
 
 export default function AddressStep() {
@@ -18,12 +19,12 @@ export default function AddressStep() {
       if (!addrForm.formValidates(['street1', 'city', 'state', 'zip'], allValues)) return;
 
       if (!placeId) {
-        dispatch({ type: 'SET_STEP', step: 'pin' });
+        dispatch(setStep('pin'));
         return;
       }
 
-      dispatch({ type: 'SET_LOADING', loading: true });
-      dispatch({ type: 'CLEAR_ERROR' });
+      dispatch(setLoading(true));
+      dispatch(clearError());
 
       try {
         await Bridge.request(Base.CMD_SETATTRIBUTES, `SERV:place:${placeId}`, {
@@ -33,19 +34,19 @@ export default function AddressStep() {
           [Place.ATTR_STATEPROV]: addrState,
           [Place.ATTR_ZIPCODE]: zip,
         });
-        dispatch({ type: 'SET_STEP', step: 'pin' });
+        dispatch(setStep('pin'));
       } catch {
-        dispatch({ type: 'SET_ERROR', error: 'Failed to save address. You can update it later in Settings.' });
-        dispatch({ type: 'SET_STEP', step: 'pin' });
+        dispatch(setError('Failed to save address. You can update it later in Settings.'));
+        dispatch(setStep('pin'));
       } finally {
-        dispatch({ type: 'SET_LOADING', loading: false });
+        dispatch(setLoading(false));
       }
     },
     [street1, street2, city, addrState, zip, placeId, addrForm, dispatch, allValues],
   );
 
   const handleSkip = useCallback(() => {
-    dispatch({ type: 'SET_STEP', step: 'pin' });
+    dispatch(setStep('pin'));
   }, [dispatch]);
 
   return (
@@ -53,27 +54,27 @@ export default function AddressStep() {
       <p className="text-sm text-grouse">Enter your home address for accurate weather and service information.</p>
       <FormField
         label="Street Address" id="street1" value={street1}
-        onChange={(v) => dispatch({ type: 'SET_FIELD', field: 'street1', value: v })}
+        onChange={(v) => dispatch(setField({ field: 'street1', value: v }))}
         form={addrForm} allValues={allValues}
       />
       <FormField
         label="Street Address 2 (optional)" id="street2" value={street2}
-        onChange={(v) => dispatch({ type: 'SET_FIELD', field: 'street2', value: v })}
+        onChange={(v) => dispatch(setField({ field: 'street2', value: v }))}
       />
       <div className="grid grid-cols-3 gap-3">
         <FormField
           label="City" id="city" value={city}
-          onChange={(v) => dispatch({ type: 'SET_FIELD', field: 'city', value: v })}
+          onChange={(v) => dispatch(setField({ field: 'city', value: v }))}
           form={addrForm} allValues={allValues}
         />
         <FormField
           label="State" id="state" value={addrState}
-          onChange={(v) => dispatch({ type: 'SET_FIELD', field: 'state', value: v })}
+          onChange={(v) => dispatch(setField({ field: 'state', value: v }))}
           form={addrForm} allValues={allValues}
         />
         <FormField
           label="ZIP" id="zip" value={zip}
-          onChange={(v) => dispatch({ type: 'SET_FIELD', field: 'zip', value: v })}
+          onChange={(v) => dispatch(setField({ field: 'zip', value: v }))}
           form={addrForm} allValues={allValues}
         />
       </div>
