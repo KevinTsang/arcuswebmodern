@@ -1,335 +1,135 @@
 /**
- * Tests for loginThunk — credential login via SessionCreated.
+ * Tests for loginThunk — credential login. The shared sign-in flow
+ * (waitForSession, completeSession) is mocked here; it has its own tests in
+ * src/__tests__/store/utils/sessionFlow.test.ts.
  */
 
-import { setAuthenticating, loginSuccess, loginFailed } from '@/store/slices/authSlice';
-import { Base, Account, Person } from '@arcus/core';
+import type { SessionCreatedEvent } from '@/arcus/types';
+import { setAuthenticating, loginFailed } from '@/store/slices/authSlice';
+import { initializeCoreConfig } from '@/store/thunks/initConfig';
+import { loginThunk } from '@/store/thunks/loginThunk';
+import { waitForSession, completeSession } from '@/store/utils/sessionFlow';
 
 // ── Mocks ─────────────────────────────────────────────────────────────
 
-const mockSetActivePlace = jest.fn().mockResolvedValue({});
-
-jest.mock('@arcus/core/services', () => ({
-  SessionService: { SetActivePlace: (...args: any[]) => mockSetActivePlace(...args) },
-}));
-
-let authListeners: Record<string, ((...args: any[]) => void)[]> = {};
-const mockLogin = jest.fn();
-const mockReset = jest.fn();
+const mockLogin = jest.fn<Promise<void>, [string, string, boolean]>();
 
 jest.mock('@arcus/core/auth', () => ({
   __esModule: true,
   default: {
-    on(event: string, fn: (...args: any[]) => void) {
-      (authListeners[event] ??= []).push(fn);
-    },
-    off(event: string, fn: (...args: any[]) => void) {
-      authListeners[event] = (authListeners[event] ?? []).filter((l) => l !== fn);
-    },
-    login: (...args: any[]) => mockLogin(...args),
-    reset: (...args: any[]) => mockReset(...args),
+    login: (username: string, password: string, isPublic: boolean) => mockLogin(username, password, isPublic),
   },
 }));
 
-jest.mock('@arcus/core/config', () => ({ setConfig: jest.fn() }));
-const mockBridgeRequest = jest.fn().mockResolvedValue({});
-jest.mock('@arcus/core/bridge', () => ({ __esModule: true, default: { configure: jest.fn(), request: (...args: any[]) => mockBridgeRequest(...args) } }));
+jest.mock('@/store/thunks/initConfig', () => ({ initializeCoreConfig: jest.fn() }));
 
-/** Route GetAttributes by address; pass an Error to make that request reject. */
-function mockAttributes({ person = {}, account = {} }: { person?: object; account?: object }) {
-  mockBridgeRequest.mockImplementation((_cmd: string, address: string) => {
-    const result = address.startsWith('SERV:person:') ? person : address.startsWith('SERV:account:') ? account : {};
-    return result instanceof Error ? Promise.reject(result) : Promise.resolve(result);
-  });
+jest.mock('@/store/utils/sessionFlow', () => ({
+  waitForSession: jest.fn(),
+  completeSession: jest.fn(),
+}));
+
+const mockInitializeCoreConfig = jest.mocked(initializeCoreConfig);
+const mockWaitForSession = jest.mocked(waitForSession);
+const mockCompleteSession = jest.mocked(completeSession);
+const mockDispatch = jest.fn();
+
+// ── Helpers ───────────────────────────────────────────────────────────
+
+const creds = { username: 'user@test.com', password: 'secret', isPublic: false };
+
+// Passed through untouched, since completeSession is mocked.
+const session = { personId: 'person-1', places: [] } as SessionCreatedEvent;
+
+function runLogin(overrides: Partial<typeof creds> = {}) {
+  return loginThunk({ ...creds, ...overrides })(mockDispatch, () => ({}), undefined);
 }
 
-const dispatched: any[] = [];
-const dispatch = Object.assign(
-  (action: any) => {
-    dispatched.push(typeof action === 'function' ? action : { ...action });
-    return action;
-  },
-  { getState: () => ({}), extra: undefined, requestId: 'test', signal: new AbortController().signal, abort: jest.fn(), condition: jest.fn() },
-);
-
-function emitAuth(event: string, data?: any) {
-  for (const fn of [...(authListeners[event] ?? [])]) {
-    fn(data);
-  }
+/** The start call the thunk handed to waitForSession. */
+function startCall() {
+  expect(mockWaitForSession).toHaveBeenCalledTimes(1);
+  return mockWaitForSession.mock.calls[0][0];
 }
-
-// ── Tests ─────────────────────────────────────────────────────────────
-
-let loginThunk: typeof import('@/store/thunks/loginThunk').loginThunk;
-
-beforeAll(async () => {
-  loginThunk = (await import('@/store/thunks/loginThunk')).loginThunk;
-});
 
 beforeEach(() => {
   jest.clearAllMocks();
-  authListeners = {};
-  dispatched.length = 0;
-  mockBridgeRequest.mockResolvedValue({});
   mockLogin.mockResolvedValue(undefined);
-  localStorage.clear();
+  mockWaitForSession.mockResolvedValue(session);
+  mockCompleteSession.mockResolvedValue('place-1');
 });
 
+// ── Tests ─────────────────────────────────────────────────────────────
+
 describe('loginThunk', () => {
-  const creds = { username: 'user@test.com', password: 'secret', isPublic: false };
-  const sessionPayload = {
-    personId: 'person-1',
-    places: [
-      { placeId: 'place-1', placeName: 'Home', accountId: 'acc-1', role: 'OWNER' },
-    ],
-  };
+  describe('on success', () => {
+    it('initializes the core config', async () => {
+      await runLogin();
 
-  it('dispatches setAuthenticating(true)', async () => {
-    mockLogin.mockImplementation(() => {
-      emitAuth('authentication:success', sessionPayload);
-      return Promise.resolve();
+      expect(mockInitializeCoreConfig).toHaveBeenCalledTimes(1);
     });
 
-    await loginThunk(creds)(dispatch, () => ({}), undefined);
+    it('dispatches setAuthenticating(true)', async () => {
+      await runLogin();
 
-    expect(dispatched).toContainEqual(setAuthenticating(true));
+      expect(mockDispatch).toHaveBeenCalledWith(setAuthenticating(true));
+    });
+
+    it('waits for a session with the login fail message', async () => {
+      await runLogin();
+
+      expect(mockWaitForSession).toHaveBeenCalledWith(expect.any(Function), 'Authentication failed');
+    });
+
+    it('logs in with the credentials only through the start call', async () => {
+      await runLogin();
+      expect(mockLogin).not.toHaveBeenCalled();
+
+      await startCall()();
+
+      expect(mockLogin).toHaveBeenCalledWith('user@test.com', 'secret', false);
+    });
+
+    it('passes the isPublic flag to auth.login', async () => {
+      await runLogin({ isPublic: true });
+      await startCall()();
+
+      expect(mockLogin).toHaveBeenCalledWith('user@test.com', 'secret', true);
+    });
+
+    it('completes the session with the SessionCreated payload and dispatch', async () => {
+      await runLogin();
+
+      expect(mockCompleteSession).toHaveBeenCalledWith(session, mockDispatch);
+    });
+
+    it('returns { session, placeId }', async () => {
+      const result = await runLogin();
+
+      expect(result.payload).toEqual({ session, placeId: 'place-1' });
+    });
+
+    it('does not dispatch loginFailed', async () => {
+      await runLogin();
+
+      expect(mockDispatch).not.toHaveBeenCalledWith(loginFailed());
+    });
   });
 
-  it('calls auth.login with credentials', async () => {
-    mockLogin.mockImplementation(() => {
-      emitAuth('authentication:success', sessionPayload);
-      return Promise.resolve();
+  describe('on failure', () => {
+    it('dispatches loginFailed and rethrows when no session is established', async () => {
+      mockWaitForSession.mockRejectedValue(new Error('Authentication failed'));
+
+      await expect(runLogin().unwrap()).rejects.toMatchObject({ message: 'Authentication failed' });
+
+      expect(mockDispatch).toHaveBeenCalledWith(loginFailed());
+      expect(mockCompleteSession).not.toHaveBeenCalled();
     });
 
-    await loginThunk(creds)(dispatch, () => ({}), undefined);
+    it('dispatches loginFailed and rethrows when completing the session fails', async () => {
+      mockCompleteSession.mockRejectedValue(new Error('No account found for the selected place'));
 
-    expect(mockLogin).toHaveBeenCalledWith('user@test.com', 'secret', false);
-  });
+      await expect(runLogin().unwrap()).rejects.toMatchObject({ message: 'No account found for the selected place' });
 
-  it('dispatches loginSuccess on SessionCreated', async () => {
-    mockLogin.mockImplementation(() => {
-      emitAuth('authentication:success', sessionPayload);
-      return Promise.resolve();
+      expect(mockDispatch).toHaveBeenCalledWith(loginFailed());
     });
-
-    await loginThunk(creds)(dispatch, () => ({}), undefined);
-
-    const success = dispatched.find((a) => a.type === loginSuccess.type);
-    expect(success).toBeDefined();
-    expect(success.payload.person).toEqual(sessionPayload);
-  });
-
-  it('calls SetActivePlace with OWNER place', async () => {
-    mockLogin.mockImplementation(() => {
-      emitAuth('authentication:success', sessionPayload);
-      return Promise.resolve();
-    });
-
-    await loginThunk(creds)(dispatch, () => ({}), undefined);
-
-    expect(mockSetActivePlace).toHaveBeenCalledWith('place-1');
-  });
-
-  it('stores placeId in localStorage', async () => {
-    mockLogin.mockImplementation(() => {
-      emitAuth('authentication:success', sessionPayload);
-      return Promise.resolve();
-    });
-
-    await loginThunk(creds)(dispatch, () => ({}), undefined);
-
-    expect(localStorage.getItem('arcus:placeId')).toBe('place-1');
-  });
-
-  it('does not call SetActivePlace when places is empty', async () => {
-    mockLogin.mockImplementation(() => {
-      emitAuth('authentication:success', { personId: 'p1', places: [] });
-      return Promise.resolve();
-    });
-
-    await loginThunk(creds)(dispatch, () => ({}), undefined);
-
-    expect(mockSetActivePlace).not.toHaveBeenCalled();
-  });
-
-  it('does not store placeId when places is empty', async () => {
-    mockLogin.mockImplementation(() => {
-      emitAuth('authentication:success', { personId: 'p1', places: [] });
-      return Promise.resolve();
-    });
-
-    await loginThunk(creds)(dispatch, () => ({}), undefined);
-
-    expect(localStorage.getItem('arcus:placeId')).toBeNull();
-  });
-
-  it('dispatches loginFailed on authentication:fail', async () => {
-    mockLogin.mockImplementation(() => {
-      emitAuth('authentication:fail');
-      return Promise.resolve();
-    });
-
-    await loginThunk(creds)(dispatch, () => ({}), undefined).catch(() => {});
-
-    expect(dispatched).toContainEqual(loginFailed());
-  });
-
-  it('dispatches loginFailed when login() rejects', async () => {
-    mockLogin.mockRejectedValue(new Error('Network error'));
-
-    await loginThunk(creds)(dispatch, () => ({}), undefined).catch(() => {});
-
-    expect(dispatched).toContainEqual(loginFailed());
-  });
-
-  it('tears down the socket when login fails', async () => {
-    mockLogin.mockImplementation(() => {
-      emitAuth('authentication:fail');
-      return Promise.resolve();
-    });
-
-    await loginThunk(creds)(dispatch, () => ({}), undefined).catch(() => {});
-
-    expect(mockReset).toHaveBeenCalled();
-  });
-
-  it('removes its auth listeners when login() rejects', async () => {
-    mockLogin.mockRejectedValue(new Error('Login failed: 401'));
-
-    await loginThunk(creds)(dispatch, () => ({}), undefined).catch(() => {});
-
-    expect(authListeners['authentication:success']).toHaveLength(0);
-    expect(authListeners['authentication:fail']).toHaveLength(0);
-  });
-
-  it('keeps the socket when login succeeds', async () => {
-    mockLogin.mockImplementation(() => {
-      emitAuth('authentication:success', sessionPayload);
-      return Promise.resolve();
-    });
-
-    await loginThunk(creds)(dispatch, () => ({}), undefined);
-
-    expect(mockReset).not.toHaveBeenCalled();
-  });
-
-  it('passes isPublic flag to auth.login', async () => {
-    mockLogin.mockImplementation(() => {
-      emitAuth('authentication:success', sessionPayload);
-      return Promise.resolve();
-    });
-
-    await loginThunk({ ...creds, isPublic: true })(dispatch, () => ({}), undefined);
-
-    expect(mockLogin).toHaveBeenCalledWith('user@test.com', 'secret', true);
-  });
-
-  it('fetches account for the selected place', async () => {
-    const accountData = { [Base.ATTR_ADDRESS]: 'SERV:account:acc-1', [Account.ATTR_STATE]: 'ACTIVE' };
-    mockAttributes({ account: accountData });
-    mockLogin.mockImplementation(() => {
-      emitAuth('authentication:success', sessionPayload);
-      return Promise.resolve();
-    });
-
-    await loginThunk(creds)(dispatch, () => ({}), undefined);
-
-    expect(mockBridgeRequest).toHaveBeenCalledWith(
-      Base.CMD_GETATTRIBUTES,
-      'SERV:account:acc-1',
-      {},
-    );
-    const success = dispatched.find((a) => a.type === loginSuccess.type);
-    expect(success.payload.account).toEqual(accountData);
-  });
-
-  it('fetches the person and merges their attributes into the session', async () => {
-    const personData = {
-      [Base.ATTR_ADDRESS]: 'SERV:person:person-1',
-      [Person.ATTR_FIRSTNAME]: 'Alice',
-      [Person.ATTR_EMAIL]: 'alice@test.com',
-    };
-    mockAttributes({ person: personData });
-    mockLogin.mockImplementation(() => {
-      emitAuth('authentication:success', sessionPayload);
-      return Promise.resolve();
-    });
-
-    await loginThunk(creds)(dispatch, () => ({}), undefined);
-
-    expect(mockBridgeRequest).toHaveBeenCalledWith(
-      Base.CMD_GETATTRIBUTES,
-      'SERV:person:person-1',
-      {},
-    );
-    const success = dispatched.find((a) => a.type === loginSuccess.type);
-    expect(success.payload.person).toEqual({ ...sessionPayload, ...personData });
-  });
-
-  it('requests the person only after the active place is set', async () => {
-    const calls: string[] = [];
-    mockSetActivePlace.mockImplementationOnce((placeId: string) => {
-      calls.push(`SetActivePlace ${placeId}`);
-      return Promise.resolve({});
-    });
-    mockBridgeRequest.mockImplementation((_cmd: string, address: string) => {
-      calls.push(address);
-      return Promise.resolve({});
-    });
-    mockLogin.mockImplementation(() => {
-      emitAuth('authentication:success', sessionPayload);
-      return Promise.resolve();
-    });
-
-    await loginThunk(creds)(dispatch, () => ({}), undefined);
-
-    expect(calls).toEqual(['SetActivePlace place-1', 'SERV:person:person-1', 'SERV:account:acc-1']);
-  });
-
-  it('still succeeds with the session data when the person fetch fails', async () => {
-    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
-    mockAttributes({ person: new Error('fail') });
-    mockLogin.mockImplementation(() => {
-      emitAuth('authentication:success', sessionPayload);
-      return Promise.resolve();
-    });
-
-    await loginThunk(creds)(dispatch, () => ({}), undefined);
-
-    const success = dispatched.find((a) => a.type === loginSuccess.type);
-    expect(success.payload.person).toEqual(sessionPayload);
-    expect(dispatched).not.toContainEqual(loginFailed());
-    consoleError.mockRestore();
-  });
-
-  it('dispatches loginFailed when account fetch fails', async () => {
-    mockAttributes({ account: new Error('fail') });
-    mockLogin.mockImplementation(() => {
-      emitAuth('authentication:success', sessionPayload);
-      return Promise.resolve();
-    });
-
-    await loginThunk(creds)(dispatch, () => ({}), undefined).catch(() => {});
-
-    expect(dispatched).toContainEqual(loginFailed());
-  });
-
-  it('picks non-OWNER place when no OWNER exists', async () => {
-    const guestSession = {
-      personId: 'person-1',
-      places: [
-        { placeId: 'place-b', placeName: 'Beta', accountId: 'acc-2', role: 'GUEST' },
-        { placeId: 'place-a', placeName: 'Alpha', accountId: 'acc-1', role: 'GUEST' },
-      ],
-    };
-    mockLogin.mockImplementation(() => {
-      emitAuth('authentication:success', guestSession);
-      return Promise.resolve();
-    });
-
-    await loginThunk(creds)(dispatch, () => ({}), undefined);
-
-    // Falls back to first alphabetically
-    expect(mockSetActivePlace).toHaveBeenCalledWith('place-a');
   });
 });

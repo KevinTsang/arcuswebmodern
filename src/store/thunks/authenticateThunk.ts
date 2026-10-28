@@ -12,7 +12,7 @@ import { createAsyncThunk } from '@reduxjs/toolkit';
 import auth from '@arcus/core/auth';
 import { setAuthenticating, loginFailed } from '../slices/authSlice';
 import { initializeCoreConfig } from './initConfig';
-import { waitForSession, completeSession, SessionStepError } from './sessionFlow';
+import { waitForSession, completeSession, SessionStepError } from '../utils/sessionFlow';
 
 export const authenticateThunk = createAsyncThunk(
   'auth/authenticate',
