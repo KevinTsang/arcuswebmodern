@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, type FormEvent } from 'react';
+import { useCallback, useMemo, type FormEvent } from 'react';
 import { Base, Place } from '@arcus/core';
 import Bridge from '@arcus/core/bridge';
 import { useCreateAccount } from './CreateAccountContext';
@@ -11,7 +11,7 @@ export default function AddressStep() {
   const { state, dispatch, addrForm } = useCreateAccount();
 
   const { street1, street2, city, state: addrState, zip, placeId, loading } = state;
-  const allValues = { street1, city, state: addrState, zip };
+  const allValues = useMemo(() => ({ street1, city, state: addrState, zip }), [street1, city, addrState, zip]);
 
   const handleSubmit = useCallback(
     async (ev: FormEvent) => {

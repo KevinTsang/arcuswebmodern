@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, type FormEvent } from 'react';
+import { useCallback, useMemo, type FormEvent } from 'react';
 import { Person } from '@arcus/core';
 import { useAppDispatch } from '@/store/hooks';
 import { AccountService } from '@arcus/core/services';
@@ -17,7 +17,10 @@ export default function CredentialsStep() {
   const reduxDispatch = useAppDispatch();
 
   const { email, password, confirmPassword, firstName, lastName, phone, optIn, loading } = state;
-  const allValues = { email, password, confirmPassword, firstName, lastName };
+  const allValues = useMemo(
+    () => ({ email, password, confirmPassword, firstName, lastName }),
+    [email, password, confirmPassword, firstName, lastName],
+  );
 
   const handleSubmit = useCallback(
     async (ev: FormEvent) => {
@@ -69,7 +72,7 @@ export default function CredentialsStep() {
         dispatch(setLoading(false));
       }
     },
-    [email, password, confirmPassword, firstName, lastName, phone, optIn, credForm, dispatch, reduxDispatch, allValues],
+    [email, password, firstName, lastName, phone, optIn, credForm, dispatch, reduxDispatch, allValues],
   );
 
   return (
