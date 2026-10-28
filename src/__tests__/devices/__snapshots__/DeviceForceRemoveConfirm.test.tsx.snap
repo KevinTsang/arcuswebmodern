@@ -1,0 +1,71 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`DeviceForceRemoveConfirm matches snapshot 1`] = `
+<div
+  data-stage="confirmForce"
+  data-testid="device-remove-status"
+>
+  <p
+    class="text-sm text-swift mb-3"
+    data-testid="device-force-remove-warning"
+  >
+    Force Remove deletes 
+    <strong>
+      Front Door Lock
+    </strong>
+     from your account without excluding it from the hub's network. The device may stay paired to the hub until you factory reset it.
+  </p>
+  <div
+    class="flex gap-3"
+  >
+    <button
+      class="bg-cardinal text-crane px-4 py-2 rounded-[var(--border-radius-base)] text-sm disabled:opacity-50"
+      data-testid="device-force-remove-confirm"
+    >
+      Yes, Force Remove
+    </button>
+    <button
+      class="border border-heron text-coot px-4 py-2 rounded-[var(--border-radius-base)] text-sm disabled:opacity-50"
+      data-testid="device-force-remove-back"
+    >
+      Back
+    </button>
+  </div>
+</div>
+`;
+
+exports[`DeviceForceRemoveConfirm matches snapshot while dev:ForceRemove is pending 1`] = `
+<div
+  data-stage="forcing"
+  data-testid="device-remove-status"
+>
+  <p
+    class="text-sm text-swift mb-3"
+    data-testid="device-force-remove-warning"
+  >
+    Force Remove deletes 
+    <strong>
+      Front Door Lock
+    </strong>
+     from your account without excluding it from the hub's network. The device may stay paired to the hub until you factory reset it.
+  </p>
+  <div
+    class="flex gap-3"
+  >
+    <button
+      class="bg-cardinal text-crane px-4 py-2 rounded-[var(--border-radius-base)] text-sm disabled:opacity-50"
+      data-testid="device-force-remove-confirm"
+      disabled=""
+    >
+      Removing...
+    </button>
+    <button
+      class="border border-heron text-coot px-4 py-2 rounded-[var(--border-radius-base)] text-sm disabled:opacity-50"
+      data-testid="device-force-remove-back"
+      disabled=""
+    >
+      Back
+    </button>
+  </div>
+</div>
+`;

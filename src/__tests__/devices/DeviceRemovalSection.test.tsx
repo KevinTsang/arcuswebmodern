@@ -1,8 +1,7 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { PairingDevice } from '@arcus/core';
 import { DeviceRemovalSection } from '@/components/devices/DeviceRemovalSection';
-import type { DeviceRemovalFlow, RemovalStage } from '@/hooks/useDeviceRemoval';
-import type { PairingStep } from '@/components/pairing/types';
+import type { DeviceRemovalFlow, PairingStep, RemovalStage } from '@/components/pairing/types';
 
 // ── Helpers ───────────────────────────────────────────────────────────
 

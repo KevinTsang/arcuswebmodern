@@ -17,7 +17,7 @@
  * device from the network.
  */
 
-import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useReducer, useRef } from 'react';
 import Bridge from '@arcus/core/bridge';
 import cornea from '@arcus/core/cornea';
 import { Base, Device, DeviceAdvanced, PairingDevice } from '@arcus/core';
@@ -27,7 +27,29 @@ import { addNotification } from '@/store/slices/uiSlice';
 import { stopHubUnpairing } from '@/lib/hubUnpairing';
 import type { AppDispatch } from '@/store/store';
 import type { ArcusPayload } from '@/store/entityTypes';
-import type { PairingStep } from '@/components/pairing/types';
+import {
+  initialRemovalState,
+  type DeviceRemovalFlow,
+  type RemovalOutcome,
+  type RemovalSession,
+} from '@/components/pairing/types';
+import {
+  deviceRemovalReducer,
+  canTransition,
+  removeRequested,
+  removeDismissed,
+  removeSent,
+  removeAccepted,
+  removeFailed,
+  removeTimedOut,
+  forceRemoveRequested,
+  forceRemoveDismissed,
+  forceRemoveSent,
+  forceRemoveFailed,
+  cancelStarted,
+  cancelFinished,
+  deviceChanged,
+} from '@/components/pairing/deviceRemovalSlice';
 import type { RemovalMode, RemoveResponse } from '@/arcus/types';
 
 /** How long to wait for base:Deleted before offering Force Remove (legacy: 4 minutes). */
@@ -47,71 +69,12 @@ const DELETED_EVENT = `${Device.NAMESPACE} ${Base.EVENT_DELETED}`;
 const HUB_MAY_STAY_UNPAIRING = 'The hub may stay in removal mode for a few minutes.';
 const STOP_FAILED_MESSAGE = `Couldn't take the hub out of removal mode. ${HUB_MAY_STAY_UNPAIRING}`;
 
-/**
- * - `idle` — nothing in progress
- * - `confirm` — "Are you sure?" prompt
- * - `requesting` — dev:Remove in flight
- * - `removing` — steps shown, waiting for base:Deleted
- * - `timedOut` — no base:Deleted within REMOVE_TIMEOUT; Force Remove offered
- * - `confirmForce` — Force Remove confirmation
- * - `forcing` — dev:ForceRemove sent, waiting for base:Deleted (at most FORCE_REMOVE_TIMEOUT)
- */
-export type RemovalStage =
-  | 'idle'
-  | 'confirm'
-  | 'requesting'
-  | 'removing'
-  | 'timedOut'
-  | 'confirmForce'
-  | 'forcing';
-
-export interface DeviceRemovalFlow {
-  stage: RemovalStage;
-  /** Removal mode from the dev:Remove response, null until it arrives. */
-  mode: RemovalMode | null;
-  /** The removal runs on the hub (HUB_AUTOMATIC / HUB_MANUAL), so Cancel stops it. */
-  hubMode: boolean;
-  steps: PairingStep[];
-  /** STOP_UNPAIRING in flight after Cancel. */
-  cancelling: boolean;
-  requestRemove: () => void;
-  dismissRemove: () => void;
-  remove: () => Promise<void>;
-  cancel: () => Promise<void>;
-  requestForceRemove: () => void;
-  dismissForceRemove: () => void;
-  forceRemove: () => Promise<void>;
-}
-
 /** Whether a dev:Remove mode puts the hub into unpairing mode. */
 export function isHubRemovalMode(mode: RemovalMode | null | undefined): boolean {
   return mode === PairingDevice.REMOVEMODE_HUB_AUTOMATIC || mode === PairingDevice.REMOVEMODE_HUB_MANUAL;
 }
 
-/** One dev:Remove attempt, from Yes, Remove until the device is removed or the flow ends. */
-interface RemovalSession {
-  name: string;
-  /** Hub in the store when dev:Remove was sent; STOP_UNPAIRING goes to it. */
-  hub: string | null;
-  /** Hub-attached device by protocol: a dev:Remove that failed may still have started unpairing. */
-  hubDevice: boolean;
-  /** Mode from the dev:Remove response, null until it arrives. */
-  mode: RemovalMode | null;
-  /** The hub may be unpairing because of this removal; cleared once STOP_UNPAIRING succeeds. */
-  unpairing: boolean;
-  /** STOP_UNPAIRING in flight, shared by everyone waiting on it. */
-  stopping: Promise<boolean> | null;
-  /** dev:ForceRemove sent: the platform deletes the record whether or not the panel stays open. */
-  forced: boolean;
-  /**
-   * `active` until the device is removed, dev:Remove fails, the user cancels,
-   * or the panel closes or switches device (`abandoned`).
-   */
-  outcome: 'active' | 'removed' | 'failed' | 'cancelled' | 'abandoned';
-  timer: ReturnType<typeof setTimeout> | null;
-}
-
-function endSession(session: RemovalSession, outcome: RemovalSession['outcome']) {
+function endSession(session: RemovalSession, outcome: RemovalOutcome) {
   session.outcome = outcome;
   if (session.timer) {
     clearTimeout(session.timer);
@@ -169,6 +132,10 @@ function notifyCancelled(session: RemovalSession, stopped: boolean, dispatch: Ap
 }
 
 /**
+ * The flow's UI state lives in deviceRemovalSlice, run through `useReducer`;
+ * every stage change is one of its transitions. The current attempt's
+ * RemovalSession (hub, timers, STOP in flight) lives in a ref.
+ *
  * @param address device being removed
  * @param name device name, used in notifications
  * @param onClose closes the panel; called once the device is removed or on Cancel
@@ -177,19 +144,11 @@ export function useDeviceRemoval(address: string, name: string, onClose: () => v
   const dispatch = useAppDispatch();
   const hubAddress = useAppSelector((s) => s.hub.hub?.[Base.ATTR_ADDRESS] ?? '');
   const protocol = useDevice(address)?.[DeviceAdvanced.ATTR_PROTOCOL] as string | undefined;
-  const [stage, setStage] = useState<RemovalStage>('idle');
-  const [response, setResponse] = useState<RemoveResponse | null>(null);
-  const [cancelling, setCancelling] = useState(false);
+  const [state, dispatchRemoval] = useReducer(deviceRemovalReducer, { ...initialRemovalState, address });
 
   // A new address starts a new flow. The old flow's session is ended (and the
   // hub stopped) by the effect cleanup below.
-  const [flowAddress, setFlowAddress] = useState(address);
-  if (flowAddress !== address) {
-    setFlowAddress(address);
-    setStage('idle');
-    setResponse(null);
-    setCancelling(false);
-  }
+  if (state.address !== address) dispatchRemoval(deviceChanged(address));
 
   /** The removal this flow is showing; null when none is running. */
   const sessionRef = useRef<RemovalSession | null>(null);
@@ -226,7 +185,7 @@ export function useDeviceRemoval(address: string, name: string, onClose: () => v
   }, [address, dispatch]);
 
   const remove = useCallback(async () => {
-    if (sessionRef.current) return;
+    if (sessionRef.current || !canTransition(state, removeSent())) return;
     const session: RemovalSession = {
       name,
       hub: hubAddress || null,
@@ -239,7 +198,7 @@ export function useDeviceRemoval(address: string, name: string, onClose: () => v
       timer: null,
     };
     sessionRef.current = session;
-    setStage('requesting');
+    dispatchRemoval(removeSent());
 
     let resp: RemoveResponse;
     try {
@@ -256,7 +215,7 @@ export function useDeviceRemoval(address: string, name: string, onClose: () => v
       if (sessionRef.current === session) {
         sessionRef.current = null;
         endSession(session, 'failed');
-        setStage('confirm');
+        dispatchRemoval(removeFailed());
       }
       dispatch(addNotification({ type: 'error', message: `Failed to remove ${session.name}` }));
       return;
@@ -276,42 +235,41 @@ export function useDeviceRemoval(address: string, name: string, onClose: () => v
       return;
     }
 
-    setResponse(resp);
-    setStage('removing');
+    dispatchRemoval(removeAccepted({ mode: session.mode, steps: resp.steps ?? [] }));
     session.timer = setTimeout(() => {
       session.timer = null;
-      if (sessionRef.current === session) setStage('timedOut');
+      if (sessionRef.current === session) dispatchRemoval(removeTimedOut());
     }, REMOVE_TIMEOUT);
-  }, [address, name, hubAddress, protocol, dispatch]);
+  }, [state, address, name, hubAddress, protocol, dispatch]);
 
   const cancel = useCallback(async () => {
     const session = sessionRef.current;
-    if (!session) return;
-    setCancelling(true);
+    if (!session || !canTransition(state, cancelStarted())) return;
+    dispatchRemoval(cancelStarted());
     const stopped = await stopUnpairing(session);
     // Removed, or the panel closed or switched device, while STOP was in flight.
     if (sessionRef.current !== session) return;
     sessionRef.current = null;
     endSession(session, 'cancelled');
-    setCancelling(false);
+    dispatchRemoval(cancelFinished());
     // Don't trap the user in the panel when the hub can't be reached or has
     // already left unpairing mode: it times out on its own.
     if (!stopped) dispatch(addNotification({ type: 'error', message: STOP_FAILED_MESSAGE }));
     onCloseRef.current();
-  }, [dispatch]);
+  }, [state, dispatch]);
 
   const forceRemove = useCallback(async () => {
     const session = sessionRef.current;
-    if (!session) return;
+    if (!session || !canTransition(state, forceRemoveSent())) return;
     session.forced = true;
-    setStage('forcing');
+    dispatchRemoval(forceRemoveSent());
     try {
       await Bridge.request(Device.CMD_FORCEREMOVE, address, {});
     } catch {
       if (sessionRef.current !== session) return;
       session.forced = false;
       dispatch(addNotification({ type: 'error', message: `Failed to force remove ${session.name}` }));
-      setStage('timedOut');
+      dispatchRemoval(forceRemoveFailed());
       return;
     }
     // Success is reported when base:Deleted arrives, which is usually before
@@ -322,23 +280,22 @@ export function useDeviceRemoval(address: string, name: string, onClose: () => v
       if (sessionRef.current !== session) return;
       session.forced = false;
       dispatch(addNotification({ type: 'error', message: `Couldn't confirm that ${session.name} was removed` }));
-      setStage('timedOut');
+      dispatchRemoval(forceRemoveFailed());
     }, FORCE_REMOVE_TIMEOUT);
-  }, [address, dispatch]);
+  }, [state, address, dispatch]);
 
-  const requestRemove = useCallback(() => setStage('confirm'), []);
-  const dismissRemove = useCallback(() => setStage('idle'), []);
-  const requestForceRemove = useCallback(() => setStage('confirmForce'), []);
-  const dismissForceRemove = useCallback(() => setStage('timedOut'), []);
+  const requestRemove = useCallback(() => dispatchRemoval(removeRequested()), []);
+  const dismissRemove = useCallback(() => dispatchRemoval(removeDismissed()), []);
+  const requestForceRemove = useCallback(() => dispatchRemoval(forceRemoveRequested()), []);
+  const dismissForceRemove = useCallback(() => dispatchRemoval(forceRemoveDismissed()), []);
 
-  return useMemo(() => {
-    const mode = response?.mode ?? null;
-    return {
-      stage,
-      mode,
-      hubMode: isHubRemovalMode(mode),
-      steps: response?.steps ?? [],
-      cancelling,
+  return useMemo(
+    () => ({
+      stage: state.stage,
+      mode: state.mode,
+      hubMode: isHubRemovalMode(state.mode),
+      steps: state.steps,
+      cancelling: state.cancelling,
       requestRemove,
       dismissRemove,
       remove,
@@ -346,6 +303,7 @@ export function useDeviceRemoval(address: string, name: string, onClose: () => v
       requestForceRemove,
       dismissForceRemove,
       forceRemove,
-    };
-  }, [stage, response, cancelling, requestRemove, dismissRemove, remove, cancel, requestForceRemove, dismissForceRemove, forceRemove]);
+    }),
+    [state, requestRemove, dismissRemove, remove, cancel, requestForceRemove, dismissForceRemove, forceRemove],
+  );
 }

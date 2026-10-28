@@ -1,0 +1,37 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`DeviceRemoveTimedOut matches snapshot 1`] = `
+<div
+  data-stage="timedOut"
+  data-testid="device-remove-status"
+>
+  <h4
+    class="text-base font-medium text-swift mb-2"
+    data-testid="device-remove-title"
+  >
+    Removal was unsuccessful.
+  </h4>
+  <p
+    class="text-sm text-grouse mb-3"
+  >
+    Front Door Lock
+     wasn't removed. Force Remove deletes it from your account even if the device can't be reached.
+  </p>
+  <div
+    class="flex gap-3"
+  >
+    <button
+      class="bg-cardinal text-crane px-4 py-2 rounded-[var(--border-radius-base)] text-sm disabled:opacity-50"
+      data-testid="device-force-remove"
+    >
+      Force Remove
+    </button>
+    <button
+      class="border border-heron text-coot px-4 py-2 rounded-[var(--border-radius-base)] text-sm disabled:opacity-50"
+      data-testid="device-remove-abort"
+    >
+      Cancel
+    </button>
+  </div>
+</div>
+`;

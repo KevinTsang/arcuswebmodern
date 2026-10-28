@@ -1,0 +1,63 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`DeviceRemoveConfirm matches snapshot 1`] = `
+<div>
+  <p
+    class="text-sm text-swift mb-3"
+  >
+    Are you sure you want to remove 
+    <strong>
+      Front Door Lock
+    </strong>
+    ? This will unpair the device from your hub. Rules and scenes using this device will be affected.
+  </p>
+  <div
+    class="flex gap-3"
+  >
+    <button
+      class="bg-cardinal text-crane px-4 py-2 rounded-[var(--border-radius-base)] text-sm disabled:opacity-50"
+      data-testid="device-remove-confirm"
+    >
+      Yes, Remove
+    </button>
+    <button
+      class="border border-heron text-coot px-4 py-2 rounded-[var(--border-radius-base)] text-sm disabled:opacity-50"
+      data-testid="device-remove-cancel"
+    >
+      Cancel
+    </button>
+  </div>
+</div>
+`;
+
+exports[`DeviceRemoveConfirm matches snapshot while dev:Remove is in flight 1`] = `
+<div>
+  <p
+    class="text-sm text-swift mb-3"
+  >
+    Are you sure you want to remove 
+    <strong>
+      Front Door Lock
+    </strong>
+    ? This will unpair the device from your hub. Rules and scenes using this device will be affected.
+  </p>
+  <div
+    class="flex gap-3"
+  >
+    <button
+      class="bg-cardinal text-crane px-4 py-2 rounded-[var(--border-radius-base)] text-sm disabled:opacity-50"
+      data-testid="device-remove-confirm"
+      disabled=""
+    >
+      Removing...
+    </button>
+    <button
+      class="border border-heron text-coot px-4 py-2 rounded-[var(--border-radius-base)] text-sm disabled:opacity-50"
+      data-testid="device-remove-cancel"
+      disabled=""
+    >
+      Cancel
+    </button>
+  </div>
+</div>
+`;

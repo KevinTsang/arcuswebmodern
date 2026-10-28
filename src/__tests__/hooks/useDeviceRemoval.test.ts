@@ -664,3 +664,56 @@ describe('useDeviceRemoval – timeout and Force Remove', () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 });
+
+describe('useDeviceRemoval – state machine guards', () => {
+  it('does not send dev:ForceRemove before Force Remove is confirmed', async () => {
+    jest.useFakeTimers();
+    const { result } = await startRemoval();
+    act(() => { jest.advanceTimersByTime(REMOVE_TIMEOUT); });
+
+    await act(async () => { await result.current.forceRemove(); });
+    expect(mockBridgeRequest).not.toHaveBeenCalledWith(Device.CMD_FORCEREMOVE, DEVICE, {});
+    expect(result.current.stage).toBe('timedOut');
+  });
+
+  it('ignores Cancel while dev:Remove is in flight', async () => {
+    const pending = deferred<RemoveResponse>();
+    bridge({ [Device.CMD_REMOVE]: () => pending.promise });
+    const { result } = renderRemoval();
+
+    let done!: Promise<void>;
+    act(() => { done = result.current.remove(); });
+    await act(async () => { await result.current.cancel(); });
+    expect(onClose).not.toHaveBeenCalled();
+    expect(result.current.cancelling).toBe(false);
+
+    await act(async () => { pending.resolve(HUB_RESPONSE); await done; });
+    expect(result.current.stage).toBe('removing');
+  });
+
+  it('does not start another removal from the steps view once the flow has ended', async () => {
+    const { result } = await startRemoval();
+    // onClose is a mock here, so the panel stays open after Cancel.
+    await act(async () => { await result.current.cancel(); });
+    expect(result.current.stage).toBe('removing');
+
+    await act(async () => { await result.current.remove(); });
+    expect(mockBridgeRequest.mock.calls.filter(([cmd]) => cmd === Device.CMD_REMOVE)).toHaveLength(1);
+  });
+
+  it('does not offer Force Remove while Cancel is in flight', async () => {
+    jest.useFakeTimers();
+    const pending = deferred<unknown>();
+    const { result } = await startRemoval();
+    act(() => { jest.advanceTimersByTime(REMOVE_TIMEOUT); });
+    bridge({ [Hub.CMD_UNPAIRINGREQUEST]: () => pending.promise });
+
+    let done!: Promise<void>;
+    act(() => { done = result.current.cancel(); });
+    act(() => result.current.requestForceRemove());
+    expect(result.current.stage).toBe('timedOut');
+
+    await act(async () => { pending.resolve({}); await done; });
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+});
