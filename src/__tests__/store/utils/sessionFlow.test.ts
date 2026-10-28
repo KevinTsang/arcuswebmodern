@@ -1,7 +1,8 @@
 /**
  * Tests for sessionFlow — the sign-in flow shared by loginThunk and
  * authenticateThunk: wait for SessionCreated, then scope the session to the
- * default place, load the account and person, and dispatch loginSuccess.
+ * default place, load the account and person, and dispatch loginSuccess. A
+ * failed step rejects with a SessionStepError naming the step.
  */
 
 import type { Dispatch } from '@reduxjs/toolkit';
@@ -9,7 +10,7 @@ import { Base, Account, Person } from '@arcus/core';
 import type { SessionCreatedEvent, SessionPlace } from '@/arcus/types';
 import type { AccountData, PersonData } from '@/store/entityTypes';
 import { loginSuccess } from '@/store/slices/authSlice';
-import { waitForSession, completeSession } from '@/store/utils/sessionFlow';
+import { waitForSession, completeSession, SessionStepError } from '@/store/utils/sessionFlow';
 
 // ── Mocks ─────────────────────────────────────────────────────────────
 
@@ -112,6 +113,17 @@ function mockAttributes({ person = PERSON, account = ACCOUNT }: { person?: Perso
   });
 }
 
+/** The SessionStepError a sign-in step rejected with. */
+async function stepError<T>(promise: Promise<T>): Promise<SessionStepError> {
+  try {
+    await promise;
+  } catch (error) {
+    if (error instanceof SessionStepError) return error;
+    throw error;
+  }
+  throw new Error('Expected the sign-in step to fail');
+}
+
 function flushPromises() {
   return new Promise<void>((resolve) => setTimeout(resolve, 0));
 }
@@ -125,6 +137,19 @@ beforeEach(() => {
 });
 
 // ── Tests ─────────────────────────────────────────────────────────────
+
+describe('SessionStepError', () => {
+  it('names the failed step and keeps the raw rejection', () => {
+    const reason = {};
+    const error = new SessionStepError('SetActivePlace', reason);
+
+    expect(error).toBeInstanceOf(Error);
+    expect(error.name).toBe('SessionStepError');
+    expect(error.message).toBe('Sign-in step "SetActivePlace" failed');
+    expect(error.step).toBe('SetActivePlace');
+    expect(error.reason).toBe(reason);
+  });
+});
 
 describe('waitForSession', () => {
   it('resolves with the SessionCreated payload emitted during the start call', async () => {
@@ -141,9 +166,11 @@ describe('waitForSession', () => {
     expectNoAuthListeners();
   });
 
-  it('rejects with the fail message on authentication:fail', async () => {
-    await expect(waitForSession(startEmitting('authentication:fail'), FAIL_MESSAGE))
-      .rejects.toThrow(new Error(FAIL_MESSAGE));
+  it('rejects with a SessionCreated step error carrying the fail message on authentication:fail', async () => {
+    const error = await stepError(waitForSession(startEmitting('authentication:fail'), FAIL_MESSAGE));
+
+    expect(error.step).toBe('SessionCreated');
+    expect(error.reason).toEqual(new Error(FAIL_MESSAGE));
   });
 
   it('removes its auth listeners after authentication:fail', async () => {
@@ -152,10 +179,13 @@ describe('waitForSession', () => {
     expectNoAuthListeners();
   });
 
-  it('rejects with the reason the start call rejected with', async () => {
+  it('rejects with a connect step error carrying the start call\'s rejection', async () => {
     const reason = new Error('Login failed: 401');
 
-    await expect(waitForSession(() => Promise.reject(reason), FAIL_MESSAGE)).rejects.toBe(reason);
+    const error = await stepError(waitForSession(() => Promise.reject(reason), FAIL_MESSAGE));
+
+    expect(error.step).toBe('connect');
+    expect(error.reason).toBe(reason);
   });
 
   it('removes its auth listeners when the start call rejects', async () => {
@@ -210,12 +240,28 @@ describe('completeSession', () => {
     it('returns the selected placeId', async () => {
       await expect(completeSession(makeSession(), dispatch)).resolves.toBe('place-1');
     });
+
+    it('rejects with a SetActivePlace step error carrying the raw rejection', async () => {
+      // Cornea rejects with the platform's error attributes, which can be just {}.
+      const reason = {};
+      mockSetActivePlace.mockRejectedValueOnce(reason);
+
+      const error = await stepError(completeSession(makeSession(), dispatch));
+
+      expect(error.step).toBe('SetActivePlace');
+      expect(error.reason).toBe(reason);
+      expect(localStorage.getItem('arcus:placeId')).toBeNull();
+      expect(mockBridgeRequest).not.toHaveBeenCalled();
+      expect(mockDispatch).not.toHaveBeenCalled();
+    });
   });
 
   describe('without places', () => {
-    it('rejects without setting or saving a place, loading data or signing in', async () => {
-      await expect(completeSession(makeSession([]), dispatch))
-        .rejects.toThrow('No account found for the selected place');
+    it('rejects with an account step error without setting or saving a place, loading data or signing in', async () => {
+      const error = await stepError(completeSession(makeSession([]), dispatch));
+
+      expect(error.step).toBe('account');
+      expect(error.reason).toEqual(new Error('No account found for the selected place'));
 
       expect(mockSetActivePlace).not.toHaveBeenCalled();
       expect(localStorage.getItem('arcus:placeId')).toBeNull();
@@ -274,11 +320,14 @@ describe('completeSession', () => {
       consoleError.mockRestore();
     });
 
-    it('rejects without signing in when the account fetch fails', async () => {
+    it('rejects with an account step error without signing in when the account fetch fails', async () => {
       const failure = new Error('fail');
       mockAttributes({ account: failure });
 
-      await expect(completeSession(makeSession(), dispatch)).rejects.toBe(failure);
+      const error = await stepError(completeSession(makeSession(), dispatch));
+
+      expect(error.step).toBe('account');
+      expect(error.reason).toBe(failure);
 
       expect(mockDispatch).not.toHaveBeenCalled();
     });

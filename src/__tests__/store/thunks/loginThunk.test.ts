@@ -13,11 +13,13 @@ import { waitForSession, completeSession } from '@/store/utils/sessionFlow';
 // ── Mocks ─────────────────────────────────────────────────────────────
 
 const mockLogin = jest.fn<Promise<void>, [string, string, boolean]>();
+const mockReset = jest.fn();
 
 jest.mock('@arcus/core/auth', () => ({
   __esModule: true,
   default: {
     login: (username: string, password: string, isPublic: boolean) => mockLogin(username, password, isPublic),
+    reset: () => mockReset(),
   },
 }));
 
@@ -107,28 +109,31 @@ describe('loginThunk', () => {
       expect(result.payload).toEqual({ session, placeId: 'place-1' });
     });
 
-    it('does not dispatch loginFailed', async () => {
+    it('keeps the socket and does not dispatch loginFailed', async () => {
       await runLogin();
 
+      expect(mockReset).not.toHaveBeenCalled();
       expect(mockDispatch).not.toHaveBeenCalledWith(loginFailed());
     });
   });
 
   describe('on failure', () => {
-    it('dispatches loginFailed and rethrows when no session is established', async () => {
+    it('tears down the socket, dispatches loginFailed and rethrows when no session is established', async () => {
       mockWaitForSession.mockRejectedValue(new Error('Authentication failed'));
 
       await expect(runLogin().unwrap()).rejects.toMatchObject({ message: 'Authentication failed' });
 
+      expect(mockReset).toHaveBeenCalledTimes(1);
       expect(mockDispatch).toHaveBeenCalledWith(loginFailed());
       expect(mockCompleteSession).not.toHaveBeenCalled();
     });
 
-    it('dispatches loginFailed and rethrows when completing the session fails', async () => {
+    it('tears down the socket, dispatches loginFailed and rethrows when completing the session fails', async () => {
       mockCompleteSession.mockRejectedValue(new Error('No account found for the selected place'));
 
       await expect(runLogin().unwrap()).rejects.toMatchObject({ message: 'No account found for the selected place' });
 
+      expect(mockReset).toHaveBeenCalledTimes(1);
       expect(mockDispatch).toHaveBeenCalledWith(loginFailed());
     });
   });
