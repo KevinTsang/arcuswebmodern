@@ -31,12 +31,6 @@ export function AlarmSettings() {
         <h3 data-testid="alarm-general-title" className="text-base font-medium text-swift mb-4">General</h3>
         <div className="space-y-4">
           <SettingToggle
-            label="Record on Security Alarm"
-            description="Record video from cameras when the security alarm is triggered."
-            enabled={alarm.recordOnSecurity}
-            onToggle={() => handleToggle(AlarmSubsystem.ATTR_RECORDONSECURITY, alarm.recordOnSecurity)}
-          />
-          <SettingToggle
             label="Fan Shutoff on Smoke"
             description="Automatically shut off fans when smoke is detected."
             enabled={alarm.fanShutoffOnSmoke}

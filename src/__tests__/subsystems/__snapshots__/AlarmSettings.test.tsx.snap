@@ -1,0 +1,503 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`AlarmSettings matches snapshot 1`] = `
+<div
+  class="space-y-8 max-w-lg"
+>
+  <div>
+    <h3
+      class="text-base font-medium text-swift mb-4"
+      data-testid="alarm-general-title"
+    >
+      General
+    </h3>
+    <div
+      class="space-y-4"
+    >
+      <div
+        class="flex items-start justify-between gap-4 py-3 border-b border-heron"
+      >
+        <div>
+          <p
+            class="text-sm font-medium text-swift"
+          >
+            Fan Shutoff on Smoke
+          </p>
+          <p
+            class="text-xs text-grouse mt-0.5"
+          >
+            Automatically shut off fans when smoke is detected.
+          </p>
+        </div>
+        <button
+          aria-checked="false"
+          aria-label="Fan Shutoff on Smoke"
+          class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 bg-heron"
+          data-testid="setting-fan-shutoff-on-smoke"
+          role="switch"
+        >
+          <span
+            class="inline-block h-4 w-4 rounded-full bg-crane shadow transition-transform translate-x-1"
+          />
+        </button>
+      </div>
+      <div
+        class="flex items-start justify-between gap-4 py-3 border-b border-heron"
+      >
+        <div>
+          <p
+            class="text-sm font-medium text-swift"
+          >
+            Fan Shutoff on CO
+          </p>
+          <p
+            class="text-xs text-grouse mt-0.5"
+          >
+            Automatically shut off fans when carbon monoxide is detected.
+          </p>
+        </div>
+        <button
+          aria-checked="false"
+          aria-label="Fan Shutoff on CO"
+          class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 bg-heron"
+          data-testid="setting-fan-shutoff-on-co"
+          role="switch"
+        >
+          <span
+            class="inline-block h-4 w-4 rounded-full bg-crane shadow transition-transform translate-x-1"
+          />
+        </button>
+      </div>
+    </div>
+  </div>
+  <hr
+    class="border-heron"
+  />
+  <div>
+    <h3
+      class="text-base font-medium text-swift mb-2"
+    >
+      Notification List
+    </h3>
+    <p
+      class="text-sm text-grouse"
+    >
+      No contacts configured for alarm notifications.
+    </p>
+  </div>
+  <hr
+    class="border-heron"
+  />
+  <div>
+    <h3
+      class="text-base font-medium text-swift mb-1"
+    >
+      Security Mode Settings
+    </h3>
+    <p
+      class="text-xs text-grouse mb-3"
+    >
+      Configure delays and sounds for each alarm mode.
+    </p>
+    <div
+      class="space-y-4"
+    >
+      <div
+        class="p-4 rounded-[var(--border-radius-base)] border border-heron"
+        data-testid="alarm-mode-on"
+      >
+        <h4
+          class="text-sm font-medium text-swift mb-3"
+        >
+          Full (ON)
+        </h4>
+        <div
+          class="space-y-3"
+        >
+          <div
+            class="flex items-center justify-between gap-3"
+          >
+            <div>
+              <p
+                class="text-sm text-swift"
+              >
+                Exit Delay
+              </p>
+              <p
+                class="text-xs text-grouse"
+              >
+                Time to exit before alarm arms.
+              </p>
+            </div>
+            <select
+              class="text-sm border border-heron rounded px-2 py-1 bg-crane text-swift disabled:opacity-50"
+              data-testid="exit-delay-on"
+            >
+              <option
+                value="0"
+              >
+                None
+              </option>
+              <option
+                value="15"
+              >
+                15s
+              </option>
+              <option
+                value="30"
+              >
+                30s
+              </option>
+              <option
+                value="45"
+              >
+                45s
+              </option>
+              <option
+                value="60"
+              >
+                1m
+              </option>
+              <option
+                value="90"
+              >
+                1m 30s
+              </option>
+              <option
+                value="120"
+              >
+                2m
+              </option>
+              <option
+                value="180"
+              >
+                3m
+              </option>
+            </select>
+          </div>
+          <div
+            class="flex items-center justify-between gap-3"
+          >
+            <div>
+              <p
+                class="text-sm text-swift"
+              >
+                Entrance Delay
+              </p>
+              <p
+                class="text-xs text-grouse"
+              >
+                Grace period to disarm after entering.
+              </p>
+            </div>
+            <select
+              class="text-sm border border-heron rounded px-2 py-1 bg-crane text-swift disabled:opacity-50"
+              data-testid="entrance-delay-on"
+            >
+              <option
+                value="0"
+              >
+                None
+              </option>
+              <option
+                value="15"
+              >
+                15s
+              </option>
+              <option
+                value="30"
+              >
+                30s
+              </option>
+              <option
+                value="45"
+              >
+                45s
+              </option>
+              <option
+                value="60"
+              >
+                1m
+              </option>
+              <option
+                value="90"
+              >
+                1m 30s
+              </option>
+              <option
+                value="120"
+              >
+                2m
+              </option>
+              <option
+                value="180"
+              >
+                3m
+              </option>
+            </select>
+          </div>
+          <div
+            class="flex items-start justify-between gap-4 py-3 border-b border-heron"
+          >
+            <div>
+              <p
+                class="text-sm font-medium text-swift"
+              >
+                Arming Sounds
+              </p>
+              <p
+                class="text-xs text-grouse mt-0.5"
+              >
+                Play sounds on hub/keypad during arming countdown.
+              </p>
+            </div>
+            <button
+              aria-checked="true"
+              aria-label="Arming Sounds"
+              class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 bg-peacock"
+              data-testid="arming-sounds-on"
+              role="switch"
+            >
+              <span
+                class="inline-block h-4 w-4 rounded-full bg-crane shadow transition-transform translate-x-6"
+              />
+            </button>
+          </div>
+          <div
+            class="flex items-start justify-between gap-4 py-3 border-b border-heron"
+          >
+            <div>
+              <p
+                class="text-sm font-medium text-swift"
+              >
+                Silent Alarm
+              </p>
+              <p
+                class="text-xs text-grouse mt-0.5"
+              >
+                Suppress siren when alarm triggers in this mode.
+              </p>
+            </div>
+            <button
+              aria-checked="false"
+              aria-label="Silent Alarm"
+              class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 bg-heron"
+              data-testid="silent-alarm-on"
+              role="switch"
+            >
+              <span
+                class="inline-block h-4 w-4 rounded-full bg-crane shadow transition-transform translate-x-1"
+              />
+            </button>
+          </div>
+        </div>
+      </div>
+      <div
+        class="p-4 rounded-[var(--border-radius-base)] border border-heron"
+        data-testid="alarm-mode-partial"
+      >
+        <h4
+          class="text-sm font-medium text-swift mb-3"
+        >
+          Partial
+        </h4>
+        <div
+          class="space-y-3"
+        >
+          <div
+            class="flex items-center justify-between gap-3"
+          >
+            <div>
+              <p
+                class="text-sm text-swift"
+              >
+                Exit Delay
+              </p>
+              <p
+                class="text-xs text-grouse"
+              >
+                Time to exit before alarm arms.
+              </p>
+            </div>
+            <select
+              class="text-sm border border-heron rounded px-2 py-1 bg-crane text-swift disabled:opacity-50"
+              data-testid="exit-delay-partial"
+            >
+              <option
+                value="0"
+              >
+                None
+              </option>
+              <option
+                value="15"
+              >
+                15s
+              </option>
+              <option
+                value="30"
+              >
+                30s
+              </option>
+              <option
+                value="45"
+              >
+                45s
+              </option>
+              <option
+                value="60"
+              >
+                1m
+              </option>
+              <option
+                value="90"
+              >
+                1m 30s
+              </option>
+              <option
+                value="120"
+              >
+                2m
+              </option>
+              <option
+                value="180"
+              >
+                3m
+              </option>
+            </select>
+          </div>
+          <div
+            class="flex items-center justify-between gap-3"
+          >
+            <div>
+              <p
+                class="text-sm text-swift"
+              >
+                Entrance Delay
+              </p>
+              <p
+                class="text-xs text-grouse"
+              >
+                Grace period to disarm after entering.
+              </p>
+            </div>
+            <select
+              class="text-sm border border-heron rounded px-2 py-1 bg-crane text-swift disabled:opacity-50"
+              data-testid="entrance-delay-partial"
+            >
+              <option
+                value="0"
+              >
+                None
+              </option>
+              <option
+                value="15"
+              >
+                15s
+              </option>
+              <option
+                value="30"
+              >
+                30s
+              </option>
+              <option
+                value="45"
+              >
+                45s
+              </option>
+              <option
+                value="60"
+              >
+                1m
+              </option>
+              <option
+                value="90"
+              >
+                1m 30s
+              </option>
+              <option
+                value="120"
+              >
+                2m
+              </option>
+              <option
+                value="180"
+              >
+                3m
+              </option>
+            </select>
+          </div>
+          <div
+            class="flex items-start justify-between gap-4 py-3 border-b border-heron"
+          >
+            <div>
+              <p
+                class="text-sm font-medium text-swift"
+              >
+                Arming Sounds
+              </p>
+              <p
+                class="text-xs text-grouse mt-0.5"
+              >
+                Play sounds on hub/keypad during arming countdown.
+              </p>
+            </div>
+            <button
+              aria-checked="true"
+              aria-label="Arming Sounds"
+              class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 bg-peacock"
+              data-testid="arming-sounds-partial"
+              role="switch"
+            >
+              <span
+                class="inline-block h-4 w-4 rounded-full bg-crane shadow transition-transform translate-x-6"
+              />
+            </button>
+          </div>
+          <div
+            class="flex items-start justify-between gap-4 py-3 border-b border-heron"
+          >
+            <div>
+              <p
+                class="text-sm font-medium text-swift"
+              >
+                Silent Alarm
+              </p>
+              <p
+                class="text-xs text-grouse mt-0.5"
+              >
+                Suppress siren when alarm triggers in this mode.
+              </p>
+            </div>
+            <button
+              aria-checked="false"
+              aria-label="Silent Alarm"
+              class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 bg-heron"
+              data-testid="silent-alarm-partial"
+              role="switch"
+            >
+              <span
+                class="inline-block h-4 w-4 rounded-full bg-crane shadow transition-transform translate-x-1"
+              />
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <hr
+    class="border-heron"
+  />
+  <div>
+    <h3
+      class="text-base font-medium text-swift mb-2"
+    >
+      Device Participation
+    </h3>
+    <p
+      class="text-sm text-grouse"
+    >
+      No security devices configured.
+    </p>
+  </div>
+</div>
+`;

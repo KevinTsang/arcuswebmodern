@@ -155,15 +155,12 @@ describe('Alarm settings', () => {
   });
 
   it('toggles the general alarm settings', () => {
-    tid('setting-record-on-security-alarm').should('have.attr', 'aria-checked', 'false').click();
-    cy.expectRequest(Base.CMD_SETATTRIBUTES, (r) =>
-      r.destination === ALARM && r.attributes[AlarmSubsystem.ATTR_RECORDONSECURITY] === true);
-    tid('setting-record-on-security-alarm').should('have.attr', 'aria-checked', 'true');
-
     tid('setting-fan-shutoff-on-smoke').should('have.attr', 'aria-checked', 'true').click();
     cy.expectRequest(Base.CMD_SETATTRIBUTES, (r) =>
       r.destination === ALARM && r.attributes[AlarmSubsystem.ATTR_FANSHUTOFFONSMOKE] === false);
     tid('setting-fan-shutoff-on-smoke').should('have.attr', 'aria-checked', 'false');
+
+    tid('setting-record-on-security-alarm').should('not.exist');
   });
 
   it('reorders and toggles the notification call tree', () => {
