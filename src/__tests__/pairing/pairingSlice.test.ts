@@ -6,6 +6,7 @@ import reducer, {
   devicePaired,
   deviceMispaired,
   searchTimedOut,
+  searchFailed,
   setPairingLoading,
   setSteps,
   nextStep,
@@ -19,10 +20,14 @@ import reducer, {
   setDeviceName,
   setFavorite,
   customizationComplete,
+  startPairingFlow,
+  endPairingFlow,
   resetPairing,
 } from '@/store/slices/pairingSlice';
 import type { PairingState } from '@/store/slices/pairingSlice';
+import type { PairingFlow } from '@/components/pairing/types';
 import type { PairingProduct, PairingDevice } from '@/store/entityTypes';
+import { makePairingDevice } from '../helpers/factories';
 
 const initialState: PairingState = {
   stage: 'steps',
@@ -32,12 +37,21 @@ const initialState: PairingState = {
   currentStep: 0,
   devices: [],
   searchTimedOut: false,
+  searchFailed: false,
   loading: false,
   hubId: '',
   hubRegistrationState: null,
   deviceName: '',
   isFavorite: false,
   activeDevice: null,
+  flow: null,
+};
+
+const PAIRING_SUBSYSTEM = 'SERV:subpairing:place-1';
+const leftover = makePairingDevice('leftover', PairingDeviceCap.PAIRINGSTATE_PAIRED);
+const flow: PairingFlow = {
+  pairingSubsystem: PAIRING_SUBSYSTEM,
+  settled: { [leftover[Base.ATTR_ADDRESS]]: PairingDeviceCap.PAIRINGSTATE_PAIRED },
 };
 
 const mockProduct: PairingProduct = {
@@ -76,10 +90,11 @@ describe('pairingSlice', () => {
 
   describe('startSearch', () => {
     it('sets stage to searching and clears devices', () => {
-      const prev = { ...initialState, stage: 'steps' as const, devices: [mockDevice], searchTimedOut: true };
+      const prev = { ...initialState, stage: 'steps' as const, devices: [mockDevice], searchTimedOut: true, searchFailed: true };
       const state = reducer(prev, startSearch());
       expect(state.stage).toBe('searching');
       expect(state.searchTimedOut).toBe(false);
+      expect(state.searchFailed).toBe(false);
       expect(state.devices).toEqual([]);
     });
   });
@@ -107,12 +122,37 @@ describe('pairingSlice', () => {
       expect(state.activeDevice).toEqual(mispaired);
       expect(state.stage).toBe('completed');
     });
+
+    it('settles the device in the flow, so the next search in the flow does not end on it again', () => {
+      const lock = makePairingDevice('lock', PairingDeviceCap.PAIRINGSTATE_MISPAIRED);
+      const state = reducer({ ...initialState, flow }, deviceMispaired(lock));
+      expect(state.flow).toEqual({
+        pairingSubsystem: PAIRING_SUBSYSTEM,
+        settled: { ...flow.settled, [lock[Base.ATTR_ADDRESS]]: PairingDeviceCap.PAIRINGSTATE_MISPAIRED },
+      });
+    });
   });
 
   describe('searchTimedOut', () => {
     it('sets searchTimedOut to true', () => {
       const state = reducer(initialState, searchTimedOut());
       expect(state.searchTimedOut).toBe(true);
+    });
+  });
+
+  describe('searchFailed', () => {
+    it('sets searchFailed to true', () => {
+      expect(reducer(initialState, searchFailed()).searchFailed).toBe(true);
+    });
+  });
+
+  describe('pairing flow', () => {
+    it('startPairingFlow stores the flow', () => {
+      expect(reducer(initialState, startPairingFlow(flow)).flow).toEqual(flow);
+    });
+
+    it('endPairingFlow clears the flow', () => {
+      expect(reducer({ ...initialState, flow }, endPairingFlow()).flow).toBeNull();
     });
   });
 
@@ -213,6 +253,21 @@ describe('pairingSlice', () => {
       const state = reducer(prev, customizationComplete());
       expect(state.stage).toBe('completed');
     });
+
+    it('customizationComplete settles the customized device in the flow', () => {
+      const plug = makePairingDevice('plug', PairingDeviceCap.PAIRINGSTATE_PAIRED);
+      const prev = { ...initialState, stage: 'customize' as const, activeDevice: plug, flow };
+      const state = reducer(prev, customizationComplete());
+      expect(state.flow?.settled).toEqual({
+        ...flow.settled,
+        [plug[Base.ATTR_ADDRESS]]: PairingDeviceCap.PAIRINGSTATE_PAIRED,
+      });
+    });
+
+    it('customizationComplete leaves the flow alone for hub pairing', () => {
+      const prev = { ...initialState, stage: 'customize' as const, isHubPairing: true, flow };
+      expect(reducer(prev, customizationComplete()).flow).toEqual(flow);
+    });
   });
 
   describe('resetPairing', () => {
@@ -231,9 +286,16 @@ describe('pairingSlice', () => {
         deviceName: 'My Plug',
         isFavorite: true,
         activeDevice: mockDevice,
+        searchFailed: true,
+        flow: null,
       };
       const state = reducer(dirty, resetPairing());
       expect(state).toEqual(initialState);
+    });
+
+    it('keeps the pairing flow, which spans Pair Another and trips to the catalog', () => {
+      const dirty: PairingState = { ...initialState, stage: 'completed', activeDevice: mockDevice, flow };
+      expect(reducer(dirty, resetPairing())).toEqual({ ...initialState, flow });
     });
   });
 });

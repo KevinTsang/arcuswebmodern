@@ -8,8 +8,12 @@ import DeviceStateRow from './DeviceStateRow';
 interface SearchingStageProps {
   product: PairingProduct | null;
   isHubPairing: boolean;
+  /** Pairing records found by the current search. */
   devices: PairingDevice[];
+  /** Improperly paired records left from an earlier pairing. */
+  earlierDevices: PairingDevice[];
   searchTimedOut: boolean;
+  searchFailed: boolean;
   hubRegistrationState: string | null;
   dispatch: AppDispatch;
   onStartSearch: () => void;
@@ -20,7 +24,9 @@ export default function SearchingStage({
   product,
   isHubPairing,
   devices,
+  earlierDevices,
   searchTimedOut,
+  searchFailed,
   hubRegistrationState,
   dispatch,
   onStartSearch,
@@ -73,9 +79,14 @@ export default function SearchingStage({
 
   // Device searching
   return (
-    <div data-testid="pairing-searching" data-timed-out={searchTimedOut} className="text-center py-6">
+    <div
+      data-testid="pairing-searching"
+      data-timed-out={searchTimedOut}
+      data-failed={searchFailed}
+      className="text-center py-6"
+    >
       <h3 className="text-lg font-semibold text-swift mb-4">Searching for Device</h3>
-      {!searchTimedOut ? (
+      {!searchTimedOut && !searchFailed ? (
         <>
           <div className="animate-pulse mb-4">
             <div className="w-16 h-16 bg-peacock/10 rounded-full flex items-center justify-center mx-auto">
@@ -87,10 +98,13 @@ export default function SearchingStage({
               ? `Looking for your ${product[Product.ATTR_NAME]}…`
               : 'Looking for devices…'}
           </p>
-          {devices.length > 0 && (
+          {devices.length + earlierDevices.length > 0 && (
             <div className="mt-4 space-y-2">
               {devices.map((d) => (
                 <DeviceStateRow key={d[Base.ATTR_ADDRESS]} device={d} />
+              ))}
+              {earlierDevices.map((d) => (
+                <DeviceStateRow key={d[Base.ATTR_ADDRESS]} device={d} earlier />
               ))}
             </div>
           )}
@@ -104,13 +118,16 @@ export default function SearchingStage({
         </>
       ) : (
         <>
-          <p className="text-sm text-swift mb-2">Search timed out</p>
+          <p className="text-sm text-swift mb-2">{searchFailed ? 'Search failed' : 'Search timed out'}</p>
           <p className="text-sm text-grouse mb-4">
-            No devices were found. Make sure your device is in pairing mode and within range of the hub.
+            {searchFailed
+              ? 'The search could not be started. Check the hub connection and try again.'
+              : 'No devices were found. Make sure your device is in pairing mode and within range of the hub.'}
           </p>
           <div className="flex gap-2 justify-center">
             <button
               onClick={onStartSearch}
+              data-testid="pairing-search-retry"
               className="px-4 py-2 bg-peacock text-crane rounded-[var(--border-radius-base)] text-sm font-medium hover:bg-peacock/90"
             >
               Try Again

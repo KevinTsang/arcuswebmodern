@@ -2,6 +2,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { Base, Product, PairingDevice } from '@arcus/core';
 import SearchingStage from '@/components/pairing/SearchingStage';
 import type { PairingProduct } from '@/store/entityTypes';
+import { makePairingDevice } from '../helpers/factories';
 
 const mockDispatch = jest.fn();
 const mockStartSearch = jest.fn();
@@ -11,7 +12,9 @@ const defaultProps = {
   product: null,
   isHubPairing: false,
   devices: [],
+  earlierDevices: [],
   searchTimedOut: false,
+  searchFailed: false,
   hubRegistrationState: null,
   dispatch: mockDispatch,
   onStartSearch: mockStartSearch,
@@ -29,6 +32,18 @@ const mockProduct: PairingProduct = {
 beforeEach(() => jest.clearAllMocks());
 
 describe('SearchingStage – device search', () => {
+  it('matches snapshot', () => {
+    const { container } = render(
+      <SearchingStage
+        {...defaultProps}
+        product={mockProduct}
+        devices={[makePairingDevice('plug', PairingDevice.PAIRINGSTATE_PAIRING)]}
+        earlierDevices={[makePairingDevice('lock', PairingDevice.PAIRINGSTATE_MISPAIRED)]}
+      />,
+    );
+    expect(container.firstChild).toMatchSnapshot();
+  });
+
   it('shows "Searching for Device" heading', () => {
     render(<SearchingStage {...defaultProps} />);
     expect(screen.getByText('Searching for Device')).toBeInTheDocument();
@@ -51,6 +66,20 @@ describe('SearchingStage – device search', () => {
     render(<SearchingStage {...defaultProps} devices={devices} />);
     expect(screen.getByText('Device Found')).toBeInTheDocument();
     expect(screen.getByText('Connecting…')).toBeInTheDocument();
+  });
+
+  it('labels improperly paired devices left from an earlier pairing', () => {
+    const plug = makePairingDevice('plug', PairingDevice.PAIRINGSTATE_PAIRING);
+    const lock = makePairingDevice('lock', PairingDevice.PAIRINGSTATE_MISPAIRED);
+    render(<SearchingStage {...defaultProps} devices={[plug]} earlierDevices={[lock]} />);
+
+    const found = screen.getByTestId(`pairing-device-row-${plug[Base.ATTR_ADDRESS]}`);
+    expect(found).toHaveAttribute('data-earlier', 'false');
+    expect(found).toHaveTextContent('Device Found');
+    const earlier = screen.getByTestId(`pairing-device-row-${lock[Base.ATTR_ADDRESS]}`);
+    expect(earlier).toHaveAttribute('data-earlier', 'true');
+    expect(earlier).toHaveTextContent('From an earlier pairing');
+    expect(earlier).toHaveTextContent('Improperly Paired');
   });
 
   it('shows Cancel button while searching', () => {
@@ -80,6 +109,35 @@ describe('SearchingStage – search timed out', () => {
 
   it('calls onCancel on Cancel click', () => {
     render(<SearchingStage {...defaultProps} searchTimedOut />);
+    fireEvent.click(screen.getByText('Cancel'));
+    expect(mockCancel).toHaveBeenCalled();
+  });
+});
+
+describe('SearchingStage – search failed', () => {
+  it('matches snapshot', () => {
+    const { container } = render(<SearchingStage {...defaultProps} searchFailed />);
+    expect(container.firstChild).toMatchSnapshot();
+  });
+
+  it('replaces the spinner with a failure message', () => {
+    render(<SearchingStage {...defaultProps} searchFailed devices={[makePairingDevice('plug', PairingDevice.PAIRINGSTATE_PAIRING)]} />);
+    expect(screen.getByTestId('pairing-searching')).toHaveAttribute('data-failed', 'true');
+    expect(screen.getByText('Search failed')).toBeInTheDocument();
+    expect(screen.getByText(/The search could not be started/)).toBeInTheDocument();
+    expect(screen.queryByText('Search timed out')).not.toBeInTheDocument();
+    expect(screen.queryByText(/Looking for/)).not.toBeInTheDocument();
+    expect(screen.queryByText('Device Found')).not.toBeInTheDocument();
+  });
+
+  it('calls onStartSearch on Try Again click', () => {
+    render(<SearchingStage {...defaultProps} searchFailed />);
+    fireEvent.click(screen.getByTestId('pairing-search-retry'));
+    expect(mockStartSearch).toHaveBeenCalled();
+  });
+
+  it('calls onCancel on Cancel click', () => {
+    render(<SearchingStage {...defaultProps} searchFailed />);
     fireEvent.click(screen.getByText('Cancel'));
     expect(mockCancel).toHaveBeenCalled();
   });
