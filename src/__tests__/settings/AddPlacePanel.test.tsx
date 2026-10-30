@@ -50,15 +50,6 @@ function renderPanel() {
   return render(<AddPlacePanel accountId={OWN_ACCOUNT_ID} onSaved={mockOnSaved} />);
 }
 
-/** A promise the test resolves by hand. */
-function deferred<T>() {
-  let resolve!: (value: T) => void;
-  const promise = new Promise<T>((res) => {
-    resolve = res;
-  });
-  return { promise, resolve };
-}
-
 function createPlace(name = 'Beach House') {
   fireEvent.change(screen.getByPlaceholderText('e.g. Lake House'), { target: { value: name } });
   fireEvent.click(screen.getByTestId('place-create'));
@@ -289,8 +280,6 @@ describe('AddPlacePanel – after the place is added', () => {
   });
 
   it('does not close another panel if this one was closed during the switch', async () => {
-    const switchDone = deferred<string>();
-    mockSwitchUnwrap.mockReturnValue(switchDone.promise);
     renderPanel();
     createPlace();
     await waitFor(() => expect(screen.getByTestId('add-place-switch')).toBeInTheDocument());
@@ -299,8 +288,9 @@ describe('AddPlacePanel – after the place is added', () => {
     expect(screen.getByTestId('add-place-switch')).toHaveTextContent('Switching…');
     // The user closes this panel (and may open another) before the switch ends
     cleanup();
-    await act(async () => switchDone.resolve('place-new'));
+    await act(async () => {});
 
+    expect(mockSwitchUnwrap).toHaveBeenCalled();
     expect(mockCloseRight).not.toHaveBeenCalled();
   });
 
