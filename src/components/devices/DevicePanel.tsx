@@ -82,7 +82,9 @@ function DevicePanelInner({ address }: DevicePanelProps) {
   };
 
   const handleOpenDetails = () => {
-    openRight(<DeviceDetailPanel address={address} />);
+    // Keyed so opening another device's details remounts the panel, ending
+    // (and stopping hub unpairing for) any removal in progress.
+    openRight(<DeviceDetailPanel key={address} address={address} />);
   };
 
   return (

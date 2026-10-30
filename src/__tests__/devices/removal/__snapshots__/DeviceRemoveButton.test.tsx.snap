@@ -1,0 +1,10 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`DeviceRemoveButton matches snapshot 1`] = `
+<button
+  class="text-sm text-cardinal hover:underline"
+  data-testid="device-remove"
+>
+  Remove Device
+</button>
+`;

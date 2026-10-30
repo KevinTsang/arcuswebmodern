@@ -1,0 +1,20 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`DeviceRemoveAbortButton matches snapshot 1`] = `
+<button
+  class="border border-heron text-coot px-4 py-2 rounded-[var(--border-radius-base)] text-sm disabled:opacity-50"
+  data-testid="device-remove-abort"
+>
+  Cancel
+</button>
+`;
+
+exports[`DeviceRemoveAbortButton matches snapshot while cancelling 1`] = `
+<button
+  class="border border-heron text-coot px-4 py-2 rounded-[var(--border-radius-base)] text-sm disabled:opacity-50"
+  data-testid="device-remove-abort"
+  disabled=""
+>
+  Cancelling...
+</button>
+`;

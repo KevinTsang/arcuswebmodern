@@ -1,6 +1,7 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { Base, Device, DeviceAdvanced, DeviceConnection } from '@arcus/core';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
+import { Base, Device, DeviceAdvanced, DeviceConnection, Hub, PairingDevice } from '@arcus/core';
 import { DeviceDetailPanel } from '@/components/devices/DeviceDetailPanel';
+import { UnpairingAction } from '@/lib/hubUnpairing';
 import type { DeviceEntity } from '@/store/entityTypes';
 
 // ── Mocks ─────────────────────────────────────────────────────────────
@@ -29,21 +30,40 @@ jest.mock('@/components/SidePanel', () => ({
 
 jest.mock('@/store/hooks', () => ({
   useAppDispatch: () => mockDispatch,
+  useAppSelector: (sel: (s: any) => any) =>
+    sel({ hub: { hub: { [Base.ATTR_ADDRESS]: 'SERV:hub-1:hub' } } }),
 }));
 
 jest.mock('@/store/slices/uiSlice', () => ({
   addNotification: (payload: unknown) => ({ type: 'ui/addNotification', payload }),
 }));
 
+const mockBridgeRequest = jest.fn();
+
 jest.mock('@arcus/core/bridge', () => ({
   __esModule: true,
-  default: { request: jest.fn().mockResolvedValue({}) },
+  default: { request: (...args: any[]) => mockBridgeRequest(...args) },
+}));
+
+const corneaListeners: Record<string, Array<(...args: any[]) => void>> = {};
+
+jest.mock('@arcus/core/cornea', () => ({
+  __esModule: true,
+  default: {
+    on: (event: string, listener: (...args: any[]) => void) => {
+      (corneaListeners[event] ??= []).push(listener);
+    },
+    off: (event: string, listener: (...args: any[]) => void) => {
+      corneaListeners[event] = (corneaListeners[event] ?? []).filter((l) => l !== listener);
+    },
+  },
 }));
 
 // ── Tests ─────────────────────────────────────────────────────────────
 
 beforeEach(() => {
   jest.clearAllMocks();
+  mockBridgeRequest.mockResolvedValue({});
 });
 
 describe('DeviceDetailPanel – Identify button', () => {
@@ -183,5 +203,119 @@ describe('DeviceDetailPanel – info rows', () => {
   it('shows Offline for a disconnected device', () => {
     renderWith({ [DeviceConnection.ATTR_STATE]: 'OFFLINE' });
     expect(screen.getByTestId('device-detail-connection')).toHaveTextContent('Offline');
+  });
+});
+
+describe('DeviceDetailPanel – removal', () => {
+  const STEPS = [{ id: 'pair/remove1', order: 1, instructions: ['Press the Z-Wave button.'] }];
+
+  beforeEach(() => {
+    mockDevice = {
+      id: 'DRIV:dev:test',
+      [Base.ATTR_ADDRESS]: 'DRIV:dev:test',
+      [Device.ATTR_NAME]: 'Hall Switch',
+      [DeviceConnection.ATTR_STATE]: 'ONLINE',
+    };
+    mockBridgeRequest.mockImplementation((cmd: string) =>
+      Promise.resolve(cmd === Device.CMD_REMOVE ? { mode: PairingDevice.REMOVEMODE_HUB_MANUAL, steps: STEPS } : {}),
+    );
+  });
+
+  async function confirmRemove() {
+    const utils = render(<DeviceDetailPanel address="DRIV:dev:test" />);
+    fireEvent.click(screen.getByTestId('device-remove'));
+    fireEvent.click(screen.getByTestId('device-remove-confirm'));
+    await waitFor(() => expect(screen.getByTestId('device-remove-status')).toBeInTheDocument());
+    return utils;
+  }
+
+  it('shows the removal steps instead of reporting success straight away', async () => {
+    await confirmRemove();
+
+    expect(mockBridgeRequest).toHaveBeenCalledWith(Device.CMD_REMOVE, 'DRIV:dev:test', {});
+    expect(screen.getByTestId('device-remove-title')).toHaveTextContent('Remove Hall Switch');
+    expect(screen.getByTestId('device-remove-step-0')).toHaveTextContent('Press the Z-Wave button.');
+    expect(mockCloseRight).not.toHaveBeenCalled();
+    expect(mockDispatch).not.toHaveBeenCalled();
+  });
+
+  it('reports success and closes once the device is deleted, even after it leaves the store', async () => {
+    const { rerender, container } = await confirmRemove();
+
+    // base:Deleted also removes the device from the store; the panel renders
+    // nothing from then on but must still report the removal.
+    mockDevice = undefined;
+    rerender(<DeviceDetailPanel address="DRIV:dev:test" />);
+    expect(container.innerHTML).toBe('');
+
+    act(() => {
+      (corneaListeners[`${Device.NAMESPACE} ${Base.EVENT_DELETED}`] ?? []).forEach((l) =>
+        l({ [Base.ATTR_ADDRESS]: 'DRIV:dev:test' }),
+      );
+    });
+
+    expect(mockDispatch).toHaveBeenCalledWith({
+      type: 'ui/addNotification',
+      payload: { type: 'success', message: 'Hall Switch removed' },
+    });
+    expect(mockCloseRight).toHaveBeenCalled();
+    expect(mockBridgeRequest).toHaveBeenCalledWith(Hub.CMD_UNPAIRINGREQUEST, 'SERV:hub-1:hub', {
+      actionType: UnpairingAction.STOP,
+    });
+  });
+
+  it('stops unpairing and closes on Cancel', async () => {
+    await confirmRemove();
+    fireEvent.click(screen.getByTestId('device-remove-abort'));
+
+    await waitFor(() => expect(mockCloseRight).toHaveBeenCalled());
+    expect(mockBridgeRequest).toHaveBeenCalledWith(Hub.CMD_UNPAIRINGREQUEST, 'SERV:hub-1:hub', {
+      actionType: UnpairingAction.STOP,
+    });
+  });
+
+  it('stops unpairing and says so when the panel is closed mid-removal', async () => {
+    const { unmount } = await confirmRemove();
+    unmount();
+    expect(mockBridgeRequest).toHaveBeenCalledWith(Hub.CMD_UNPAIRINGREQUEST, 'SERV:hub-1:hub', {
+      actionType: UnpairingAction.STOP,
+    });
+    await waitFor(() =>
+      expect(mockDispatch).toHaveBeenCalledWith({
+        type: 'ui/addNotification',
+        payload: { type: 'warning', message: 'Removal of Hall Switch cancelled.' },
+      }),
+    );
+  });
+
+  it('closes on Cancel even when the hub cannot be reached', async () => {
+    await confirmRemove();
+    mockBridgeRequest.mockRejectedValue(new Error('offline'));
+    fireEvent.click(screen.getByTestId('device-remove-abort'));
+
+    await waitFor(() => expect(mockCloseRight).toHaveBeenCalledTimes(1));
+    expect(mockDispatch).toHaveBeenCalledWith({
+      type: 'ui/addNotification',
+      payload: {
+        type: 'error',
+        message: "Couldn't take the hub out of removal mode. The hub may stay in removal mode for a few minutes.",
+      },
+    });
+  });
+
+  it('notifies and keeps the prompt when dev:Remove fails', async () => {
+    mockBridgeRequest.mockRejectedValue(new Error('nope'));
+    render(<DeviceDetailPanel address="DRIV:dev:test" />);
+    fireEvent.click(screen.getByTestId('device-remove'));
+    fireEvent.click(screen.getByTestId('device-remove-confirm'));
+
+    await waitFor(() =>
+      expect(mockDispatch).toHaveBeenCalledWith({
+        type: 'ui/addNotification',
+        payload: { type: 'error', message: 'Failed to remove Hall Switch' },
+      }),
+    );
+    expect(screen.getByTestId('device-remove-confirm')).toHaveTextContent('Yes, Remove');
+    expect(mockCloseRight).not.toHaveBeenCalled();
   });
 });
