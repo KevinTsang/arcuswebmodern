@@ -36,7 +36,7 @@ jest.mock('@arcus/core/services', () => ({
 }));
 
 /** base:GetAttributes responses for each place address. */
-const placeLoads = new Map<string, () => Promise<PlaceData>>();
+const placeLoads = new Map<string, jest.Mock<Promise<PlaceData>, []>>();
 
 const mockBridgeRequest = jest.fn((command: string, address: string) => {
   switch (command) {
@@ -78,17 +78,6 @@ const HOME = makePlace('p1', 'Home');
 const LAKE = makePlace('p2', 'Lake House');
 const CABIN = makePlace('p3', 'Cabin');
 
-/** A promise the test resolves or rejects by hand. */
-function deferred<T>() {
-  let resolve!: (value: T) => void;
-  let reject!: (reason: Error) => void;
-  const promise = new Promise<T>((res, rej) => {
-    resolve = res;
-    reject = rej;
-  });
-  return { promise, resolve, reject };
-}
-
 const flushPromises = () => new Promise((r) => setTimeout(r, 0));
 
 function createTestStore() {
@@ -114,7 +103,7 @@ beforeEach(() => {
   jest.clearAllMocks();
   placeLoads.clear();
   for (const place of [HOME, LAKE, CABIN]) {
-    placeLoads.set(place[Base.ATTR_ADDRESS], () => Promise.resolve(place));
+    placeLoads.set(place[Base.ATTR_ADDRESS], jest.fn().mockResolvedValue(place));
   }
   mockListRuleTemplates.mockResolvedValue({ ruleTemplates: [] });
 });
@@ -131,23 +120,23 @@ describe('loadPlaceDataThunk', () => {
   });
 
   it('stores the place as soon as it loads, so ValueChanges during the rest of the load are kept', async () => {
-    const templates = deferred<{ ruleTemplates: [] }>();
-    mockListRuleTemplates.mockReturnValue(templates.promise);
     const store = createTestStore();
+    let duringLoad: ReturnType<typeof store.getState>['place'] | undefined;
+    // Rule templates outlast the place record: a place ValueChange arrives
+    // after the record is stored but before the load has finished
+    mockListRuleTemplates.mockImplementation(async () => {
+      await flushPromises();
+      duringLoad = store.getState().place;
+      store.dispatch(updatePlace({
+        [Base.ATTR_ADDRESS]: HOME[Base.ATTR_ADDRESS],
+        [Place.ATTR_SERVICELEVEL]: Place.SERVICELEVEL_PREMIUM,
+      }));
+      return { ruleTemplates: [] };
+    });
 
-    const load = store.dispatch(loadPlaceDataThunk('p1'));
-    await flushPromises();
-    expect(store.getState().place.place).toEqual(HOME);
-    expect(store.getState().place.ready).toBe(false);
+    await store.dispatch(loadPlaceDataThunk('p1'));
 
-    // A place ValueChange arrives while rule templates are still loading
-    store.dispatch(updatePlace({
-      [Base.ATTR_ADDRESS]: HOME[Base.ATTR_ADDRESS],
-      [Place.ATTR_SERVICELEVEL]: Place.SERVICELEVEL_PREMIUM,
-    }));
-    templates.resolve({ ruleTemplates: [] });
-    await load;
-
+    expect(duringLoad).toMatchObject({ place: HOME, ready: false });
     expect(store.getState().place.place).toEqual({ ...HOME, [Place.ATTR_SERVICELEVEL]: Place.SERVICELEVEL_PREMIUM });
     expect(store.getState().place.ready).toBe(true);
   });
@@ -156,7 +145,7 @@ describe('loadPlaceDataThunk', () => {
     const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
     const store = createTestStore();
     await store.dispatch(loadPlaceDataThunk('p1'));
-    placeLoads.set(LAKE[Base.ATTR_ADDRESS], () => Promise.reject(new Error('timeout')));
+    placeLoads.set(LAKE[Base.ATTR_ADDRESS], jest.fn().mockRejectedValue(new Error('timeout')));
 
     await store.dispatch(loadPlaceDataThunk('p2'));
 
@@ -165,15 +154,14 @@ describe('loadPlaceDataThunk', () => {
   });
 
   it('keeps the newest place when an older load finishes last', async () => {
-    const lakeLoad = deferred<PlaceData>();
-    placeLoads.set(LAKE[Base.ATTR_ADDRESS], () => lakeLoad.promise);
     const store = createTestStore();
+    // The user switches to p3 before p2's record has loaded, and p2's arrives last
+    placeLoads.set(LAKE[Base.ATTR_ADDRESS], jest.fn(async () => {
+      await store.dispatch(loadPlaceDataThunk('p3'));
+      return LAKE;
+    }));
 
-    // Switch to p2, then to p3 before p2 has loaded
-    const slowLoad = store.dispatch(loadPlaceDataThunk('p2'));
-    await store.dispatch(loadPlaceDataThunk('p3'));
-    lakeLoad.resolve(LAKE);
-    await slowLoad;
+    await store.dispatch(loadPlaceDataThunk('p2'));
 
     expect(store.getState().place.placeId).toBe('p3');
     expect(store.getState().place.place).toEqual(CABIN);
