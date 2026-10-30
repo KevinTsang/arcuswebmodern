@@ -1,0 +1,58 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`LockUnlock snapshots matches snapshot 1`] = `
+<div
+  class="flex flex-col items-end gap-1"
+>
+  <div
+    class="flex items-center gap-2"
+  >
+    <button
+      class="py-1.5 rounded-[var(--border-radius-base)] text-sm font-medium transition-colors disabled:opacity-50 px-4 bg-peacock text-crane"
+      data-testid="device-lock-toggle-DRIV:dev:lock"
+    >
+      Unlock
+    </button>
+  </div>
+</div>
+`;
+
+exports[`LockUnlock snapshots matches snapshot when jammed 1`] = `
+<div
+  class="flex flex-col items-end gap-1"
+>
+  <div
+    class="flex items-center gap-2"
+  >
+    <span
+      class="text-xs font-medium text-cardinal"
+      data-testid="device-lock-state-DRIV:dev:lock"
+    >
+      Jammed
+    </span>
+    <button
+      aria-describedby="device-lock-hint-DRIV:dev:lock"
+      aria-label="Lock"
+      class="py-1.5 rounded-[var(--border-radius-base)] text-sm font-medium transition-colors disabled:opacity-50 px-3 bg-cardinal/10 text-cardinal border border-cardinal/30"
+      data-testid="device-lock-lock-DRIV:dev:lock"
+    >
+      Lock
+    </button>
+    <button
+      aria-describedby="device-lock-hint-DRIV:dev:lock"
+      aria-label="Unlock"
+      class="py-1.5 rounded-[var(--border-radius-base)] text-sm font-medium transition-colors disabled:opacity-50 px-3 bg-cardinal/10 text-cardinal border border-cardinal/30"
+      data-testid="device-lock-unlock-DRIV:dev:lock"
+    >
+      Unlock
+    </button>
+  </div>
+  <p
+    class="max-w-48 text-right text-xs text-cardinal"
+    data-testid="device-lock-hint-DRIV:dev:lock"
+    id="device-lock-hint-DRIV:dev:lock"
+  >
+    The lock may be jammed. Check the door, then try again.
+  </p>
+</div>
+`;
