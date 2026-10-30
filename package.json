@@ -9,7 +9,6 @@
     "dev": "next dev --experimental-https --experimental-https-key certs/key.pem --experimental-https-cert certs/cert.pem --hostname localdev.myDevUrl.com --port 8443",
     "dev:e2e": "NEXT_PUBLIC_API_URL=http://localhost:3000 NEXT_PUBLIC_WS_URL=ws://localhost:3000 NEXT_PUBLIC_REDIRECT_URL=http://localhost:3000 next dev --port 3000",
     "build": "next build",
-    "start": "next start",
     "lint": "eslint .",
     "test": "jest",
     "test:watch": "jest --watch",

@@ -17,8 +17,8 @@ import { waitForSession, completeSession, SessionStepError } from '../utils/sess
 export const authenticateThunk = createAsyncThunk(
   'auth/authenticate',
   async (_, { dispatch }) => {
-    initializeCoreConfig();
     dispatch(setAuthenticating(true));
+    await initializeCoreConfig();
 
     try {
       const session = await waitForSession(() => auth.authenticate(), 'No valid session');

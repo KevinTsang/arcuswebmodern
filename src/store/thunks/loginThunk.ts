@@ -19,8 +19,8 @@ export const loginThunk = createAsyncThunk(
     { username, password, isPublic }: { username: string; password: string; isPublic: boolean },
     { dispatch },
   ) => {
-    initializeCoreConfig();
     dispatch(setAuthenticating(true));
+    await initializeCoreConfig();
 
     try {
       const session = await waitForSession(
