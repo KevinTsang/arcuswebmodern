@@ -33,6 +33,8 @@ function renderAuthProvider(children: React.ReactNode = <div>Protected Content</
 
 beforeEach(() => {
   jest.clearAllMocks();
+  sessionStorage.clear();
+  window.history.replaceState({}, '', '/');
   mockPathname = '/home';
   mockAuthState = { authenticating: false, authenticated: false, sessionExpired: false };
 });
@@ -85,7 +87,7 @@ describe('AuthProvider', () => {
     expect(mockReplace).not.toHaveBeenCalled();
   });
 
-  it('redirects to /login with redirect param after auth attempt fails on a protected route', () => {
+  it('redirects to /login and remembers the page after auth attempt fails on a protected route', () => {
     mockPathname = '/home';
     // Simulate: authenticating started (true), then finished (false) without success
     mockAuthState = { authenticating: true, authenticated: false, sessionExpired: false };
@@ -95,7 +97,20 @@ describe('AuthProvider', () => {
     mockAuthState = { authenticating: false, authenticated: false, sessionExpired: false };
     rerender(<AuthProvider><div>Protected Content</div></AuthProvider>);
 
-    expect(mockReplace).toHaveBeenCalledWith('/login?redirect=%2Fhome');
+    expect(mockReplace).toHaveBeenCalledWith('/login');
+    expect(sessionStorage.getItem('arcus:nextPage')).toBe('/home');
+  });
+
+  it('remembers the query string along with the path', () => {
+    mockPathname = '/devices';
+    window.history.replaceState({}, '', '/devices?device=DRIV:dev:1');
+    mockAuthState = { authenticating: true, authenticated: false, sessionExpired: false };
+    const { rerender } = render(<AuthProvider><div>Protected Content</div></AuthProvider>);
+
+    mockAuthState = { authenticating: false, authenticated: false, sessionExpired: false };
+    rerender(<AuthProvider><div>Protected Content</div></AuthProvider>);
+
+    expect(sessionStorage.getItem('arcus:nextPage')).toBe('/devices?device=DRIV:dev:1');
   });
 
   it('redirects to /login with expired flag when session expires', () => {
@@ -107,10 +122,11 @@ describe('AuthProvider', () => {
     mockAuthState = { authenticating: false, authenticated: false, sessionExpired: true };
     rerender(<AuthProvider><div>Protected Content</div></AuthProvider>);
 
-    expect(mockReplace).toHaveBeenCalledWith('/login?expired=1&redirect=%2Fdevices');
+    expect(mockReplace).toHaveBeenCalledWith('/login?expired=1');
+    expect(sessionStorage.getItem('arcus:nextPage')).toBe('/devices');
   });
 
-  it('redirects to /login without redirect param when on root path', () => {
+  it('redirects to /login and remembers the root path', () => {
     mockPathname = '/';
     mockAuthState = { authenticating: true, authenticated: false, sessionExpired: false };
     const { rerender } = render(<AuthProvider><div>Protected Content</div></AuthProvider>);
@@ -119,6 +135,7 @@ describe('AuthProvider', () => {
     rerender(<AuthProvider><div>Protected Content</div></AuthProvider>);
 
     expect(mockReplace).toHaveBeenCalledWith('/login');
+    expect(sessionStorage.getItem('arcus:nextPage')).toBe('/');
   });
 
   it('does not redirect after auth succeeds', () => {
@@ -132,6 +149,7 @@ describe('AuthProvider', () => {
 
     expect(mockReplace).not.toHaveBeenCalled();
     expect(screen.getByText('Protected Content')).toBeInTheDocument();
+    expect(sessionStorage.getItem('arcus:nextPage')).toBeNull();
   });
 
   it('does not redirect on public routes even after auth fails', () => {
