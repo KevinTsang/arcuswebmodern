@@ -7,6 +7,7 @@
  */
 
 import { useState, useCallback, useMemo } from 'react';
+import { usPhoneDigits } from '@/lib/phoneNumber';
 
 // ── Validation rule types ─────────────────────────────────────────────
 
@@ -33,6 +34,11 @@ interface ExclusionRule {
 interface CustomRule {
   oneLetterOneNumber?: true;
   noSpaces?: true;
+  /**
+   * A US phone number: only digits, spaces, dashes, dots, parentheses and a leading +, with 10 digits
+   * or 11 starting with 1 (what the platform accepts for `person:mobileNumber`).
+   */
+  phoneNumber?: true;
 }
 
 type ValidationRule = Partial<
@@ -98,6 +104,12 @@ function validateField(
     }
   }
 
+  if (rule.phoneNumber) {
+    if (!usPhoneDigits(value)) {
+      errors.push('must be a valid phone number');
+    }
+  }
+
   if (rule.equality) {
     const otherValue = allValues[rule.equality.attribute];
     if (value !== otherValue) {
@@ -107,6 +119,25 @@ function validateField(
     }
   }
 
+  return errors;
+}
+
+/**
+ * Validate `fields` against `constraints` without touching any form state.
+ * Returns the errors of each failing field; fields without a rule are skipped.
+ */
+export function validateFields(
+  constraints: ValidationConstraints,
+  fields: string[],
+  values: Record<string, string>,
+): Record<string, string[]> {
+  const errors: Record<string, string[]> = {};
+  for (const field of fields) {
+    const rule = constraints[field];
+    if (!rule) continue;
+    const fieldErrors = validateField(field, values[field], rule, values);
+    if (fieldErrors.length > 0) errors[field] = fieldErrors;
+  }
   return errors;
 }
 
@@ -178,18 +209,8 @@ export function useFormValidation(constraints: ValidationConstraints) {
       const fieldsToValidate =
         fields.length > 0 ? fields : Object.keys(constraints);
 
-      const newErrors: Record<string, string[]> = {};
-      let hasErrors = false;
-
-      for (const field of fieldsToValidate) {
-        const rule = constraints[field];
-        if (!rule) continue;
-        const fieldErrors = validateField(field, values[field], rule, values);
-        if (fieldErrors.length > 0) {
-          newErrors[field] = fieldErrors;
-          hasErrors = true;
-        }
-      }
+      const newErrors = validateFields(constraints, fieldsToValidate, values);
+      const hasErrors = Object.keys(newErrors).length > 0;
 
       setErrors((prev) => {
         const next = { ...prev };

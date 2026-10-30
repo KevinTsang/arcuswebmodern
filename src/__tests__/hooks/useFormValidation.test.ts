@@ -1,5 +1,5 @@
 import { renderHook, act } from '@testing-library/react';
-import { useFormValidation, type ValidationConstraints } from '@/hooks/useFormValidation';
+import { useFormValidation, validateFields, type ValidationConstraints } from '@/hooks/useFormValidation';
 
 describe('useFormValidation', () => {
   const constraints: ValidationConstraints = {
@@ -66,6 +66,53 @@ describe('useFormValidation', () => {
       result.current.formValidates(['password'], { email: '', password: 'pass word1', confirmPassword: '' });
     });
     expect(result.current.errors['password']).toContain('cannot use spaces');
+  });
+
+  describe('phoneNumber', () => {
+    const phoneConstraints: ValidationConstraints = { phone: { presence: true, phoneNumber: true } };
+
+    it.each(['5551234567', '(555) 123-4567', '555-123-4567', '+1 555.123.4567'])('accepts %s', (phone) => {
+      const { result } = renderHook(() => useFormValidation(phoneConstraints));
+      let valid: boolean;
+      act(() => {
+        valid = result.current.formValidates(['phone'], { phone });
+      });
+      expect(valid!).toBe(true);
+      expect(result.current.errors['phone']).toBeUndefined();
+    });
+
+    it.each(['555-1234', '25551234567', 'not a number', 'call 555 123 4567'])('rejects %s', (phone) => {
+      const { result } = renderHook(() => useFormValidation(phoneConstraints));
+      let valid: boolean;
+      act(() => {
+        valid = result.current.formValidates(['phone'], { phone });
+      });
+      expect(valid!).toBe(false);
+      expect(result.current.errors['phone']).toEqual(['must be a valid phone number']);
+    });
+
+    it('skips the format check for an empty optional phone', () => {
+      const { result } = renderHook(() => useFormValidation({ phone: { phoneNumber: true } }));
+      let valid: boolean;
+      act(() => {
+        valid = result.current.formValidates(['phone'], { phone: '' });
+      });
+      expect(valid!).toBe(true);
+    });
+  });
+
+  describe('validateFields', () => {
+    it('returns the errors of the given fields only', () => {
+      const values = { email: 'bad', password: 'short', confirmPassword: '' };
+      expect(validateFields(constraints, ['email', 'confirmPassword'], values)).toEqual({
+        email: ['is invalid'],
+        confirmPassword: ["can't be blank"],
+      });
+    });
+
+    it('returns no errors for valid or unconstrained fields', () => {
+      expect(validateFields(constraints, ['email', 'nickname'], { email: 'a@b.co', nickname: '' })).toEqual({});
+    });
   });
 
   it('validates password equality', () => {
