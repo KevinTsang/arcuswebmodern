@@ -1,0 +1,251 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`AddPersonPanel – rendering matches snapshot 1`] = `
+<div
+  class="p-4 space-y-4"
+>
+  <h3
+    class="text-lg font-semibold text-swift"
+    data-testid="invite-panel-title"
+  >
+    Invite a Person
+  </h3>
+  <p
+    class="text-sm text-grouse"
+    data-testid="invite-panel-place"
+  >
+    Send an invitation to join 
+    <span
+      class="font-medium text-swift"
+    >
+      Lake House
+    </span>
+    .
+  </p>
+  <div>
+    <label
+      class="block text-sm text-grouse mb-1"
+    >
+      First Name
+    </label>
+    <input
+      class="w-full border border-heron rounded-[var(--border-radius-base)] px-3 py-2 text-sm text-swift focus:outline-none focus:border-peacock"
+      data-testid="field-first-name"
+      type="text"
+      value=""
+    />
+  </div>
+  <div>
+    <label
+      class="block text-sm text-grouse mb-1"
+    >
+      Last Name
+    </label>
+    <input
+      class="w-full border border-heron rounded-[var(--border-radius-base)] px-3 py-2 text-sm text-swift focus:outline-none focus:border-peacock"
+      data-testid="field-last-name"
+      type="text"
+      value=""
+    />
+  </div>
+  <div>
+    <label
+      class="block text-sm text-grouse mb-1"
+    >
+      Email
+    </label>
+    <input
+      class="w-full border border-heron rounded-[var(--border-radius-base)] px-3 py-2 text-sm text-swift focus:outline-none focus:border-peacock"
+      data-testid="field-email"
+      placeholder="person@example.com"
+      type="email"
+      value=""
+    />
+  </div>
+  <div>
+    <label
+      class="block text-sm text-grouse mb-1"
+    >
+      Relationship
+    </label>
+    <select
+      class="w-full border border-heron rounded-[var(--border-radius-base)] px-3 py-2 text-sm text-swift focus:outline-none focus:border-peacock bg-crane"
+      data-testid="invite-relationship"
+    >
+      <option
+        value=""
+      >
+        Select a relationship…
+      </option>
+      <optgroup
+        label="Family"
+      >
+        <option
+          value="people_family_spouse"
+        >
+          Spouse/Partner
+        </option>
+        <option
+          value="people_family_child_home"
+        >
+          Child (Lives at home)
+        </option>
+        <option
+          value="people_family_child_not_home"
+        >
+          Child (Doesn't live at home)
+        </option>
+        <option
+          value="people_family_mother"
+        >
+          Mother
+        </option>
+        <option
+          value="people_family_father"
+        >
+          Father
+        </option>
+        <option
+          value="people_family_grandmother"
+        >
+          Grandmother
+        </option>
+        <option
+          value="people_family_grandfather"
+        >
+          Grandfather
+        </option>
+        <option
+          value="people_family_aunt"
+        >
+          Aunt
+        </option>
+        <option
+          value="people_family_uncle"
+        >
+          Uncle
+        </option>
+        <option
+          value="people_family_cousin"
+        >
+          Cousin
+        </option>
+      </optgroup>
+      <optgroup
+        label="Other"
+      >
+        <option
+          value="people_other_friend"
+        >
+          Friend
+        </option>
+        <option
+          value="people_other_guest"
+        >
+          Guest
+        </option>
+        <option
+          value="people_other_neighbor"
+        >
+          Neighbor
+        </option>
+        <option
+          value="people_other_landlord"
+        >
+          Landlord
+        </option>
+        <option
+          value="people_other_renter"
+        >
+          Renter
+        </option>
+        <option
+          value="people_other_roommate"
+        >
+          Roommate
+        </option>
+      </optgroup>
+      <optgroup
+        label="Service"
+      >
+        <option
+          value="people_service_babysitter"
+        >
+          Babysitter (Nanny)
+        </option>
+        <option
+          value="people_service_dogwalker"
+        >
+          Dog Walker
+        </option>
+        <option
+          value="people_service_electrician"
+        >
+          Electrician
+        </option>
+        <option
+          value="people_service_handyman"
+        >
+          Handyman
+        </option>
+        <option
+          value="people_service_homecleaner"
+        >
+          Home Cleaner (Maid)
+        </option>
+        <option
+          value="people_service_hvac"
+        >
+          HVAC Specialist
+        </option>
+        <option
+          value="people_service_landscaper"
+        >
+          Landscaper
+        </option>
+        <option
+          value="people_service_nurse"
+        >
+          Nurse
+        </option>
+        <option
+          value="people_service_painter"
+        >
+          Painter
+        </option>
+        <option
+          value="people_service_pestcontrol"
+        >
+          Pest Control
+        </option>
+        <option
+          value="people_service_plumber"
+        >
+          Plumber
+        </option>
+        <option
+          value="people_service_other"
+        >
+          Other
+        </option>
+      </optgroup>
+    </select>
+  </div>
+  <div
+    class="flex gap-2 pt-2"
+  >
+    <button
+      class="px-4 py-2 bg-peacock text-crane rounded-[var(--border-radius-base)] text-sm font-medium hover:bg-peacock/90 disabled:opacity-50"
+      data-testid="invite-send"
+      disabled=""
+    >
+      Send Invitation
+    </button>
+    <button
+      class="px-4 py-2 border border-heron rounded-[var(--border-radius-base)] text-sm text-coot hover:bg-pigeon"
+    >
+      Cancel
+    </button>
+  </div>
+</div>
+`;

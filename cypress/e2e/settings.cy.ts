@@ -107,7 +107,7 @@ describe('People & Places', () => {
     placeValue(PLACE_ID, 'address').should('contain', '123 Maple Street');
     placeValue(PLACE_ID, 'role').should('have.text', 'Owner');
     tid(`place-active-${PLACE_ID}`).should('be.visible');
-    tid(`manage-api-keys-${PLACE_ID}`).should('have.attr', 'href', '/settings/api-keys');
+    tid(`manage-api-keys-${PLACE_ID}`).should('have.attr', 'href', `/settings/api-keys?placeId=${PLACE_ID}`);
     tid(`person-${PLACE_ID}-${GUEST_PERSON_ID}`).should('contain', 'Sam Rivera');
     tid(`person-${PLACE_ID}-person-alex`).should('not.exist');
     tid('guest-places').find(`[data-testid="place-card-${LAKE_PLACE_ID}"]`).should('exist');

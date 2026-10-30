@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { Base, Place } from '@arcus/core';
 import AddPersonPanel from '@/components/settings/AddPersonPanel';
 import type { PlaceData } from '@/store/entityTypes';
@@ -22,17 +22,25 @@ jest.mock('@/store/slices/uiSlice', () => ({
   addNotification: (payload: unknown) => ({ type: 'ui/addNotification', payload }),
 }));
 
-let mockPlace: PlaceData | null = null;
+// The ACTIVE place is "My Home" (place-1). The panel is opened for a different
+// place, and must never fall back to the active one.
+const activePlace: PlaceData = {
+  [Base.ATTR_ADDRESS]: 'SERV:place:place-1',
+  [Base.ATTR_ID]: 'place-1',
+  [Place.ATTR_NAME]: 'My Home',
+};
 
 jest.mock('@/store/hooks', () => ({
   useAppSelector: (sel: (s: any) => any) =>
     sel({
-      place: { place: mockPlace },
+      place: { placeId: 'place-1', place: activePlace },
     }),
   useAppDispatch: () => mockDispatch,
 }));
 
 // ── Helpers ───────────────────────────────────────────────────────────
+
+const defaultProps = { placeId: 'place-2', placeName: 'Lake House' };
 
 /** Command → response handler. Tests override entries to control per-command behavior. */
 const commandHandlers = new Map<string, () => Promise<unknown>>();
@@ -56,11 +64,6 @@ function fillAndSubmit(relationship?: string, pleaseDescribe?: string) {
 beforeEach(() => {
   jest.clearAllMocks();
   commandHandlers.clear();
-  mockPlace = {
-    [Base.ATTR_ADDRESS]: 'SERV:place:place-1',
-    [Base.ATTR_ID]: 'place-1',
-    [Place.ATTR_NAME]: 'My Home',
-  };
 
   commandHandlers.set(Place.CMD_CREATEINVITATION, () =>
     Promise.resolve({ invitation: { code: 'abc', inviteeEmail: 'jane@test.com' } }),
@@ -75,14 +78,19 @@ beforeEach(() => {
 // ── Tests ─────────────────────────────────────────────────────────────
 
 describe('AddPersonPanel – rendering', () => {
-  it('shows heading and description', () => {
-    render(<AddPersonPanel />);
-    expect(screen.getByText('Invite a Person')).toBeInTheDocument();
-    expect(screen.getByText('Send an invitation to join this place.')).toBeInTheDocument();
+  it('matches snapshot', () => {
+    const { container } = render(<AddPersonPanel {...defaultProps} />);
+    expect(container.firstChild).toMatchSnapshot();
+  });
+
+  it('shows heading and names the place being invited to', () => {
+    render(<AddPersonPanel {...defaultProps} />);
+    expect(screen.getByTestId('invite-panel-title')).toHaveTextContent('Invite a Person');
+    expect(screen.getByTestId('invite-panel-place')).toHaveTextContent('Send an invitation to join Lake House.');
   });
 
   it('shows First Name, Last Name, Email, and Relationship fields', () => {
-    render(<AddPersonPanel />);
+    render(<AddPersonPanel {...defaultProps} />);
     expect(screen.getByText('First Name')).toBeInTheDocument();
     expect(screen.getByText('Last Name')).toBeInTheDocument();
     expect(screen.getByText('Email')).toBeInTheDocument();
@@ -90,18 +98,18 @@ describe('AddPersonPanel – rendering', () => {
   });
 
   it('shows Send Invitation and Cancel buttons', () => {
-    render(<AddPersonPanel />);
+    render(<AddPersonPanel {...defaultProps} />);
     expect(screen.getByText('Send Invitation')).toBeInTheDocument();
     expect(screen.getByText('Cancel')).toBeInTheDocument();
   });
 
   it('disables Send Invitation when email is empty', () => {
-    render(<AddPersonPanel />);
+    render(<AddPersonPanel {...defaultProps} />);
     expect(screen.getByText('Send Invitation')).toBeDisabled();
   });
 
   it('shows relationship dropdown with grouped options', () => {
-    render(<AddPersonPanel />);
+    render(<AddPersonPanel {...defaultProps} />);
     const select = screen.getByRole('combobox');
     expect(select).toBeInTheDocument();
     expect(screen.getByText('Spouse/Partner')).toBeInTheDocument();
@@ -112,33 +120,33 @@ describe('AddPersonPanel – rendering', () => {
 
 describe('AddPersonPanel – relationship', () => {
   it('defaults to OTHER when no relationship selected', async () => {
-    render(<AddPersonPanel />);
+    render(<AddPersonPanel {...defaultProps} />);
     fillAndSubmit();
 
     await waitFor(() => {
       expect(mockBridgeRequest).toHaveBeenCalledWith(
         Place.CMD_CREATEINVITATION,
-        'SERV:place:place-1',
+        'SERV:place:place-2',
         expect.objectContaining({ relationship: 'OTHER' }),
       );
     });
   });
 
   it('sends selected relationship tag', async () => {
-    render(<AddPersonPanel />);
+    render(<AddPersonPanel {...defaultProps} />);
     fillAndSubmit('people_family_spouse');
 
     await waitFor(() => {
       expect(mockBridgeRequest).toHaveBeenCalledWith(
         Place.CMD_CREATEINVITATION,
-        'SERV:place:place-1',
+        'SERV:place:place-2',
         expect.objectContaining({ relationship: 'people_family_spouse' }),
       );
     });
   });
 
   it('shows Please Describe field when Other is selected', () => {
-    render(<AddPersonPanel />);
+    render(<AddPersonPanel {...defaultProps} />);
     expect(screen.queryByPlaceholderText('e.g. Property Manager')).not.toBeInTheDocument();
 
     fireEvent.change(screen.getByRole('combobox'), { target: { value: 'people_service_other' } });
@@ -146,13 +154,13 @@ describe('AddPersonPanel – relationship', () => {
   });
 
   it('sends custom description when Other is selected and described', async () => {
-    render(<AddPersonPanel />);
+    render(<AddPersonPanel {...defaultProps} />);
     fillAndSubmit('people_service_other', 'Property Manager');
 
     await waitFor(() => {
       expect(mockBridgeRequest).toHaveBeenCalledWith(
         Place.CMD_CREATEINVITATION,
-        'SERV:place:place-1',
+        'SERV:place:place-2',
         expect.objectContaining({ relationship: 'Property Manager' }),
       );
     });
@@ -161,32 +169,43 @@ describe('AddPersonPanel – relationship', () => {
 
 describe('AddPersonPanel – interactions', () => {
   it('enables Send Invitation when email is entered', () => {
-    render(<AddPersonPanel />);
+    render(<AddPersonPanel {...defaultProps} />);
     const emailInput = screen.getByPlaceholderText('person@example.com');
     fireEvent.change(emailInput, { target: { value: 'jane@test.com' } });
     expect(screen.getByText('Send Invitation')).not.toBeDisabled();
   });
 
+  it('sends both invitation calls to the given place, not the active place', async () => {
+    render(<AddPersonPanel {...defaultProps} />);
+    fillAndSubmit();
+
+    await waitFor(() => expect(mockBridgeRequest).toHaveBeenCalledTimes(2));
+    for (const [, address] of mockBridgeRequest.mock.calls) {
+      expect(address).toBe('SERV:place:place-2');
+      expect(address).not.toBe(activePlace[Base.ATTR_ADDRESS]);
+    }
+  });
+
   it('calls CreateInvitation then SendInvitation on submit', async () => {
-    render(<AddPersonPanel />);
+    render(<AddPersonPanel {...defaultProps} />);
     fillAndSubmit();
 
     await waitFor(() => {
       expect(mockBridgeRequest).toHaveBeenCalledWith(
         Place.CMD_CREATEINVITATION,
-        'SERV:place:place-1',
+        'SERV:place:place-2',
         { firstName: 'Jane', lastName: 'Smith', email: 'jane@test.com', relationship: 'OTHER' },
       );
       expect(mockBridgeRequest).toHaveBeenCalledWith(
         Place.CMD_SENDINVITATION,
-        'SERV:place:place-1',
+        'SERV:place:place-2',
         { invitation: { code: 'abc', inviteeEmail: 'jane@test.com' } },
       );
     });
   });
 
   it('dispatches success notification and closes panel on success', async () => {
-    render(<AddPersonPanel />);
+    render(<AddPersonPanel {...defaultProps} />);
 
     fireEvent.change(screen.getByPlaceholderText('person@example.com'), { target: { value: 'jane@test.com' } });
     fireEvent.click(screen.getByText('Send Invitation'));
@@ -205,7 +224,7 @@ describe('AddPersonPanel – interactions', () => {
       Promise.reject(new Error('fail')),
     );
 
-    render(<AddPersonPanel />);
+    render(<AddPersonPanel {...defaultProps} />);
 
     fireEvent.change(screen.getByPlaceholderText('person@example.com'), { target: { value: 'jane@test.com' } });
     fireEvent.click(screen.getByText('Send Invitation'));
@@ -219,15 +238,46 @@ describe('AddPersonPanel – interactions', () => {
   });
 
   it('closes panel on Cancel click', () => {
-    render(<AddPersonPanel />);
+    render(<AddPersonPanel {...defaultProps} />);
     fireEvent.click(screen.getByText('Cancel'));
     expect(mockCloseRight).toHaveBeenCalled();
+  });
+
+  it('does not close or toast once the panel is gone when the send succeeds', async () => {
+    let finishSend: () => void = () => {};
+    commandHandlers.set(Place.CMD_SENDINVITATION, () => new Promise<void>((resolve) => { finishSend = resolve; }));
+    const onSent = jest.fn();
+    const { unmount } = render(<AddPersonPanel {...defaultProps} onSent={onSent} />);
+    fillAndSubmit();
+    await waitFor(() => expect(mockBridgeRequest).toHaveBeenCalledTimes(2));
+
+    unmount();
+    await act(async () => finishSend());
+
+    expect(onSent).toHaveBeenCalled();
+    expect(mockCloseRight).not.toHaveBeenCalled();
+    expect(mockDispatch).not.toHaveBeenCalled();
+  });
+
+  it('does not toast once the panel is gone when the send fails', async () => {
+    let failSend: () => void = () => {};
+    commandHandlers.set(Place.CMD_SENDINVITATION, () =>
+      new Promise<void>((_, reject) => { failSend = () => reject(new Error('fail')); }),
+    );
+    const { unmount } = render(<AddPersonPanel {...defaultProps} />);
+    fillAndSubmit();
+    await waitFor(() => expect(mockBridgeRequest).toHaveBeenCalledTimes(2));
+
+    unmount();
+    await act(async () => failSend());
+
+    expect(mockDispatch).not.toHaveBeenCalled();
   });
 
   it('calls onSent callback after successful send', async () => {
     const onSent = jest.fn();
 
-    render(<AddPersonPanel onSent={onSent} />);
+    render(<AddPersonPanel {...defaultProps} onSent={onSent} />);
     fireEvent.change(screen.getByPlaceholderText('person@example.com'), { target: { value: 'jane@test.com' } });
     fireEvent.click(screen.getByText('Send Invitation'));
 

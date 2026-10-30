@@ -42,11 +42,12 @@ describe('KeyCard', () => {
     expect(screen.queryByText('Revoke')).not.toBeInTheDocument();
   });
 
-  it('calls onRevoke when Revoke is clicked', () => {
+  it('calls onRevoke with its key when Revoke is clicked', () => {
     const onRevoke = jest.fn();
     render(<KeyCard apiKey={baseKey} onRevoke={onRevoke} onDelete={jest.fn()} />);
     fireEvent.click(screen.getByText('Revoke'));
     expect(onRevoke).toHaveBeenCalledTimes(1);
+    expect(onRevoke).toHaveBeenCalledWith(baseKey);
   });
 
   it('calls onDelete when Delete is clicked on a revoked key', () => {
@@ -55,6 +56,7 @@ describe('KeyCard', () => {
     render(<KeyCard apiKey={revokedKey} onRevoke={jest.fn()} onDelete={onDelete} />);
     fireEvent.click(screen.getByText('Delete'));
     expect(onDelete).toHaveBeenCalledTimes(1);
+    expect(onDelete).toHaveBeenCalledWith(revokedKey);
   });
 
   it('does not show permissions table by default', () => {

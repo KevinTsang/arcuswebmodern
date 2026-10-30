@@ -12,8 +12,8 @@ export default function KeyCard({
   onDelete,
 }: {
   apiKey: ApiKeyMeta;
-  onRevoke: () => void;
-  onDelete: () => void;
+  onRevoke: (apiKey: ApiKeyMeta) => void;
+  onDelete: (apiKey: ApiKeyMeta) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
   const permSet = stringsToPermSet(k.permissions);
@@ -50,11 +50,11 @@ export default function KeyCard({
             {expanded ? 'Hide' : 'Permissions'}
           </button>
           {!k.expired ? (
-            <button onClick={onRevoke} data-testid={`apikey-revoke-${k.id}`} className="text-xs text-cardinal hover:underline">
+            <button onClick={() => onRevoke(k)} data-testid={`apikey-revoke-${k.id}`} className="text-xs text-cardinal hover:underline">
               Revoke
             </button>
           ) : (
-            <button onClick={onDelete} data-testid={`apikey-delete-${k.id}`} className="text-xs text-cardinal hover:underline">
+            <button onClick={() => onDelete(k)} data-testid={`apikey-delete-${k.id}`} className="text-xs text-cardinal hover:underline">
               Delete
             </button>
           )}

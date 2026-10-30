@@ -1,0 +1,159 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`PlaceCard – rendering matches snapshot 1`] = `
+<div
+  data-active="false"
+  data-testid="place-card-place-lake"
+>
+  <div
+    class="border border-heron rounded-[var(--border-radius-base)] overflow-hidden"
+    data-testid="place-info-place-lake"
+  >
+    <div
+      class="flex items-center justify-between px-4 py-3 bg-pigeon/30"
+    >
+      <h3
+        class="text-sm font-medium text-swift"
+      >
+        Lake House
+      </h3>
+      <span
+        data-testid="place-info-place-lake-action"
+      >
+        <button
+          class="text-sm text-peacock hover:underline"
+          data-testid="place-edit-place-lake"
+        >
+          Edit
+        </button>
+      </span>
+    </div>
+    <div
+      class="px-4 py-3 space-y-2"
+    >
+      <div
+        class="flex justify-between text-sm"
+      >
+        <span
+          class="text-grouse"
+        >
+          Address
+        </span>
+        <span
+          class="text-swift"
+          data-testid="place-info-place-lake-value-address"
+        >
+          1 Shore Rd, Tahoe
+        </span>
+      </div>
+      <div
+        class="flex justify-between text-sm"
+      >
+        <span
+          class="text-grouse"
+        >
+          Service Level
+        </span>
+        <span
+          class="text-swift"
+          data-testid="place-info-place-lake-value-service-level"
+        >
+          Premium
+        </span>
+      </div>
+      <div
+        class="flex justify-between text-sm"
+      >
+        <span
+          class="text-grouse"
+        >
+          Role
+        </span>
+        <span
+          class="text-swift"
+          data-testid="place-info-place-lake-value-role"
+        >
+          Owner
+        </span>
+      </div>
+      <div
+        class="flex justify-between text-sm pt-1"
+      >
+        <span
+          class="text-grouse"
+        >
+          API Access
+        </span>
+        <a
+          class="text-peacock hover:underline"
+          data-testid="manage-api-keys-place-lake"
+          href="/settings/api-keys?placeId=place-lake"
+        >
+          Manage API Keys
+        </a>
+      </div>
+      <div
+        class="border-t border-heron mt-3 pt-3"
+      >
+        <div
+          class="flex items-center justify-between mb-2"
+        >
+          <span
+            class="text-sm font-medium text-swift"
+          >
+            People
+          </span>
+          <button
+            class="text-xs text-peacock hover:underline"
+            data-testid="place-invite-place-lake"
+          >
+            + Invite
+          </button>
+        </div>
+        <div
+          class="space-y-2"
+        >
+          <div
+            class="flex items-center justify-between px-3 py-2 rounded border border-heron"
+            data-testid="person-place-lake-p2"
+          >
+            <div
+              class="flex items-center gap-3 min-w-0"
+            >
+              <div
+                class="w-8 h-8 rounded-full bg-peacock/10 text-peacock flex items-center justify-center text-sm font-medium flex-shrink-0"
+              >
+                J
+              </div>
+              <div
+                class="min-w-0"
+              >
+                <p
+                  class="text-sm text-swift truncate"
+                >
+                  Jane Smith
+                </p>
+                <p
+                  class="text-xs text-grouse truncate"
+                >
+                  jane@test.com
+                </p>
+              </div>
+            </div>
+            <div
+              class="flex items-center gap-2 flex-shrink-0"
+            >
+              <button
+                class="text-xs text-peacock hover:underline"
+                data-testid="person-place-lake-p2-details"
+              >
+                Details
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+`;
