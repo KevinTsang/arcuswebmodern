@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, type FormEvent } from 'react';
+import { useCallback, useMemo, type FormEvent } from 'react';
 import { Person } from '@arcus/core';
 import { useAppDispatch } from '@/store/hooks';
 import { AccountService } from '@arcus/core/services';
@@ -9,6 +9,7 @@ import { loginSuccess } from '@/store/slices/authSlice';
 import { initializeCoreConfig } from '@/store/thunks/initConfig';
 import type { SessionCreatedEvent, Account } from '@/arcus/types';
 import { useCreateAccount } from './CreateAccountContext';
+import { setField, setLoading, setError, clearError, accountCreated } from './createAccountSlice';
 import FormField from './FormField';
 
 export default function CredentialsStep() {
@@ -16,15 +17,18 @@ export default function CredentialsStep() {
   const reduxDispatch = useAppDispatch();
 
   const { email, password, confirmPassword, firstName, lastName, phone, optIn, loading } = state;
-  const allValues = { email, password, confirmPassword, firstName, lastName };
+  const allValues = useMemo(
+    () => ({ email, password, confirmPassword, firstName, lastName }),
+    [email, password, confirmPassword, firstName, lastName],
+  );
 
   const handleSubmit = useCallback(
     async (ev: FormEvent) => {
       ev.preventDefault();
       if (!credForm.formValidates(['email', 'password', 'confirmPassword', 'firstName', 'lastName'], allValues)) return;
 
-      dispatch({ type: 'SET_LOADING', loading: true });
-      dispatch({ type: 'CLEAR_ERROR' });
+      dispatch(setLoading(true));
+      dispatch(clearError());
 
       try {
         await initializeCoreConfig();
@@ -61,14 +65,14 @@ export default function CredentialsStep() {
         const pId = (sessionData[Person.ATTR_CURRPLACE] as string) ?? (result['placeId'] as string);
 
         reduxDispatch(loginSuccess({ person: sessionData, account: (result['account'] as Account) ?? ({} as Account) }));
-        dispatch({ type: 'ACCOUNT_CREATED', personData: sessionData, placeId: pId });
+        dispatch(accountCreated({ personData: sessionData, placeId: pId }));
       } catch {
-        dispatch({ type: 'SET_ERROR', error: 'Failed to create account. The email may already be in use.' });
+        dispatch(setError('Failed to create account. The email may already be in use.'));
       } finally {
-        dispatch({ type: 'SET_LOADING', loading: false });
+        dispatch(setLoading(false));
       }
     },
-    [email, password, confirmPassword, firstName, lastName, phone, optIn, credForm, dispatch, reduxDispatch, allValues],
+    [email, password, firstName, lastName, phone, optIn, credForm, dispatch, reduxDispatch, allValues],
   );
 
   return (
@@ -76,36 +80,36 @@ export default function CredentialsStep() {
       <div className="grid grid-cols-2 gap-3">
         <FormField
           label="First Name" id="firstName" value={firstName}
-          onChange={(v) => dispatch({ type: 'SET_FIELD', field: 'firstName', value: v })}
+          onChange={(v) => dispatch(setField({ field: 'firstName', value: v }))}
           form={credForm} allValues={allValues}
         />
         <FormField
           label="Last Name" id="lastName" value={lastName}
-          onChange={(v) => dispatch({ type: 'SET_FIELD', field: 'lastName', value: v })}
+          onChange={(v) => dispatch(setField({ field: 'lastName', value: v }))}
           form={credForm} allValues={allValues}
         />
       </div>
       <FormField
         label="Email" id="email" type="email" autoComplete="email"
         value={email}
-        onChange={(v) => dispatch({ type: 'SET_FIELD', field: 'email', value: v })}
+        onChange={(v) => dispatch(setField({ field: 'email', value: v }))}
         form={credForm} allValues={allValues}
       />
       <FormField
         label="Phone (optional)" id="phone" type="tel" autoComplete="tel"
         value={phone}
-        onChange={(v) => dispatch({ type: 'SET_FIELD', field: 'phone', value: v })}
+        onChange={(v) => dispatch(setField({ field: 'phone', value: v }))}
       />
       <FormField
         label="Password" id="password" type="password" autoComplete="new-password"
         value={password}
-        onChange={(v) => dispatch({ type: 'SET_FIELD', field: 'password', value: v })}
+        onChange={(v) => dispatch(setField({ field: 'password', value: v }))}
         form={credForm} allValues={allValues}
       />
       <FormField
         label="Confirm Password" id="confirmPassword" type="password" autoComplete="new-password"
         value={confirmPassword}
-        onChange={(v) => dispatch({ type: 'SET_FIELD', field: 'confirmPassword', value: v })}
+        onChange={(v) => dispatch(setField({ field: 'confirmPassword', value: v }))}
         form={credForm} allValues={allValues}
       />
       <label className="flex items-center gap-2 text-sm text-coot">
@@ -113,7 +117,7 @@ export default function CredentialsStep() {
           type="checkbox"
           data-testid="create-account-optin"
           checked={optIn}
-          onChange={(e) => dispatch({ type: 'SET_FIELD', field: 'optIn', value: e.target.checked })}
+          onChange={(e) => dispatch(setField({ field: 'optIn', value: e.target.checked }))}
           className="accent-peacock"
         />
         Keep me up to date with news and offers

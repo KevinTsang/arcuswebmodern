@@ -6,6 +6,7 @@ import reducer, {
   sessionExpired,
   type AuthState,
 } from '@/store/slices/authSlice';
+import { personUpdated } from '@/store/slices/peopleSlice';
 import { Base, Person, Account } from '@arcus/core';
 
 const initial: AuthState = {
@@ -82,5 +83,43 @@ describe('authSlice', () => {
     }));
     expect(state.sessionExpired).toBe(false);
     expect(state.authenticated).toBe(true);
+  });
+
+  it('personUpdated merges changes into the signed-in person', () => {
+    const logged = reducer(initial, loginSuccess({
+      person: { [Base.ATTR_ADDRESS]: 'SERV:person:p1', [Person.ATTR_FIRSTNAME]: 'Alice', personId: 'p1' },
+      account: { state: 'ACTIVE' },
+    }));
+    const state = reducer(logged, personUpdated({
+      [Base.ATTR_ADDRESS]: 'SERV:person:p1',
+      [Person.ATTR_FIRSTNAME]: 'Alicia',
+    }));
+    expect(state.person?.[Person.ATTR_FIRSTNAME]).toBe('Alicia');
+    expect(state.person?.personId).toBe('p1');
+  });
+
+  it('personUpdated matches by personId when the person fetch failed', () => {
+    // Only the SessionCreated payload: no base:address.
+    const logged = reducer(initial, loginSuccess({
+      person: { personId: 'p1', places: [] },
+      account: { state: 'ACTIVE' },
+    }));
+    const state = reducer(logged, personUpdated({
+      [Base.ATTR_ADDRESS]: 'SERV:person:p1',
+      [Person.ATTR_FIRSTNAME]: 'Alicia',
+    }));
+    expect(state.person?.[Person.ATTR_FIRSTNAME]).toBe('Alicia');
+  });
+
+  it('personUpdated ignores changes to other people', () => {
+    const logged = reducer(initial, loginSuccess({
+      person: { [Base.ATTR_ADDRESS]: 'SERV:person:p1', [Person.ATTR_FIRSTNAME]: 'Alice' },
+      account: { state: 'ACTIVE' },
+    }));
+    const state = reducer(logged, personUpdated({
+      [Base.ATTR_ADDRESS]: 'SERV:person:p2',
+      [Person.ATTR_FIRSTNAME]: 'Bob',
+    }));
+    expect(state.person?.[Person.ATTR_FIRSTNAME]).toBe('Alice');
   });
 });

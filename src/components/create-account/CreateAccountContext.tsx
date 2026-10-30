@@ -2,7 +2,8 @@
 
 import { createContext, useContext, useReducer, type ReactNode } from 'react';
 import { useFormValidation, type ValidationConstraints } from '@/hooks/useFormValidation';
-import { createAccountReducer, initialState, type CreateAccountState, type CreateAccountAction } from './types';
+import { initialState, type CreateAccountState } from './types';
+import { createAccountReducer, type CreateAccountAction } from './createAccountSlice';
 
 // ── Validation constraints ───────────────────────────────────────
 

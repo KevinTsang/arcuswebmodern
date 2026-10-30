@@ -20,7 +20,6 @@ export interface SignInOptions {
 }
 
 declare global {
-  // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace Cypress {
     interface Chainable {
       /** Restore a platform session (as if the auth cookie were present) and open `path`. */
