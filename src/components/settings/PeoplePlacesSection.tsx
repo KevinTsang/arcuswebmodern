@@ -20,11 +20,14 @@ import { useSidePanel } from '@/components/SidePanel';
 import PlaceCard from './PlaceCard';
 import { type PlaceWithPeople, type PlaceData } from './types';
 import type { ListPersonsResponse } from '@/arcus/types';
-import AddPlacePanel from './AddPlacePanel';
+import { AddPlacePanel } from './AddPlacePanel';
+
+const OWNER = 'OWNER';
 
 export default function PeoplePlacesSection() {
   const { openRight } = useSidePanel();
   const activePlaceId = useAppSelector((s) => s.place.placeId);
+  const activePlace = useAppSelector((s) => s.place.place);
   const currentPerson = useAppSelector((s) => s.auth.person);
 
   const [places, setPlaces] = useState<PlaceWithPeople[]>([]);
@@ -33,11 +36,36 @@ export default function PeoplePlacesSection() {
 
   const refresh = useCallback(() => setRefreshKey((k) => k + 1), []);
 
+  // account:AddPlace is only authorized while the session's active place is
+  // one the person owns (RoleAuthorizer checks the active place), and a person
+  // owns at most one account. So both the check and the destination come from
+  // the active place: its role, and its place:account.
+  const sessionPlaces = currentPerson?.places ?? [];
+  const activeRole =
+    sessionPlaces.find((p) => p.placeId === activePlaceId)?.role
+    // A place added or joined since sign-in is only in the fetched list
+    ?? places.find((p) => p.placeId === activePlaceId)?.role;
+  // Read the account only from the active place's own record: the platform
+  // adds the new place to whichever account the request is sent to.
+  const activeAccountId = activePlace?.[Base.ATTR_ID] === activePlaceId
+    ? activePlace?.[Place.ATTR_ACCOUNT]
+    : undefined;
+  const addPlaceAccountId = activeRole === OWNER ? activeAccountId : undefined;
+  // Only point guests at a place of their own when they have one to switch to.
+  const ownsAPlace = [...sessionPlaces, ...places].some((p) => p.role === OWNER);
+  const atGuestPlace = activeRole !== undefined && activeRole !== OWNER && ownsAPlace;
+
+  const handleAddPlace = useCallback(() => {
+    if (!addPlaceAccountId) return;
+    openRight(<AddPlacePanel accountId={addPlaceAccountId} onSaved={refresh} />);
+  }, [addPlaceAccountId, openRight, refresh]);
+
   useEffect(() => {
     let cancelled = false;
 
+    // Only the first load shows "Loading places…"; a refresh keeps the
+    // current list on screen until the new one arrives.
     async function fetchAll() {
-      setLoading(true);
       try {
         const res = await SessionService.ListAvailablePlaces();
         const available = res.places ?? [];
@@ -80,8 +108,8 @@ export default function PeoplePlacesSection() {
     return <p className="text-grouse">Loading places…</p>;
   }
 
-  const ownerPlaces = places.filter((p) => p.role === 'OWNER');
-  const guestPlaces = places.filter((p) => p.role !== 'OWNER');
+  const ownerPlaces = places.filter((p) => p.role === OWNER);
+  const guestPlaces = places.filter((p) => p.role !== OWNER);
 
   return (
     <div className="space-y-8">
@@ -123,14 +151,24 @@ export default function PeoplePlacesSection() {
         <p className="text-sm text-grouse">No places found.</p>
       )}
 
-      {/* Add place */}
-      <button
-        onClick={() => openRight(<AddPlacePanel />)}
-        data-testid="add-place"
-        className="px-4 py-2 bg-peacock text-crane rounded-[var(--border-radius-base)] text-sm font-medium hover:bg-peacock/90"
-      >
-        + Add Place
-      </button>
+      {/* Add place — only while the active place is one the person owns */}
+      {(addPlaceAccountId || atGuestPlace) && (
+        <div data-testid="add-place-section" className="space-y-2">
+          <button
+            onClick={handleAddPlace}
+            data-testid="add-place"
+            disabled={!addPlaceAccountId}
+            className="px-4 py-2 bg-peacock text-crane rounded-[var(--border-radius-base)] text-sm font-medium hover:bg-peacock/90 disabled:opacity-50"
+          >
+            + Add Place
+          </button>
+          {atGuestPlace && (
+            <p data-testid="add-place-hint" className="text-xs text-grouse">
+              To add a place, first switch to a place you own.
+            </p>
+          )}
+        </div>
+      )}
     </div>
   );
 }

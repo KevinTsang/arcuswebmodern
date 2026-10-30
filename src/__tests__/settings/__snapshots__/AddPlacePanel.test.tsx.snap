@@ -1,0 +1,141 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`AddPlacePanel – creating a place matches snapshot after a place is added 1`] = `
+<div
+  class="p-4 space-y-4"
+>
+  <h3
+    class="text-lg font-semibold text-swift"
+    data-testid="add-place-panel-title"
+  >
+    Add a Place
+  </h3>
+  <p
+    class="text-sm text-coot"
+    data-testid="add-place-added"
+  >
+    <span
+      class="font-medium text-swift"
+    >
+      Beach House
+    </span>
+     has been added to your account.
+  </p>
+  <p
+    class="text-sm text-grouse"
+  >
+    Switch to it now to set it up, or keep using your current place.
+  </p>
+  <div
+    class="flex gap-2 pt-2"
+  >
+    <button
+      class="px-4 py-2 bg-peacock text-crane rounded-[var(--border-radius-base)] text-sm font-medium hover:bg-peacock/90 disabled:opacity-50"
+      data-testid="add-place-switch"
+    >
+      Switch to Beach House
+    </button>
+    <button
+      class="px-4 py-2 border border-heron rounded-[var(--border-radius-base)] text-sm text-coot hover:bg-pigeon disabled:opacity-50"
+      data-testid="add-place-done"
+    >
+      Done
+    </button>
+  </div>
+</div>
+`;
+
+exports[`AddPlacePanel – rendering matches snapshot 1`] = `
+<div
+  class="p-4 space-y-4"
+>
+  <h3
+    class="text-lg font-semibold text-swift"
+    data-testid="add-place-panel-title"
+  >
+    Add a Place
+  </h3>
+  <div>
+    <label
+      class="block text-sm text-grouse mb-1"
+    >
+      Place Name
+    </label>
+    <input
+      class="w-full border border-heron rounded-[var(--border-radius-base)] px-3 py-2 text-sm text-swift focus:outline-none focus:border-peacock"
+      data-testid="field-place-name"
+      placeholder="e.g. Lake House"
+      type="text"
+      value=""
+    />
+  </div>
+  <div>
+    <label
+      class="block text-sm text-grouse mb-1"
+    >
+      Street Address
+    </label>
+    <input
+      class="w-full border border-heron rounded-[var(--border-radius-base)] px-3 py-2 text-sm text-swift focus:outline-none focus:border-peacock"
+      data-testid="field-street-address"
+      type="text"
+      value=""
+    />
+  </div>
+  <div>
+    <label
+      class="block text-sm text-grouse mb-1"
+    >
+      City
+    </label>
+    <input
+      class="w-full border border-heron rounded-[var(--border-radius-base)] px-3 py-2 text-sm text-swift focus:outline-none focus:border-peacock"
+      data-testid="field-city"
+      type="text"
+      value=""
+    />
+  </div>
+  <div>
+    <label
+      class="block text-sm text-grouse mb-1"
+    >
+      State
+    </label>
+    <input
+      class="w-full border border-heron rounded-[var(--border-radius-base)] px-3 py-2 text-sm text-swift focus:outline-none focus:border-peacock"
+      data-testid="field-state"
+      type="text"
+      value=""
+    />
+  </div>
+  <div>
+    <label
+      class="block text-sm text-grouse mb-1"
+    >
+      ZIP Code
+    </label>
+    <input
+      class="w-full border border-heron rounded-[var(--border-radius-base)] px-3 py-2 text-sm text-swift focus:outline-none focus:border-peacock"
+      data-testid="field-zip-code"
+      type="text"
+      value=""
+    />
+  </div>
+  <div
+    class="flex gap-2 pt-2"
+  >
+    <button
+      class="px-4 py-2 bg-peacock text-crane rounded-[var(--border-radius-base)] text-sm font-medium hover:bg-peacock/90 disabled:opacity-50"
+      data-testid="place-create"
+      disabled=""
+    >
+      Create Place
+    </button>
+    <button
+      class="px-4 py-2 border border-heron rounded-[var(--border-radius-base)] text-sm text-coot hover:bg-pigeon"
+    >
+      Cancel
+    </button>
+  </div>
+</div>
+`;
