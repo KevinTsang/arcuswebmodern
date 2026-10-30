@@ -1,0 +1,107 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`PlaceInfoPanel matches snapshot 1`] = `
+<div
+  class="p-4 space-y-4"
+>
+  <h3
+    class="text-lg font-semibold text-swift"
+    data-testid="place-panel-title"
+  >
+    Edit Place
+  </h3>
+  <div>
+    <label
+      class="block text-sm text-grouse mb-1"
+    >
+      Place Name
+    </label>
+    <input
+      class="w-full border border-heron rounded-[var(--border-radius-base)] px-3 py-2 text-sm text-swift focus:outline-none focus:border-peacock"
+      data-testid="field-place-name"
+      type="text"
+      value="Test Home"
+    />
+  </div>
+  <div>
+    <label
+      class="block text-sm text-grouse mb-1"
+    >
+      Street Address
+    </label>
+    <input
+      class="w-full border border-heron rounded-[var(--border-radius-base)] px-3 py-2 text-sm text-swift focus:outline-none focus:border-peacock"
+      data-testid="field-street-address"
+      type="text"
+      value="123 Main St"
+    />
+  </div>
+  <div>
+    <label
+      class="block text-sm text-grouse mb-1"
+    >
+      Street Address 2
+    </label>
+    <input
+      class="w-full border border-heron rounded-[var(--border-radius-base)] px-3 py-2 text-sm text-swift focus:outline-none focus:border-peacock"
+      data-testid="field-street-address-2"
+      type="text"
+      value=""
+    />
+  </div>
+  <div>
+    <label
+      class="block text-sm text-grouse mb-1"
+    >
+      City
+    </label>
+    <input
+      class="w-full border border-heron rounded-[var(--border-radius-base)] px-3 py-2 text-sm text-swift focus:outline-none focus:border-peacock"
+      data-testid="field-city"
+      type="text"
+      value="Springfield"
+    />
+  </div>
+  <div>
+    <label
+      class="block text-sm text-grouse mb-1"
+    >
+      State
+    </label>
+    <input
+      class="w-full border border-heron rounded-[var(--border-radius-base)] px-3 py-2 text-sm text-swift focus:outline-none focus:border-peacock"
+      data-testid="field-state"
+      type="text"
+      value="IL"
+    />
+  </div>
+  <div>
+    <label
+      class="block text-sm text-grouse mb-1"
+    >
+      ZIP Code
+    </label>
+    <input
+      class="w-full border border-heron rounded-[var(--border-radius-base)] px-3 py-2 text-sm text-swift focus:outline-none focus:border-peacock"
+      data-testid="field-zip-code"
+      type="text"
+      value="62701"
+    />
+  </div>
+  <div
+    class="flex gap-2 pt-2"
+  >
+    <button
+      class="px-4 py-2 bg-peacock text-crane rounded-[var(--border-radius-base)] text-sm font-medium hover:bg-peacock/90 disabled:opacity-50"
+      data-testid="place-save"
+    >
+      Save
+    </button>
+    <button
+      class="px-4 py-2 border border-heron rounded-[var(--border-radius-base)] text-sm text-coot hover:bg-pigeon"
+    >
+      Cancel
+    </button>
+  </div>
+</div>
+`;
