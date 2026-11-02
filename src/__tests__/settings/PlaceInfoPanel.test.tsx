@@ -2,6 +2,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { Base, Place } from '@arcus/core';
 import PlaceInfoPanel from '@/components/settings/PlaceInfoPanel';
 import { type PlaceData } from '@/components/settings/types';
+import type { PlaceChange } from '@/store/slices/placeSlice';
 
 const mockCloseRight = jest.fn();
 const mockDispatch = jest.fn();
@@ -17,7 +18,7 @@ jest.mock('@/components/SidePanel', () => ({
 }));
 
 jest.mock('@/store/slices/placeSlice', () => ({
-  setPlace: (payload: PlaceData) => ({ type: 'place/setPlace', payload }),
+  updatePlace: (payload: PlaceChange) => ({ type: 'place/updatePlace', payload }),
 }));
 
 jest.mock('@/store/slices/uiSlice', () => ({
@@ -39,6 +40,7 @@ const mockPlaceData: PlaceData = {
   [Place.ATTR_CITY]: 'Springfield',
   [Place.ATTR_STATEPROV]: 'IL',
   [Place.ATTR_ZIPCODE]: '62701',
+  [Place.ATTR_SERVICELEVEL]: Place.SERVICELEVEL_BASIC,
 };
 
 beforeEach(() => {
@@ -47,6 +49,11 @@ beforeEach(() => {
 });
 
 describe('PlaceInfoPanel', () => {
+  it('matches snapshot', () => {
+    const { container } = render(<PlaceInfoPanel placeData={mockPlaceData} />);
+    expect(container.firstChild).toMatchSnapshot();
+  });
+
   it('shows pre-filled place data', () => {
     render(<PlaceInfoPanel placeData={mockPlaceData} />);
     expect(screen.getByDisplayValue('Test Home')).toBeInTheDocument();
@@ -70,29 +77,53 @@ describe('PlaceInfoPanel', () => {
     });
   });
 
-  it('dispatches setPlace for active place', async () => {
+  it('merges only the saved attributes into the active place', async () => {
     render(<PlaceInfoPanel placeData={mockPlaceData} />);
+    fireEvent.change(screen.getByDisplayValue('Test Home'), { target: { value: 'Updated Home' } });
     fireEvent.click(screen.getByText('Save'));
 
+    // Not the whole snapshot: its service level (and anything else that
+    // changed since the panel opened) must not be written back.
     await waitFor(() => {
-      expect(mockDispatch).toHaveBeenCalledWith(
-        expect.objectContaining({ type: 'place/setPlace' }),
-      );
+      expect(mockDispatch).toHaveBeenCalledWith({
+        type: 'place/updatePlace',
+        payload: {
+          [Base.ATTR_ADDRESS]: 'SERV:place:place-1',
+          [Place.ATTR_NAME]: 'Updated Home',
+          [Place.ATTR_STREETADDRESS1]: '123 Main St',
+          [Place.ATTR_STREETADDRESS2]: '',
+          [Place.ATTR_CITY]: 'Springfield',
+          [Place.ATTR_STATEPROV]: 'IL',
+          [Place.ATTR_ZIPCODE]: '62701',
+        },
+      });
     });
   });
 
-  it('does not dispatch setPlace for non-active place', async () => {
-    const otherPlace = { ...mockPlaceData, [Base.ATTR_ID]: 'place-2' };
+  it('does not update the active place when saving another place', async () => {
+    const otherPlace = { ...mockPlaceData, [Base.ATTR_ID]: 'place-2', [Base.ATTR_ADDRESS]: 'SERV:place:place-2' };
     render(<PlaceInfoPanel placeData={otherPlace} />);
     fireEvent.click(screen.getByText('Save'));
 
     await waitFor(() => {
-      expect(mockBridgeRequest).toHaveBeenCalled();
+      expect(mockCloseRight).toHaveBeenCalled();
     });
-    const setPlaceCalls = mockDispatch.mock.calls.filter(
-      (c: any[]) => c[0]?.type === 'place/setPlace',
-    );
-    expect(setPlaceCalls).toHaveLength(0);
+    expect(mockDispatch).not.toHaveBeenCalledWith(expect.objectContaining({ type: 'place/updatePlace' }));
+  });
+
+  it('shows an error and keeps the panel open when the save fails', async () => {
+    mockBridgeRequest.mockRejectedValue(new Error('fail'));
+    render(<PlaceInfoPanel placeData={mockPlaceData} />);
+    fireEvent.click(screen.getByText('Save'));
+
+    await waitFor(() => {
+      expect(mockDispatch).toHaveBeenCalledWith({
+        type: 'ui/addNotification',
+        payload: { type: 'error', message: 'Failed to update place info.' },
+      });
+    });
+    expect(mockDispatch).not.toHaveBeenCalledWith(expect.objectContaining({ type: 'place/updatePlace' }));
+    expect(mockCloseRight).not.toHaveBeenCalled();
   });
 
   it('calls onSaved callback after save', async () => {
