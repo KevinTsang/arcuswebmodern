@@ -53,8 +53,8 @@ beforeEach(() => {
 
 describe('LoginPage', () => {
   it('matches snapshot', () => {
-    const { container } = render(<LoginPage />);
-    expect(container.firstChild).toMatchSnapshot();
+    const { asFragment } = render(<LoginPage />);
+    expect(asFragment()).toMatchSnapshot();
   });
 
   it('returns to the page remembered before login, including its query', async () => {

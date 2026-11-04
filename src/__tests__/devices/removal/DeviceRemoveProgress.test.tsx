@@ -46,13 +46,13 @@ beforeEach(() => {
 
 describe('DeviceRemoveProgress – rendering', () => {
   it('matches snapshot', () => {
-    const { container } = renderProgress();
-    expect(container.firstChild).toMatchSnapshot();
+    const { asFragment } = renderProgress();
+    expect(asFragment()).toMatchSnapshot();
   });
 
   it('matches snapshot for an automatic removal with no steps', () => {
-    const { container } = renderProgress({ mode: PairingDevice.REMOVEMODE_HUB_AUTOMATIC, steps: [] });
-    expect(container.firstChild).toMatchSnapshot();
+    const { asFragment } = renderProgress({ mode: PairingDevice.REMOVEMODE_HUB_AUTOMATIC, steps: [] });
+    expect(asFragment()).toMatchSnapshot();
   });
 
   it('exposes the stage', () => {

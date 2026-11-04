@@ -17,13 +17,13 @@ beforeEach(() => {
 
 describe('DeviceRemoveAbortButton', () => {
   it('matches snapshot', () => {
-    const { container } = renderButton();
-    expect(container.firstChild).toMatchSnapshot();
+    const { asFragment } = renderButton();
+    expect(asFragment()).toMatchSnapshot();
   });
 
   it('matches snapshot while cancelling', () => {
-    const { container } = renderButton({ cancelling: true });
-    expect(container.firstChild).toMatchSnapshot();
+    const { asFragment } = renderButton({ cancelling: true });
+    expect(asFragment()).toMatchSnapshot();
   });
 
   it.each([

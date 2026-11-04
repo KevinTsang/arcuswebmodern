@@ -47,8 +47,8 @@ beforeEach(() => {
 
 describe('DeviceRemovalSection – snapshots', () => {
   it('matches snapshot', () => {
-    const { container } = renderSection();
-    expect(container.firstChild).toMatchSnapshot();
+    const { asFragment } = renderSection();
+    expect(asFragment()).toMatchSnapshot();
   });
 
   it.each<[RemovalStage, Partial<DeviceRemovalFlow>]>([
@@ -57,8 +57,8 @@ describe('DeviceRemovalSection – snapshots', () => {
     ['timedOut', HUB_MANUAL],
     ['confirmForce', {}],
   ])('matches snapshot in the %s stage', (stage, overrides) => {
-    const { container } = renderSection({ stage, ...overrides });
-    expect(container.firstChild).toMatchSnapshot();
+    const { asFragment } = renderSection({ stage, ...overrides });
+    expect(asFragment()).toMatchSnapshot();
   });
 });
 

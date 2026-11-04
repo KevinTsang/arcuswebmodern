@@ -40,13 +40,15 @@ describe('ComponentName', () => {
 
 Every component test file must include:
 
-1. **Snapshot test** — Verify visual rendering with `toMatchSnapshot()`:
+1. **Snapshot test** — Verify visual rendering with `toMatchSnapshot()` on `asFragment()`:
    ```tsx
    it('matches snapshot', () => {
-     const { container } = render(<Component {...defaultProps} />);
-     expect(container.firstChild).toMatchSnapshot();
+     const { asFragment } = render(<Component {...defaultProps} />);
+     expect(asFragment()).toMatchSnapshot();
    });
    ```
+   `asFragment()` records every element the component rendered, without the wrapper `<div>`
+   React Testing Library adds, and copies the DOM at the moment it is called.
 
 2. **Rendering tests** — Verify key elements appear in the DOM (text, roles, attributes).
 
@@ -87,12 +89,116 @@ expect(screen.getByTestId('status-value-on')).toHaveTextContent('2');
 - **Notifications**: `jest.mock('@/store/slices/uiSlice', () => ({ addNotification: (payload: unknown) => ({ type: 'ui/addNotification', payload }) }));`
 - **Device hooks**: `jest.mock('@/hooks/useDeviceCapability', () => ({ useDevice: () => mockDevice }));`
 - Use `waitFor()` for assertions on async operations (Bridge calls, dispatches after promises).
+  See [Testing Promises](#testing-promises) for stubbing results and waiting on a specific promise.
+
+## Testing Promises
+
+### Stubbing async results
+
+Use `mockResolvedValue` and `mockRejectedValue` instead of writing
+`mockImplementation(() => Promise.resolve(...))` by hand. Set the success value in
+`beforeEach` so every test starts on the happy path, and override a single call with the
+`…Once` variants in the tests that need something else.
+
+```tsx
+const mockBridgeRequest = jest.fn();
+
+beforeEach(() => {
+  jest.clearAllMocks();
+  mockBridgeRequest.mockResolvedValue({ [Place.ATTR_NAME]: 'Beach House' });
+});
+
+it('shows an error when saving fails', async () => {
+  mockBridgeRequest.mockRejectedValueOnce(new Error('fail'));
+  // ...render, click Save...
+  await waitFor(() => expect(mockDispatch).toHaveBeenCalledWith(SAVE_ERROR));
+});
+```
+
+- **Prefer `…Once` for failures.** A test that only fails the first call leaves later calls
+  (a retry, a second load) on the default success value, which is usually what a retry test
+  wants.
+- **Reject with an `Error`** unless the code under test reads a platform error shape. Then
+  reject with that shape, such as `{ code: 'error.unsupported' }`, so the test exercises the
+  same branch the platform would.
+- `mockRejectedValue` builds a new rejected promise on each call, so setting it without
+  calling the mock does not cause an unhandled rejection.
+
+### Asserting on a promise
+
+Use `.resolves` and `.rejects` when the test holds the promise itself — a helper, a thunk's
+`unwrap()`, or a service call. **Always `await` them** (or `return` them).
+
+```tsx
+await expect(fetchPlaces(placeId)).resolves.toEqual([newPlace]);
+await expect(fetchPlaces('missing')).rejects.toThrow('not found');
+await expect(fetchPlaces('legacy')).rejects.toMatchObject({ code: 'error.unsupported' });
+```
+
+Without the `await`, the test finishes before the promise settles. A passing assertion is
+never checked. A failing one surfaces afterwards as an unhandled rejection that crashes the
+whole Jest run instead of failing its own test.
+
+For assertions on what a *component* does with a promise (a toast, a closed panel, a
+re-enabled button), wait on the UI with `waitFor` or `findBy…`, not on the promise.
+
+### Waiting for a mocked promise to settle
+
+When a test has to let a mocked call finish before asserting, wait on that call's own
+promise. `mock.results` holds what each call returned:
+
+```tsx
+fireEvent.click(screen.getByTestId('contact-save'));
+await act(() => mockBridgeRequest.mock.results[0].value);
+expect(mockCloseRight).toHaveBeenCalled();
+```
+
+- **Mounted component:** wrap the wait in `act`, because the component's handler resumes and
+  updates state once the promise settles.
+- **Already unmounted (after `cleanup()`):** `act` is not needed. Await the promise directly,
+  for example with `await expect(mock.mock.results[0].value).resolves.toBe(...)`.
+- **Avoid** `await act(async () => {})` and `await new Promise(process.nextTick)`. Both flush
+  only the promises already queued, so they break silently if the code gains another `await`.
+  Jest's fake timers also replace `process.nextTick` by default, so that version hangs under
+  `jest.useFakeTimers()`.
+
+### Controlling when a promise settles
+
+A resolved mock settles as soon as the code awaits it. When a test has to assert on the
+in-between state ("still saving", "panel closed mid-request"), give the mock a promise the
+test settles itself, using `deferred()` from `src/__tests__/helpers/deferred.ts`:
+
+```tsx
+import { deferred } from '../helpers/deferred';
+
+const save = deferred<Record<string, never>>(); // base:SetAttributes answers {}
+mockBridgeRequest.mockReturnValueOnce(save.promise);
+
+fireEvent.click(screen.getByTestId('contact-save'));
+expect(screen.getByTestId('contact-save')).toBeDisabled();
+
+await act(async () => { save.resolve({}); });
+expect(mockCloseRight).toHaveBeenCalled();
+```
+
+- **Hold only that call open** with `mockReturnValueOnce`. `mockReturnValue` and
+  `mockImplementation` also hang every later call, and `jest.clearAllMocks()` does not reset
+  them, so the hang leaks into the following tests.
+- **Settle inside `act`** (`save.resolve(...)` or `save.reject(new Error(...))`), then assert
+  directly. The component has updated by the time `act` returns.
+- **Use `new Promise(() => {})`** instead when a test only checks the loading state and never
+  needs the call to finish.
+
+Only reach for this when the order is the point of the test. When it isn't, the default
+resolved mock plus [waiting on its promise](#waiting-for-a-mocked-promise-to-settle) is shorter.
 
 ## Snapshot Best Practices
 
 - One snapshot per component for the default/primary render state.
 - Additional snapshots for significantly different visual states (disabled, loading, error, empty).
-- Keep snapshots focused — snapshot `container.firstChild` not the full container.
+- Snapshot `asFragment()`, not `container` or `container.firstChild`. The full container adds the
+  wrapper `<div>`, and `firstChild` silently drops every root after the first when a component
+  renders a fragment with several siblings.
 - Review snapshot changes carefully on update; they are a safety net against unintended visual regressions.
 
 ## Containerized Testing

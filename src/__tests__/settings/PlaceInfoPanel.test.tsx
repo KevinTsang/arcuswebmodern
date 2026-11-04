@@ -50,8 +50,8 @@ beforeEach(() => {
 
 describe('PlaceInfoPanel', () => {
   it('matches snapshot', () => {
-    const { container } = render(<PlaceInfoPanel placeData={mockPlaceData} />);
-    expect(container.firstChild).toMatchSnapshot();
+    const { asFragment } = render(<PlaceInfoPanel placeData={mockPlaceData} />);
+    expect(asFragment()).toMatchSnapshot();
   });
 
   it('shows pre-filled place data', () => {
