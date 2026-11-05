@@ -55,7 +55,7 @@ None.
 | Device naming | Yes | Yes | **Done** |
 | Device favorite toggle | Yes | Yes | **Done** |
 | Device identification (blink/beep) | Yes | Yes | **Done** |
-| Device removal with confirmation | Yes | Yes | **Done** |
+| Device removal with confirmation | Yes (removal steps, Cancel, Force Remove after timeout) | Yes (removal steps, waits for `base:Deleted`, Cancel/close stops hub unpairing, Force Remove after 4 min) | **Done** |
 | Device settings/configuration panel | Yes | Yes (enum, range, text parameter types) | **Done** |
 | Power usage display (instantaneous) | Yes | No | **Missing** |
 | OTA firmware update status | Yes | No | **Missing** |
@@ -445,6 +445,7 @@ None.
 
 ### Gaps
 
+- ~~**Bug:** Saving Profile → Edit Contact Info could blank the user's first and last name.~~ **DONE.** The form was seeded from `auth.person` (often just the session payload, with no names) and always wrote all three fields. `ContactInfoPanel` now loads the person with `base:GetAttributes` and stays disabled until that succeeds (error toast + retry on failure; a sign-in-again message with no session). It sends only the fields that changed, trimmed, and checks only those: names can't be blanked, and a changed phone must be a US number (phone characters only, 10 digits or 11 starting with 1, via `useFormValidation`'s new `phoneNumber` rule). Phones are sent as `(555) 123-4567`, the format the platform stores. Errors show after Save and follow typing, not blur. The Profile card refreshes after a save once #13 (`auth.person` follows the person's `base:ValueChange`) is merged.
 - Billing and subscription management is entirely absent.
 - Notification preferences and call tree management.
 - Account-level features (email management, phone verification, security questions, account deletion).
@@ -694,6 +695,30 @@ These are commonly used features that users will expect:
     device lists that live on the alarm subsystem itself — the per-alert `Alarm`
     capability instances, `alarm:devices:<SECURITY|PANIC|SMOKE|CO|WATER>`.
     Covered by `src/__tests__/hooks/useSubsystem.test.ts`.
+27. **Share person validation across sign-up, invite and the contact panel** —
+    A follow-up to this PR (#22, contact info validation), building on the
+    phone rule and formatter it adds.
+    - **Validate and format the phone at sign-up and invite.** Sign-up
+      (`src/components/create-account/CredentialsStep.tsx`) and the invite page
+      (`src/app/invite/page.tsx`) send `person:mobileNumber` exactly as typed,
+      unchecked and unformatted. Give both the optional `phoneNumber` rule (the
+      validator skips empty fields), and send the number through
+      `formatPhoneNumber` so it's stored as "(555) 123-4567", like the contact
+      panel saves it. Check first whether the platform rejects a malformed
+      phone. If it does, sign-up currently reports the misleading "The email may
+      already be in use".
+    - **Remove the duplicated sign-up rules.** `CREDENTIALS_CONSTRAINTS`
+      (`src/components/create-account/CreateAccountContext.tsx`) and the invite
+      page's `LOGIN_CONSTRAINTS` are identical: email, password, confirm password,
+      first and last name. Move them into one shared module that both import.
+    - **Share rules, not field maps.** The contact panel keys its constraints by
+      `person:*` attribute names, while sign-up and invite key theirs by form
+      field names. So export reusable rules (required name, optional or required
+      phone, password) and let each form build its own map. Keep the contact
+      panel's field list, empty values and changed-fields comparison in the panel,
+      since they're specific to editing an existing person.
+    - This overlaps with item 25 (splitting `login/page.tsx`), which also plans a
+      shared `constraints.ts`. Use the same module for both.
 
 ---
 

@@ -166,9 +166,9 @@ describe('parseTemplateString', () => {
 
 describe('RulePanel (create mode)', () => {
   it('matches snapshot', async () => {
-    const { container } = render(<RulePanel template={mockTemplate} placeId="place-1" />);
+    const { asFragment } = render(<RulePanel template={mockTemplate} placeId="place-1" />);
     await waitForLoad();
-    expect(container.firstChild).toMatchSnapshot();
+    expect(asFragment()).toMatchSnapshot();
   });
 
   it('shows loading state initially', () => {
@@ -376,9 +376,9 @@ describe('RulePanel (edit mode)', () => {
   });
 
   it('matches snapshot', async () => {
-    const { container } = render(<RulePanel rule={mockRule} placeId="place-1" />);
+    const { asFragment } = render(<RulePanel rule={mockRule} placeId="place-1" />);
     await waitForLoad();
-    expect(container.firstChild).toMatchSnapshot();
+    expect(asFragment()).toMatchSnapshot();
   });
 
   it('saves the name, then re-applies the context, on a rename', async () => {

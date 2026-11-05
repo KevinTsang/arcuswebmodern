@@ -83,16 +83,6 @@ function hubTimesOut() {
   emitHubChange({ [Hub.ATTR_STATE]: Hub.STATE_NORMAL });
 }
 
-function deferred<T>() {
-  let resolve!: (value: T) => void;
-  let reject!: (reason: Error) => void;
-  const promise = new Promise<T>((res, rej) => {
-    resolve = res;
-    reject = rej;
-  });
-  return { promise, resolve, reject };
-}
-
 function startCalls() {
   return mockBridgeRequest.mock.calls.filter(
     ([cmd, , attrs]) => cmd === Hub.CMD_UNPAIRINGREQUEST && attrs.actionType === UnpairingAction.START,
@@ -105,6 +95,11 @@ function stopCalls() {
   );
 }
 
+/** The promise the most recent Bridge request returned. */
+function lastRequest() {
+  return mockBridgeRequest.mock.results.at(-1)?.value;
+}
+
 function modalState() {
   return screen.queryByTestId('zwave-remove-modal')?.getAttribute('data-state') ?? 'closed';
 }
@@ -115,7 +110,7 @@ async function openSearch() {
   fireEvent.click(screen.getByText('Remove Z-Wave Device'));
   fireEvent.click(screen.getByText('Remove Z-Wave Devices'));
   await waitFor(() => expect(screen.getByText('Searching...')).toBeInTheDocument());
-  await act(async () => {});
+  await act(() => lastRequest());
   emitHubChange({ [Hub.ATTR_STATE]: Hub.STATE_UNPAIRING });
   return utils;
 }
@@ -145,13 +140,13 @@ beforeEach(() => {
 
 describe('ZWaveTools – snapshots', () => {
   it('matches snapshot', () => {
-    const { container } = render(<ZWaveTools />);
-    expect(container.firstChild).toMatchSnapshot();
+    const { asFragment } = render(<ZWaveTools />);
+    expect(asFragment()).toMatchSnapshot();
   });
 
   it('matches snapshot with the stop retry offered', async () => {
-    const { container } = await cancelWithFailedStop();
-    expect(container.firstChild).toMatchSnapshot();
+    const { asFragment } = await cancelWithFailedStop();
+    expect(asFragment()).toMatchSnapshot();
   });
 });
 
@@ -293,18 +288,16 @@ describe('ZWaveTools – Orphan removal modal', () => {
     await waitFor(() => expect(stopCalls()).toHaveLength(1));
 
     fireEvent.click(screen.getByTestId('zwave-remove-done'));
-    await act(async () => {});
-    expect(modalState()).toBe('closed');
+    await waitFor(() => expect(modalState()).toBe('closed'));
     expect(stopCalls()).toHaveLength(1);
   });
 
   it('shares the stop in flight when Done is clicked right after a removal', async () => {
-    const stop = deferred<unknown>();
     await openSearch();
-    mockBridgeRequest.mockReturnValueOnce(stop.promise);
+    mockBridgeRequest.mockResolvedValueOnce({});
     emitHubChange({ [HubZwave.ATTR_NUMDEVICES]: 4 });
     fireEvent.click(screen.getByTestId('zwave-remove-done'));
-    await act(async () => { stop.resolve({}); });
+    await act(() => lastRequest());
 
     expect(stopCalls()).toHaveLength(1);
     expect(modalState()).toBe('closed');
@@ -333,7 +326,7 @@ describe('ZWaveTools – Orphan removal modal', () => {
     render(<ZWaveTools />);
     fireEvent.click(screen.getByText('Remove Z-Wave Device'));
     fireEvent.click(screen.getByText('Remove Z-Wave Devices'));
-    await act(async () => {});
+    await act(() => lastRequest());
     emitHubChange({ [Hub.ATTR_STATE]: Hub.STATE_NORMAL });
     expect(modalState()).toBe('search');
   });
@@ -383,36 +376,56 @@ describe('ZWaveTools – Orphan removal modal', () => {
 });
 
 describe('ZWaveTools – closing a search', () => {
-  it('ignores the NORMAL caused by Cancel arriving before the STOP reply', async () => {
-    const stop = deferred<unknown>();
+  it('stays closed when Cancel\'s NORMAL arrives while STOP is pending', async () => {
     await openSearch();
-    mockBridgeRequest.mockReturnValueOnce(stop.promise);
+    mockBridgeRequest.mockReturnValueOnce(new Promise(() => {}));
     fireEvent.click(screen.getByTestId('zwave-remove-cancel'));
 
     hubTimesOut();
-    expect(modalState()).toBe('closed');
+    await waitFor(() => expect(modalState()).toBe('closed'));
+  });
 
-    await act(async () => { stop.resolve({}); });
+  it('ignores the NORMAL caused by Cancel arriving before the STOP reply', async () => {
+    await openSearch();
+    mockBridgeRequest.mockResolvedValueOnce({});
+    fireEvent.click(screen.getByTestId('zwave-remove-cancel'));
+    const stop = lastRequest();
+    hubTimesOut();
+
+    // Nothing visible changes when STOP answers, so wait on the request itself.
+    await act(() => stop);
     expect(modalState()).toBe('closed');
   });
 
-  it('does not close a search restarted before the old STOP reply', async () => {
-    const stop = deferred<unknown>();
-    const { unmount } = await openSearch();
+  it('keeps a restarted search open while the old STOP is pending', async () => {
+    await openSearch();
     hubTimesOut();
     // Failure screen: the hub left unpairing, so Cancel sends nothing; start a
     // search that then gets cancelled with a slow STOP, and restart.
     fireEvent.click(screen.getByText('Keep Searching'));
-    await act(async () => {});
+    await act(() => lastRequest());
     emitHubChange({ [Hub.ATTR_STATE]: Hub.STATE_UNPAIRING });
-    mockBridgeRequest.mockReturnValueOnce(stop.promise);
+    mockBridgeRequest.mockReturnValueOnce(new Promise(() => {}));
     fireEvent.click(screen.getByTestId('zwave-remove-cancel'));
 
     fireEvent.click(screen.getByText('Remove Z-Wave Devices'));
-    await act(async () => {});
-    expect(modalState()).toBe('search');
+    await waitFor(() => expect(modalState()).toBe('search'));
+  });
 
-    await act(async () => { stop.resolve({}); });
+  it('does not close a search restarted before the old STOP reply', async () => {
+    const { unmount } = await openSearch();
+    hubTimesOut();
+    fireEvent.click(screen.getByText('Keep Searching'));
+    await act(() => lastRequest());
+    emitHubChange({ [Hub.ATTR_STATE]: Hub.STATE_UNPAIRING });
+    mockBridgeRequest.mockResolvedValueOnce({});
+    fireEvent.click(screen.getByTestId('zwave-remove-cancel'));
+    const stop = lastRequest();
+
+    fireEvent.click(screen.getByText('Remove Z-Wave Devices'));
+    const restart = lastRequest();
+    // The late STOP reply changes nothing visible, so wait on both requests themselves.
+    await act(() => Promise.all([stop, restart]));
     expect(modalState()).toBe('search');
 
     // The restarted search is still tracked: unmounting stops it.
@@ -421,16 +434,15 @@ describe('ZWaveTools – closing a search', () => {
   });
 
   it('does not reopen the modal when START fails after Cancel', async () => {
-    const start = deferred<unknown>();
-    mockBridgeRequest.mockReturnValueOnce(start.promise);
+    mockBridgeRequest.mockRejectedValueOnce(new Error('timeout'));
     render(<ZWaveTools />);
     fireEvent.click(screen.getByText('Remove Z-Wave Device'));
     fireEvent.click(screen.getByText('Remove Z-Wave Devices'));
+    const start = lastRequest();
     fireEvent.click(screen.getByTestId('zwave-remove-cancel'));
-    await act(async () => {});
-    expect(stopCalls()).toHaveLength(1);
 
-    await act(async () => { start.reject(new Error('timeout')); });
+    await act(() => expect(start).rejects.toThrow('timeout'));
+    expect(stopCalls()).toHaveLength(1);
     expect(modalState()).toBe('closed');
   });
 
@@ -477,14 +489,12 @@ describe('ZWaveTools – retrying a failed stop', () => {
   });
 
   it('disables the retry while it is in flight', async () => {
-    const stop = deferred<unknown>();
     await cancelWithFailedStop();
-    mockBridgeRequest.mockReturnValueOnce(stop.promise);
+    mockBridgeRequest.mockReturnValueOnce(new Promise(() => {}));
     fireEvent.click(screen.getByTestId('zwave-remove-stop-retry'));
 
-    expect(screen.getByTestId('zwave-remove-stop-retry')).toBeDisabled();
-    expect(screen.getByTestId('zwave-remove-stop-retry')).toHaveTextContent('Stopping...');
-    await act(async () => { stop.resolve({}); });
+    await waitFor(() => expect(screen.getByTestId('zwave-remove-stop-retry')).toBeDisabled());
+    expect(await screen.findByTestId('zwave-remove-stop-retry')).toHaveTextContent('Stopping...');
   });
 
   it('retries the stop on unmount after a failed STOP', async () => {
@@ -527,10 +537,9 @@ describe('ZWaveTools – stopping unpairing on unmount', () => {
     const { rerender } = await openSearch();
     mockCurrentDispatch = jest.fn();
     rerender(<ZWaveTools />);
-    await act(async () => {});
 
+    await waitFor(() => expect(modalState()).toBe('search'));
     expect(stopCalls()).toHaveLength(0);
-    expect(modalState()).toBe('search');
   });
 
   it('does not stop unpairing on unmount once the hub returned to NORMAL', async () => {
@@ -543,7 +552,7 @@ describe('ZWaveTools – stopping unpairing on unmount', () => {
   it('does not send STOP_UNPAIRING again on unmount after Cancel', async () => {
     const { unmount } = await openSearch();
     fireEvent.click(screen.getByTestId('zwave-remove-cancel'));
-    await act(async () => {});
+    await act(() => lastRequest());
     unmount();
     expect(stopCalls()).toHaveLength(1);
   });

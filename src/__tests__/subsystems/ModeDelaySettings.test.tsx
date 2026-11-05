@@ -40,8 +40,8 @@ beforeEach(() => {
 
 describe('ModeDelaySettings', () => {
   it('matches snapshot', () => {
-    const { container } = render(<ModeDelaySettings {...defaultProps} />);
-    expect(container.firstChild).toMatchSnapshot();
+    const { asFragment } = render(<ModeDelaySettings {...defaultProps} />);
+    expect(asFragment()).toMatchSnapshot();
   });
 
   it('renders mode label', () => {

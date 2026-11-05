@@ -8,7 +8,6 @@
  */
 
 import { useState, useCallback } from 'react';
-import Bridge from '@arcus/core/bridge';
 import { Base, Device, DeviceAdvanced, DevicePower, Identify } from '@arcus/core';
 import { useDevice } from '@/hooks/useDeviceCapability';
 import { isDeviceOffline, formatTemp } from '@/hooks/useDeviceConfig';
@@ -16,7 +15,9 @@ import { useSidePanel } from '@/components/SidePanel';
 import { useAppDispatch } from '@/store/hooks';
 import { addNotification } from '@/store/slices/uiSlice';
 import { useDeviceActions } from '@/hooks/useDeviceActions';
+import { useDeviceRemoval } from '@/hooks/useDeviceRemoval';
 import { testIdSlug } from '@/lib/testId';
+import { DeviceRemovalSection } from './removal/DeviceRemovalSection';
 
 interface DeviceDetailPanelProps {
   address: string;
@@ -27,23 +28,11 @@ export function DeviceDetailPanel({ address }: DeviceDetailPanelProps) {
   const { closeRight } = useSidePanel();
   const dispatch = useAppDispatch();
   const { sendCommand } = useDeviceActions(address);
-  const [confirmRemove, setConfirmRemove] = useState(false);
-  const [removing, setRemoving] = useState(false);
   const [identifying, setIdentifying] = useState(false);
-
-  const handleRemove = useCallback(async () => {
-    if (!device) return;
-    setRemoving(true);
-    const devName = (device[Device.ATTR_NAME] as string) ?? 'Unknown Device';
-    try {
-      await Bridge.request(Device.CMD_REMOVE, address, {});
-      dispatch(addNotification({ type: 'success', message: `${devName} removed` }));
-      closeRight();
-    } catch {
-      dispatch(addNotification({ type: 'error', message: `Failed to remove ${devName}` }));
-    }
-    setRemoving(false);
-  }, [address, device, dispatch, closeRight]);
+  const name = (device?.[Device.ATTR_NAME] as string) ?? 'Unknown Device';
+  // Called before the early return below: the device leaves the store when its
+  // base:Deleted arrives, and the removal flow must keep running to report it.
+  const removal = useDeviceRemoval(address, name, closeRight);
 
   const handleIdentify = useCallback(async () => {
     setIdentifying(true);
@@ -60,7 +49,6 @@ export function DeviceDetailPanel({ address }: DeviceDetailPanelProps) {
 
   const caps = (device[Base.ATTR_CAPS] as string[]) ?? [];
   const supportsIdentify = caps.includes('ident');
-  const name = (device[Device.ATTR_NAME] as string) ?? 'Unknown Device';
   const devType = (device[Device.ATTR_DEVTYPEHINT] as string) ?? '';
   const vendor = (device[Device.ATTR_VENDOR] as string) ?? '';
   const model = (device[Device.ATTR_MODEL] as string) ?? '';
@@ -130,39 +118,7 @@ export function DeviceDetailPanel({ address }: DeviceDetailPanelProps) {
       {/* Removal section */}
       <hr className="border-heron mb-4" />
 
-      {!confirmRemove ? (
-        <button
-          onClick={() => setConfirmRemove(true)}
-          data-testid="device-remove"
-          className="text-sm text-cardinal hover:underline"
-        >
-          Remove Device
-        </button>
-      ) : (
-        <div>
-          <p className="text-sm text-swift mb-3">
-            Are you sure you want to remove <strong>{name}</strong>? This will unpair
-            the device from your hub. Rules and scenes using this device will be affected.
-          </p>
-          <div className="flex gap-3">
-            <button
-              onClick={handleRemove}
-              disabled={removing}
-              data-testid="device-remove-confirm"
-              className="bg-cardinal text-crane px-4 py-2 rounded-[var(--border-radius-base)] text-sm disabled:opacity-50"
-            >
-              {removing ? 'Removing...' : 'Yes, Remove'}
-            </button>
-            <button
-              onClick={() => setConfirmRemove(false)}
-              data-testid="device-remove-cancel"
-              className="border border-heron text-coot px-4 py-2 rounded-[var(--border-radius-base)] text-sm"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
+      <DeviceRemovalSection name={name} removal={removal} />
     </div>
   );
 }

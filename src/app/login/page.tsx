@@ -19,6 +19,7 @@ import { loadPlaceDataThunk } from '@/store/thunks/loadPlaceDataThunk';
 import { useFormValidation, type ValidationConstraints } from '@/hooks/useFormValidation';
 import { PersonService } from '@arcus/core/services';
 import { ArcusLogo } from '@/components/shared/ArcusLogo';
+import { takeNextPage } from '@/lib/nextPage';
 
 // ── Validation constraints ────────────────────────────────────────────
 
@@ -99,14 +100,13 @@ function LoginForm() {
           await dispatch(loadPlaceDataThunk(result.placeId)).unwrap();
         }
 
-        const redirect = searchParams.get('redirect') ?? '/';
-        router.replace(redirect);
+        router.replace(takeNextPage());
       } catch {
         setSaving(false);
         form.setFormError('Invalid username or password');
       }
     },
-    [emailAddress, password, isPublic, dispatch, router, searchParams, form],
+    [emailAddress, password, isPublic, dispatch, router, form],
   );
 
   return (
