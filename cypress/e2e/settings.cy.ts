@@ -36,8 +36,9 @@ describe('Profile settings', () => {
     field('phone').clear().type('5550009999');
     tid('contact-save').click();
 
+    // Sent in the "(555) 123-4567" format the platform stores phone numbers in.
     cy.expectRequest(Base.CMD_SETATTRIBUTES, (r) =>
-      r.destination === addr.person && r.attributes[Person.ATTR_MOBILENUMBER] === '5550009999');
+      r.destination === addr.person && r.attributes[Person.ATTR_MOBILENUMBER] === '(555) 000-9999');
     cy.toast('Contact info updated.');
     tid('contact-save').should('not.exist');
   });
