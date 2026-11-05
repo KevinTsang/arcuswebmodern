@@ -1,3 +1,7 @@
+# The build context is the working tree, so keep out everything .gitignore does:
+# docker/bin/build.sh checks that the tree is clean, but git status can't see
+# ignored files. Unlike .gitignore, a pattern here only matches from the root,
+# so files that can be anywhere need **/.
 **/node_modules
 .next
 out
@@ -6,6 +10,11 @@ certs
 cypress
 coverage
 test-results
-*.log
-.env*.local
-.DS_Store
+**/*.log
+**/.env*.local
+**/.DS_Store
+build
+**/*.pem
+**/*.tsbuildinfo
+next-env.d.ts
+src/app/debug
