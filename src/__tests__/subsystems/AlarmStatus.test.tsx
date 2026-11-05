@@ -1,5 +1,5 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { Base, Device, DeviceConnection, SecuritySubsystem, AlarmIncident, AlarmSubsystem } from '@arcus/core';
+import { Base, Device, DeviceConnection, SecuritySubsystem, AlarmIncident } from '@arcus/core';
 import { AlarmStatus } from '@/components/subsystems/AlarmStatus';
 import type { DeviceEntity, IncidentEntity, SubsystemEntity } from '@/store/entityTypes';
 import { makeDevice, makeIncident } from '../helpers/factories';
@@ -346,44 +346,11 @@ describe('AlarmStatus', () => {
     expect(screen.queryByTestId('incident-tracker')).not.toBeInTheDocument();
   });
 
-  // ── Panic button ────────────────────────────────────────────────────
-  it('shows Panic button when disarmed', () => {
-    render(<AlarmStatus />);
-    expect(screen.getByText('Panic')).toBeInTheDocument();
-  });
-
-  it('calls AlarmSubsystem.CMD_PANIC on Panic click', async () => {
-    mockBridgeRequest.mockResolvedValue({});
-    render(<AlarmStatus />);
-
-    fireEvent.click(screen.getByText('Panic'));
-
-    await waitFor(() => {
-      expect(mockBridgeRequest).toHaveBeenCalledWith(
-        AlarmSubsystem.CMD_PANIC,
-        'SERV:subalarm:abc',
-        {},
-      );
-    });
-  });
-
-  it('hides Panic button during active alert', () => {
-    mockAlarm = { ...defaultAlarm, securityState: SecuritySubsystem.ALARMSTATE_ALERT };
+  // ── Panic ───────────────────────────────────────────────────────────
+  // Panic comes from keypads, pendants and rules, never from this page.
+  it('does not offer a panic button', () => {
     render(<AlarmStatus />);
     expect(screen.queryByText('Panic')).not.toBeInTheDocument();
-  });
-
-  it('dispatches error notification on panic failure', async () => {
-    mockBridgeRequest.mockRejectedValue(new Error('network'));
-    render(<AlarmStatus />);
-
-    fireEvent.click(screen.getByText('Panic'));
-
-    await waitFor(() => {
-      expect(mockDispatch).toHaveBeenCalledWith({
-        type: 'ui/addNotification',
-        payload: { type: 'error', message: 'Failed to trigger panic alarm' },
-      });
-    });
+    expect(screen.queryByTestId('alarm-panic')).not.toBeInTheDocument();
   });
 });

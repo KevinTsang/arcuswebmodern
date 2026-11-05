@@ -3,7 +3,7 @@ import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { selectAllDevices } from "@/store/slices/devicesSlice";
 import { selectAllIncidents } from "@/store/slices/incidentsSlice";
 import { addNotification } from "@/store/slices/uiSlice";
-import { AlarmIncident, AlarmSubsystem, Base, Bridge, SecuritySubsystem, Device, DeviceConnection } from "@arcus/core";
+import { AlarmIncident, Base, Bridge, SecuritySubsystem, Device, DeviceConnection } from "@arcus/core";
 import { useState, useCallback } from "react";
 import IncidentTracker from "./IncidentTracker";
 
@@ -60,16 +60,6 @@ export function AlarmStatus() {
     CLEARING: 'Clearing...',
     SOAKING: 'Entry Delay',
   }[alarm.securityState] ?? alarm.securityState;
-
-  const handlePanic = useCallback(async () => {
-    if (!alarm.alarmSubsystem) return;
-    const addr = alarm.alarmSubsystem[Base.ATTR_ADDRESS] as string;
-    try {
-      await Bridge.request(AlarmSubsystem.CMD_PANIC, addr, {});
-    } catch {
-      dispatch(addNotification({ type: 'error', message: 'Failed to trigger panic alarm' }));
-    }
-  }, [alarm.alarmSubsystem, dispatch]);
 
   const isArmed = alarm.securityState === SecuritySubsystem.ALARMSTATE_ARMED;
   const isAlert = alarm.securityState === SecuritySubsystem.ALARMSTATE_ALERT;
@@ -139,19 +129,6 @@ export function AlarmStatus() {
           </button>
         )}
       </div>
-
-      {/* Panic button */}
-      {!isAlert && (
-        <div className="flex justify-center">
-          <button
-            onClick={handlePanic}
-            data-testid="alarm-panic"
-            className="border border-cardinal text-cardinal px-6 py-2 rounded-[var(--border-radius-base)] text-sm font-medium hover:bg-cardinal/5"
-          >
-            Panic
-          </button>
-        </div>
-      )}
 
       {/* Device list */}
       {securityDevices.length > 0 && (

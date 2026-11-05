@@ -45,7 +45,7 @@ jest.mock('@arcus/core/bridge', () => ({
 const flushPromises = () => new Promise((r) => setTimeout(r, 0));
 
 import { configureStore } from '@reduxjs/toolkit';
-import { Base, Device, Switch, Hub, Person, AlarmIncident } from '@arcus/core';
+import { Base, Device, Switch, Hub, Person, Place, AlarmIncident } from '@arcus/core';
 import authReducer, { loginSuccess, logout } from '@/store/slices/authSlice';
 import devicesReducer from '@/store/slices/devicesSlice';
 import subsystemsReducer from '@/store/slices/subsystemsSlice';
@@ -55,7 +55,7 @@ import schedulersReducer from '@/store/slices/schedulersSlice';
 import incidentsReducer from '@/store/slices/incidentsSlice';
 import peopleReducer from '@/store/slices/peopleSlice';
 import hubReducer from '@/store/slices/hubSlice';
-import placeReducer from '@/store/slices/placeSlice';
+import placeReducer, { setPlaceId, setPlace } from '@/store/slices/placeSlice';
 import uiReducer from '@/store/slices/uiSlice';
 import invitationsReducer from '@/store/slices/invitationsSlice';
 import { corneaMiddleware } from '@/store/middleware/corneaMiddleware';
@@ -142,6 +142,51 @@ describe('corneaMiddleware', () => {
 
     emit(`hub ${Base.EVENT_VALUECHANGE}`, { [Hub.ATTR_STATE]: 'PAIRING' });
     expect(store.getState().hub.hub?.[Hub.ATTR_STATE]).toBe('PAIRING');
+  });
+
+  describe('place base:ValueChange', () => {
+    const HOME_ADDRESS = 'SERV:place:p1';
+    const homePlace = {
+      [Base.ATTR_ADDRESS]: HOME_ADDRESS,
+      [Base.ATTR_ID]: 'p1',
+      [Place.ATTR_NAME]: 'Home',
+      [Place.ATTR_SERVICELEVEL]: Place.SERVICELEVEL_PREMIUM,
+    };
+
+    function createStoreWithActivePlace() {
+      const store = createTestStore();
+      store.dispatch(loginSuccess({ person: {}, account: {} }));
+      store.dispatch(setPlaceId('p1'));
+      store.dispatch(setPlace(homePlace));
+      return store;
+    }
+
+    it('merges the changed attributes into the active place', () => {
+      const store = createStoreWithActivePlace();
+
+      emit(`place ${Base.EVENT_VALUECHANGE}`, { [Base.ATTR_ADDRESS]: HOME_ADDRESS, [Place.ATTR_NAME]: 'Main House' });
+
+      expect(store.getState().place.place).toEqual({ ...homePlace, [Place.ATTR_NAME]: 'Main House' });
+    });
+
+    it('ignores a ValueChange for a place other than the active one', () => {
+      const store = createStoreWithActivePlace();
+
+      // e.g. the user edited "Lake House" from Settings while Home is active
+      emit(`place ${Base.EVENT_VALUECHANGE}`, { [Base.ATTR_ADDRESS]: 'SERV:place:p2', [Place.ATTR_NAME]: 'Lake House' });
+
+      expect(store.getState().place.place).toEqual(homePlace);
+    });
+
+    it('ignores a ValueChange before a place is loaded', () => {
+      const store = createTestStore();
+      store.dispatch(loginSuccess({ person: {}, account: {} }));
+      store.dispatch(setPlaceId('p1'));
+
+      emit(`place ${Base.EVENT_VALUECHANGE}`, { [Base.ATTR_ADDRESS]: HOME_ADDRESS, [Place.ATTR_NAME]: 'Main House' });
+
+      expect(store.getState().place.place).toBeNull();
+    });
   });
 
   it('dispatches logout on sess unauthorized', () => {
