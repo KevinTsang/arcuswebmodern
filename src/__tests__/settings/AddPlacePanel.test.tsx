@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor, act, cleanup } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
 import { Base, Account, Place } from '@arcus/core';
 import { AddPlacePanel } from '@/components/settings/AddPlacePanel';
 import type { PlaceData } from '@/store/entityTypes';
@@ -65,8 +65,8 @@ beforeEach(() => {
 
 describe('AddPlacePanel – rendering', () => {
   it('matches snapshot', () => {
-    const { container } = renderPanel();
-    expect(container.firstChild).toMatchSnapshot();
+    const { asFragment } = renderPanel();
+    expect(asFragment()).toMatchSnapshot();
   });
 
   it('shows heading', () => {
@@ -165,11 +165,11 @@ describe('AddPlacePanel – creating a place', () => {
   });
 
   it('matches snapshot after a place is added', async () => {
-    const { container } = renderPanel();
+    const { asFragment } = renderPanel();
     createPlace();
 
     await waitFor(() => expect(screen.getByTestId('add-place-added')).toBeInTheDocument());
-    expect(container.firstChild).toMatchSnapshot();
+    expect(asFragment()).toMatchSnapshot();
   });
 
   it('falls back to the entered name when the response has none', async () => {
@@ -288,9 +288,9 @@ describe('AddPlacePanel – after the place is added', () => {
     expect(screen.getByTestId('add-place-switch')).toHaveTextContent('Switching…');
     // The user closes this panel (and may open another) before the switch ends
     cleanup();
-    await act(async () => {});
+    // The panel is unmounted, so no act: wait for the switch itself to finish.
+    await expect(mockSwitchUnwrap.mock.results[0].value).resolves.toBe('place-new');
 
-    expect(mockSwitchUnwrap).toHaveBeenCalled();
     expect(mockCloseRight).not.toHaveBeenCalled();
   });
 
