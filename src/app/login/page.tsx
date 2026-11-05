@@ -10,7 +10,7 @@
  *   /login?view=reset-confirmation — forgot password step 3
  */
 
-import { useState, useCallback, Suspense, FormEvent } from 'react';
+import { useState, useCallback, useMemo, Suspense, FormEvent } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
@@ -19,6 +19,7 @@ import { loadPlaceDataThunk } from '@/store/thunks/loadPlaceDataThunk';
 import { useFormValidation, type ValidationConstraints } from '@/hooks/useFormValidation';
 import { PersonService } from '@arcus/core/services';
 import { ArcusLogo } from '@/components/shared/ArcusLogo';
+import { takeNextPage } from '@/lib/nextPage';
 
 // ── Validation constraints ────────────────────────────────────────────
 
@@ -99,14 +100,13 @@ function LoginForm() {
           await dispatch(loadPlaceDataThunk(result.placeId)).unwrap();
         }
 
-        const redirect = searchParams.get('redirect') ?? '/';
-        router.replace(redirect);
+        router.replace(takeNextPage());
       } catch {
         setSaving(false);
         form.setFormError('Invalid username or password');
       }
     },
-    [emailAddress, password, isPublic, dispatch, router, searchParams, form],
+    [emailAddress, password, isPublic, dispatch, router, form],
   );
 
   return (
@@ -332,7 +332,10 @@ function ResetPasswordForm() {
   const constraints = getResetPasswordConstraints(emailAddress);
   const form = useFormValidation(constraints);
 
-  const allValues = { emailAddress, code, newPassword, confirmPassword };
+  const allValues = useMemo(
+    () => ({ emailAddress, code, newPassword, confirmPassword }),
+    [emailAddress, code, newPassword, confirmPassword],
+  );
 
   const handleSubmit = useCallback(
     async (ev: FormEvent) => {

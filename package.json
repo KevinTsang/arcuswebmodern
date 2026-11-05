@@ -10,7 +10,7 @@
     "dev:e2e": "NEXT_PUBLIC_API_URL=http://localhost:3000 NEXT_PUBLIC_WS_URL=ws://localhost:3000 NEXT_PUBLIC_REDIRECT_URL=http://localhost:3000 next dev --port 3000",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint .",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:e2e": "cypress run",

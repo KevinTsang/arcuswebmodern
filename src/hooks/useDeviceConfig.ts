@@ -16,6 +16,8 @@ import {
 } from '@arcus/core';
 import { useAppSelector } from '../store/hooks';
 import { selectDeviceByAddress } from '../store/slices/devicesSlice';
+import { getLockStatus } from '../lib/lockStatus';
+import { getValveStatus } from '../lib/valveStatus';
 import {
   resolveDeviceConfig,
   resolveDeviceBadges,
@@ -370,7 +372,7 @@ export function getDeviceStatusText(device: DeviceObj, config: DeviceWebConfig):
     case 'tilt':
       return isDeviceOpen(device) ? 'Open' : 'Closed';
     case 'lock':
-      return (device[DoorLock.ATTR_LOCKSTATE] as string) === DoorLock.LOCKSTATE_LOCKED ? 'Locked' : 'Unlocked';
+      return getLockStatus(device).label;
     case 'garagedoor':
       return getGarageDoorStatus(device).label;
     case 'thermostat':
@@ -388,7 +390,7 @@ export function getDeviceStatusText(device: DeviceObj, config: DeviceWebConfig):
     case 'motion':
       return 'Ok';
     case 'watervalve':
-      return isDeviceOpen(device) ? 'Open' : 'Closed';
+      return getValveStatus(device).label;
     default:
       return on ? 'On' : 'Off';
   }

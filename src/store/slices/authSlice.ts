@@ -1,5 +1,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { Base } from '@arcus/core';
 import type { SessionCreatedEvent, Account } from '@/arcus/types';
+import { personUpdated } from './peopleSlice';
 
 export interface AuthState {
   authenticating: boolean;
@@ -31,6 +33,9 @@ const authSlice = createSlice({
       state.person = action.payload.person;
       state.account = action.payload.account;
     },
+    accountUpdated(state, action: PayloadAction<Account>) {
+      state.account = action.payload;
+    },
     loginFailed(state) {
       state.authenticated = false;
       state.authenticating = false;
@@ -52,7 +57,17 @@ const authSlice = createSlice({
       state.account = null;
     },
   },
+  extraReducers: (builder) => {
+    // Keep the signed-in person current when the platform reports a change
+    // to them (e.g. after editing contact info).
+    builder.addCase(personUpdated, (state, action) => {
+      // Match on personId: base:address is missing if the person fetch failed.
+      if (state.person && action.payload[Base.ATTR_ADDRESS] === `SERV:person:${state.person.personId}`) {
+        Object.assign(state.person, action.payload);
+      }
+    });
+  },
 });
 
-export const { setAuthenticating, loginSuccess, loginFailed, logout, sessionExpired } = authSlice.actions;
+export const { setAuthenticating, loginSuccess, accountUpdated, loginFailed, logout, sessionExpired } = authSlice.actions;
 export default authSlice.reducer;

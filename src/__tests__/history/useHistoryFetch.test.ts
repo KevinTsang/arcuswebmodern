@@ -2,6 +2,7 @@ import { renderHook, act, waitFor } from '@testing-library/react';
 import { Place } from '@arcus/core';
 import useHistoryFetch from '@/components/history/useHistoryFetch';
 import Bridge from '@arcus/core/bridge';
+import type { ListHistoryEntriesResponse } from '@/arcus/types';
 
 jest.mock('@arcus/core/bridge', () => ({
   __esModule: true,
@@ -43,15 +44,18 @@ describe('useHistoryFetch – initial fetch', () => {
   });
 
   it('sets loading to true while fetching', async () => {
-    let resolve: (v: any) => void;
-    mockRequest.mockReturnValue(new Promise((r) => { resolve = r; }));
+    mockRequest.mockReturnValueOnce(new Promise(() => {}));
 
     const { result } = renderHook(() => useHistoryFetch('SERV:place:place-1'));
-
     await waitFor(() => expect(result.current.loading).toBe(true));
+  });
 
-    await act(async () => resolve!({ results: page1, nextToken: undefined }));
+  it('clears loading once the page arrives', async () => {
+    const page: ListHistoryEntriesResponse = { results: page1, nextToken: undefined };
+    mockRequest.mockResolvedValueOnce(page);
 
+    const { result } = renderHook(() => useHistoryFetch('SERV:place:place-1'));
+    await waitFor(() => expect(result.current.entries).toHaveLength(page1.length));
     expect(result.current.loading).toBe(false);
   });
 });
