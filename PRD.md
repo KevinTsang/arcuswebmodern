@@ -675,6 +675,30 @@ These are commonly used features that users will expect:
     device lists that live on the alarm subsystem itself — the per-alert `Alarm`
     capability instances, `alarm:devices:<SECURITY|PANIC|SMOKE|CO|WATER>`.
     Covered by `src/__tests__/hooks/useSubsystem.test.ts`.
+27. **Share person validation across sign-up, invite and the contact panel** —
+    A follow-up to this PR (#22, contact info validation), building on the
+    phone rule and formatter it adds.
+    - **Validate and format the phone at sign-up and invite.** Sign-up
+      (`src/components/create-account/CredentialsStep.tsx`) and the invite page
+      (`src/app/invite/page.tsx`) send `person:mobileNumber` exactly as typed,
+      unchecked and unformatted. Give both the optional `phoneNumber` rule (the
+      validator skips empty fields), and send the number through
+      `formatPhoneNumber` so it's stored as "(555) 123-4567", like the contact
+      panel saves it. Check first whether the platform rejects a malformed
+      phone. If it does, sign-up currently reports the misleading "The email may
+      already be in use".
+    - **Remove the duplicated sign-up rules.** `CREDENTIALS_CONSTRAINTS`
+      (`src/components/create-account/CreateAccountContext.tsx`) and the invite
+      page's `LOGIN_CONSTRAINTS` are identical: email, password, confirm password,
+      first and last name. Move them into one shared module that both import.
+    - **Share rules, not field maps.** The contact panel keys its constraints by
+      `person:*` attribute names, while sign-up and invite key theirs by form
+      field names. So export reusable rules (required name, optional or required
+      phone, password) and let each form build its own map. Keep the contact
+      panel's field list, empty values and changed-fields comparison in the panel,
+      since they're specific to editing an existing person.
+    - This overlaps with item 25 (splitting `login/page.tsx`), which also plans a
+      shared `constraints.ts`. Use the same module for both.
 
 ---
 
