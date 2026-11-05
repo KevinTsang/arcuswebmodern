@@ -1,0 +1,43 @@
+#!/bin/bash
+# Writes the runtime config the app reads on start (see src/store/thunks/initConfig.ts)
+# to the same path as the legacy ui-server. Only the platform URLs are written,
+# from legacy's ARCUS_HTTP_URI and ARCUS_WS_URI; its other ARCUS_* variables are
+# ignored because nothing in this client uses them. Deployments mount a
+# writable volume at CONF_DIR because the rest of the filesystem is read-only.
+
+set -euo pipefail
+
+CONF_DIR=/usr/share/nginx/html/build/dist/config/
+SERVER_CONF="$CONF_DIR/server.json"
+
+# Without both URLs the app has nothing to talk to, so stop here rather than
+# serve a client whose logins go nowhere. For the same reason, set -e stops the
+# container if CONF_DIR isn't writable.
+#
+# The values go into server.json as-is, so beyond the scheme, allow nothing that
+# would break the JSON string: no whitespace (such as the trailing newline a
+# YAML "|" block adds), quotes or backslashes.
+require_url() {
+  local name=$1 scheme=$2 example=$3
+  local value=${!name:-}
+  local pattern="^${scheme}://[^[:space:]\"\\\\]+\$"
+  if [[ ! $value =~ $pattern ]]; then
+    echo "run-nginx: $name must be the platform's URL, such as $example, not '$value'" >&2
+    exit 1
+  fi
+}
+require_url ARCUS_HTTP_URI 'https?' https://client.example.com
+require_url ARCUS_WS_URI 'wss?' wss://client.example.com
+
+mkdir -p "$CONF_DIR"
+# Overwrite (not append) so container restarts don't produce duplicate entries
+cat > "$SERVER_CONF.tmp" <<EOF
+{
+   "apiUrl" : "$ARCUS_HTTP_URI",
+   "wsUrl"  : "$ARCUS_WS_URI"
+}
+EOF
+mv "$SERVER_CONF.tmp" "$SERVER_CONF"
+
+# exec so nginx receives the container's stop signal directly.
+exec nginx -g 'daemon off;'
