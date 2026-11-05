@@ -1,0 +1,38 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`CreatedKeyBanner matches snapshot 1`] = `
+<DocumentFragment>
+  <div
+    class="mb-4 bg-honeycreeper/5 border border-honeycreeper/20 rounded-[var(--border-radius-base)] px-4 py-3"
+    data-testid="apikey-created"
+  >
+    <p
+      class="text-sm font-medium text-swift mb-1"
+    >
+      API key created. Copy it now — it will not be shown again.
+    </p>
+    <div
+      class="flex items-center gap-2"
+    >
+      <code
+        class="flex-1 text-sm bg-pigeon/30 px-3 py-1.5 rounded font-mono break-all"
+        data-testid="apikey-token"
+      >
+        arcus_sk_new_token
+      </code>
+      <button
+        class="px-3 py-1.5 text-sm bg-peacock text-crane rounded-[var(--border-radius-base)] hover:bg-peacock/90 flex-shrink-0"
+        data-testid="apikey-copy"
+      >
+        Copy
+      </button>
+    </div>
+    <button
+      class="mt-2 text-xs text-grouse hover:underline"
+      data-testid="apikey-dismiss"
+    >
+      Dismiss
+    </button>
+  </div>
+</DocumentFragment>
+`;

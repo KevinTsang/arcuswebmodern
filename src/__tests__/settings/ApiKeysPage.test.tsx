@@ -108,13 +108,6 @@ function makeKey(id: string, label: string, overrides: Partial<ApiKeyMeta> = {})
   };
 }
 
-function deferred<T>() {
-  let resolve!: (value: T) => void;
-  let reject!: (err: Error) => void;
-  const promise = new Promise<T>((res, rej) => { resolve = res; reject = rej; });
-  return { promise, resolve, reject };
-}
-
 const twoKeys = [makeKey('k1', 'Home Assistant'), makeKey('k2', 'Node-RED', { expired: true })];
 
 beforeEach(() => {
@@ -142,15 +135,15 @@ describe('ApiKeysPage – rendering', () => {
   it('matches snapshot', async () => {
     mockSearchPlaceId = 'place-2';
     mockListKeys.mockResolvedValue({ keys: twoKeys });
-    const { container } = render(<ApiKeysPage />);
+    const { asFragment } = render(<ApiKeysPage />);
     await waitFor(() => expect(screen.getAllByTestId('key-card')).toHaveLength(2));
-    expect(container.firstChild).toMatchSnapshot();
+    expect(asFragment()).toMatchSnapshot();
   });
 
   it('matches snapshot for a place the user does not own', () => {
     mockSearchPlaceId = 'place-3';
-    const { container } = render(<ApiKeysPage />);
-    expect(container.firstChild).toMatchSnapshot();
+    const { asFragment } = render(<ApiKeysPage />);
+    expect(asFragment()).toMatchSnapshot();
   });
 
   it('shows API Keys heading', async () => {
@@ -276,7 +269,7 @@ describe('ApiKeysPage – place scoping', () => {
     expect(mockListAvailablePlaces).not.toHaveBeenCalled();
   });
 
-  it('falls back to the active place when no placeId is given', async () => {
+  it('uses the active place when the URL names no place', async () => {
     render(<ApiKeysPage />);
     await waitFor(() => expect(mockListKeys).toHaveBeenCalledWith('place-1'));
     expect(screen.getByTestId('apikeys-place')).toHaveTextContent('for Home');
@@ -400,21 +393,23 @@ describe('ApiKeysPage – place added after sign-in', () => {
     mockListKeys.mockResolvedValue({ keys: twoKeys });
   });
 
-  it('looks up a place missing from the session, then lists its keys', async () => {
-    const places = deferred<ListAvailablePlacesResponse>();
-    mockListAvailablePlaces.mockReturnValue(places.promise);
+  it('waits for the lookup of a place missing from the session before listing keys', async () => {
+    mockListAvailablePlaces.mockReturnValueOnce(new Promise(() => {}));
     mockSearchPlaceId = 'place-4';
     render(<ApiKeysPage />);
 
-    expect(screen.getByText('Loading...')).toBeInTheDocument();
+    expect(await screen.findByText('Loading...')).toBeInTheDocument();
     expect(screen.queryByText('New Key')).not.toBeInTheDocument();
     expect(mockListKeys).not.toHaveBeenCalled();
+  });
 
-    await act(async () => {
-      places.resolve({ places: [{ placeId: 'place-4', name: 'Barn', role: 'OWNER' }] });
-    });
-    expect(screen.getByTestId('apikeys-place')).toHaveTextContent('for Barn');
+  it('looks up a place missing from the session, then lists its keys', async () => {
+    mockListAvailablePlaces.mockResolvedValueOnce({ places: [{ placeId: 'place-4', name: 'Barn', role: 'OWNER' }] });
+    mockSearchPlaceId = 'place-4';
+    render(<ApiKeysPage />);
+
     await waitFor(() => expect(screen.getAllByTestId('key-card')).toHaveLength(2));
+    expect(screen.getByTestId('apikeys-place')).toHaveTextContent('for Barn');
     expect(mockListKeys).toHaveBeenCalledWith('place-4');
   });
 
@@ -452,20 +447,20 @@ describe('ApiKeysPage – place added after sign-in', () => {
   });
 
   it('ignores a lookup that finishes after the place changed', async () => {
-    const places = deferred<ListAvailablePlacesResponse>();
-    mockListAvailablePlaces.mockReturnValue(places.promise);
+    // Both places are missing from the session. place-4's lookup answers while
+    // place-5's is still pending; if it were applied, Barn's keys would load.
+    mockListAvailablePlaces
+      .mockResolvedValueOnce({ places: [{ placeId: 'place-4', name: 'Barn', role: 'OWNER' }] })
+      .mockReturnValueOnce(new Promise(() => {}));
     mockSearchPlaceId = 'place-4';
     const { rerender } = render(<ApiKeysPage />);
 
-    mockSearchPlaceId = 'place-3';
+    mockSearchPlaceId = 'place-5';
     rerender(<ApiKeysPage />);
-    expect(screen.getByTestId('apikeys-not-owner')).toBeInTheDocument();
+    await act(() => mockListAvailablePlaces.mock.results[0].value);
 
-    await act(async () => {
-      places.resolve({ places: [{ placeId: 'place-4', name: 'Barn', role: 'OWNER' }] });
-    });
-    expect(screen.getByTestId('apikeys-place')).toHaveTextContent('for Cabin');
-    expect(screen.getByTestId('apikeys-not-owner')).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText('Loading...')).toBeInTheDocument());
+    expect(screen.queryByText(/for Barn/)).not.toBeInTheDocument();
     expect(mockListKeys).not.toHaveBeenCalled();
   });
 });
@@ -501,22 +496,20 @@ describe('ApiKeysPage – switching places while mounted', () => {
   });
 
   it("drops the previous place's key list if it arrives late", async () => {
-    const lakeKeys = deferred<{ keys: ApiKeyMeta[] }>();
-    mockListKeys.mockImplementation((placeId: string) =>
-      placeId === 'place-2' ? lakeKeys.promise : Promise.resolve({ keys: [makeKey('k9', 'Garage Opener')] }),
-    );
+    // place-2's list answers while place-1's is still loading. If it were applied, its keys would show.
+    mockListKeys
+      .mockResolvedValueOnce({ keys: twoKeys })
+      .mockReturnValueOnce(new Promise(() => {}));
     mockSearchPlaceId = 'place-2';
     const { rerender } = render(<ApiKeysPage />);
 
     mockSearchPlaceId = 'place-1';
     rerender(<ApiKeysPage />);
-    await waitFor(() => expect(screen.getByText('Garage Opener')).toBeInTheDocument());
+    expect(mockListKeys).toHaveBeenLastCalledWith('place-1');
+    await act(() => mockListKeys.mock.results[0].value);
 
-    await act(async () => {
-      lakeKeys.resolve({ keys: twoKeys });
-    });
-    expect(screen.getAllByTestId('key-card')).toHaveLength(1);
-    expect(screen.queryByText('Home Assistant')).not.toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText('Loading...')).toBeInTheDocument());
+    expect(screen.queryByTestId('key-card')).not.toBeInTheDocument();
   });
 
   it("revokes at the new place, not the previous one", async () => {

@@ -79,8 +79,8 @@ beforeEach(() => {
 
 describe('AddPersonPanel – rendering', () => {
   it('matches snapshot', () => {
-    const { container } = render(<AddPersonPanel {...defaultProps} />);
-    expect(container.firstChild).toMatchSnapshot();
+    const { asFragment } = render(<AddPersonPanel {...defaultProps} />);
+    expect(asFragment()).toMatchSnapshot();
   });
 
   it('shows heading and names the place being invited to', () => {

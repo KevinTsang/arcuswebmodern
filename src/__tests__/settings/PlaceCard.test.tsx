@@ -111,8 +111,8 @@ beforeEach(() => {
 
 describe('PlaceCard – rendering', () => {
   it('matches snapshot', () => {
-    const { container } = render(<PlaceCard {...defaultProps} />);
-    expect(container.firstChild).toMatchSnapshot();
+    const { asFragment } = render(<PlaceCard {...defaultProps} />);
+    expect(asFragment()).toMatchSnapshot();
   });
 
   it('shows the place name, people and owner actions', () => {
