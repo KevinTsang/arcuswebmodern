@@ -101,6 +101,8 @@ export class Cornea extends EventEmitter {
   timeout = 50 * 1000;
   url = '';
   debug: boolean;
+  /** Rejects the pending initialize() promise if the socket is torn down before it opens. */
+  private rejectPendingOpen: ((reason: Error) => void) | null = null;
 
   constructor(debug = false) {
     super();
@@ -126,21 +128,18 @@ export class Cornea extends EventEmitter {
     }
 
     // Clean up any existing connection before starting a new one.
-    // Detach handlers first so the old socket's async close event
-    // doesn't emit WebSocketClosed / authentication:fail into the
-    // new connection's listeners.
-    if (this.socket) {
-      this.socket.onclose = null;
-      this.socket.onerror = null;
-      this.socket.onmessage = null;
-      this.socket.onopen = null;
-      this.cleanup();
-    }
+    this.cleanup();
 
     this.url = url;
 
     return new Promise<void>((resolve, reject) => {
       let settled = false;
+      this.rejectPendingOpen = (reason) => {
+        if (!settled) {
+          settled = true;
+          reject(reason);
+        }
+      };
 
       this.socket = new ReconnectingWebSocket(url, undefined, {
         maxReconnectionDelay: 30000,
@@ -185,20 +184,18 @@ export class Cornea extends EventEmitter {
       }
 
       const uuid = uuidv1();
-      const currentId = this.id;
       msg.headers.correlationId = uuid;
 
       this.requests[uuid] = {
         resolve,
         reject,
         timeout: setTimeout(() => {
-          if (this.id === currentId) {
-            const timeoutMessage = this.getErrorMessage(
-              'Oops, there seems to be a problem connecting right now.',
-              msg,
-            );
-            reject(timeoutMessage.payload.attributes);
-          }
+          delete this.requests[uuid];
+          const timeoutMessage = this.getErrorMessage(
+            'Oops, there seems to be a problem connecting right now.',
+            msg,
+          );
+          reject(timeoutMessage.payload.attributes);
         }, this.timeout),
       };
 
@@ -233,11 +230,32 @@ export class Cornea extends EventEmitter {
 
   cleanup(): void {
     if (this.socket) {
+      // Detach handlers first so this deliberate close doesn't emit
+      // WebSocketClosed / authentication:fail into a newer connection's listeners.
+      this.socket.onclose = null;
+      this.socket.onerror = null;
+      this.socket.onmessage = null;
+      this.socket.onopen = null;
       this.socket.close(); // stops partysocket reconnection
       this.socket = null;
     }
+    this.rejectPendingOpen?.(new Error('Connection closed before it opened'));
+    this.rejectPendingOpen = null;
+    this.rejectPendingRequests();
     this.id = null;
+  }
+
+  /**
+   * Settle every in-flight request once its connection is gone; their
+   * responses can never arrive, so callers would otherwise wait forever.
+   */
+  private rejectPendingRequests(): void {
+    const requests = this.requests;
     this.requests = {};
+    for (const request of Object.values(requests)) {
+      clearTimeout(request.timeout);
+      request.reject({ type: 'Error', message: 'The connection to the platform was closed.' });
+    }
   }
 
   private onMessage(ev: MessageEvent): void {
@@ -256,13 +274,13 @@ export class Cornea extends EventEmitter {
     const request = uuid ? this.requests[uuid] : undefined;
 
     if (request) {
+      clearTimeout(request.timeout);
       if (eventType === 'Error') {
         if (message.payload.code === 'error.unauthorized') {
           this.emit('sess unauthorized', {});
         }
         request.reject(message.payload.attributes);
       } else {
-        clearTimeout(request.timeout);
         request.resolve(message.payload.attributes);
       }
       if (uuid) delete this.requests[uuid];
@@ -297,17 +315,34 @@ export class Cornea extends EventEmitter {
 
   private onClose(ev: CloseEvent): void {
     this.log('Connection Closed', ev);
-    this.emit('WebSocketClosed', ev);
+    // partysocket reports a connection *error* (rejected upgrade, timeout,
+    // network failure) as a close with code 1000. Report it as the abnormal
+    // close it is, so it isn't mistaken for a clean logout.
+    const closed = isSyntheticClose(ev)
+      ? { code: 1006, reason: ev.reason, wasClean: false } as CloseEvent
+      : ev;
+    // Requests sent on this connection can't be answered on a reconnected one.
+    this.rejectPendingRequests();
+    this.emit('WebSocketClosed', closed);
 
     // 1000 = clean logout, 4001 = session ended — stop reconnecting
-    if ([1000, 4001].includes(ev.code)) {
+    if ([1000, 4001].includes(closed.code)) {
       this.cleanup();
-      if (ev.code === 4001) {
+      if (closed.code === 4001) {
         this.emit('sess unauthorized');
       }
     }
     // For any other close code, partysocket reconnects automatically
   }
+}
+
+/**
+ * True for the close event partysocket makes up after a connection error.
+ * It's partysocket's own Event subclass; closes from the server arrive as
+ * DOM CloseEvents.
+ */
+function isSyntheticClose(ev: Event): boolean {
+  return typeof CloseEvent !== 'undefined' && !(ev instanceof CloseEvent);
 }
 
 // Default singleton instance

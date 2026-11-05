@@ -6,6 +6,7 @@ import { useAppDispatch } from '@/store/hooks';
 import { loadPlaceDataThunk } from '@/store/thunks/loadPlaceDataThunk';
 import { logoutThunk } from '@/store/thunks/logoutThunk';
 import { useCreateAccount } from './CreateAccountContext';
+import { setLoading, setError, clearError } from './createAccountSlice';
 
 export default function WelcomeStep() {
   const { state, dispatch } = useCreateAccount();
@@ -16,19 +17,19 @@ export default function WelcomeStep() {
 
   const handleFinish = useCallback(async () => {
     if (!placeId) {
-      dispatch({ type: 'SET_ERROR', error: 'Account setup incomplete. Please log in to try again.' });
+      dispatch(setError('Account setup incomplete. Please log in to try again.'));
       return;
     }
 
-    dispatch({ type: 'SET_LOADING', loading: true });
-    dispatch({ type: 'CLEAR_ERROR' });
+    dispatch(setLoading(true));
+    dispatch(clearError());
     try {
       await reduxDispatch(loadPlaceDataThunk(placeId)).unwrap();
       router.replace('/');
     } catch {
-      dispatch({ type: 'SET_ERROR', error: 'Failed to load your place data. Please log in to try again.' });
+      dispatch(setError('Failed to load your place data. Please log in to try again.'));
     } finally {
-      dispatch({ type: 'SET_LOADING', loading: false });
+      dispatch(setLoading(false));
     }
   }, [placeId, reduxDispatch, router, dispatch]);
 
