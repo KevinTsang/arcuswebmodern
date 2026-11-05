@@ -13,17 +13,11 @@
 import { setConfig } from '@arcus/core/config';
 import Bridge from '@arcus/core/bridge';
 
-/** server.json as written by run-nginx — the same file and keys as the legacy ui-server. */
+/** server.json as written by run-nginx: the same file, and legacy's keys for the platform URLs. */
 export interface ServerConfig {
   apiUrl?: string;
   redirectUrl?: string;
   wsUrl?: string;
-  iosDownloadUrl?: string;
-  androidDownloadUrl?: string;
-  /** Feature flags, written as 0 or 1. */
-  enableYearlySubscription?: number;
-  enableHubWifiScan?: number;
-  enableBatteryPercentage?: number;
 }
 
 const SERVER_CONFIG_URL = '/build/dist/config/server.json';

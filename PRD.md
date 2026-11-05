@@ -627,7 +627,7 @@ This is a new feature in the modern client with no legacy equivalent.
 
 ### Gaps
 
-- `ARCUS_ENABLE_HUB_WIFI_SCAN`, `ARCUS_ENABLE_BATTERY_PERCENTAGE`, `ARCUS_ENABLE_YEARLY_SUBSCRIPTION`, `ARCUS_IOS_DOWNLOAD_URI` and `ARCUS_ANDROID_DOWNLOAD_URI` are written to `server.json`, but nothing in the modern UI reads them yet. Wire each one up when the feature that needs it lands (hub WiFi scan, battery percentage, billing, app download links).
+- `run-nginx` ignores legacy's `ARCUS_ENABLE_HUB_WIFI_SCAN`, `ARCUS_ENABLE_BATTERY_PERCENTAGE`, `ARCUS_ENABLE_YEARLY_SUBSCRIPTION`, `ARCUS_IOS_DOWNLOAD_URI` and `ARCUS_ANDROID_DOWNLOAD_URI`, because nothing in the modern UI uses them. arcus-k8s still sets the WiFi scan and battery percentage flags to `1`. When the feature that needs one lands (hub WiFi scan, battery percentage, billing, app download links), add its key to `server.json` and `ServerConfig`.
 - No workflow builds and pushes the image. For now it is published by hand with `docker/bin/build.sh --push`.
 - **TODO — static-server:** arcus-k8s points `staticResourceBaseUrl`, `secureStaticResourceBaseUrl` and the notification service's resource URL at `static-server`, which still runs the legacy arcusweb image (Iris brand logo and 22 device-type icons). The mobile apps, legacy web and platform emails also request catalog product and pairing-step images, customization and action images, more brand logos and device types, and the email/invoice assets (`o/res_templates`). Those exist in the old Iris resource root (about 120 MB once unused parts are dropped) but aren't in any repo. Decide where they live (licensing, and whether a 120 MB set belongs in this repo, a separate repo or a private bucket), then build a replacement image.
 
