@@ -13,12 +13,21 @@ SERVER_CONF="$CONF_DIR/server.json"
 # Without both URLs the app has nothing to talk to, so stop here rather than
 # serve a client whose logins go nowhere. For the same reason, set -e stops the
 # container if CONF_DIR isn't writable.
-for var in ARCUS_HTTP_URI ARCUS_WS_URI; do
-  if [[ -z "${!var:-}" ]]; then
-    echo "run-nginx: $var must be set to the platform's URL" >&2
+#
+# The values go into server.json as-is, so beyond the scheme, allow nothing that
+# would break the JSON string: no whitespace (such as the trailing newline a
+# YAML "|" block adds), quotes or backslashes.
+require_url() {
+  local name=$1 scheme=$2 example=$3
+  local value=${!name:-}
+  local pattern="^${scheme}://[^[:space:]\"\\\\]+\$"
+  if [[ ! $value =~ $pattern ]]; then
+    echo "run-nginx: $name must be the platform's URL, such as $example, not '$value'" >&2
     exit 1
   fi
-done
+}
+require_url ARCUS_HTTP_URI 'https?' https://client.example.com
+require_url ARCUS_WS_URI 'wss?' wss://client.example.com
 
 mkdir -p "$CONF_DIR"
 # Overwrite (not append) so container restarts don't produce duplicate entries
