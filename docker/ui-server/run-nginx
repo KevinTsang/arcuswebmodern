@@ -5,10 +5,22 @@
 # ignored because nothing in this client uses them. Deployments mount a
 # writable volume at CONF_DIR because the rest of the filesystem is read-only.
 
+set -euo pipefail
+
 CONF_DIR=/usr/share/nginx/html/build/dist/config/
 SERVER_CONF="$CONF_DIR/server.json"
 
-mkdir -p $CONF_DIR
+# Without both URLs the app has nothing to talk to, so stop here rather than
+# serve a client whose logins go nowhere. For the same reason, set -e stops the
+# container if CONF_DIR isn't writable.
+for var in ARCUS_HTTP_URI ARCUS_WS_URI; do
+  if [[ -z "${!var:-}" ]]; then
+    echo "run-nginx: $var must be set to the platform's URL" >&2
+    exit 1
+  fi
+done
+
+mkdir -p "$CONF_DIR"
 # Overwrite (not append) so container restarts don't produce duplicate entries
 cat > "$SERVER_CONF.tmp" <<EOF
 {

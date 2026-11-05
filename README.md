@@ -130,8 +130,9 @@ writable), and the app fetches that file before it talks to the platform:
 | `ARCUS_HTTP_URI` | Platform HTTP base, e.g. `https://client.arcussmarthome.com` |
 | `ARCUS_WS_URI` | Platform WebSocket base, e.g. `wss://client.arcussmarthome.com` |
 
-Legacy's other `ARCUS_*` variables (`ARCUS_REDIRECT_URI`, the feature flags and the app
-download URIs) are ignored: nothing in this client uses them.
+Both are required: the container exits at start if either is unset, or if it can't write
+`server.json`. Legacy's other `ARCUS_*` variables (`ARCUS_REDIRECT_URI`, the feature flags
+and the app download URIs) are ignored: nothing in this client uses them.
 
 ```bash
 docker/bin/build.sh                    # build arcus/ui-server:<version>-<sha> and :latest
