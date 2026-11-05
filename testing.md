@@ -89,9 +89,14 @@ expect(screen.getByTestId('status-value-on')).toHaveTextContent('2');
 - **Notifications**: `jest.mock('@/store/slices/uiSlice', () => ({ addNotification: (payload: unknown) => ({ type: 'ui/addNotification', payload }) }));`
 - **Device hooks**: `jest.mock('@/hooks/useDeviceCapability', () => ({ useDevice: () => mockDevice }));`
 - Use `waitFor()` for assertions on async operations (Bridge calls, dispatches after promises).
-  See [Testing Promises](#testing-promises) for stubbing results and waiting on a specific promise.
+  See [Testing Promises and Timers](#testing-promises-and-timers) for stubbing results, waiting on a
+  specific promise, and fake timers.
 
-## Testing Promises
+## Testing Promises and Timers
+
+Async code waits on promises, on timers, or on both. Jest controls each one: mocked calls
+decide when a promise settles, and fake timers decide when the clock moves. The test drives
+both, so nothing waits on real time or a real network.
 
 ### Stubbing async results
 
@@ -162,35 +167,150 @@ expect(mockCloseRight).toHaveBeenCalled();
   Jest's fake timers also replace `process.nextTick` by default, so that version hangs under
   `jest.useFakeTimers()`.
 
-### Controlling when a promise settles
+### Asserting on the in-between state
 
-A resolved mock settles as soon as the code awaits it. When a test has to assert on the
-in-between state ("still saving", "panel closed mid-request"), give the mock a promise the
-test settles itself, using `deferred()` from `src/__tests__/helpers/deferred.ts`:
+Verify in-flight states ("still saving", "Stopping…", a disabled button) with `waitFor` or
+`screen.findByTestId`, while the request is held open with `new Promise(() => {})`. A held
+request never settles, so the in-flight state stays on screen for as long as the query needs
+to find it:
 
 ```tsx
-import { deferred } from '../helpers/deferred';
-
-const save = deferred<Record<string, never>>(); // base:SetAttributes answers {}
-mockBridgeRequest.mockReturnValueOnce(save.promise);
+mockBridgeRequest.mockReturnValueOnce(new Promise(() => {}));
 
 fireEvent.click(screen.getByTestId('contact-save'));
-expect(screen.getByTestId('contact-save')).toBeDisabled();
-
-await act(async () => { save.resolve({}); });
-expect(mockCloseRight).toHaveBeenCalled();
+await waitFor(() => expect(screen.getByTestId('contact-save')).toBeDisabled());
+expect(await screen.findByTestId('contact-save')).toHaveTextContent('Saving…');
 ```
 
-- **Hold only that call open** with `mockReturnValueOnce`. `mockReturnValue` and
-  `mockImplementation` also hang every later call, and `jest.clearAllMocks()` does not reset
-  them, so the hang leaks into the following tests.
-- **Settle inside `act`** (`save.resolve(...)` or `save.reject(new Error(...))`), then assert
-  directly. The component has updated by the time `act` returns.
-- **Use `new Promise(() => {})`** instead when a test only checks the loading state and never
-  needs the call to finish.
+- **Hold the request open.** With a resolved mock, the request can finish before the query
+  looks. `await screen.findByTestId(...)` then hands back an element that has already left the
+  page, and a state set after an earlier `await` is never seen at all.
+- **Pick the query by what the assertion needs.** `screen.findByTestId` waits for an element to
+  appear and returns it, so it suits an element that only exists in flight, such as a spinner.
+  `waitFor` retries an assertion until it passes, so it suits a change to an element that is
+  already there, such as a button becoming disabled.
+- **Test what happens after the request settles separately.** A held request never finishes, so
+  give the settled case its own test with `mockResolvedValueOnce` or `mockRejectedValueOnce`, and
+  wait for the result with `waitFor`:
 
-Only reach for this when the order is the point of the test. When it isn't, the default
-resolved mock plus [waiting on its promise](#waiting-for-a-mocked-promise-to-settle) is shorter.
+  ```tsx
+  mockBridgeRequest.mockResolvedValueOnce({});
+  fireEvent.click(screen.getByTestId('contact-save'));
+  await waitFor(() => expect(mockCloseRight).toHaveBeenCalled());
+  ```
+
+- **Wait on the call itself when nothing visible changes.** If the settled result is that
+  nothing happens (no second close, no extra request), `waitFor` passes before the request even
+  settles. Wait on the call's own promise instead, as in
+  [Waiting for a mocked promise to settle](#waiting-for-a-mocked-promise-to-settle), then assert.
+
+- **Wait on a rejection with `.rejects`.** `await act(() => expect(promise).rejects.toThrow('timeout'))`
+  lets a `mockRejectedValueOnce` call fail without an unhandled rejection.
+- **Override with `…Once`.** `mockReturnValue` and `mockImplementation` apply to every later
+  call, and `jest.clearAllMocks()` does not reset them, so a one-test override leaks into the
+  tests that follow.
+- **Hold the call open for timeouts too.** A test that lets a timeout fire while the request is
+  still pending also uses `new Promise(() => {})` (see
+  [Promises that haven't settled yet](#promises-that-havent-settled-yet)).
+
+### Setting up fake timers
+
+Use `jest.useFakeTimers()` when the code under test waits on `setTimeout` or `setInterval`,
+such as a countdown, an auto-dismissing toast, or a request timeout. The test then moves the
+clock itself instead of waiting for real time to pass.
+
+Switch to fake timers before the code schedules anything, and always switch back in
+`afterEach`. The fake clock otherwise stays on for every later test in the file.
+
+```tsx
+afterEach(() => {
+  jest.useRealTimers();
+});
+
+it('ticks down once a second', () => {
+  jest.useFakeTimers();
+  render(<Countdown durationSeconds={5} />);
+
+  act(() => { jest.advanceTimersByTime(2000); });
+  expect(screen.getByText('0:03')).toBeInTheDocument();
+});
+```
+
+- **Call it before `render`.** A timer scheduled while real timers were active stays real, and
+  advancing the fake clock won't fire it.
+- **Turn it on per test** when only a few tests need it, or in `beforeEach` when the whole file
+  does. Either way, restore real timers in `afterEach` rather than at the end of the test, so a
+  failing assertion can't skip the cleanup.
+
+### Advancing the clock
+
+- **Wrap advances in `act`** when a timer updates React state:
+  `act(() => { jest.advanceTimersByTime(1000); })`. Without it, React warns that an update was
+  not wrapped in `act`. Plain modules such as the Bridge client need no `act`.
+- **For intervals, advance by whole periods.** Advancing by three intervals fires the callback
+  three times. `jest.runOnlyPendingTimers()` fires only the timers already queued. Avoid
+  `jest.runAllTimers()` while an interval is running: the interval keeps rescheduling itself, so
+  Jest fires 100,000 timers and then throws.
+
+### Promises that haven't settled yet
+
+Fake timers only move when the test moves them, so a promise that waits on a timer stays
+pending until the test advances the clock.
+
+- **Start the promise, advance the clock, then await it.** Awaiting first never returns: the
+  promise waits on the clock, and the clock waits on the test, so the test hangs until Jest's
+  timeout fails it.
+
+  ```ts
+  const pending = cornea.send(request());
+  jest.advanceTimersByTime(cornea.timeout);
+  await expect(pending).rejects.toEqual({ type: 'Error', message: TIMEOUT_MESSAGE });
+  ```
+
+- **Let a timeout fire while a request is still pending** by holding the call open with
+  `new Promise(() => {})`. Check the in-flight state first, then advance past the deadline:
+
+  ```tsx
+  mockBridgeRequest.mockReturnValueOnce(new Promise(() => {}));
+  fireEvent.click(screen.getByTestId('contact-save'));
+  await waitFor(() => expect(screen.getByTestId('contact-save')).toBeDisabled());
+
+  await act(() => jest.advanceTimersByTimeAsync(REQUEST_TIMEOUT));
+  expect(mockDispatch).toHaveBeenCalledWith(TIMEOUT_ERROR);
+  ```
+
+- **Use `advanceTimersByTimeAsync` when promises and timers interleave.** That covers a timer
+  callback that awaits a promise, and code that awaits a request before it schedules a timer.
+  `advanceTimersByTime` runs synchronously, so it fires nothing that is scheduled after an
+  `await`, and it returns before an awaited callback finishes. The async variant settles the
+  pending promises between timers. Wrap it in an async `act` when it updates React state:
+  `await act(() => jest.advanceTimersByTimeAsync(1000))`.
+
+### What else fake timers change
+
+- **`Date` is faked too.** Advancing the clock moves `Date.now()`. Use
+  `jest.setSystemTime(new Date('2026-01-01T00:00:00Z'))` for code that formats or compares
+  timestamps.
+- **`process.nextTick` is faked**, so `await new Promise(process.nextTick)` never resolves.
+  Promises are not faked: `mockResolvedValue` mocks still settle, and waiting on
+  `mock.results[0].value` works as described in
+  [Waiting for a mocked promise to settle](#waiting-for-a-mocked-promise-to-settle).
+- **`waitFor` and `findBy…` still work.** React Testing Library advances Jest's fake clock while
+  it polls.
+- **`userEvent` needs the clock passed in**:
+  `userEvent.setup({ advanceTimers: jest.advanceTimersByTime })`. Without it, its built-in
+  delays never elapse and the test hangs until it times out.
+
+### Checking that timers are cleaned up
+
+`jest.getTimerCount()` returns how many fake timers are still pending. Check it after an
+unmount, or after a request settles, to catch a timer that was never cleared:
+
+```tsx
+const { unmount } = render(<Countdown durationSeconds={5} />);
+unmount();
+expect(jest.getTimerCount()).toBe(0);
+```
 
 ## Snapshot Best Practices
 

@@ -7,9 +7,6 @@ import { makeDevice } from '../helpers/factories';
 
 // ── Mocks ─────────────────────────────────────────────────────────────
 
-/** base:SetAttributes answers with an empty object. */
-type SetAttributesResponse = Record<string, never>;
-
 const mockSetAttribute = jest.fn();
 const mockDispatch = jest.fn();
 let mockDevice: DeviceEntity | undefined;
@@ -92,13 +89,6 @@ function queryHint() {
   return screen.queryByTestId(`device-lock-hint-${ADDRESS}`);
 }
 
-/** setAttribute returns a promise the test resolves by calling the returned function. */
-function holdRequest(): () => void {
-  let resolve: (value: SetAttributesResponse) => void = () => {};
-  mockSetAttribute.mockReturnValue(new Promise<SetAttributesResponse>((r) => { resolve = r; }));
-  return () => resolve({});
-}
-
 beforeEach(() => {
   jest.clearAllMocks();
   mockSetAttribute.mockResolvedValue({});
@@ -110,14 +100,14 @@ beforeEach(() => {
 describe('LockUnlock', () => {
   describe('snapshots', () => {
     it('matches snapshot', () => {
-      const { container } = render(<LockUnlock address={ADDRESS} />);
-      expect(container.firstChild).toMatchSnapshot();
+      const { asFragment } = render(<LockUnlock address={ADDRESS} />);
+      expect(asFragment()).toMatchSnapshot();
     });
 
     it('matches snapshot when jammed', () => {
       mockDevice = makeLock(DoorLock.LOCKSTATE_LOCKING, JAM);
-      const { container } = render(<LockUnlock address={ADDRESS} />);
-      expect(container.firstChild).toMatchSnapshot();
+      const { asFragment } = render(<LockUnlock address={ADDRESS} />);
+      expect(asFragment()).toMatchSnapshot();
     });
   });
 
@@ -228,17 +218,20 @@ describe('LockUnlock', () => {
       expect(mockSetAttribute).toHaveBeenCalledTimes(1);
     });
 
-    it('disables the button while the request is in flight and re-enables it afterwards', async () => {
-      const resolve = holdRequest();
+    it('disables the button while the request is in flight', async () => {
+      mockSetAttribute.mockReturnValueOnce(new Promise(() => {}));
       render(<LockUnlock address={ADDRESS} />);
       fireEvent.click(getButton());
-      expect(getButton()).toHaveTextContent('...');
-      expect(getButton()).toBeDisabled();
 
-      resolve();
-      await waitFor(() => {
-        expect(getButton()).toBeEnabled();
-      });
+      await waitFor(() => expect(getButton()).toBeDisabled());
+      expect(await screen.findByTestId(`device-lock-toggle-${ADDRESS}`)).toHaveTextContent('...');
+    });
+
+    it('re-enables the button once the request succeeds', async () => {
+      render(<LockUnlock address={ADDRESS} />);
+      fireEvent.click(getButton());
+
+      await waitFor(() => expect(getButton()).toBeEnabled());
       expect(mockDispatch).not.toHaveBeenCalled();
     });
 
@@ -282,14 +275,14 @@ describe('LockUnlock', () => {
         });
       });
 
-      it.each(JAMMED_BUTTONS)('disables both buttons while "%s" is in flight and re-enables them afterwards', async (label, testId) => {
+      it.each(JAMMED_BUTTONS)('disables both buttons while "%s" is in flight', async (label, testId) => {
         mockDevice = makeLock(DoorLock.LOCKSTATE_LOCKING, JAM);
-        const resolve = holdRequest();
+        mockSetAttribute.mockReturnValueOnce(new Promise(() => {}));
         render(<LockUnlock address={ADDRESS} />);
         fireEvent.click(screen.getByTestId(testId));
 
-        expect(screen.getByTestId(testId)).toHaveTextContent('...');
-        expect(getLockButton()).toBeDisabled();
+        expect(await screen.findByTestId(testId)).toHaveTextContent('...');
+        await waitFor(() => expect(getLockButton()).toBeDisabled());
         expect(getUnlockButton()).toBeDisabled();
         // Names stay readable while the pressed button shows the in-flight marker.
         expect(screen.getByRole('button', { name: label })).toBe(screen.getByTestId(testId));
@@ -298,11 +291,14 @@ describe('LockUnlock', () => {
         fireEvent.click(getLockButton());
         fireEvent.click(getUnlockButton());
         expect(mockSetAttribute).toHaveBeenCalledTimes(1);
+      });
 
-        resolve();
-        await waitFor(() => {
-          expect(getLockButton()).toBeEnabled();
-        });
+      it.each(JAMMED_BUTTONS)('re-enables both buttons once "%s" succeeds', async (_label, testId) => {
+        mockDevice = makeLock(DoorLock.LOCKSTATE_LOCKING, JAM);
+        render(<LockUnlock address={ADDRESS} />);
+        fireEvent.click(screen.getByTestId(testId));
+
+        await waitFor(() => expect(getLockButton()).toBeEnabled());
         expect(getUnlockButton()).toBeEnabled();
         expect(getLockButton()).toHaveTextContent(/^Lock$/);
         expect(getUnlockButton()).toHaveTextContent(/^Unlock$/);
@@ -326,19 +322,24 @@ describe('LockUnlock', () => {
 
       it('keeps the control disabled when the jam clears during a request', async () => {
         mockDevice = makeLock(DoorLock.LOCKSTATE_UNLOCKED, JAM);
-        const resolve = holdRequest();
+        mockSetAttribute.mockReturnValueOnce(new Promise(() => {}));
         const { rerender } = render(<LockUnlock address={ADDRESS} />);
         fireEvent.click(getLockButton());
 
         mockDevice = makeLock(DoorLock.LOCKSTATE_LOCKED);
         rerender(<LockUnlock address={ADDRESS} />);
+        await waitFor(() => expect(getButton()).toBeDisabled());
         expect(queryJammedButtons()).toEqual([null, null]);
-        expect(getButton()).toBeDisabled();
+      });
 
-        resolve();
-        await waitFor(() => {
-          expect(getButton()).toBeEnabled();
-        });
+      it('re-enables the control once a request sent while jammed succeeds', async () => {
+        mockDevice = makeLock(DoorLock.LOCKSTATE_UNLOCKED, JAM);
+        const { rerender } = render(<LockUnlock address={ADDRESS} />);
+        fireEvent.click(getLockButton());
+
+        mockDevice = makeLock(DoorLock.LOCKSTATE_LOCKED);
+        rerender(<LockUnlock address={ADDRESS} />);
+        await waitFor(() => expect(getButton()).toBeEnabled());
         expect(getButton()).toHaveTextContent('Unlock');
       });
     });

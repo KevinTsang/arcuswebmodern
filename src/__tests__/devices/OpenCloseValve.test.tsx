@@ -6,9 +6,6 @@ import { makeDevice } from '../helpers/factories';
 
 // ── Mocks ─────────────────────────────────────────────────────────────
 
-/** base:SetAttributes answers with an empty object. */
-type SetAttributesResponse = Record<string, never>;
-
 const mockSetAttribute = jest.fn();
 const mockDispatch = jest.fn();
 let mockDevice: DeviceEntity | undefined;
@@ -65,14 +62,14 @@ beforeEach(() => {
 describe('OpenCloseValve', () => {
   describe('snapshots', () => {
     it('matches snapshot', () => {
-      const { container } = render(<OpenCloseValve address={ADDRESS} />);
-      expect(container.firstChild).toMatchSnapshot();
+      const { asFragment } = render(<OpenCloseValve address={ADDRESS} />);
+      expect(asFragment()).toMatchSnapshot();
     });
 
     it('matches snapshot when obstructed', () => {
       mockDevice = makeValve(Valve.VALVESTATE_OBSTRUCTION);
-      const { container } = render(<OpenCloseValve address={ADDRESS} />);
-      expect(container.firstChild).toMatchSnapshot();
+      const { asFragment } = render(<OpenCloseValve address={ADDRESS} />);
+      expect(asFragment()).toMatchSnapshot();
     });
   });
 
@@ -154,18 +151,20 @@ describe('OpenCloseValve', () => {
       expect(mockSetAttribute).toHaveBeenCalledTimes(1);
     });
 
-    it('disables the button while the request is in flight and re-enables it afterwards', async () => {
-      let resolve: (value: SetAttributesResponse) => void = () => {};
-      mockSetAttribute.mockReturnValue(new Promise<SetAttributesResponse>((r) => { resolve = r; }));
+    it('disables the button while the request is in flight', async () => {
+      mockSetAttribute.mockReturnValueOnce(new Promise(() => {}));
       render(<OpenCloseValve address={ADDRESS} />);
       fireEvent.click(getButton());
-      expect(getButton()).toHaveTextContent('...');
-      expect(getButton()).toBeDisabled();
 
-      resolve({});
-      await waitFor(() => {
-        expect(getButton()).toBeEnabled();
-      });
+      await waitFor(() => expect(getButton()).toBeDisabled());
+      expect(await screen.findByTestId(`device-valve-toggle-${ADDRESS}`)).toHaveTextContent('...');
+    });
+
+    it('re-enables the button once the request succeeds', async () => {
+      render(<OpenCloseValve address={ADDRESS} />);
+      fireEvent.click(getButton());
+
+      await waitFor(() => expect(getButton()).toBeEnabled());
       expect(mockDispatch).not.toHaveBeenCalled();
     });
 
