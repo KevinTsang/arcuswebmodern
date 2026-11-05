@@ -76,19 +76,19 @@ export default function ContactInfoPanel() {
 
   // auth.person may be just the session payload (no names), so the form is never seeded from it.
   const [load, setLoad] = useState<LoadState>({ status: 'loading' });
-  const [reloadKey, setReloadKey] = useState(0);
   const [values, setValues] = useState<ContactValues>(EMPTY_VALUES);
   // Set when Save finds invalid fields. From then on errors follow what the user types. Nothing is
   // validated on blur, so the Save/Cancel row never moves between mousedown and mouseup.
   const [showErrors, setShowErrors] = useState(false);
   const [saving, setSaving] = useState(false);
 
+  // The fetch runs whenever the panel enters the loading state, so Retry only has to go back to it.
+  const loading = load.status === 'loading';
   useEffect(() => {
-    if (!personId) return;
+    if (!personId || !loading) return;
     let cancelled = false;
 
     async function fetchPerson() {
-      setLoad({ status: 'loading' });
       try {
         const attrs = await Bridge.request<PersonData>(Base.CMD_GETATTRIBUTES, `SERV:person:${personId}`, {});
         if (cancelled) return;
@@ -108,7 +108,7 @@ export default function ContactInfoPanel() {
 
     fetchPerson();
     return () => { cancelled = true; };
-  }, [personId, reloadKey, dispatch]);
+  }, [personId, loading, dispatch]);
 
   const changes = useMemo(
     () => (load.status === 'ready' ? changedAttributes(load.loaded, values) : {}),
@@ -120,7 +120,7 @@ export default function ContactInfoPanel() {
   );
   const hasChanges = Object.keys(changes).length > 0;
 
-  const handleRetry = useCallback(() => setReloadKey((k) => k + 1), []);
+  const handleRetry = useCallback(() => setLoad({ status: 'loading' }), []);
 
   const setField = useCallback((field: ContactField, value: string) => {
     setValues((prev) => ({ ...prev, [field]: value }));

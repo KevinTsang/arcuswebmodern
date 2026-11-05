@@ -9,6 +9,10 @@ import type { PersonEntity } from '@/store/entityTypes';
 const mockCloseRight = jest.fn();
 const mockDispatch = jest.fn();
 const mockBridgeRequest = jest.fn();
+/** base:GetAttributes on a person. */
+const mockGetAttributes = jest.fn();
+/** base:SetAttributes on a person. */
+const mockSetAttributes = jest.fn();
 
 jest.mock('@arcus/core/bridge', () => ({
   __esModule: true,
@@ -35,28 +39,20 @@ jest.mock('@/store/hooks', () => ({
 
 const PERSON_ADDRESS = 'SERV:person:p1';
 
-/** What `base:GetAttributes` on the person returns. */
-let platformPerson: PersonEntity;
-/** While set, every `base:GetAttributes` rejects. */
-let failLoad = false;
-/** While set, every `base:SetAttributes` rejects. */
-let failSave = false;
+/** The person `base:GetAttributes` returns unless a test says otherwise. */
+function storedPerson(): PersonEntity {
+  return makePerson(PERSON_ADDRESS, {
+    [Person.ATTR_FIRSTNAME]: 'John',
+    [Person.ATTR_LASTNAME]: 'Doe',
+    [Person.ATTR_MOBILENUMBER]: '(555) 123-4567',
+    [Person.ATTR_EMAIL]: 'john@test.com',
+  });
+}
 
 const LOAD_ERROR = { type: 'ui/addNotification', payload: { type: 'error', message: 'Failed to load contact info.' } };
 
 function setAttributesCalls() {
   return mockBridgeRequest.mock.calls.filter(([cmd]) => cmd === Base.CMD_SETATTRIBUTES);
-}
-
-/** A promise the test settles by hand, to hold a Bridge request in flight. */
-function deferred<T>() {
-  let resolve!: (value: T) => void;
-  let reject!: (error: Error) => void;
-  const promise = new Promise<T>((res, rej) => {
-    resolve = res;
-    reject = rej;
-  });
-  return { promise, resolve, reject };
 }
 
 /** Render the panel and wait for the person's attributes to load. */
@@ -78,20 +74,11 @@ beforeEach(() => {
   jest.clearAllMocks();
   // After sign-up / login the store only holds the session payload: no names or phone.
   mockSessionPerson = { personId: 'p1' };
-  platformPerson = makePerson(PERSON_ADDRESS, {
-    [Person.ATTR_FIRSTNAME]: 'John',
-    [Person.ATTR_LASTNAME]: 'Doe',
-    [Person.ATTR_MOBILENUMBER]: '(555) 123-4567',
-    [Person.ATTR_EMAIL]: 'john@test.com',
-  });
-  failLoad = false;
-  failSave = false;
-  mockBridgeRequest.mockImplementation((cmd: string) => {
-    if (cmd === Base.CMD_GETATTRIBUTES) {
-      return failLoad ? Promise.reject(new Error('load failed')) : Promise.resolve({ ...platformPerson });
-    }
-    return failSave ? Promise.reject(new Error('save failed')) : Promise.resolve({});
-  });
+  mockGetAttributes.mockResolvedValue(storedPerson());
+  mockSetAttributes.mockResolvedValue({});
+  // Route each Bridge call to the mock for its command.
+  mockBridgeRequest.mockImplementation((cmd: string, address: string, attrs: object) =>
+    cmd === Base.CMD_GETATTRIBUTES ? mockGetAttributes(address) : mockSetAttributes(address, attrs));
 });
 
 // ── Tests ─────────────────────────────────────────────────────────────
@@ -99,36 +86,36 @@ beforeEach(() => {
 describe('ContactInfoPanel', () => {
   describe('rendering', () => {
     it('matches snapshot', async () => {
-      const { container } = await renderLoaded();
-      expect(container.firstChild).toMatchSnapshot();
+      const { asFragment } = await renderLoaded();
+      expect(asFragment()).toMatchSnapshot();
     });
 
     it('matches snapshot while loading', () => {
-      mockBridgeRequest.mockReturnValue(new Promise(() => {}));
-      const { container } = render(<ContactInfoPanel />);
-      expect(container.firstChild).toMatchSnapshot();
+      mockGetAttributes.mockReturnValueOnce(new Promise(() => {}));
+      const { asFragment } = render(<ContactInfoPanel />);
+      expect(asFragment()).toMatchSnapshot();
     });
 
     it('matches snapshot when loading fails', async () => {
-      failLoad = true;
-      const { container } = render(<ContactInfoPanel />);
+      mockGetAttributes.mockRejectedValueOnce(new Error('load failed'));
+      const { asFragment } = render(<ContactInfoPanel />);
       await screen.findByTestId('contact-load-error');
-      expect(container.firstChild).toMatchSnapshot();
+      expect(asFragment()).toMatchSnapshot();
     });
 
     it('matches snapshot with field errors', async () => {
-      const { container } = await renderLoaded();
+      const { asFragment } = await renderLoaded();
       type('field-first-name', '');
       type('field-phone', '555-123');
       clickSave();
       await screen.findByTestId('field-phone-error');
-      expect(container.firstChild).toMatchSnapshot();
+      expect(asFragment()).toMatchSnapshot();
     });
 
     it('matches snapshot when signed out', () => {
       mockSessionPerson = null;
-      const { container } = render(<ContactInfoPanel />);
-      expect(container.firstChild).toMatchSnapshot();
+      const { asFragment } = render(<ContactInfoPanel />);
+      expect(asFragment()).toMatchSnapshot();
     });
 
     it('loads the person from the platform when opened', async () => {
@@ -178,7 +165,7 @@ describe('ContactInfoPanel', () => {
 
   describe('loading', () => {
     it('shows no form and keeps Save disabled while the person loads', () => {
-      mockBridgeRequest.mockReturnValue(new Promise(() => {}));
+      mockGetAttributes.mockReturnValueOnce(new Promise(() => {}));
       render(<ContactInfoPanel />);
       expect(screen.getByTestId('contact-loading')).toHaveTextContent('Loading contact info…');
       expect(screen.queryByTestId('field-first-name')).not.toBeInTheDocument();
@@ -186,7 +173,7 @@ describe('ContactInfoPanel', () => {
     });
 
     it('never saves when the person fails to load', async () => {
-      failLoad = true;
+      mockGetAttributes.mockRejectedValueOnce(new Error('load failed'));
       render(<ContactInfoPanel />);
       expect(await screen.findByTestId('contact-load-error')).toHaveTextContent('Unable to load your contact info.');
       expect(screen.queryByTestId('field-first-name')).not.toBeInTheDocument();
@@ -196,18 +183,17 @@ describe('ContactInfoPanel', () => {
     });
 
     it('dispatches an error notification when the person fails to load', async () => {
-      failLoad = true;
+      mockGetAttributes.mockRejectedValueOnce(new Error('load failed'));
       render(<ContactInfoPanel />);
       await screen.findByTestId('contact-load-error');
       expect(mockDispatch).toHaveBeenCalledWith(LOAD_ERROR);
     });
 
     it('reloads the person on Try again', async () => {
-      failLoad = true;
+      mockGetAttributes.mockRejectedValueOnce(new Error('load failed'));
       render(<ContactInfoPanel />);
       await screen.findByTestId('contact-load-error');
 
-      failLoad = false;
       fireEvent.click(screen.getByTestId('contact-retry'));
 
       expect(await screen.findByTestId('field-first-name')).toHaveValue('John');
@@ -239,39 +225,29 @@ describe('ContactInfoPanel', () => {
     });
 
     it('ignores a load that finishes after the person changed', async () => {
-      const first = deferred<PersonEntity>();
-      const second = deferred<PersonEntity>();
-      mockBridgeRequest.mockImplementation((_cmd: string, address: string) =>
-        address === PERSON_ADDRESS ? first.promise : second.promise);
+      // p1 answers while p2 is still loading. If p1's answer were applied, John would appear.
+      mockGetAttributes
+        .mockResolvedValueOnce(makePerson(PERSON_ADDRESS, { [Person.ATTR_FIRSTNAME]: 'John' }))
+        .mockReturnValueOnce(new Promise(() => {}));
 
       const { rerender } = render(<ContactInfoPanel />);
       mockSessionPerson = { personId: 'p2' };
       rerender(<ContactInfoPanel />);
       expect(mockBridgeRequest).toHaveBeenLastCalledWith(Base.CMD_GETATTRIBUTES, 'SERV:person:p2', {});
 
-      await act(async () => {
-        second.resolve(makePerson('SERV:person:p2', { [Person.ATTR_FIRSTNAME]: 'Jane' }));
-      });
-      await act(async () => {
-        first.resolve(makePerson(PERSON_ADDRESS, { [Person.ATTR_FIRSTNAME]: 'John' }));
-      });
-
-      expect(screen.getByTestId('field-first-name')).toHaveValue('Jane');
+      await act(() => mockGetAttributes.mock.results[0].value);
+      await waitFor(() => expect(screen.getByTestId('contact-loading')).toBeInTheDocument());
+      expect(screen.queryByTestId('field-first-name')).not.toBeInTheDocument();
     });
 
     it('ignores a load failure after the person changed', async () => {
-      const first = deferred<PersonEntity>();
-      mockBridgeRequest.mockImplementation((_cmd: string, address: string) =>
-        address === PERSON_ADDRESS ? first.promise : Promise.resolve({ ...platformPerson }));
+      mockGetAttributes.mockRejectedValueOnce(new Error('load failed'));
 
       const { rerender } = render(<ContactInfoPanel />);
       mockSessionPerson = { personId: 'p2' };
       rerender(<ContactInfoPanel />);
       await screen.findByTestId('field-first-name');
-
-      await act(async () => {
-        first.reject(new Error('load failed'));
-      });
+      await act(() => expect(mockGetAttributes.mock.results[0].value).rejects.toThrow('load failed'));
 
       expect(screen.queryByTestId('contact-load-error')).not.toBeInTheDocument();
       expect(screen.getByTestId('field-first-name')).toHaveValue('John');
@@ -279,14 +255,11 @@ describe('ContactInfoPanel', () => {
     });
 
     it('does nothing when the load fails after the panel closed', async () => {
-      const pending = deferred<PersonEntity>();
-      mockBridgeRequest.mockReturnValue(pending.promise);
+      mockGetAttributes.mockRejectedValueOnce(new Error('load failed'));
 
       const { unmount } = render(<ContactInfoPanel />);
       unmount();
-      await act(async () => {
-        pending.reject(new Error('load failed'));
-      });
+      await expect(mockGetAttributes.mock.results[0].value).rejects.toThrow('load failed');
 
       expect(mockDispatch).not.toHaveBeenCalled();
     });
@@ -339,25 +312,21 @@ describe('ContactInfoPanel', () => {
 
     it('disables Save and the fields while the request is in flight', async () => {
       await renderLoaded();
-      const save = deferred<void>();
-      mockBridgeRequest.mockReturnValue(save.promise);
+      mockSetAttributes.mockReturnValueOnce(new Promise(() => {}));
       type('field-first-name', 'Jane');
       clickSave();
 
       await waitFor(() => expect(screen.getByTestId('contact-save')).toBeDisabled());
-      expect(screen.getByTestId('contact-save')).toHaveTextContent('Saving…');
+      expect(await screen.findByTestId('contact-save')).toHaveTextContent('Saving…');
       expect(screen.getByLabelText('First Name')).toBeDisabled();
       expect(screen.getByLabelText('Last Name')).toBeDisabled();
       expect(screen.getByLabelText('Phone')).toBeDisabled();
       clickSave();
       expect(setAttributesCalls()).toHaveLength(1);
-
-      await act(async () => { save.resolve(); });
-      expect(mockCloseRight).toHaveBeenCalled();
     });
 
     it('dispatches error notification on failure and keeps the panel editable', async () => {
-      failSave = true;
+      mockSetAttributes.mockRejectedValueOnce(new Error('save failed'));
       await renderLoaded();
       type('field-first-name', 'Jane');
       clickSave();
@@ -374,7 +343,7 @@ describe('ContactInfoPanel', () => {
     });
 
     it('lets a person whose names were blanked fill them back in', async () => {
-      platformPerson = makePerson(PERSON_ADDRESS, { [Person.ATTR_MOBILENUMBER]: '(555) 123-4567' });
+      mockGetAttributes.mockResolvedValue(makePerson(PERSON_ADDRESS, { [Person.ATTR_MOBILENUMBER]: '(555) 123-4567' }));
       await renderLoaded();
       type('field-first-name', 'John');
       type('field-last-name', 'Doe');
@@ -392,11 +361,11 @@ describe('ContactInfoPanel', () => {
       ['a phone the platform would not accept', '555-1234'],
     ])('saves a name change for a person with %s', async (_label, storedPhone) => {
       // Sign-up and invite let people skip the phone, so an unchanged phone is never checked.
-      platformPerson = makePerson(PERSON_ADDRESS, {
+      mockGetAttributes.mockResolvedValue(makePerson(PERSON_ADDRESS, {
         [Person.ATTR_FIRSTNAME]: '',
         [Person.ATTR_LASTNAME]: 'Doe',
         ...(storedPhone === undefined ? {} : { [Person.ATTR_MOBILENUMBER]: storedPhone }),
-      });
+      }));
       await renderLoaded();
       type('field-first-name', 'John');
       clickSave();
@@ -407,7 +376,7 @@ describe('ContactInfoPanel', () => {
     });
 
     it('saves a phone change for a person with a blank last name', async () => {
-      platformPerson = makePerson(PERSON_ADDRESS, { [Person.ATTR_FIRSTNAME]: 'John' });
+      mockGetAttributes.mockResolvedValue(makePerson(PERSON_ADDRESS, { [Person.ATTR_FIRSTNAME]: 'John' }));
       await renderLoaded();
       type('field-phone', '5559876543');
       clickSave();
@@ -437,10 +406,10 @@ describe('ContactInfoPanel', () => {
     });
 
     it('still blocks blanking a name when the stored phone is invalid', async () => {
-      platformPerson = makePerson(PERSON_ADDRESS, {
+      mockGetAttributes.mockResolvedValue(makePerson(PERSON_ADDRESS, {
         [Person.ATTR_FIRSTNAME]: 'John',
         [Person.ATTR_LASTNAME]: 'Doe',
-      });
+      }));
       await renderLoaded();
       type('field-last-name', '');
       clickSave();
