@@ -7,7 +7,9 @@
  * the ui-server container writes from its ARCUS_* environment on start
  * (docker/ui-server/run-nginx), so one image works against any platform. Any
  * value it leaves empty — and everything in dev, where there is no such file —
- * falls back to the NEXT_PUBLIC_* values inlined at build time.
+ * falls back to the NEXT_PUBLIC_* values inlined at build time. The image bakes
+ * none in, so if server.json can't be loaded there are no URLs at all, and this
+ * throws rather than point the client at the ui-server itself.
  */
 
 import { setConfig } from '@arcus/core/config';
@@ -46,6 +48,9 @@ export async function initializeCoreConfig(): Promise<void> {
 
   const apiUrl = trimSlash(server.apiUrl || process.env.NEXT_PUBLIC_API_URL || '');
   const wsUrl = trimSlash(server.wsUrl || process.env.NEXT_PUBLIC_WS_URL || '');
+  if (!apiUrl || !wsUrl) {
+    throw new Error('The platform URLs are not configured: server.json could not be loaded and none were built in');
+  }
   // Always set by next.config.ts (the image tag, or the package.json version).
   const version = process.env.NEXT_PUBLIC_APP_VERSION ?? '';
 

@@ -68,13 +68,14 @@ describe('initializeCoreConfig – outside production', () => {
     expect(mockBridgeConfigure).toHaveBeenCalledWith({ apiUrl: 'https://build.example.com', version: '2026.11.0' });
   });
 
-  it('defaults to empty URLs when nothing is configured', async () => {
+  it('throws without configuring anything when no URLs are configured', async () => {
     setEnv({ NODE_ENV: 'test', NEXT_PUBLIC_API_URL: undefined, NEXT_PUBLIC_WS_URL: undefined });
     const initializeCoreConfig = await loadInit();
 
-    await initializeCoreConfig();
+    await expect(initializeCoreConfig()).rejects.toThrow('The platform URLs are not configured');
 
-    expect(mockSetConfig).toHaveBeenCalledWith(expect.objectContaining({ apiUrl: '', wsUrl: '' }));
+    expect(mockSetConfig).not.toHaveBeenCalled();
+    expect(mockBridgeConfigure).not.toHaveBeenCalled();
   });
 });
 
@@ -102,7 +103,7 @@ describe('initializeCoreConfig – production', () => {
   });
 
   it('falls back to build-time values for keys server.json leaves empty', async () => {
-    // run-nginx writes "" for an unset ARCUS_* variable.
+    // Each key falls back on its own, e.g. for a server.json written by hand.
     mockFetch.mockResolvedValue(jsonResponse({ apiUrl: 'https://client.example.com', wsUrl: '' }));
     const initializeCoreConfig = await loadInit();
 
@@ -161,6 +162,24 @@ describe('initializeCoreConfig – production', () => {
     await expect(initializeCoreConfig()).resolves.toBeUndefined();
 
     expect(mockSetConfig).toHaveBeenCalledWith(expect.objectContaining({ apiUrl: 'https://build.example.com' }));
+  });
+
+  it('throws when server.json cannot be loaded and no URLs were built in, and retries next time', async () => {
+    // The Docker image: no NEXT_PUBLIC_* URLs, so server.json is the only source.
+    setEnv({ NODE_ENV: 'production', NEXT_PUBLIC_API_URL: undefined, NEXT_PUBLIC_WS_URL: undefined });
+    mockFetch
+      .mockRejectedValueOnce(new TypeError('Failed to fetch'))
+      .mockResolvedValueOnce(jsonResponse({ apiUrl: 'https://client.example.com', wsUrl: 'wss://client.example.com' }));
+    const initializeCoreConfig = await loadInit();
+
+    await expect(initializeCoreConfig()).rejects.toThrow('The platform URLs are not configured');
+    expect(mockSetConfig).not.toHaveBeenCalled();
+
+    await initializeCoreConfig();
+    expect(mockSetConfig).toHaveBeenCalledWith(expect.objectContaining({
+      apiUrl: 'https://client.example.com',
+      wsUrl: 'wss://client.example.com',
+    }));
   });
 
   it('falls back to build-time values when server.json is not valid JSON', async () => {
