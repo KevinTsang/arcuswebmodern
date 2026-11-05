@@ -1,13 +1,13 @@
 # Local containerized instance of the production images, for testing against
 # the dev platform.
 #
-# Auth flow (scripted-login): browse to https://localdev.myDevUrl.com:8443/login
+# Auth flow (scripted-login): browse to https://localdev.example.com:8443/login
 # and sign in. The app POSTs credentials to ARCUS_HTTP_URI/login; the platform
-# sets the irisAuthToken cookie scoped to .myDevUrl.com. Because Caddy serves
+# sets the irisAuthToken cookie scoped to .example.com. Because Caddy serves
 # the app over HTTPS at the same-site hostname, the browser attaches that
 # cookie to the direct wss:// handshake and the session restores.
 #
-# Prereq: /etc/hosts must map  127.0.0.1  localdev.myDevUrl.com  (already set).
+# Prereq: /etc/hosts must map  127.0.0.1  localdev.example.com  (already set).
 #
 #   docker compose up --build
 
@@ -18,8 +18,8 @@ services:
       dockerfile: docker/ui-server/Dockerfile
     # Read at container start, as in production: change and `docker compose up -d`.
     environment:
-      ARCUS_HTTP_URI: https://client.dev.myDevUrl.com
-      ARCUS_WS_URI: wss://client.dev.myDevUrl.com
+      ARCUS_HTTP_URI: https://client.dev.example.com
+      ARCUS_WS_URI: wss://client.dev.example.com
     expose:
       - "8096"
     restart: unless-stopped

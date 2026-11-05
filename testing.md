@@ -335,11 +335,15 @@ platform session cookie keeps working.
 - An `/etc/hosts` entry so the same-site hostname resolves locally:
 
   ```
-  127.0.0.1  localdev.myDevUrl.com
+  127.0.0.1  localdev.example.com
   ```
 
-- TLS certs at `certs/cert.pem` / `certs/key.pem` covering `localdev.myDevUrl.com`
+- TLS certs at `certs/cert.pem` / `certs/key.pem` covering `localdev.example.com`
   (the same certs `npm run dev` uses; gitignored, kept locally).
+
+`example.com` stands for your platform's domain: replace it here and in `package.json`'s
+`dev` script, `Caddyfile` and `docker-compose.yml`. The page must be same-site with the
+platform, or its auth cookie isn't sent (see [Authentication](#authentication)).
 
 ### Run it
 
@@ -349,7 +353,7 @@ docker compose logs -f           # tail all services
 docker compose down              # stop and remove containers
 ```
 
-Then open **https://localdev.myDevUrl.com:8443** (accept the self-signed cert once)
+Then open **https://localdev.example.com:8443** (accept the self-signed cert once)
 and sign in on **/login**.
 
 ### How it fits together
@@ -358,24 +362,24 @@ and sign in on **/login**.
 |-------|------|
 | `docker/ui-server/` | Static export of the app served by nginx on HTTP `:8096` |
 | `docker-compose.yml` | `ui` + `proxy` (Caddy) on one network |
-| `Caddyfile` | Terminates HTTPS at `localdev.myDevUrl.com:8443`, reverse-proxies to `ui:8096` |
+| `Caddyfile` | Terminates HTTPS at `localdev.example.com:8443`, reverse-proxies to `ui:8096` |
 
 The browser loads the app over HTTPS from the same-site hostname; platform API/WebSocket
-traffic goes **directly** from the browser to `client.dev.myDevUrl.com` (there are no
+traffic goes **directly** from the browser to `client.dev.example.com` (there are no
 rewrites in `next.config.ts`), so Caddy only serves the app itself.
 
 ### Authentication
 
 The client talks to the platform over a **browser WebSocket**, which can't carry a custom
 auth header — the only credential it can send is the `irisAuthToken` cookie. That cookie is
-scoped to `.myDevUrl.com` and `SameSite`, so it is attached to the WebSocket handshake
+scoped to `.example.com` and `SameSite`, so it is attached to the WebSocket handshake
 **only** when the page is loaded over HTTPS from a same-site host. That is why both
-`npm run dev` and this container serve from `localdev.myDevUrl.com` rather than
+`npm run dev` and this container serve from `localdev.example.com` rather than
 `localhost` — loading from `localhost` (e.g. the `ui` container on its own) is cross-site and the cookie
 is silently withheld, bouncing you to `/login`.
 
 To authenticate, use the **/login** page: it POSTs credentials to the platform, which sets
-`irisAuthToken` for you. (You can also paste a still-valid token onto the `.myDevUrl.com`
+`irisAuthToken` for you. (You can also paste a still-valid token onto the `.example.com`
 domain in DevTools, but scripted login is more robust.)
 
 ### Pointing at a different backend
@@ -416,7 +420,7 @@ npx cypress run --spec cypress/e2e/scenes.cy.ts   # a single spec
 
 `dev:e2e` points `NEXT_PUBLIC_API_URL` / `NEXT_PUBLIC_WS_URL` at `localhost:3000`
 so platform traffic stays same-origin and is fully intercepted; the normal
-`npm run dev` (HTTPS on `localdev.arcus.wl-net.net`) is **not** used for E2E.
+`npm run dev` (HTTPS on `localdev.example.com`) is **not** used for E2E.
 
 ### How the fake platform works
 

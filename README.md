@@ -39,7 +39,7 @@ cutover. [`PRD.md`](./PRD.md) is the living source of truth for what's **Done**,
 
 **Carried over as-is:**
 - The **Bridge pattern** for platform communication — `Bridge.request(command, address, attributes)` against capability constants (`Scene.CMD_FIRE`, `Switch.ATTR_STATE`, etc.), mirroring the legacy client's command/attribute vocabulary so both clients speak the same platform language.
-- Cookie-based WebSocket auth (`irisAuthToken`, same-site, HTTPS) — inherited directly from the legacy client's session model. This is why local dev runs on `https://localdev.myDevUrl.com:8443` instead of `localhost`: the auth cookie is silently withheld cross-site, which would otherwise bounce every request to `/login`. See [`testing.md`](./testing.md#authentication) for the full explanation.
+- Cookie-based WebSocket auth (`irisAuthToken`, same-site, HTTPS) — inherited directly from the legacy client's session model. This is why local dev runs on `https://localdev.example.com:8443` instead of `localhost`: the auth cookie is silently withheld cross-site, which would otherwise bounce every request to `/login`. See [`testing.md`](./testing.md#authentication) for the full explanation.
 - Route structure for the Services section mirrors legacy's `/services/<subsystem>/<action>` path shape.
 
 **Rebuilt / changed:**
@@ -95,7 +95,7 @@ See PRD.md's **Priority Summary** for the full tiered breakdown of remaining wor
 ## Running locally
 
 ```bash
-npm run dev          # HTTPS dev server on localhost.arcus.wl-net.net:8443
+npm run dev          # HTTPS dev server on localdev.example.com:8443
 npm test             # Jest unit tests
 npm run test:e2e:ci  # Cypress E2E against an in-browser fake platform (starts/stops the app)
 npm run test:e2e     # Cypress E2E (headless; needs `npm run dev:e2e` running)
@@ -103,7 +103,7 @@ npm run build         # Production build (static export to out/)
 npm run lint          # ESLint
 ```
 
-Requires an `/etc/hosts` entry for `localhost.myDevUrl.com:8443` and local TLS certs
+Requires an `/etc/hosts` entry for `localdev.example.com` and local TLS certs
 — see [`testing.md`](./testing.md) for setup, containerized (Docker + Caddy)
 testing, and pointing the client at a different backend.
 
