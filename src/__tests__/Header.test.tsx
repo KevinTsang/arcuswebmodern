@@ -60,8 +60,8 @@ beforeEach(() => {
 
 describe('Header', () => {
   it('matches snapshot', () => {
-    const { container } = render(<Header />);
-    expect(container.firstChild).toMatchSnapshot();
+    const { asFragment } = render(<Header />);
+    expect(asFragment()).toMatchSnapshot();
   });
 
   describe('logo', () => {

@@ -120,10 +120,7 @@ describe('DeviceDetailPanel – Identify button', () => {
   });
 
   it('shows Identifying... text while command is in flight', async () => {
-    let resolveIdentify: () => void;
-    mockSendCommand.mockImplementation(
-      () => new Promise<void>((resolve) => { resolveIdentify = resolve; }),
-    );
+    mockSendCommand.mockReturnValueOnce(new Promise(() => {}));
     mockDevice = {
       id: 'DRIV:dev:test',
       [Base.ATTR_ADDRESS]: 'DRIV:dev:test',
@@ -134,15 +131,22 @@ describe('DeviceDetailPanel – Identify button', () => {
     render(<DeviceDetailPanel address="DRIV:dev:test" />);
     fireEvent.click(screen.getByText('Identify'));
 
-    await waitFor(() => {
-      expect(screen.getByText('Identifying...')).toBeInTheDocument();
-    });
+    expect(await screen.findByTestId('device-identify')).toHaveTextContent('Identifying...');
+  });
 
-    // Resolve and verify it returns to normal
-    resolveIdentify!();
-    await waitFor(() => {
-      expect(screen.getByText('Identify')).toBeInTheDocument();
-    });
+  it('returns to Identify once the command finishes', async () => {
+    mockDevice = {
+      id: 'DRIV:dev:test',
+      [Base.ATTR_ADDRESS]: 'DRIV:dev:test',
+      [Base.ATTR_CAPS]: ['base', 'ident'],
+      [Device.ATTR_NAME]: 'Test Device',
+      [DeviceConnection.ATTR_STATE]: 'ONLINE',
+    };
+    render(<DeviceDetailPanel address="DRIV:dev:test" />);
+    fireEvent.click(screen.getByText('Identify'));
+
+    await waitFor(() => expect(screen.getByTestId('device-identify')).toHaveTextContent(/^Identify$/));
+    expect(mockSendCommand).toHaveBeenCalledWith('ident:Identify');
   });
 
   it('dispatches error notification when identify fails', async () => {

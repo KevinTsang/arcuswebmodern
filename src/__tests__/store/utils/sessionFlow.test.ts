@@ -5,6 +5,7 @@
  * failed step rejects with a SessionStepError naming the step.
  */
 
+import { waitFor } from '@testing-library/react';
 import type { Dispatch } from '@reduxjs/toolkit';
 import { Base, Account, Person } from '@arcus/core';
 import type { SessionCreatedEvent, SessionPlace } from '@/arcus/types';
@@ -122,10 +123,6 @@ async function stepError<T>(promise: Promise<T>): Promise<SessionStepError> {
     throw error;
   }
   throw new Error('Expected the sign-in step to fail');
-}
-
-function flushPromises() {
-  return new Promise<void>((resolve) => setTimeout(resolve, 0));
 }
 
 beforeEach(() => {
@@ -271,18 +268,16 @@ describe('completeSession', () => {
   });
 
   describe('account and person', () => {
-    it('does not request anything until SetActivePlace resolves', async () => {
-      let resolveActivePlace: () => void = () => {};
-      mockSetActivePlace.mockReturnValueOnce(new Promise<void>((resolve) => {
-        resolveActivePlace = () => resolve();
-      }));
+    it('does not request anything while SetActivePlace is pending', async () => {
+      mockSetActivePlace.mockReturnValueOnce(new Promise(() => {}));
 
-      const done = completeSession(makeSession(), dispatch);
-      await flushPromises();
+      void completeSession(makeSession(), dispatch);
+      await waitFor(() => expect(mockSetActivePlace).toHaveBeenCalled());
       expect(mockBridgeRequest).not.toHaveBeenCalled();
+    });
 
-      resolveActivePlace();
-      await done;
+    it('requests the person and account once SetActivePlace resolves', async () => {
+      await completeSession(makeSession(), dispatch);
       expect(mockBridgeRequest.mock.calls.map(([, address]) => address)).toEqual([PERSON_ADDRESS, ACCOUNT_ADDRESS]);
     });
 

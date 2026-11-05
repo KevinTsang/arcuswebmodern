@@ -26,8 +26,8 @@ beforeEach(() => {
 
 describe('DeviceRemoveTimedOut', () => {
   it('matches snapshot', () => {
-    const { container } = renderTimedOut();
-    expect(container.firstChild).toMatchSnapshot();
+    const { asFragment } = renderTimedOut();
+    expect(asFragment()).toMatchSnapshot();
   });
 
   it('reports that the device was not removed', () => {

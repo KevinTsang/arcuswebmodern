@@ -1,4 +1,4 @@
-import { renderHook, act } from '@testing-library/react';
+import { renderHook, act, waitFor } from '@testing-library/react';
 import { Base, Device, DeviceAdvanced, Hub, PairingDevice } from '@arcus/core';
 import {
   useDeviceRemoval,
@@ -68,16 +68,6 @@ function emitDeleted(address = DEVICE) {
   act(() => {
     (corneaListeners[DELETED] ?? []).forEach((l) => l({ [Base.ATTR_ADDRESS]: address }));
   });
-}
-
-function deferred<T>() {
-  let resolve!: (value: T) => void;
-  let reject!: (reason: Error) => void;
-  const promise = new Promise<T>((res, rej) => {
-    resolve = res;
-    reject = rej;
-  });
-  return { promise, resolve, reject };
 }
 
 /** Route Bridge requests by command; anything unlisted resolves {}. */
@@ -175,16 +165,11 @@ describe('useDeviceRemoval – dev:Remove', () => {
   });
 
   it('is requesting while dev:Remove is in flight', async () => {
-    const pending = deferred<RemoveResponse>();
-    bridge({ [Device.CMD_REMOVE]: () => pending.promise });
+    bridge({ [Device.CMD_REMOVE]: jest.fn().mockReturnValue(new Promise(() => {})) });
     const { result } = renderRemoval();
 
-    let done!: Promise<void>;
-    act(() => { done = result.current.remove(); });
-    expect(result.current.stage).toBe('requesting');
-
-    await act(async () => { pending.resolve(HUB_RESPONSE); await done; });
-    expect(result.current.stage).toBe('removing');
+    act(() => { void result.current.remove(); });
+    await waitFor(() => expect(result.current.stage).toBe('requesting'));
   });
 
   it('notifies and returns to the prompt when dev:Remove fails for a cloud device', async () => {
@@ -282,37 +267,41 @@ describe('useDeviceRemoval – base:Deleted', () => {
     expect(mockDispatch).not.toHaveBeenCalled();
   });
 
-  it('handles base:Deleted arriving before the dev:Remove response', async () => {
-    const pending = deferred<RemoveResponse>();
-    bridge({ [Device.CMD_REMOVE]: () => pending.promise });
+  it('closes on base:Deleted while dev:Remove is still pending', async () => {
+    bridge({ [Device.CMD_REMOVE]: jest.fn().mockReturnValue(new Promise(() => {})) });
     const { result } = renderRemoval();
 
-    let done!: Promise<void>;
-    act(() => { done = result.current.remove(); });
+    act(() => { void result.current.remove(); });
     emitDeleted();
-    expect(onClose).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(onClose).toHaveBeenCalledTimes(1));
     expect(stopCalls()).toHaveLength(0);
+  });
+
+  it('handles base:Deleted arriving before the dev:Remove response', async () => {
+    bridge({ [Device.CMD_REMOVE]: jest.fn().mockResolvedValue(HUB_RESPONSE) });
+    const { result } = renderRemoval();
+
+    act(() => { void result.current.remove(); });
+    emitDeleted();
 
     // The late response says the hub is unpairing: stop it.
-    await act(async () => { pending.resolve(HUB_RESPONSE); await done; });
-    expect(stopCalls()).toHaveLength(1);
+    await waitFor(() => expect(stopCalls()).toHaveLength(1));
     expect(mockDispatch.mock.calls).toEqual([[notification('success', 'Lamp removed')]]);
   });
 
   it('does not also report a failure when dev:Remove rejects after base:Deleted', async () => {
-    const pending = deferred<RemoveResponse>();
-    bridge({ [Device.CMD_REMOVE]: () => pending.promise });
+    bridge({ [Device.CMD_REMOVE]: jest.fn().mockRejectedValue(new Error('timeout')) });
     const { result } = renderRemoval();
 
     let done!: Promise<void>;
     act(() => { done = result.current.remove(); });
     emitDeleted();
-    await act(async () => { pending.reject(new Error('timeout')); await done; });
+    // Hub device: the hub may still have been put into unpairing mode.
+    await waitFor(() => expect(stopCalls()).toHaveLength(1));
+    await act(() => done);
 
     expect(mockDispatch.mock.calls).toEqual([[notification('success', 'Lamp removed')]]);
     expect(onClose).toHaveBeenCalledTimes(1);
-    // Hub device: the hub may still have been put into unpairing mode.
-    expect(stopCalls()).toHaveLength(1);
   });
 
   it('reports that the hub may stay unpairing when there is no hub to stop', async () => {
@@ -352,15 +341,19 @@ describe('useDeviceRemoval – cancel', () => {
   });
 
   it('is cancelling while STOP_UNPAIRING is in flight', async () => {
-    const pending = deferred<unknown>();
     const { result } = await startRemoval();
-    bridge({ [Hub.CMD_UNPAIRINGREQUEST]: () => pending.promise });
+    bridge({ [Hub.CMD_UNPAIRINGREQUEST]: jest.fn().mockReturnValue(new Promise(() => {})) });
 
-    let done!: Promise<void>;
-    act(() => { done = result.current.cancel(); });
-    expect(result.current.cancelling).toBe(true);
+    act(() => { void result.current.cancel(); });
+    await waitFor(() => expect(result.current.cancelling).toBe(true));
+  });
 
-    await act(async () => { pending.resolve({}); await done; });
+  it('stops cancelling once STOP_UNPAIRING answers', async () => {
+    const { result } = await startRemoval();
+    bridge({ [Hub.CMD_UNPAIRINGREQUEST]: jest.fn().mockResolvedValue({}) });
+
+    act(() => { void result.current.cancel(); });
+    await waitFor(() => expect(onClose).toHaveBeenCalledTimes(1));
     expect(result.current.cancelling).toBe(false);
   });
 
@@ -400,30 +393,29 @@ describe('useDeviceRemoval – cancel', () => {
   });
 
   it('does not close again when the panel closed while STOP was in flight', async () => {
-    const pending = deferred<unknown>();
     const { result, unmount } = await startRemoval();
-    bridge({ [Hub.CMD_UNPAIRINGREQUEST]: () => pending.promise });
+    bridge({ [Hub.CMD_UNPAIRINGREQUEST]: jest.fn().mockResolvedValue({}) });
 
-    let done!: Promise<void>;
-    act(() => { done = result.current.cancel(); });
+    act(() => { void result.current.cancel(); });
     unmount();
-    await act(async () => { pending.resolve({}); await done; });
+    await waitFor(() =>
+      expect(mockDispatch).toHaveBeenCalledWith(notification('warning', 'Removal of Lamp cancelled.')),
+    );
 
     expect(onClose).not.toHaveBeenCalled();
     // The unmount shares the stop already in flight.
     expect(stopCalls()).toHaveLength(1);
-    expect(mockDispatch).toHaveBeenCalledWith(notification('warning', 'Removal of Lamp cancelled.'));
   });
 
   it('closes once when the device is removed while STOP was in flight', async () => {
-    const pending = deferred<unknown>();
     const { result } = await startRemoval();
-    bridge({ [Hub.CMD_UNPAIRINGREQUEST]: () => pending.promise });
+    bridge({ [Hub.CMD_UNPAIRINGREQUEST]: jest.fn().mockResolvedValue({}) });
 
     let done!: Promise<void>;
     act(() => { done = result.current.cancel(); });
     emitDeleted();
-    await act(async () => { pending.resolve({}); await done; });
+    // Nothing visible changes when STOP answers, so wait on cancel() itself.
+    await act(() => done);
 
     expect(onClose).toHaveBeenCalledTimes(1);
     expect(stopCalls()).toHaveLength(1);
@@ -473,18 +465,24 @@ describe('useDeviceRemoval – unmount', () => {
     expect(mockDispatch).not.toHaveBeenCalled();
   });
 
-  it('stops unpairing once the response arrives when unmounted mid-request', async () => {
-    const pending = deferred<RemoveResponse>();
-    bridge({ [Device.CMD_REMOVE]: () => pending.promise });
+  it('does not stop unpairing while dev:Remove is pending after an unmount', async () => {
+    bridge({ [Device.CMD_REMOVE]: jest.fn().mockReturnValue(new Promise(() => {})) });
     const { result, unmount } = renderRemoval();
 
-    let done!: Promise<void>;
-    act(() => { done = result.current.remove(); });
+    act(() => { void result.current.remove(); });
     unmount();
-    expect(stopCalls()).toHaveLength(0);
+    await waitFor(() => expect(stopCalls()).toHaveLength(0));
+    expect(mockDispatch).not.toHaveBeenCalled();
+  });
 
-    await act(async () => { pending.resolve(HUB_RESPONSE); await done; });
-    expect(stopCalls()).toHaveLength(1);
+  it('stops unpairing once the response arrives when unmounted mid-request', async () => {
+    bridge({ [Device.CMD_REMOVE]: jest.fn().mockResolvedValue(HUB_RESPONSE) });
+    const { result, unmount } = renderRemoval();
+
+    act(() => { void result.current.remove(); });
+    unmount();
+
+    await waitFor(() => expect(stopCalls()).toHaveLength(1));
     expect(mockDispatch.mock.calls).toEqual([[notification('warning', 'Removal of Lamp cancelled.')]]);
   });
 
@@ -552,17 +550,14 @@ describe('useDeviceRemoval – address change', () => {
   });
 
   it('ignores the old device response arriving after the switch', async () => {
-    const pending = deferred<RemoveResponse>();
-    bridge({ [Device.CMD_REMOVE]: () => pending.promise });
+    bridge({ [Device.CMD_REMOVE]: jest.fn().mockResolvedValue(HUB_RESPONSE) });
     const { result, rerender } = renderRemoval();
 
-    let done!: Promise<void>;
-    act(() => { done = result.current.remove(); });
+    act(() => { void result.current.remove(); });
     rerender({ addr: OTHER_DEVICE });
-    await act(async () => { pending.resolve(HUB_RESPONSE); await done; });
 
+    await waitFor(() => expect(stopCalls()).toHaveLength(1));
     expect(result.current.stage).toBe('idle');
-    expect(stopCalls()).toHaveLength(1);
   });
 });
 
@@ -583,6 +578,18 @@ describe('useDeviceRemoval – timeout and Force Remove', () => {
 
     act(() => { jest.advanceTimersByTime(1); });
     expect(result.current.stage).toBe('timedOut');
+  });
+
+  it('does not start the timeout while dev:Remove is still pending', async () => {
+    jest.useFakeTimers();
+    bridge({ [Device.CMD_REMOVE]: jest.fn().mockReturnValue(new Promise(() => {})) });
+    const { result } = renderRemoval();
+    act(() => { void result.current.remove(); });
+    await waitFor(() => expect(result.current.stage).toBe('requesting'));
+    expect(jest.getTimerCount()).toBe(0);
+
+    await act(() => jest.advanceTimersByTimeAsync(REMOVE_TIMEOUT));
+    await waitFor(() => expect(result.current.stage).toBe('requesting'));
   });
 
   it('does not time out once the device is removed', async () => {
@@ -645,6 +652,19 @@ describe('useDeviceRemoval – timeout and Force Remove', () => {
     expect(onClose).not.toHaveBeenCalled();
   });
 
+  it('does not start the Force Remove timeout while dev:ForceRemove is still pending', async () => {
+    const { result } = await timedOut();
+    bridge({ [Device.CMD_FORCEREMOVE]: jest.fn().mockReturnValue(new Promise(() => {})) });
+    act(() => result.current.requestForceRemove());
+    act(() => { void result.current.forceRemove(); });
+    await waitFor(() => expect(result.current.stage).toBe('forcing'));
+    expect(jest.getTimerCount()).toBe(0);
+
+    await act(() => jest.advanceTimersByTimeAsync(FORCE_REMOVE_TIMEOUT));
+    await waitFor(() => expect(result.current.stage).toBe('forcing'));
+    expect(mockDispatch).not.toHaveBeenCalled();
+  });
+
   it('does not say the removal was cancelled when closed while force removing', async () => {
     const { result, unmount } = await timedOut();
     act(() => result.current.requestForceRemove());
@@ -676,18 +696,28 @@ describe('useDeviceRemoval – state machine guards', () => {
     expect(result.current.stage).toBe('timedOut');
   });
 
+  it('does not start cancelling while dev:Remove is in flight', async () => {
+    bridge({ [Device.CMD_REMOVE]: jest.fn().mockReturnValue(new Promise(() => {})) });
+    const { result } = renderRemoval();
+
+    act(() => { void result.current.remove(); });
+    act(() => { void result.current.cancel(); });
+    await waitFor(() => expect(result.current.stage).toBe('requesting'));
+    expect(result.current.cancelling).toBe(false);
+  });
+
   it('ignores Cancel while dev:Remove is in flight', async () => {
-    const pending = deferred<RemoveResponse>();
-    bridge({ [Device.CMD_REMOVE]: () => pending.promise });
+    bridge({ [Device.CMD_REMOVE]: jest.fn().mockResolvedValue(HUB_RESPONSE) });
     const { result } = renderRemoval();
 
     let done!: Promise<void>;
+    let cancelled!: Promise<void>;
     act(() => { done = result.current.remove(); });
-    await act(async () => { await result.current.cancel(); });
-    expect(onClose).not.toHaveBeenCalled();
-    expect(result.current.cancelling).toBe(false);
+    act(() => { cancelled = result.current.cancel(); });
+    // The ignored Cancel changes nothing visible, so wait on both calls themselves.
+    await act(() => Promise.all([done, cancelled]));
 
-    await act(async () => { pending.resolve(HUB_RESPONSE); await done; });
+    expect(onClose).not.toHaveBeenCalled();
     expect(result.current.stage).toBe('removing');
   });
 
@@ -703,17 +733,24 @@ describe('useDeviceRemoval – state machine guards', () => {
 
   it('does not offer Force Remove while Cancel is in flight', async () => {
     jest.useFakeTimers();
-    const pending = deferred<unknown>();
     const { result } = await startRemoval();
     act(() => { jest.advanceTimersByTime(REMOVE_TIMEOUT); });
-    bridge({ [Hub.CMD_UNPAIRINGREQUEST]: () => pending.promise });
+    bridge({ [Hub.CMD_UNPAIRINGREQUEST]: jest.fn().mockReturnValue(new Promise(() => {})) });
 
-    let done!: Promise<void>;
-    act(() => { done = result.current.cancel(); });
+    act(() => { void result.current.cancel(); });
     act(() => result.current.requestForceRemove());
+    await waitFor(() => expect(result.current.cancelling).toBe(true));
     expect(result.current.stage).toBe('timedOut');
+  });
 
-    await act(async () => { pending.resolve({}); await done; });
-    expect(onClose).toHaveBeenCalledTimes(1);
+  it('closes once Cancel finishes even if Force Remove was requested meanwhile', async () => {
+    jest.useFakeTimers();
+    const { result } = await startRemoval();
+    act(() => { jest.advanceTimersByTime(REMOVE_TIMEOUT); });
+    bridge({ [Hub.CMD_UNPAIRINGREQUEST]: jest.fn().mockResolvedValue({}) });
+
+    act(() => { void result.current.cancel(); });
+    act(() => result.current.requestForceRemove());
+    await waitFor(() => expect(onClose).toHaveBeenCalledTimes(1));
   });
 });

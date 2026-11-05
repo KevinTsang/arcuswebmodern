@@ -20,13 +20,13 @@ beforeEach(() => {
 
 describe('DeviceRemoveConfirm', () => {
   it('matches snapshot', () => {
-    const { container } = renderConfirm();
-    expect(container.firstChild).toMatchSnapshot();
+    const { asFragment } = renderConfirm();
+    expect(asFragment()).toMatchSnapshot();
   });
 
   it('matches snapshot while dev:Remove is in flight', () => {
-    const { container } = renderConfirm(true);
-    expect(container.firstChild).toMatchSnapshot();
+    const { asFragment } = renderConfirm(true);
+    expect(asFragment()).toMatchSnapshot();
   });
 
   it('names the device in the prompt', () => {

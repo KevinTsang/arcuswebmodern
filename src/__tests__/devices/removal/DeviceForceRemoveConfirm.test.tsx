@@ -20,13 +20,13 @@ beforeEach(() => {
 
 describe('DeviceForceRemoveConfirm', () => {
   it('matches snapshot', () => {
-    const { container } = renderConfirm();
-    expect(container.firstChild).toMatchSnapshot();
+    const { asFragment } = renderConfirm();
+    expect(asFragment()).toMatchSnapshot();
   });
 
   it('matches snapshot while dev:ForceRemove is pending', () => {
-    const { container } = renderConfirm(true);
-    expect(container.firstChild).toMatchSnapshot();
+    const { asFragment } = renderConfirm(true);
+    expect(asFragment()).toMatchSnapshot();
   });
 
   it('warns that the device is not excluded from the network', () => {

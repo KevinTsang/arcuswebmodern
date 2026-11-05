@@ -13,8 +13,8 @@ beforeEach(() => {
 
 describe('DeviceRemoveButton', () => {
   it('matches snapshot', () => {
-    const { container } = render(<DeviceRemoveButton onClick={onClick} />);
-    expect(container.firstChild).toMatchSnapshot();
+    const { asFragment } = render(<DeviceRemoveButton onClick={onClick} />);
+    expect(asFragment()).toMatchSnapshot();
   });
 
   it('renders Remove Device', () => {
