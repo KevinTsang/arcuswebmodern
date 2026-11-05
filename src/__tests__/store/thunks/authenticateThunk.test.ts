@@ -124,6 +124,16 @@ describe('authenticateThunk', () => {
   });
 
   describe('on failure', () => {
+    it('dispatches loginFailed and returns null when setting up the config fails', async () => {
+      mockInitializeCoreConfig.mockRejectedValueOnce(new Error('Config failed'));
+
+      const result = await runRestore();
+
+      expect(result.payload).toBeNull();
+      expect(mockDispatch).toHaveBeenCalledWith(loginFailed());
+      expect(mockWaitForSession).not.toHaveBeenCalled();
+    });
+
     it('tears down the socket, dispatches loginFailed and returns null when no session is established', async () => {
       mockWaitForSession.mockRejectedValue(new SessionStepError('SessionCreated', new Error('No valid session')));
 

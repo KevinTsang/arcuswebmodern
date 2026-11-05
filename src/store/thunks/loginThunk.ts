@@ -20,9 +20,9 @@ export const loginThunk = createAsyncThunk(
     { dispatch },
   ) => {
     dispatch(setAuthenticating(true));
-    await initializeCoreConfig();
 
     try {
+      await initializeCoreConfig();
       const session = await waitForSession(
         () => auth.login(username, password, isPublic),
         'Authentication failed',
