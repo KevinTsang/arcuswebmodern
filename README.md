@@ -129,9 +129,9 @@ writable), and the app fetches that file before it talks to the platform:
 |----------|---------|
 | `ARCUS_HTTP_URI` | Platform HTTP base, e.g. `https://client.arcussmarthome.com` |
 | `ARCUS_WS_URI` | Platform WebSocket base, e.g. `wss://client.arcussmarthome.com` |
-| `ARCUS_REDIRECT_URI` | Redirect base (optional) |
 
-Legacy's other `ARCUS_*` variables (feature flags and app download URIs) are ignored.
+Legacy's other `ARCUS_*` variables (`ARCUS_REDIRECT_URI`, the feature flags and the app
+download URIs) are ignored: nothing in this client uses them.
 
 ```bash
 docker/bin/build.sh                    # build arcus/ui-server:<version>-<sha> and :latest

@@ -16,7 +16,6 @@ import Bridge from '@arcus/core/bridge';
 /** server.json as written by run-nginx: the same file, and legacy's keys for the platform URLs. */
 export interface ServerConfig {
   apiUrl?: string;
-  redirectUrl?: string;
   wsUrl?: string;
 }
 
@@ -47,10 +46,9 @@ export async function initializeCoreConfig(): Promise<void> {
 
   const apiUrl = trimSlash(server.apiUrl || process.env.NEXT_PUBLIC_API_URL || '');
   const wsUrl = trimSlash(server.wsUrl || process.env.NEXT_PUBLIC_WS_URL || '');
-  const version = process.env.NEXT_PUBLIC_APP_VERSION ?? '1.0.0';
-  const redirectUrl = trimSlash(server.redirectUrl || process.env.NEXT_PUBLIC_REDIRECT_URL || '');
-  const isProduction = process.env.NODE_ENV === 'production';
+  // Always set by next.config.ts (the image tag, or the package.json version).
+  const version = process.env.NEXT_PUBLIC_APP_VERSION ?? '';
 
-  setConfig({ apiUrl, wsUrl, version, redirectUrl, isProduction });
+  setConfig({ apiUrl, wsUrl, version });
   Bridge.configure({ apiUrl, version });
 }

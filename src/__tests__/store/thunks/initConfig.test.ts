@@ -23,7 +23,6 @@ const ORIGINAL_FETCH = global.fetch;
 const BUILD_ENV = {
   NEXT_PUBLIC_API_URL: 'https://build.example.com',
   NEXT_PUBLIC_WS_URL: 'wss://build.example.com',
-  NEXT_PUBLIC_REDIRECT_URL: 'https://build-redirect.example.com',
   NEXT_PUBLIC_APP_VERSION: '2026.11.0',
 };
 
@@ -65,19 +64,17 @@ describe('initializeCoreConfig – outside production', () => {
       apiUrl: 'https://build.example.com',
       wsUrl: 'wss://build.example.com',
       version: '2026.11.0',
-      redirectUrl: 'https://build-redirect.example.com',
-      isProduction: false,
     });
     expect(mockBridgeConfigure).toHaveBeenCalledWith({ apiUrl: 'https://build.example.com', version: '2026.11.0' });
   });
 
   it('defaults to empty URLs when nothing is configured', async () => {
-    setEnv({ NODE_ENV: 'test', NEXT_PUBLIC_API_URL: undefined, NEXT_PUBLIC_WS_URL: undefined, NEXT_PUBLIC_REDIRECT_URL: undefined });
+    setEnv({ NODE_ENV: 'test', NEXT_PUBLIC_API_URL: undefined, NEXT_PUBLIC_WS_URL: undefined });
     const initializeCoreConfig = await loadInit();
 
     await initializeCoreConfig();
 
-    expect(mockSetConfig).toHaveBeenCalledWith(expect.objectContaining({ apiUrl: '', wsUrl: '', redirectUrl: '' }));
+    expect(mockSetConfig).toHaveBeenCalledWith(expect.objectContaining({ apiUrl: '', wsUrl: '' }));
   });
 });
 
@@ -90,7 +87,6 @@ describe('initializeCoreConfig – production', () => {
     mockFetch.mockResolvedValue(jsonResponse({
       apiUrl: 'https://client.example.com',
       wsUrl: 'wss://client.example.com',
-      redirectUrl: 'https://example.com',
     }));
     const initializeCoreConfig = await loadInit();
 
@@ -101,30 +97,27 @@ describe('initializeCoreConfig – production', () => {
       apiUrl: 'https://client.example.com',
       wsUrl: 'wss://client.example.com',
       version: '2026.11.0',
-      redirectUrl: 'https://example.com',
-      isProduction: true,
     });
     expect(mockBridgeConfigure).toHaveBeenCalledWith({ apiUrl: 'https://client.example.com', version: '2026.11.0' });
   });
 
   it('falls back to build-time values for keys server.json leaves empty', async () => {
-    // run-nginx writes "" for unset ARCUS_* variables, e.g. ARCUS_REDIRECT_URI.
-    mockFetch.mockResolvedValue(jsonResponse({ apiUrl: 'https://client.example.com', wsUrl: 'wss://client.example.com', redirectUrl: '' }));
+    // run-nginx writes "" for an unset ARCUS_* variable.
+    mockFetch.mockResolvedValue(jsonResponse({ apiUrl: 'https://client.example.com', wsUrl: '' }));
     const initializeCoreConfig = await loadInit();
 
     await initializeCoreConfig();
 
     expect(mockSetConfig).toHaveBeenCalledWith(expect.objectContaining({
       apiUrl: 'https://client.example.com',
-      redirectUrl: 'https://build-redirect.example.com',
+      wsUrl: 'wss://build.example.com',
     }));
   });
 
   it('strips trailing slashes from the configured URLs', async () => {
     mockFetch.mockResolvedValue(jsonResponse({
       apiUrl: 'https://client.example.com/',
-      wsUrl: 'wss://client.example.com/',
-      redirectUrl: 'https://example.com//',
+      wsUrl: 'wss://client.example.com//',
     }));
     const initializeCoreConfig = await loadInit();
 
@@ -133,7 +126,6 @@ describe('initializeCoreConfig – production', () => {
     expect(mockSetConfig).toHaveBeenCalledWith(expect.objectContaining({
       apiUrl: 'https://client.example.com',
       wsUrl: 'wss://client.example.com',
-      redirectUrl: 'https://example.com',
     }));
   });
 

@@ -20,7 +20,6 @@ services:
     environment:
       ARCUS_HTTP_URI: https://client.dev.myDevUrl.com
       ARCUS_WS_URI: wss://client.dev.myDevUrl.com
-      ARCUS_REDIRECT_URI: https://client.dev.myDevUrl.com
     expose:
       - "8096"
     restart: unless-stopped

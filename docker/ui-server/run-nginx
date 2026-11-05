@@ -1,9 +1,9 @@
 #!/bin/bash
 # Writes the runtime config the app reads on start (see src/store/thunks/initConfig.ts)
-# to the same path as the legacy ui-server, from the same ARCUS_*_URI variables.
-# Only the platform URLs are written: legacy's feature flags and app download
-# URIs are ignored until the UI uses them. Deployments mount a writable volume
-# at CONF_DIR because the rest of the filesystem is read-only.
+# to the same path as the legacy ui-server. Only the platform URLs are written,
+# from legacy's ARCUS_HTTP_URI and ARCUS_WS_URI; its other ARCUS_* variables are
+# ignored because nothing in this client uses them. Deployments mount a
+# writable volume at CONF_DIR because the rest of the filesystem is read-only.
 
 CONF_DIR=/usr/share/nginx/html/build/dist/config/
 SERVER_CONF="$CONF_DIR/server.json"
@@ -13,7 +13,6 @@ mkdir -p $CONF_DIR
 cat > "$SERVER_CONF.tmp" <<EOF
 {
    "apiUrl" : "$ARCUS_HTTP_URI",
-   "redirectUrl" : "$ARCUS_REDIRECT_URI",
    "wsUrl"  : "$ARCUS_WS_URI"
 }
 EOF
