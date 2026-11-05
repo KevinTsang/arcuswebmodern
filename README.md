@@ -119,7 +119,8 @@ existing deployment (e.g. arcus-k8s) only needs the new image tag:
 It uses legacy's base image (`nginx:1.30-trixie`) and runs as uid 1000, the user
 arcus-k8s runs it as, so it is non-root under `docker run` and `docker compose` too.
 Under arcus-k8s it also runs with a read-only root filesystem, given writable mounts at
-`/tmp`, `/var/cache/nginx` and `/var/run`.
+`/tmp`, `/var/cache/nginx`, `/var/run` and `/usr/share/nginx/html/build/dist/config`
+(for `server.json`; without it the container exits at start).
 
 The ui-server reads its platform URLs when the container starts, from the same
 environment variables as legacy. `run-nginx` writes them to

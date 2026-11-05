@@ -123,6 +123,7 @@ describe('loginThunk', () => {
 
       await expect(runLogin().unwrap()).rejects.toMatchObject({ message: 'Config failed' });
 
+      expect(mockReset).toHaveBeenCalledTimes(1);
       expect(mockDispatch).toHaveBeenCalledWith(loginFailed());
       expect(mockWaitForSession).not.toHaveBeenCalled();
     });

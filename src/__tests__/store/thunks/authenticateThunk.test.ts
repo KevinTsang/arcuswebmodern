@@ -130,6 +130,7 @@ describe('authenticateThunk', () => {
       const result = await runRestore();
 
       expect(result.payload).toBeNull();
+      expect(mockReset).toHaveBeenCalledTimes(1);
       expect(mockDispatch).toHaveBeenCalledWith(loginFailed());
       expect(mockWaitForSession).not.toHaveBeenCalled();
     });

@@ -37,8 +37,11 @@ COPY --from=builder /app/out /usr/share/nginx/html
 # isn't root anywhere else either. That user owns only what nginx and run-nginx
 # write: the cache, the pid file's directory and server.json's directory, which
 # arcus-k8s mounts as writable volumes over its read-only root filesystem. The
-# app's files stay root-owned, so nginx can't change them.
-RUN mkdir -p /usr/share/nginx/html/build/dist/config \
+# app's files stay root-owned, so nginx can't change them. A non-root master
+# can't switch users, so drop the base config's `user` line, which nginx would
+# otherwise warn about on every start.
+RUN sed -i '/^user /d' /etc/nginx/nginx.conf \
+ && mkdir -p /usr/share/nginx/html/build/dist/config \
  && chown -R 1000:1000 /var/cache/nginx /run /usr/share/nginx/html/build/dist/config
 USER 1000:1000
 
