@@ -36,6 +36,23 @@ describe('Authentication', () => {
     cy.location('pathname', { timeout: 20000 }).should('eq', '/home');
   });
 
+  it('stops retrying the session socket once a restore is rejected', () => {
+    cy.visit('/login');
+    tid('login-submit').should('be.visible');
+    cy.platform().its('connectionAttempts').should('be.gte', 1);
+
+    // A rejected upgrade must not leave the socket reconnecting behind the
+    // login form, where each failure could land in the next login attempt.
+    cy.platform().then((p) => {
+      const attempts = p.connectionAttempts;
+      cy.wait(2000);
+      cy.platform().its('connectionAttempts').should('eq', attempts);
+    });
+
+    login(LOGIN.email, LOGIN.password);
+    cy.location('pathname', { timeout: 20000 }).should('eq', '/home');
+  });
+
   it('rejects bad credentials and stays on the login page', () => {
     cy.visit('/login');
     login(LOGIN.email, 'not-the-password');
@@ -45,12 +62,22 @@ describe('Authentication', () => {
     cy.platform().its('authenticated').should('eq', false);
   });
 
-  it('honours the redirect query after login', () => {
-    cy.visit('/login?redirect=/scenes');
+  it('returns to the page the user was trying to reach after login', () => {
+    cy.visit('/scenes');
+    cy.location('pathname', { timeout: 20000 }).should('eq', '/login');
+    cy.location('search').should('not.include', 'redirect');
     login(LOGIN.email, LOGIN.password);
 
     cy.location('pathname', { timeout: 20000 }).should('eq', '/scenes');
     tid('scenes-title').should('have.text', 'Scenes');
+  });
+
+  it('ignores a redirect query param and lands on the dashboard', () => {
+    cy.visit('/login?redirect=//evil.example/login');
+    login(LOGIN.email, LOGIN.password);
+
+    cy.location('pathname', { timeout: 20000 }).should('eq', '/home');
+    cy.location('origin').should('eq', Cypress.config('baseUrl'));
   });
 
   it('restores an existing session on a hard refresh', () => {
@@ -64,6 +91,17 @@ describe('Authentication', () => {
     cy.platform().then((p) => {
       expect(p.requestsOf('sess:SetActivePlace').length).to.be.greaterThan(1);
     });
+  });
+
+  it('stays signed in when the connection fails and reconnects', () => {
+    cy.signIn();
+    cy.platform().invoke('failConnections');
+
+    // partysocket reconnects on the still-valid session; nothing posts /logout.
+    cy.platform().its('openSocketCount', { timeout: 10000 }).should('eq', 1);
+    cy.platform().its('authenticated').should('eq', true);
+    cy.location('pathname').should('eq', '/home');
+    tid('header-greeting').should('have.text', 'Hello, Alex');
   });
 
   it('logs out from the place selector and returns to login', () => {

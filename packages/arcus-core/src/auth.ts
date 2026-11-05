@@ -11,7 +11,8 @@ import { getConfig } from './config';
 type AuthEvent =
   | 'authentication:success'
   | 'authentication:fail'
-  | 'authentication:logout';
+  | 'authentication:logout'
+  | 'connection:lost';
 
 type AuthListener = (data?: any) => void;
 
@@ -78,6 +79,12 @@ class Auth {
     password: string,
     isPublic: boolean,
   ): Promise<void> {
+    // Start from a clean slate: logging in again makes the platform end any
+    // existing session, and that socket's close must not reach this attempt.
+    this.reset();
+    attachOnce('SessionCreated', this.onSessionCreated);
+    attachOnce('WebSocketClosed', this.onWebSocketClosed);
+
     const config = getConfig();
     const url = `${config.apiUrl.replace(/\/+$/, '')}/login`;
 
@@ -99,7 +106,20 @@ class Auth {
       throw new Error(`Login failed: ${response.status}`);
     }
 
-    return this.startCornea();
+    const promise = this.startCornea();
+    this.active = { auth: true, promise };
+    return promise;
+  }
+
+  /**
+   * Drop the socket and auth state without contacting the platform.
+   * Called when a login or session restore fails, so an abandoned socket
+   * can't keep reconnecting or deliver events into a later attempt.
+   */
+  reset(): void {
+    this.authenticated = false;
+    this.active = { auth: false };
+    this.cleanupCornea();
   }
 
   emitLogout(): void {
@@ -158,10 +178,19 @@ class Auth {
 
   private onWebSocketClosed(ev: CloseEvent): void {
     if (this.authenticated && ev.code === 1000) {
+      // closed due to logout
       this.logout();
     } else if (this.authenticated && ev.code === 4001) {
+      // session ended elsewhere; the app handles the expiry
       this.cleanupCornea();
+    } else if (this.authenticated) {
+      // network failure while authenticated — partysocket reconnects and the
+      // session is still valid, so don't treat it as an auth failure
+      this.emit('connection:lost');
     } else {
+      // not authenticated and the connection failed — a real auth failure.
+      // Tear the socket down so partysocket stops retrying a rejected upgrade.
+      this.reset();
       this.emit('authentication:fail');
     }
   }

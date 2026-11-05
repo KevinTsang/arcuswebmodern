@@ -5,13 +5,15 @@
  *
  * Wraps the app and dispatches authenticateThunk to check for an
  * existing session cookie. While authenticating, shows a loading spinner.
- * On failure, redirects to /login.
+ * On failure, redirects to /login and remembers the page the user was on
+ * (see lib/nextPage) so login can send them back to it.
  */
 
 import { useEffect, useRef } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { authenticateThunk } from '@/store/thunks/authenticateThunk';
+import { saveNextPage } from '@/lib/nextPage';
 
 const PUBLIC_ROUTES = ['/login', '/create-account', '/invite'];
 
@@ -44,15 +46,10 @@ export default function AuthProvider({
     // Only redirect after the auth attempt has started and then completed
     if (!hasStartedAuth.current) return;
     if (!authenticating && !authenticated && !isPublicRoute(pathname)) {
-      const params = new URLSearchParams();
-      if (sessionExpired) {
-        params.set('expired', '1');
-      }
-      if (pathname !== '/') {
-        params.set('redirect', pathname);
-      }
-      const query = params.toString();
-      router.replace(`/login${query ? `?${query}` : ''}`);
+      // Remember where the user was headed (path + query, e.g. a ?device= deep
+      // link) so the login page can return them there after signing in.
+      saveNextPage(`${pathname}${window.location.search}`);
+      router.replace(sessionExpired ? '/login?expired=1' : '/login');
     }
   }, [authenticating, authenticated, sessionExpired, pathname, router]);
 

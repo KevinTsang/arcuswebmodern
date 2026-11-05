@@ -4,3 +4,4 @@ export { default as CredentialsStep } from './CredentialsStep';
 export { default as AddressStep } from './AddressStep';
 export { default as WelcomeStep } from './WelcomeStep';
 export * from './types';
+export * from './createAccountSlice';
