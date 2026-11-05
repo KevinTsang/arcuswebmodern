@@ -70,20 +70,20 @@ afterEach(() => {
 describe('OpenCloseDoor', () => {
   describe('snapshots', () => {
     it('matches snapshot', () => {
-      const { container } = render(<OpenCloseDoor address={ADDRESS} />);
-      expect(container.firstChild).toMatchSnapshot();
+      const { asFragment } = render(<OpenCloseDoor address={ADDRESS} />);
+      expect(asFragment()).toMatchSnapshot();
     });
 
     it('matches snapshot while closing', () => {
       mockDevice = makeDoor(MotorizedDoor.DOORSTATE_CLOSING);
-      const { container } = render(<OpenCloseDoor address={ADDRESS} />);
-      expect(container.firstChild).toMatchSnapshot();
+      const { asFragment } = render(<OpenCloseDoor address={ADDRESS} />);
+      expect(asFragment()).toMatchSnapshot();
     });
 
     it('matches snapshot when obstructed', () => {
       mockDevice = makeDoor(MotorizedDoor.DOORSTATE_OBSTRUCTION, OBSTRUCTED);
-      const { container } = render(<OpenCloseDoor address={ADDRESS} />);
-      expect(container.firstChild).toMatchSnapshot();
+      const { asFragment } = render(<OpenCloseDoor address={ADDRESS} />);
+      expect(asFragment()).toMatchSnapshot();
     });
   });
 
