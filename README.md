@@ -138,6 +138,12 @@ REGISTRY_NAME=us-west1-docker.pkg.dev/<project>/<repo> docker/bin/build.sh --pus
 DOCKER_DEFAULT_PLATFORM=linux/amd64 docker/bin/build.sh   # build for another architecture
 ```
 
+The image tag (e.g. `2026.11.0-1a2b3c4`) is also the client version the app sends to the
+platform as `X-Client-Version`, so platform logs show which build a session came from. The
+client version is independent of the platform's; bump `version` in `package.json` for a
+release. Builds without `build.sh` (`npm run dev`, `docker compose`) send the bare
+`package.json` version.
+
 **TODO:** the `static-server` image (device, brand and product images at the platform's
 `staticResourceBaseUrl`) still comes from legacy arcusweb, which only ships a small part of
 what the mobile apps and platform emails request. Where the full image set should live is

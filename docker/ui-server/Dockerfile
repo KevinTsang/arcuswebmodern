@@ -13,11 +13,11 @@ COPY packages/arcus-core/package.json packages/arcus-core/
 RUN CYPRESS_INSTALL_BINARY=0 npm ci
 
 # Platform URLs are deliberately not baked in: run-nginx writes them to
-# server.json from ARCUS_* when the container starts. The client version is
-# sent to the platform and is fixed per build.
-ARG NEXT_PUBLIC_APP_VERSION=2018.10.2
-ENV NEXT_PUBLIC_APP_VERSION=$NEXT_PUBLIC_APP_VERSION \
-    NEXT_TELEMETRY_DISABLED=1
+# server.json from ARCUS_* when the container starts. The client version, sent
+# to the platform as X-Client-Version, is fixed per build: docker/bin/build.sh
+# passes the image tag, and without it next.config.ts uses package.json's.
+ARG NEXT_PUBLIC_APP_VERSION
+ENV NEXT_TELEMETRY_DISABLED=1
 
 COPY . .
 RUN npm run build

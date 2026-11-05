@@ -20,7 +20,7 @@ export interface ArcusConfig {
 
 function getConfig(): ArcusConfig {
   const isProduction = process.env.NODE_ENV === 'production';
-  const version = process.env.NEXT_PUBLIC_APP_VERSION || '2018.10.2';
+  const version = process.env.NEXT_PUBLIC_APP_VERSION || '2026.11.0';
 
   return {
     apiUrl: process.env.NEXT_PUBLIC_API_URL || 'https://dev.myDevUrl.com',

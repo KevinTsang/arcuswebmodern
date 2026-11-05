@@ -24,7 +24,7 @@ const BUILD_ENV = {
   NEXT_PUBLIC_API_URL: 'https://build.example.com',
   NEXT_PUBLIC_WS_URL: 'wss://build.example.com',
   NEXT_PUBLIC_REDIRECT_URL: 'https://build-redirect.example.com',
-  NEXT_PUBLIC_APP_VERSION: '2018.10.2',
+  NEXT_PUBLIC_APP_VERSION: '2026.11.0',
 };
 
 function setEnv(env: Partial<NodeJS.ProcessEnv>) {
@@ -64,11 +64,11 @@ describe('initializeCoreConfig – outside production', () => {
     expect(mockSetConfig).toHaveBeenCalledWith({
       apiUrl: 'https://build.example.com',
       wsUrl: 'wss://build.example.com',
-      version: '2018.10.2',
+      version: '2026.11.0',
       redirectUrl: 'https://build-redirect.example.com',
       isProduction: false,
     });
-    expect(mockBridgeConfigure).toHaveBeenCalledWith({ apiUrl: 'https://build.example.com', version: '2018.10.2' });
+    expect(mockBridgeConfigure).toHaveBeenCalledWith({ apiUrl: 'https://build.example.com', version: '2026.11.0' });
   });
 
   it('defaults to empty URLs when nothing is configured', async () => {
@@ -100,11 +100,11 @@ describe('initializeCoreConfig – production', () => {
     expect(mockSetConfig).toHaveBeenCalledWith({
       apiUrl: 'https://client.example.com',
       wsUrl: 'wss://client.example.com',
-      version: '2018.10.2',
+      version: '2026.11.0',
       redirectUrl: 'https://example.com',
       isProduction: true,
     });
-    expect(mockBridgeConfigure).toHaveBeenCalledWith({ apiUrl: 'https://client.example.com', version: '2018.10.2' });
+    expect(mockBridgeConfigure).toHaveBeenCalledWith({ apiUrl: 'https://client.example.com', version: '2026.11.0' });
   });
 
   it('falls back to build-time values for keys server.json leaves empty', async () => {

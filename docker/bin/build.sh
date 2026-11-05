@@ -8,8 +8,9 @@
 #
 # The image is named arcus/ui-server (override the prefix with DOCKER_PREFIX)
 # and tagged latest plus <package.json version>-<short sha> (override with
-# VERSION). To build for another architecture, set
-# DOCKER_DEFAULT_PLATFORM=linux/amd64.
+# VERSION). That tag is also the client version the app sends to the platform,
+# so platform logs show which build a session came from. To build for another
+# architecture, set DOCKER_DEFAULT_PLATFORM=linux/amd64.
 
 set -euo pipefail
 
@@ -29,6 +30,7 @@ if $PUSH && [ -z "${REGISTRY_NAME:-}" ]; then
 fi
 
 docker build -t "$PREFIX/ui-server:$VERSION" -t "$PREFIX/ui-server:latest" \
+  --build-arg NEXT_PUBLIC_APP_VERSION="$VERSION" \
   -f "$ROOT/docker/ui-server/Dockerfile" "$ROOT"
 
 if $PUSH; then
