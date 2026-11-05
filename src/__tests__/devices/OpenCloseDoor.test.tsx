@@ -7,9 +7,6 @@ import { makeDevice } from '../helpers/factories';
 
 // ── Mocks ─────────────────────────────────────────────────────────────
 
-/** base:SetAttributes answers with an empty object. */
-type SetAttributesResponse = Record<string, never>;
-
 const mockSetAttribute = jest.fn();
 const mockSendCommand = jest.fn();
 const mockDispatch = jest.fn();
@@ -56,13 +53,6 @@ function queryStateText() {
 
 function queryHint() {
   return screen.queryByTestId(`device-door-hint-${ADDRESS}`);
-}
-
-/** Make the next write hang until the returned function is called. */
-function deferWrite(): () => void {
-  let resolve: (value: SetAttributesResponse) => void = () => {};
-  mockSetAttribute.mockReturnValueOnce(new Promise<SetAttributesResponse>((r) => { resolve = r; }));
-  return () => resolve({});
 }
 
 beforeEach(() => {
@@ -209,14 +199,13 @@ describe('OpenCloseDoor', () => {
     });
 
     it('stays busy after the platform acks until the door reports a new state', async () => {
-      const ack = deferWrite();
       mockDevice = makeDoor(MotorizedDoor.DOORSTATE_OPEN);
       const { rerender } = render(<OpenCloseDoor address={ADDRESS} />);
       fireEvent.click(getButton());
       expect(getButton()).toHaveTextContent('...');
       expect(getButton()).toBeDisabled();
 
-      await act(async () => { ack(); });
+      await act(async () => mockSetAttribute.mock.results[0].value);
       expect(getButton()).toHaveTextContent('...');
       expect(getButton()).toBeDisabled();
 
