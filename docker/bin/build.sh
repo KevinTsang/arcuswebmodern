@@ -8,15 +8,21 @@
 #
 # The image is named arcus/ui-server (override the prefix with DOCKER_PREFIX)
 # and tagged latest plus <package.json version>-<short sha> (override with
-# VERSION). That tag is also the client version the app sends to the platform,
-# so platform logs show which build a session came from. To build for another
+# VERSION), with a -dirty suffix when the tree has uncommitted changes. That
+# tag is also the client version the app sends to the platform, so platform
+# logs show which build a session came from. To build for another
 # architecture, set DOCKER_DEFAULT_PLATFORM=linux/amd64.
 
 set -euo pipefail
 
 ROOT=$(git -C "$(dirname "$0")" rev-parse --show-toplevel)
 PREFIX=${DOCKER_PREFIX:-arcus}
-VERSION=${VERSION:-$(node -p "require('$ROOT/package.json').version")-$(git -C "$ROOT" rev-parse --short=7 HEAD)}
+SHA=$(git -C "$ROOT" rev-parse --short=7 HEAD)
+# The image is built from the working tree, not the commit, so say when they differ.
+if [ -n "$(git -C "$ROOT" status --porcelain)" ]; then
+  SHA="$SHA-dirty"
+fi
+VERSION=${VERSION:-$(node -p "require('$ROOT/package.json').version")-$SHA}
 
 PUSH=false
 case "${1:-}" in
