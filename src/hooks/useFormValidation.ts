@@ -41,7 +41,7 @@ interface CustomRule {
   phoneNumber?: true;
 }
 
-type ValidationRule = Partial<
+export type ValidationRule = Partial<
   PresenceRule & EmailRule & LengthRule & EqualityRule & ExclusionRule & CustomRule
 >;
 

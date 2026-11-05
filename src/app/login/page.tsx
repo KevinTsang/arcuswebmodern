@@ -17,6 +17,7 @@ import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { loginThunk } from '@/store/thunks/loginThunk';
 import { loadPlaceDataThunk } from '@/store/thunks/loadPlaceDataThunk';
 import { useFormValidation, type ValidationConstraints } from '@/hooks/useFormValidation';
+import { EMAIL_RULE, NEW_PASSWORD_RULE, confirmPasswordRule } from '@/lib/validationRules';
 import { PersonService } from '@arcus/core/services';
 import { ArcusLogo } from '@/components/shared/ArcusLogo';
 import { takeNextPage } from '@/lib/nextPage';
@@ -24,42 +25,27 @@ import { takeNextPage } from '@/lib/nextPage';
 // ── Validation constraints ────────────────────────────────────────────
 
 const LOGIN_CONSTRAINTS: ValidationConstraints = {
-  emailAddress: {
-    presence: true,
-    email: { message: 'is invalid' },
-  },
+  emailAddress: EMAIL_RULE,
   password: {
     presence: true,
   },
 };
 
 const SEND_CODE_CONSTRAINTS: ValidationConstraints = {
-  emailAddress: {
-    presence: true,
-    email: { message: 'is invalid' },
-  },
+  emailAddress: EMAIL_RULE,
 };
 
 function getResetPasswordConstraints(emailAddress: string): ValidationConstraints {
   return {
-    emailAddress: {
-      presence: true,
-      email: { message: 'is invalid' },
-    },
+    emailAddress: EMAIL_RULE,
     code: {
       presence: true,
     },
     newPassword: {
-      presence: true,
-      length: { minimum: 8, message: 'must be at least 8 characters' },
+      ...NEW_PASSWORD_RULE,
       exclusion: { within: [emailAddress], message: 'cannot be your email address' },
-      oneLetterOneNumber: true,
-      noSpaces: true,
     },
-    confirmPassword: {
-      presence: true,
-      equality: { attribute: 'newPassword', message: '^Passwords do not match' },
-    },
+    confirmPassword: confirmPasswordRule('newPassword'),
   };
 }
 
