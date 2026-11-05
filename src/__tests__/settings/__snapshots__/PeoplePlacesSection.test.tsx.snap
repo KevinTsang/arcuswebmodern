@@ -1,0 +1,36 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`PeoplePlacesSection – add place matches snapshot at a place the user owns 1`] = `
+<div
+  class="space-y-2"
+  data-testid="add-place-section"
+>
+  <button
+    class="px-4 py-2 bg-peacock text-crane rounded-[var(--border-radius-base)] text-sm font-medium hover:bg-peacock/90 disabled:opacity-50"
+    data-testid="add-place"
+  >
+    + Add Place
+  </button>
+</div>
+`;
+
+exports[`PeoplePlacesSection – add place matches snapshot while a guest place is active 1`] = `
+<div
+  class="space-y-2"
+  data-testid="add-place-section"
+>
+  <button
+    class="px-4 py-2 bg-peacock text-crane rounded-[var(--border-radius-base)] text-sm font-medium hover:bg-peacock/90 disabled:opacity-50"
+    data-testid="add-place"
+    disabled=""
+  >
+    + Add Place
+  </button>
+  <p
+    class="text-xs text-grouse"
+    data-testid="add-place-hint"
+  >
+    To add a place, first switch to a place you own.
+  </p>
+</div>
+`;
