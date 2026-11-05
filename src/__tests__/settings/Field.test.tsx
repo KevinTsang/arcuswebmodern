@@ -3,15 +3,15 @@ import Field from '@/components/settings/Field';
 
 describe('Field', () => {
   it('matches snapshot', () => {
-    const { container } = render(<Field id="email" label="Email" value="john@test.com" onChange={jest.fn()} />);
-    expect(container.firstChild).toMatchSnapshot();
+    const { asFragment } = render(<Field id="email" label="Email" value="john@test.com" onChange={jest.fn()} />);
+    expect(asFragment()).toMatchSnapshot();
   });
 
   it('matches snapshot with an error', () => {
-    const { container } = render(
+    const { asFragment } = render(
       <Field id="first-name" label="First Name" value="" onChange={jest.fn()} error="can't be blank" />,
     );
-    expect(container.firstChild).toMatchSnapshot();
+    expect(asFragment()).toMatchSnapshot();
   });
 
   it('renders label text', () => {
