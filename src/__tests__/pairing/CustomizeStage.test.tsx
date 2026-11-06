@@ -11,6 +11,7 @@ const defaultProps = {
   product: null,
   deviceName: '',
   isFavorite: false,
+  saving: false,
   dispatch: mockDispatch,
   onCustomize: mockCustomize,
 };
@@ -26,6 +27,20 @@ const mockProduct: PairingProduct = {
 beforeEach(() => jest.clearAllMocks());
 
 describe('CustomizeStage – device pairing', () => {
+  it('matches snapshot', () => {
+    const { container } = render(<CustomizeStage {...defaultProps} product={mockProduct} />);
+    expect(container.firstChild).toMatchSnapshot();
+  });
+
+  it('disables Save & Finish while the customization is saving', () => {
+    render(<CustomizeStage {...defaultProps} saving />);
+    const save = screen.getByTestId('pairing-customize-save');
+    expect(save).toBeDisabled();
+    expect(save).toHaveTextContent('Saving…');
+    fireEvent.click(save);
+    expect(mockCustomize).not.toHaveBeenCalled();
+  });
+
   it('shows "Customize Your Device" heading', () => {
     render(<CustomizeStage {...defaultProps} />);
     expect(screen.getByText('Customize Your Device')).toBeInTheDocument();

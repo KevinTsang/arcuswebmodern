@@ -5,4 +5,4 @@ export { default as SearchingStage } from './SearchingStage';
 export { default as CustomizeStage } from './CustomizeStage';
 export { default as CompletedStage } from './CompletedStage';
 export { default as DeviceStateRow } from './DeviceStateRow';
-export type { PairingStage, PairingStep } from './types';
+export type { PairingFlow, PairingStage, PairingStep } from './types';

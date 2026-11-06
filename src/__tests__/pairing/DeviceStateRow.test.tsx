@@ -9,6 +9,19 @@ const makeDevice = (state: string, phase: string) => ({
 });
 
 describe('DeviceStateRow', () => {
+  it('matches snapshot', () => {
+    const { container } = render(<DeviceStateRow device={makeDevice('PAIRING', 'JOIN')} />);
+    expect(container.firstChild).toMatchSnapshot();
+  });
+
+  it('labels a device left from an earlier pairing', () => {
+    render(<DeviceStateRow device={makeDevice('MISPAIRED', 'FAILED')} earlier />);
+    expect(screen.getByTestId('pairing-device-row-DRIV:dev:dev-1')).toHaveAttribute('data-earlier', 'true');
+    expect(screen.getByText('From an earlier pairing')).toBeInTheDocument();
+    expect(screen.queryByText('Device Found')).not.toBeInTheDocument();
+    expect(screen.getByText('Improperly Paired')).toBeInTheDocument();
+  });
+
   it('shows "Device Found" label', () => {
     render(<DeviceStateRow device={makeDevice('PAIRING', 'JOIN')} />);
     expect(screen.getByText('Device Found')).toBeInTheDocument();

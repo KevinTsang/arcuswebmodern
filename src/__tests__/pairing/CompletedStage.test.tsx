@@ -9,6 +9,7 @@ const defaultProps = {
   isHubPairing: false,
   activeDevice: null,
   productName: 'GE Smart Plug',
+  busy: false,
   onFinish: mockFinish,
   onPairAnother: mockPairAnother,
 };
@@ -16,6 +17,21 @@ const defaultProps = {
 beforeEach(() => jest.clearAllMocks());
 
 describe('CompletedStage – successful device pairing', () => {
+  it('matches snapshot', () => {
+    const { container } = render(<CompletedStage {...defaultProps} />);
+    expect(container.firstChild).toMatchSnapshot();
+  });
+
+  it('disables Go to Devices and Pair Another while one of them is under way', () => {
+    render(<CompletedStage {...defaultProps} busy />);
+    expect(screen.getByTestId('pairing-finish')).toBeDisabled();
+    expect(screen.getByTestId('pairing-pair-another')).toBeDisabled();
+    fireEvent.click(screen.getByTestId('pairing-finish'));
+    fireEvent.click(screen.getByTestId('pairing-pair-another'));
+    expect(mockFinish).not.toHaveBeenCalled();
+    expect(mockPairAnother).not.toHaveBeenCalled();
+  });
+
   it('shows "Device Paired!" heading', () => {
     render(<CompletedStage {...defaultProps} />);
     expect(screen.getByText('Device Paired!')).toBeInTheDocument();

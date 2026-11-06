@@ -1,0 +1,45 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`CustomizeStage – device pairing matches snapshot 1`] = `
+<div>
+  <h3
+    class="text-lg font-semibold text-swift mb-4"
+  >
+    Customize Your Device
+  </h3>
+  <div
+    class="space-y-4"
+  >
+    <div>
+      <label
+        class="block text-sm font-medium text-swift mb-1"
+      >
+        Device Name
+      </label>
+      <input
+        class="w-full border border-heron rounded-[var(--border-radius-base)] px-3 py-2 text-sm text-swift focus:outline-none focus:border-peacock"
+        data-testid="pairing-device-name"
+        placeholder="Smart Plug"
+        type="text"
+        value=""
+      />
+    </div>
+    <label
+      class="flex items-center gap-2 text-sm text-coot"
+    >
+      <input
+        class="accent-peacock"
+        data-testid="pairing-favorite"
+        type="checkbox"
+      />
+      Add to favorites
+    </label>
+    <button
+      class="w-full py-2.5 bg-peacock text-crane rounded-[var(--border-radius-base)] text-sm font-medium hover:bg-peacock/90 disabled:opacity-50"
+      data-testid="pairing-customize-save"
+    >
+      Save & Finish
+    </button>
+  </div>
+</div>
+`;

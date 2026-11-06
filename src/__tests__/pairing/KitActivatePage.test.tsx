@@ -1,6 +1,7 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { Base, Product, PairingDevice } from '@arcus/core';
 import KitActivatePage from '@/app/(authenticated)/kit-activate/page';
+import { endPairingFlow } from '@/store/slices/pairingSlice';
 import type { DeviceEntity, PairingProduct, SubsystemEntity } from '@/store/entityTypes';
 
 // ── Mocks ─────────────────────────────────────────────────────────────
@@ -136,6 +137,8 @@ describe('KitActivatePage – with kit devices', () => {
     await waitFor(() => expect(screen.getByText('Finish Later')).toBeInTheDocument());
     fireEvent.click(screen.getByText('Finish Later'));
     await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/devices'));
+    // DismissAll ends pairing, so the pairing page's next search starts a new flow
+    expect(mockDispatch).toHaveBeenCalledWith(endPairingFlow());
   });
 });
 
