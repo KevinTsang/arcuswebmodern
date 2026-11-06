@@ -1,0 +1,61 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`SidePanel matches snapshot with the right panel open 1`] = `
+<div>
+  <button>
+    Edit Home
+  </button>
+  <button>
+    Edit Lake House
+  </button>
+  <button>
+    Left Home
+  </button>
+  <button>
+    Left Lake
+  </button>
+  <button>
+    Close
+  </button>
+  <div
+    class="fixed inset-0 bg-raven/30 z-[var(--z-modal-bg)] transition-opacity"
+  />
+  <div
+    class="
+          fixed top-0 left-0 h-full bg-crane shadow-xl z-[var(--z-modal)]
+          transition-transform duration-300 ease-in-out overflow-y-auto
+          w-[380px]
+          -translate-x-full
+        "
+  />
+  <div
+    class="
+          fixed top-0 right-0 h-full bg-crane shadow-xl z-[var(--z-modal)]
+          transition-transform duration-300 ease-in-out overflow-y-auto
+          w-[380px]
+          translate-x-0
+        "
+  >
+    <div
+      class="relative h-full"
+    >
+      <button
+        aria-label="Close panel"
+        class="absolute top-4 right-4 text-2xl text-grouse hover:text-swift z-10"
+        data-testid="side-panel-right-close"
+      >
+        ×
+      </button>
+      <div
+        class="p-6 pt-14"
+        data-testid="side-panel-right"
+      >
+        <input
+          aria-label="Name"
+          value="Home"
+        />
+      </div>
+    </div>
+  </div>
+</div>
+`;
