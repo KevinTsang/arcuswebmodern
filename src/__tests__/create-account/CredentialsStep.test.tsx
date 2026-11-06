@@ -243,4 +243,44 @@ describe('CredentialsStep', () => {
       expect(screen.getByRole('button', { name: 'Create Account' })).not.toBeDisabled();
     });
   });
+
+  // ── Phone number ──────────────────────────────────────────────────
+
+  describe('phone number', () => {
+    beforeEach(() => {
+      (AccountService.CreateAccount as jest.Mock).mockResolvedValue({ placeId: 'p1', account: {} });
+    });
+
+    function submitWithPhone(phone: string) {
+      renderStep();
+      fillValidForm();
+      fireEvent.change(screen.getByLabelText('Phone (optional)'), { target: { value: phone } });
+      fireEvent.click(screen.getByRole('button', { name: 'Create Account' }));
+    }
+
+    function sentPhone() {
+      return (AccountService.CreateAccount as jest.Mock).mock.calls[0][0].person[Person.ATTR_MOBILENUMBER];
+    }
+
+    it('rejects a phone that is not a US number', async () => {
+      submitWithPhone('555-123');
+
+      expect(await screen.findByText('must be a valid phone number')).toBeInTheDocument();
+      expect(AccountService.CreateAccount).not.toHaveBeenCalled();
+    });
+
+    it('sends the phone in the format the platform stores', async () => {
+      submitWithPhone('555.123.4567');
+
+      await waitFor(() => expect(AccountService.CreateAccount).toHaveBeenCalled());
+      expect(sentPhone()).toBe('(555) 123-4567');
+    });
+
+    it('leaves the phone out when the field is empty', async () => {
+      submitWithPhone('');
+
+      await waitFor(() => expect(AccountService.CreateAccount).toHaveBeenCalled());
+      expect(sentPhone()).toBeUndefined();
+    });
+  });
 });

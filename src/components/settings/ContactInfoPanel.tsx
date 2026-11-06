@@ -8,6 +8,7 @@ import { addNotification } from '@/store/slices/uiSlice';
 import { useSidePanel } from '@/components/SidePanel';
 import { validateFields, type ValidationConstraints } from '@/hooks/useFormValidation';
 import { formatPhoneNumber } from '@/lib/phoneNumber';
+import { NAME_RULE, REQUIRED_PHONE_RULE } from '@/lib/validationRules';
 import type { PersonData } from '@/store/entityTypes';
 import Field from './Field';
 
@@ -48,9 +49,9 @@ const EMPTY_VALUES: ContactValues = {
 // The legacy profile form's rules: names can't be blank, and the phone must be a US number.
 // They only apply to fields the user changed, since sign-up and invite let people skip the phone.
 const CONTACT_CONSTRAINTS: ValidationConstraints = {
-  [Person.ATTR_FIRSTNAME]: { presence: true },
-  [Person.ATTR_LASTNAME]: { presence: true },
-  [Person.ATTR_MOBILENUMBER]: { presence: true, phoneNumber: true },
+  [Person.ATTR_FIRSTNAME]: NAME_RULE,
+  [Person.ATTR_LASTNAME]: NAME_RULE,
+  [Person.ATTR_MOBILENUMBER]: REQUIRED_PHONE_RULE,
 };
 
 /** The value to save for `field`: trimmed, and a phone in the "(555) 123-4567" format the platform stores. */

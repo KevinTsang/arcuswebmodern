@@ -12,7 +12,7 @@
  * only the PIN step + welcome are shown.
  */
 
-import { useState, useCallback, FormEvent } from 'react';
+import { useState, useCallback, useMemo, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Base, Person } from '@arcus/core';
@@ -24,7 +24,9 @@ import { loginSuccess } from '@/store/slices/authSlice';
 import { loadPlaceDataThunk } from '@/store/thunks/loadPlaceDataThunk';
 import { initializeCoreConfig } from '@/store/thunks/initConfig';
 import { getDefaultPlaceId } from '@/store/thunks/placeSelection';
-import { useFormValidation, type ValidationConstraints } from '@/hooks/useFormValidation';
+import { useFormValidation } from '@/hooks/useFormValidation';
+import { NEW_LOGIN_CONSTRAINTS, NEW_LOGIN_FIELDS } from '@/lib/validationRules';
+import { formatPhoneNumber } from '@/lib/phoneNumber';
 import ChangePinForm from '@/components/ChangePinForm';
 import type { SessionCreatedEvent } from '@/arcus/types';
 import type { Invitation } from '@/store/slices/invitationsSlice';
@@ -32,21 +34,6 @@ import { AccountData } from '@/store/entityTypes';
 
 type InviteStep = 'code' | 'confirm' | 'create-login' | 'pin' | 'welcome';
 
-const LOGIN_CONSTRAINTS: ValidationConstraints = {
-  email: { presence: true, email: { message: 'is invalid' } },
-  password: {
-    presence: true,
-    length: { minimum: 8, message: 'must be at least 8 characters' },
-    oneLetterOneNumber: true,
-    noSpaces: true,
-  },
-  confirmPassword: {
-    presence: true,
-    equality: { attribute: 'password', message: '^Passwords do not match' },
-  },
-  firstName: { presence: true },
-  lastName: { presence: true },
-};
 
 export default function InvitePage() {
   const router = useRouter();
@@ -74,7 +61,11 @@ export default function InvitePage() {
   const [placeId, setPlaceId] = useState<string | null>(null);
   const [pinError, setPinError] = useState<string | null>(null);
 
-  const loginForm = useFormValidation(LOGIN_CONSTRAINTS);
+  const loginForm = useFormValidation(NEW_LOGIN_CONSTRAINTS);
+  const loginValues = useMemo(
+    () => ({ email: inviteeEmail, password, confirmPassword, firstName, lastName, phone }),
+    [inviteeEmail, password, confirmPassword, firstName, lastName, phone],
+  );
 
   // ── Step 1: Look up invitation ─────────────────────────────
 
@@ -115,8 +106,7 @@ export default function InvitePage() {
 
   const handleCreateLogin = useCallback(async (ev: FormEvent) => {
     ev.preventDefault();
-    const values = { email: inviteeEmail, password, confirmPassword, firstName, lastName };
-    if (!loginForm.formValidates(['email', 'password', 'confirmPassword', 'firstName', 'lastName'], values)) return;
+    if (!loginForm.formValidates(NEW_LOGIN_FIELDS, loginValues)) return;
 
     setLoading(true);
     setError('');
@@ -126,7 +116,8 @@ export default function InvitePage() {
         [Person.ATTR_EMAIL]: inviteeEmail,
         [Person.ATTR_FIRSTNAME]: firstName,
         [Person.ATTR_LASTNAME]: lastName,
-        [Person.ATTR_MOBILENUMBER]: phone || undefined,
+        // Validation has already rejected anything that isn't a phone number, so null means empty.
+        [Person.ATTR_MOBILENUMBER]: formatPhoneNumber(phone) ?? undefined,
       };
 
       await InvitationService.AcceptInvitationCreateLogin(
@@ -181,7 +172,7 @@ export default function InvitePage() {
     } finally {
       setLoading(false);
     }
-  }, [inviteeEmail, password, confirmPassword, firstName, lastName, phone, inviteCode, loginForm, dispatch]);
+  }, [inviteeEmail, password, firstName, lastName, phone, inviteCode, loginForm, loginValues, dispatch]);
 
   // ── Step 4: Set PIN ────────────────────────────────────────
 
@@ -294,28 +285,28 @@ export default function InvitePage() {
                 <ValidatedField
                   label="First Name" id="firstName" value={firstName}
                   onChange={setFirstName} form={loginForm}
-                  allValues={{ email: inviteeEmail, password, confirmPassword, firstName, lastName }}
+                  allValues={loginValues}
                 />
                 <ValidatedField
                   label="Last Name" id="lastName" value={lastName}
                   onChange={setLastName} form={loginForm}
-                  allValues={{ email: inviteeEmail, password, confirmPassword, firstName, lastName }}
+                  allValues={loginValues}
                 />
               </div>
-              <InviteField
-                label="Phone (optional)" id="phone" type="tel" value={phone}
-                onChange={setPhone}
+              <ValidatedField
+                label="Phone (optional)" id="phone" type="tel" autoComplete="tel"
+                value={phone} onChange={setPhone} form={loginForm} allValues={loginValues}
               />
               <ValidatedField
                 label="Password" id="password" type="password" autoComplete="new-password"
                 value={password} onChange={setPassword} form={loginForm}
-                allValues={{ email: inviteeEmail, password, confirmPassword, firstName, lastName }}
+                allValues={loginValues}
               />
               <ValidatedField
                 label="Confirm Password" id="confirmPassword" type="password"
                 autoComplete="new-password"
                 value={confirmPassword} onChange={setConfirmPassword} form={loginForm}
-                allValues={{ email: inviteeEmail, password, confirmPassword, firstName, lastName }}
+                allValues={loginValues}
               />
               <button
                 type="submit"
@@ -414,7 +405,7 @@ function ValidatedField({
         onBlur={() => { form.markVisited(id); form.validateSingle(id, value, allValues); }}
         className="w-full px-3 py-2 border border-grouse rounded-[var(--border-radius-base)] text-sm focus:outline-none focus:border-peacock"
       />
-      {errors.length > 0 && <p className="mt-1 text-sm text-cardinal">{errors[0]}</p>}
+      {errors.length > 0 && <p data-testid={`field-error-${id}`} className="mt-1 text-sm text-cardinal">{errors[0]}</p>}
     </div>
   );
 }
