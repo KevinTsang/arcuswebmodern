@@ -4,7 +4,8 @@
  * public pages live in login.cy.ts / create-account.cy.ts / invite.cy.ts.
  */
 
-import { LOGIN } from '../support/platform/fixtures';
+import { LOGIN, PASSKEY_ID } from '../support/platform/fixtures';
+import { fakePasskeyPrompt, type PasskeyPrompt } from '../support/passkey';
 import { tid } from '../support/selectors';
 
 function login(email: string, password: string) {
@@ -158,5 +159,42 @@ describe('Authentication', () => {
 
     tid('reset-error').should('have.text', 'Invalid reset code');
     cy.location('search').should('include', 'view=reset-password');
+  });
+});
+
+describe('Passkey login', () => {
+  function visitLogin(prompt: PasskeyPrompt) {
+    cy.visit('/login', { onBeforeLoad: (win) => fakePasskeyPrompt(win, prompt) });
+  }
+
+  it('logs in with a passkey and lands on the dashboard', () => {
+    visitLogin({ credentialId: PASSKEY_ID });
+    cy.get('input#isPublic').check();
+    tid('passkey-login').click();
+
+    cy.location('pathname', { timeout: 20000 }).should('eq', '/home');
+    tid('header-greeting').should('have.text', 'Hello, Alex');
+    cy.expectRequestAttrs('sess:SetActivePlace', { placeId: 'place-maple' });
+    cy.platform().its('passkeyLogins').should('deep.equal', [{ credentialId: PASSKEY_ID, isPublic: true }]);
+  });
+
+  it('explains a dismissed passkey prompt and stays on the login page', () => {
+    visitLogin({ error: 'NotAllowedError' });
+    tid('passkey-login').click();
+
+    tid('login-error').should('have.text', 'No passkey was used. Please try again, or log in with your password.');
+    tid('passkey-login').should('be.enabled');
+    cy.location('pathname').should('eq', '/login');
+    cy.platform().its('passkeyLogins').should('have.length', 0);
+  });
+
+  it('rejects a passkey the platform does not know', () => {
+    visitLogin({ credentialId: 'passkey-someone-else' });
+    tid('passkey-login').click();
+
+    tid('login-error').should('have.text', 'That passkey could not be used to log in. Please log in with your password.');
+    cy.location('pathname').should('eq', '/login');
+    cy.platform().its('passkeyLogins').should('deep.equal', [{ credentialId: 'passkey-someone-else', isPublic: false }]);
+    tid('passkey-login').should('be.enabled');
   });
 });

@@ -147,12 +147,17 @@ export class MockPlatform {
   requests: LoggedRequest[] = [];
   /** Addresses of objects created during the current test, removed by `cleanupCreated()`. */
   created = new Set<string>();
+  /** Every `POST /passkey/Login`, accepted or not. */
+  passkeyLogins: { credentialId: string; isPublic: boolean }[] = [];
 
   private sockets = new Set<MockSocket>();
   private overrides = new Map<string, Handler>();
   private failures = new Map<string, InjectedFailure>();
   private timers: ReturnType<typeof setTimeout>[] = [];
   private counter = 0;
+  /** Passkey requests handed out by `/passkey/LoginOptions` and not used yet. */
+  private passkeyRequests = new Set<string>();
+  private passkeyRequestCount = 0;
 
   /** Restore pristine state; called before every test. */
   reset(): void {
@@ -168,6 +173,9 @@ export class MockPlatform {
     this.overrides.clear();
     this.failures.clear();
     this.counter = 0;
+    this.passkeyLogins = [];
+    this.passkeyRequests.clear();
+    this.passkeyRequestCount = 0;
   }
 
   // ── Browser plumbing ────────────────────────────────────────────────
@@ -246,6 +254,22 @@ export class MockPlatform {
   login(user: string, password: string): boolean {
     const ok = user === this.data.login.email && password === this.data.login.password;
     this.authenticated = ok;
+    return ok;
+  }
+
+  /** `POST /passkey/LoginOptions` — a single-use request for the browser's passkey prompt. */
+  passkeyLoginOptions(): { requestId: string; publicKey: { challenge: string; userVerification: string } } {
+    // Not this.counter, so a passkey login doesn't shift the ids of created objects.
+    const requestId = `passkey-request-${++this.passkeyRequestCount}`;
+    this.passkeyRequests.add(requestId);
+    return { requestId, publicKey: { challenge: btoa(requestId), userVerification: 'required' } };
+  }
+
+  /** `POST /passkey/Login` — accepts a registered passkey answering an outstanding request, once. */
+  passkeyLogin(requestId: string, credentialId: string, isPublic: boolean): boolean {
+    this.passkeyLogins.push({ credentialId, isPublic });
+    const ok = this.passkeyRequests.delete(requestId) && this.data.passkeys.includes(credentialId);
+    if (ok) this.authenticated = true;
     return ok;
   }
 

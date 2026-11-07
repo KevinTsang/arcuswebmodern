@@ -1,4 +1,4 @@
-import auth from '@arcus/core/auth';
+import auth, { SocketOpenError } from '@arcus/core/auth';
 import cornea from '@arcus/core/cornea';
 
 // ── Mocks ─────────────────────────────────────────────────────────────
@@ -27,6 +27,12 @@ jest.mock('@arcus/core/cornea', () => {
 
 jest.mock('@arcus/core/config', () => ({
   getConfig: () => ({ apiUrl: 'https://platform.test', wsUrl: 'wss://platform.test', version: '1.0' }),
+}));
+
+const mockPasskeyLogin = jest.fn<Promise<void>, [boolean]>();
+
+jest.mock('@arcus/core/passkey', () => ({
+  passkeyLogin: (isPublic: boolean) => mockPasskeyLogin(isPublic),
 }));
 
 const mockFetch = jest.fn();
@@ -62,6 +68,7 @@ beforeEach(() => {
   auth.reset();
   jest.clearAllMocks();
   mockFetch.mockResolvedValue({ ok: true, status: 200 });
+  mockPasskeyLogin.mockResolvedValue(undefined);
 });
 
 afterEach(() => {
@@ -97,6 +104,62 @@ describe('auth.login', () => {
 
     await expect(auth.login('alex@example.com', 'wrong', false)).rejects.toThrow('Login failed: 401');
     expect(mockCornea.initialize).not.toHaveBeenCalled();
+  });
+
+  it('rejects with a SocketOpenError carrying the reason when the socket fails to open', async () => {
+    const reason = new Event('error');
+    mockCornea.initialize.mockRejectedValueOnce(reason);
+
+    const login = auth.login('alex@example.com', 'secret', false);
+
+    await expect(login).rejects.toBeInstanceOf(SocketOpenError);
+    await expect(login).rejects.toMatchObject({ reason });
+  });
+});
+
+describe('auth.loginWithPasskey', () => {
+  it('tears down any existing socket before the passkey login, then connects', async () => {
+    await auth.loginWithPasskey(false);
+
+    expect(mockCornea.cleanup).toHaveBeenCalled();
+    expect(mockCornea.cleanup.mock.invocationCallOrder[0])
+      .toBeLessThan(mockPasskeyLogin.mock.invocationCallOrder[0]);
+    expect(mockPasskeyLogin.mock.invocationCallOrder[0])
+      .toBeLessThan(mockCornea.initialize.mock.invocationCallOrder[0]);
+    expect(mockCornea.initialize).toHaveBeenCalledWith('wss://platform.test/websocket?v=1.0');
+  });
+
+  it('passes the public computer flag', async () => {
+    await auth.loginWithPasskey(true);
+
+    expect(mockPasskeyLogin).toHaveBeenCalledWith(true);
+  });
+
+  it('attaches the session handlers itself', async () => {
+    const onSuccess = listen('authentication:success');
+
+    await auth.loginWithPasskey(false);
+    mockCornea.emit('SessionCreated', SESSION);
+
+    expect(mockCornea.listeners('SessionCreated')).toHaveLength(1);
+    expect(mockCornea.listeners('WebSocketClosed')).toHaveLength(1);
+    expect(onSuccess).toHaveBeenCalledWith(SESSION);
+    expect(auth.authenticated).toBe(true);
+  });
+
+  it('rejects with the passkey error without opening a socket', async () => {
+    const error = new DOMException('closed', 'NotAllowedError');
+    mockPasskeyLogin.mockRejectedValueOnce(error);
+
+    await expect(auth.loginWithPasskey(false)).rejects.toBe(error);
+    expect(mockCornea.initialize).not.toHaveBeenCalled();
+    expect(auth.active.auth).toBe(false);
+  });
+
+  it('rejects with a SocketOpenError when the passkey is accepted but the socket fails to open', async () => {
+    mockCornea.initialize.mockRejectedValueOnce(new Error('Connection closed before it opened'));
+
+    await expect(auth.loginWithPasskey(false)).rejects.toBeInstanceOf(SocketOpenError);
   });
 });
 

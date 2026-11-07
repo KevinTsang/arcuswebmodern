@@ -30,6 +30,9 @@ export const HUB_ID = 'LWF-1234';
 
 export const LOGIN = { email: 'alex@example.com', password: 'Password1' };
 
+/** The credential id of the passkey registered for the signed-in person. */
+export const PASSKEY_ID = 'passkey-alex';
+
 export const addr = {
   place: `SERV:place:${PLACE_ID}`,
   lakePlace: `SERV:place:${LAKE_PLACE_ID}`,
@@ -601,6 +604,7 @@ export function createFixture(): PlatformData {
 
   return {
     login: { ...LOGIN },
+    passkeys: [PASSKEY_ID],
     personId: PERSON_ID,
     placeId: PLACE_ID,
     accountId: ACCOUNT_ID,

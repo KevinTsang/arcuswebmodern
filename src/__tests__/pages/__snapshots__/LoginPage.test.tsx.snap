@@ -152,7 +152,7 @@ exports[`LoginPage matches snapshot 1`] = `
           </label>
         </div>
         <div
-          class="flex items-center gap-4 mb-6"
+          class="flex flex-wrap items-center gap-4 mb-6"
         >
           <button
             class="bg-peacock text-crane px-6 py-2.5 rounded-[var(--border-radius-base)] hover:opacity-90 transition-opacity disabled:opacity-50"

@@ -111,6 +111,8 @@ export interface KitDeviceFixture {
 export interface PlatformData {
   /** Credentials accepted by `POST /login`. */
   login: { email: string; password: string };
+  /** Credential ids of the passkeys accepted by `POST /passkey/Login`. */
+  passkeys: string[];
   personId: string;
   placeId: string;
   accountId: string;

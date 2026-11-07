@@ -2,7 +2,7 @@
 //
 // Wires the app to the in-browser fake platform:
 //   - `window:before:load` routes the app's platform WebSocket to the engine
-//   - a `cy.intercept` answers the REST bridge (`/login`, `/logout`, `/<ns>/<Command>`)
+//   - a `cy.intercept` answers the REST bridge (`/login`, `/logout`, `/passkey/*`, `/<ns>/<Command>`)
 //   - every test starts from a pristine fixture and removes what it created afterwards
 
 import './commands';
@@ -29,6 +29,16 @@ beforeEach(() => {
       const params = new URLSearchParams(body);
       const ok = platform.login(params.get('user') ?? '', params.get('password') ?? '');
       req.reply({ statusCode: ok ? 200 : 401, body: ok ? { status: 'success' } : { status: 'error' } });
+      return;
+    }
+    // Passkey login: plain JSON bodies, not envelopes.
+    if (path.endsWith('/passkey/LoginOptions')) {
+      req.reply({ statusCode: 200, body: platform.passkeyLoginOptions() });
+      return;
+    }
+    if (path.endsWith('/passkey/Login') && isPasskeyLogin(body)) {
+      const ok = platform.passkeyLogin(body.requestId, body.credential.id, body.public);
+      req.reply({ statusCode: ok ? 200 : 401, body: ok ? {} : { error: 'Unable to log in with that passkey' } });
       return;
     }
     if (path.endsWith('/logout') && !isNextRequest(req.headers)) {
@@ -70,6 +80,18 @@ function isEnvelope(body: unknown): body is RequestEnvelope {
   return !!body && typeof body === 'object'
     && typeof (body as RequestEnvelope).type === 'string'
     && typeof (body as RequestEnvelope).payload === 'object';
+}
+
+interface PasskeyLoginBody {
+  requestId: string;
+  credential: { id: string };
+  public: boolean;
+}
+
+function isPasskeyLogin(body: unknown): body is PasskeyLoginBody {
+  return !!body && typeof body === 'object'
+    && typeof (body as PasskeyLoginBody).requestId === 'string'
+    && typeof (body as PasskeyLoginBody).credential?.id === 'string';
 }
 
 function isNextRequest(headers: Record<string, string | string[]>): boolean {

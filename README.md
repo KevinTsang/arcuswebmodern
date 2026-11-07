@@ -106,3 +106,14 @@ npm run lint          # ESLint
 Requires an `/etc/hosts` entry for `localhost.myDevUrl.com:8443` and local TLS certs
 — see [`testing.md`](./testing.md) for setup, containerized (Docker + Caddy)
 testing, and pointing the client at a different backend.
+
+## Passkeys
+
+People can log in with a passkey instead of their password. The login page offers
+it only when the app is built with `NEXT_PUBLIC_ENABLE_PASSKEYS=1` and the browser
+supports passkeys. Set it only when the platform's client-bridge has `passkey.rp.id`
+set (see "Passkeys" in arcusplatform's `docs/security.md`). Passkeys are bound to
+that domain, so the app must be served from it or one of its subdomains, and its
+origin must be listed in `passkey.origins`. Container images can't turn it on yet
+(see PRD §1). Adding and removing passkeys isn't in this app yet; use the legacy
+web app's Settings > Profile.

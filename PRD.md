@@ -13,6 +13,8 @@ Status legend: **Done** = fully implemented, **Partial** = core flow works but m
 | Feature | Legacy | Modern | Status |
 |---------|--------|--------|--------|
 | Email/password login | Yes | Yes | **Done** |
+| Passkey login | Yes | Yes (login page, behind `NEXT_PUBLIC_ENABLE_PASSKEYS`) | **Done** |
+| Passkey management (add / rename / remove) | Yes (Settings > Profile) | No | **Missing** |
 | "Public computer" session flag | Yes | Yes | **Done** |
 | Password reset (email flow) | Yes | Yes (3-step) | **Done** |
 | Create account wizard | Yes (multi-step) | Yes (4-step: credentials, address, PIN, welcome) | **Done** |
@@ -23,6 +25,9 @@ Status legend: **Done** = fully implemented, **Partial** = core flow works but m
 ### Gaps
 
 - ~~**Bug:** No automatic logout when the platform session is too old.~~ **DONE.** `corneaMiddleware` now bridges the platform `sess:SessionExpired` event to `sessionExpired()` and tears down the socket, so AuthProvider redirects to `/login?expired=1` (4001 close / `error.unauthorized` responses were already handled via `sess unauthorized`).
+- **Passkey login** — **DONE.** The login page offers "Log In With a Passkey" beside Login when the build sets `NEXT_PUBLIC_ENABLE_PASSKEYS=1` and the browser can parse WebAuthn JSON options. `passkeyLoginThunk` runs `auth.loginWithPasskey()` (`/passkey/LoginOptions` → browser prompt → `/passkey/Login`, which sets the session cookie) and then the same `sessionFlow` as password login, honoring the public-computer flag. Failures are classified (cancelled, no passkey, unavailable, rate-limited, rejected, server, network, connection) so the page explains them as the legacy client does; a cancelled prompt shows nothing.
+- **Passkey management** — Settings > Profile in the legacy client lists, adds and removes passkeys (`/passkey/RegisterOptions`, `/passkey/Register`, `/passkey/List`, `/passkey/Delete`). Not ported yet; the endpoints can go in `packages/arcus-core/src/passkey.ts` beside login.
+- Passkeys are a build-time flag (`NEXT_PUBLIC_ENABLE_PASSKEYS`, read in `usePasskeyLoginAvailable`), so container images can't turn them on yet. The drop-in ui-server image (#34) bakes in no flags and writes only the platform URLs to `server.json`; once it lands, write `enablePasskeys` from `ARCUS_ENABLE_PASSKEYS` there, as the legacy ui-server does, and have the hook read it.
 - Session / WebSocket persistence between the deployed dev client and the locally running `arcuswebmodern` instance, so switching between them reuses the same platform session instead of forcing re-authentication.
 
 ---

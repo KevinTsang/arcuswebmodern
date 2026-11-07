@@ -7,6 +7,7 @@
 
 import cornea from './cornea';
 import { getConfig } from './config';
+import { passkeyLogin } from './passkey';
 
 type AuthEvent =
   | 'authentication:success'
@@ -15,6 +16,14 @@ type AuthEvent =
   | 'connection:lost';
 
 type AuthListener = (data?: any) => void;
+
+/** A login set the session cookie, but the WebSocket then failed to open. */
+export class SocketOpenError extends Error {
+  constructor(readonly reason: Event | Error) {
+    super('Unable to open the WebSocket connection');
+    this.name = 'SocketOpenError';
+  }
+}
 
 function attachOnce(event: string, listener: (...args: any[]) => void): void {
   const listeners = cornea.listeners(event);
@@ -74,39 +83,58 @@ class Auth {
     }
   }
 
-  async login(
+  login(
     username: string,
     password: string,
     isPublic: boolean,
   ): Promise<void> {
+    return this.connectAfter(async () => {
+      const config = getConfig();
+      const url = `${config.apiUrl.replace(/\/+$/, '')}/login`;
+
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'X-Client-Version': config.version,
+        },
+        credentials: 'include',
+        body: new URLSearchParams({
+          user: username,
+          password,
+          public: isPublic ? 'true' : 'false',
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Login failed: ${response.status}`);
+      }
+    });
+  }
+
+  /**
+   * Log in with one of the person's passkeys, which the browser prompts for.
+   * Rejects as passkeyLogin() does, without opening a socket.
+   */
+  loginWithPasskey(isPublic: boolean): Promise<void> {
+    return this.connectAfter(() => passkeyLogin(isPublic));
+  }
+
+  /** Run a login request that sets the session cookie, then open the socket. */
+  private async connectAfter(loginRequest: () => Promise<void>): Promise<void> {
     // Start from a clean slate: logging in again makes the platform end any
     // existing session, and that socket's close must not reach this attempt.
     this.reset();
     attachOnce('SessionCreated', this.onSessionCreated);
     attachOnce('WebSocketClosed', this.onWebSocketClosed);
 
-    const config = getConfig();
-    const url = `${config.apiUrl.replace(/\/+$/, '')}/login`;
+    await loginRequest();
 
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'X-Client-Version': config.version,
-      },
-      credentials: 'include',
-      body: new URLSearchParams({
-        user: username,
-        password,
-        public: isPublic ? 'true' : 'false',
-      }),
+    // The login was accepted, so failing to connect now is a server or
+    // network problem. Cornea rejects with a bare event, so say which.
+    const promise = this.startCornea().catch((reason: Event | Error) => {
+      throw new SocketOpenError(reason);
     });
-
-    if (!response.ok) {
-      throw new Error(`Login failed: ${response.status}`);
-    }
-
-    const promise = this.startCornea();
     this.active = { auth: true, promise };
     return promise;
   }

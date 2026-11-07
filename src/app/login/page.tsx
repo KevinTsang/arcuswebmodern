@@ -15,8 +15,11 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { loginThunk } from '@/store/thunks/loginThunk';
+import { passkeyLoginThunk } from '@/store/thunks/passkeyLoginThunk';
 import { loadPlaceDataThunk } from '@/store/thunks/loadPlaceDataThunk';
 import { useFormValidation, type ValidationConstraints } from '@/hooks/useFormValidation';
+import { usePasskeyLoginAvailable } from '@/hooks/usePasskeyLoginAvailable';
+import { isPasskeyLoginFailure, passkeyLoginErrorMessage } from '@/lib/passkeyLoginFailure';
 import { EMAIL_RULE, NEW_PASSWORD_RULE, confirmPasswordRule } from '@/lib/validationRules';
 import { PersonService } from '@arcus/core/services';
 import { ArcusLogo } from '@/components/shared/ArcusLogo';
@@ -60,12 +63,29 @@ function LoginForm() {
   const [password, setPassword] = useState('');
   const [isPublic, setIsPublic] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [waitingForPasskey, setWaitingForPasskey] = useState(false);
+  const passkeyAvailable = usePasskeyLoginAvailable();
+  const busy = saving || waitingForPasskey;
 
   const form = useFormValidation(LOGIN_CONSTRAINTS);
+
+  /** Load the signed-in place and leave the login page. */
+  const enterApp = useCallback(
+    async (placeId: string | undefined) => {
+      // SetActivePlace + cookie already handled inside the login thunks
+      if (placeId) {
+        await dispatch(loadPlaceDataThunk(placeId)).unwrap();
+      }
+
+      router.replace(takeNextPage());
+    },
+    [dispatch, router],
+  );
 
   const handleSubmit = useCallback(
     async (ev: FormEvent) => {
       ev.preventDefault();
+      if (busy) return;
       const values = { emailAddress, password };
       if (!form.formValidates(['emailAddress', 'password'], values)) return;
 
@@ -81,19 +101,29 @@ function LoginForm() {
           }),
         ).unwrap();
 
-        // SetActivePlace + cookie already handled inside loginThunk
-        if (result.placeId) {
-          await dispatch(loadPlaceDataThunk(result.placeId)).unwrap();
-        }
-
-        router.replace(takeNextPage());
+        await enterApp(result.placeId);
       } catch {
         setSaving(false);
         form.setFormError('Invalid username or password');
       }
     },
-    [emailAddress, password, isPublic, dispatch, router, form],
+    [busy, emailAddress, password, isPublic, dispatch, enterApp, form],
   );
+
+  const handlePasskeyLogin = useCallback(async () => {
+    if (busy) return;
+    setWaitingForPasskey(true);
+    form.setFormError(null);
+
+    try {
+      const result = await dispatch(passkeyLoginThunk({ isPublic })).unwrap();
+      await enterApp(result.placeId);
+    } catch (failure) {
+      setWaitingForPasskey(false);
+      // Anything else is from loading the place after signing in.
+      form.setFormError(passkeyLoginErrorMessage(isPasskeyLoginFailure(failure) ? failure : 'unknown'));
+    }
+  }, [busy, isPublic, dispatch, enterApp, form]);
 
   return (
     <form onSubmit={handleSubmit} className="w-full max-w-sm">
@@ -171,15 +201,26 @@ function LoginForm() {
         </label>
       </div>
 
-      <div className="flex items-center gap-4 mb-6">
+      <div className="flex flex-wrap items-center gap-4 mb-6">
         <button
           type="submit"
           data-testid="login-submit"
-          disabled={saving}
+          disabled={busy}
           className="bg-peacock text-crane px-6 py-2.5 rounded-[var(--border-radius-base)] hover:opacity-90 transition-opacity disabled:opacity-50"
         >
           {saving ? 'Logging In...' : 'Login'}
         </button>
+        {passkeyAvailable && (
+          <button
+            type="button"
+            data-testid="passkey-login"
+            onClick={handlePasskeyLogin}
+            disabled={busy}
+            className="bg-heron text-swift px-6 py-2.5 rounded-[var(--border-radius-base)] border border-grouse hover:bg-crane transition-colors disabled:opacity-50"
+          >
+            {waitingForPasskey ? 'Waiting for Passkey...' : 'Log In With a Passkey'}
+          </button>
+        )}
         <Link
           href="/create-account"
           className="bg-heron text-swift px-6 py-2.5 rounded-[var(--border-radius-base)] border border-grouse hover:bg-crane transition-colors"
