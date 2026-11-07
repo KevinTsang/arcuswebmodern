@@ -124,7 +124,18 @@ describe('SubsystemPage – static params', () => {
         { subsystem: 'water', action: ['status'] },
       ]),
     );
-    // Every entry defaults to the status action.
-    expect(params.every((p) => p.action[0] === 'status')).toBe(true);
+  });
+
+  it('includes the bare subsystem path for every visible subsystem', () => {
+    const params = generateStaticParams();
+    const bare = params.filter((p) => p.action.length === 0).map((p) => p.subsystem);
+    const withStatus = params.filter((p) => p.action[0] === 'status').map((p) => p.subsystem);
+    expect(bare).toEqual(withStatus);
+  });
+
+  it('includes the alarm settings tab, and no extra tabs elsewhere', () => {
+    const params = generateStaticParams();
+    const extra = params.filter((p) => p.action.length > 0 && p.action[0] !== 'status');
+    expect(extra).toEqual([{ subsystem: 'alarms', action: ['settings'] }]);
   });
 });

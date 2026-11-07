@@ -17,10 +17,10 @@ import { waitForSession, completeSession, SessionStepError } from '../utils/sess
 export const authenticateThunk = createAsyncThunk(
   'auth/authenticate',
   async (_, { dispatch }) => {
-    initializeCoreConfig();
     dispatch(setAuthenticating(true));
 
     try {
+      await initializeCoreConfig();
       const session = await waitForSession(() => auth.authenticate(), 'No valid session');
       const placeId = await completeSession(session, dispatch);
       return { session, placeId };

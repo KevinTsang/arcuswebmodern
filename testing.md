@@ -323,8 +323,9 @@ expect(jest.getTimerCount()).toBe(0);
 
 ## Containerized Testing
 
-Runs a production build of the app in Docker against the dev platform, mirroring
-`npm run dev`'s hostname/HTTPS setup so the platform session cookie keeps working.
+Runs the production images (see [README → Docker images](./README.md#docker-images)) in
+Docker against the dev platform, mirroring `npm run dev`'s hostname/HTTPS setup so the
+platform session cookie keeps working.
 
 ### Prerequisites
 
@@ -334,64 +335,64 @@ Runs a production build of the app in Docker against the dev platform, mirroring
 - An `/etc/hosts` entry so the same-site hostname resolves locally:
 
   ```
-  127.0.0.1  localdev.myDevUrl.com
+  127.0.0.1  localdev.example.com
   ```
 
-- TLS certs at `certs/cert.pem` / `certs/key.pem` covering `localdev.myDevUrl.com`
+- TLS certs at `certs/cert.pem` / `certs/key.pem` covering `localdev.example.com`
   (the same certs `npm run dev` uses; gitignored, kept locally).
+
+`example.com` stands for your platform's domain: replace it here and in `package.json`'s
+`dev` script, `Caddyfile` and `docker-compose.yml`. The page must be same-site with the
+platform, or its auth cookie isn't sent (see [Authentication](#authentication)).
 
 ### Run it
 
 ```bash
-docker compose up --build -d     # build image + start app (web) and TLS proxy (proxy)
-docker compose logs -f           # tail both services
+docker compose up --build -d     # build the image + start app (ui) and TLS proxy (proxy)
+docker compose logs -f           # tail all services
 docker compose down              # stop and remove containers
 ```
 
-Then open **https://localdev.myDevUrl.com:8443** (accept the self-signed cert once)
+Then open **https://localdev.example.com:8443** (accept the self-signed cert once)
 and sign in on **/login**.
 
 ### How it fits together
 
 | Piece | Role |
 |-------|------|
-| `Dockerfile` | Multi-stage build → Next.js `standalone` server on HTTP `:3000` |
-| `docker-compose.yml` | `web` (the app) + `proxy` (Caddy) on one network |
-| `Caddyfile` | Terminates HTTPS at `localdev.myDevUrl.com:8443`, reverse-proxies to `web:3000` |
+| `docker/ui-server/` | Static export of the app served by nginx on HTTP `:8096` |
+| `docker-compose.yml` | `ui` + `proxy` (Caddy) on one network |
+| `Caddyfile` | Terminates HTTPS at `localdev.example.com:8443`, reverse-proxies to `ui:8096` |
 
 The browser loads the app over HTTPS from the same-site hostname; platform API/WebSocket
-traffic goes **directly** from the browser to `client.dev.myDevUrl.com` (there are no
+traffic goes **directly** from the browser to `client.dev.example.com` (there are no
 rewrites in `next.config.ts`), so Caddy only serves the app itself.
 
 ### Authentication
 
 The client talks to the platform over a **browser WebSocket**, which can't carry a custom
 auth header — the only credential it can send is the `irisAuthToken` cookie. That cookie is
-scoped to `.myDevUrl.com` and `SameSite`, so it is attached to the WebSocket handshake
+scoped to `.example.com` and `SameSite`, so it is attached to the WebSocket handshake
 **only** when the page is loaded over HTTPS from a same-site host. That is why both
-`npm run dev` and this container serve from `localdev.myDevUrl.com` rather than
-`localhost` — loading from `localhost` (e.g. plain `next start`) is cross-site and the cookie
+`npm run dev` and this container serve from `localdev.example.com` rather than
+`localhost` — loading from `localhost` (e.g. the `ui` container on its own) is cross-site and the cookie
 is silently withheld, bouncing you to `/login`.
 
 To authenticate, use the **/login** page: it POSTs credentials to the platform, which sets
-`irisAuthToken` for you. (You can also paste a still-valid token onto the `.myDevUrl.com`
+`irisAuthToken` for you. (You can also paste a still-valid token onto the `.example.com`
 domain in DevTools, but scripted login is more robust.)
 
 ### Pointing at a different backend
 
-`NEXT_PUBLIC_*` values are **inlined into the browser bundle at build time**, not read at
-runtime — so `docker run -e ...` won't change them. Override them as build args and rebuild:
+The image reads the platform URLs when the container starts, from the same `ARCUS_*`
+variables as the legacy ui-server. Change them under `ui.environment` in
+`docker-compose.yml` and recreate the container — no rebuild needed:
 
 ```bash
-docker compose build \
-  --build-arg NEXT_PUBLIC_API_URL=https://client.dev.myDevUrl.com \
-  --build-arg NEXT_PUBLIC_WS_URL=wss://client.dev.myDevUrl.com \
-  --build-arg NEXT_PUBLIC_REDIRECT_URL=https://client.dev.myDevUrl.com
-docker compose up -d
+docker compose up -d ui
 ```
 
-Defaults are set in both `docker-compose.yml` (`web.build.args`) and the `Dockerfile`
-(`ARG` lines). A plain `docker compose restart` will **not** pick up new URLs — you must rebuild.
+(`npm run dev` still takes its URLs from the `NEXT_PUBLIC_*` values in `.env.local`.)
 
 ## End-to-End Tests
 
@@ -419,7 +420,7 @@ npx cypress run --spec cypress/e2e/scenes.cy.ts   # a single spec
 
 `dev:e2e` points `NEXT_PUBLIC_API_URL` / `NEXT_PUBLIC_WS_URL` at `localhost:3000`
 so platform traffic stays same-origin and is fully intercepted; the normal
-`npm run dev` (HTTPS on `localdev.arcus.wl-net.net`) is **not** used for E2E.
+`npm run dev` (HTTPS on `localdev.example.com`) is **not** used for E2E.
 
 ### How the fake platform works
 

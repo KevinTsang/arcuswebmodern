@@ -614,6 +614,26 @@ This is a new feature in the modern client with no legacy equivalent.
 
 ---
 
+## 26. Deployment (Docker Images)
+
+| Feature | Legacy | Modern | Status |
+|---------|--------|--------|--------|
+| `ui-server` image (nginx, `:8096`) | Yes | Yes (`docker/ui-server`: Next static export served by nginx) | **Done** |
+| `static-server` image (nginx, `:8097`, device/brand images) | Yes | No (the legacy image is still deployed) | **Missing** |
+| Platform URLs set at runtime from `ARCUS_HTTP_URI` / `ARCUS_WS_URI` | Yes (`server.json`) | Yes (same `server.json` path and keys, read by `initializeCoreConfig`) | **Done** |
+| Runs read-only as uid 1000 under the arcus-k8s mounts and limits | Yes | Yes | **Done** |
+| Browsers still running the legacy page move to this client | — | Yes (legacy `/build/dist/*.js` bundle requests get a script that reloads the page once) | **Done** |
+| Build / tag / push | Yes (gradle `:tools:khakis:pushDocker`) | Yes (`docker/bin/build.sh [--push]`) | **Done** |
+| CI image publishing | No | No | **Missing** |
+
+### Gaps
+
+- `server.json` holds only the two platform URLs. `run-nginx` ignores legacy's `ARCUS_REDIRECT_URI`, `ARCUS_ENABLE_HUB_WIFI_SCAN`, `ARCUS_ENABLE_BATTERY_PERCENTAGE`, `ARCUS_ENABLE_YEARLY_SUBSCRIPTION`, `ARCUS_IOS_DOWNLOAD_URI` and `ARCUS_ANDROID_DOWNLOAD_URI`. Nothing in this client reads them, and battery percentages are always shown (legacy showed them only with the flag on, which arcus-k8s sets). When a feature needs one (hub WiFi scan, billing, app download links), add its key to `run-nginx`, `ServerConfig` and `ArcusCoreConfig` together. A `NEXT_PUBLIC_*` value won't do, because the image bakes none in.
+- No workflow builds and pushes the image. For now it is published by hand with `docker/bin/build.sh --push`.
+- **TODO — static-server:** arcus-k8s points `staticResourceBaseUrl`, `secureStaticResourceBaseUrl` and the notification service's resource URL at `static-server`, which still runs the legacy arcusweb image (Iris brand logo and 22 device-type icons). The mobile apps, legacy web and platform emails also request catalog product and pairing-step images, customization and action images, more brand logos and device types, and the email/invoice assets (`o/res_templates`). Those exist in the old Iris resource root (about 120 MB once unused parts are dropped) but aren't in any repo. Decide where they live (licensing, and whether a 120 MB set belongs in this repo, a separate repo or a private bucket), then build a replacement image.
+
+---
+
 ## Priority Summary
 
 ### Tier 1 — High-Impact Gaps (Core Smart Home Functionality)

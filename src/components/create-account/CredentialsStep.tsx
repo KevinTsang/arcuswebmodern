@@ -33,7 +33,7 @@ export default function CredentialsStep() {
       dispatch(clearError());
 
       try {
-        initializeCoreConfig();
+        await initializeCoreConfig();
 
         const result = await AccountService.CreateAccount({
           email,
