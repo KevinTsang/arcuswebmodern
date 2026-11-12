@@ -33,7 +33,7 @@ beforeEach(() => jest.clearAllMocks());
 
 describe('SearchingStage – device search', () => {
   it('matches snapshot', () => {
-    const { container } = render(
+    const { asFragment } = render(
       <SearchingStage
         {...defaultProps}
         product={mockProduct}
@@ -41,7 +41,7 @@ describe('SearchingStage – device search', () => {
         earlierDevices={[makePairingDevice('lock', PairingDevice.PAIRINGSTATE_MISPAIRED)]}
       />,
     );
-    expect(container.firstChild).toMatchSnapshot();
+    expect(asFragment()).toMatchSnapshot();
   });
 
   it('shows "Searching for Device" heading', () => {
@@ -116,8 +116,8 @@ describe('SearchingStage – search timed out', () => {
 
 describe('SearchingStage – search failed', () => {
   it('matches snapshot', () => {
-    const { container } = render(<SearchingStage {...defaultProps} searchFailed />);
-    expect(container.firstChild).toMatchSnapshot();
+    const { asFragment } = render(<SearchingStage {...defaultProps} searchFailed />);
+    expect(asFragment()).toMatchSnapshot();
   });
 
   it('replaces the spinner with a failure message', () => {

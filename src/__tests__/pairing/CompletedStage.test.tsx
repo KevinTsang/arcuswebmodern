@@ -18,8 +18,8 @@ beforeEach(() => jest.clearAllMocks());
 
 describe('CompletedStage – successful device pairing', () => {
   it('matches snapshot', () => {
-    const { container } = render(<CompletedStage {...defaultProps} />);
-    expect(container.firstChild).toMatchSnapshot();
+    const { asFragment } = render(<CompletedStage {...defaultProps} />);
+    expect(asFragment()).toMatchSnapshot();
   });
 
   it('disables Go to Devices and Pair Another while one of them is under way', () => {

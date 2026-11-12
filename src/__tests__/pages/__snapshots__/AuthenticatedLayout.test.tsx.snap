@@ -1,26 +1,28 @@
 // Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
 
 exports[`AuthenticatedLayout – rendering matches snapshot 1`] = `
-<div
-  class="min-h-screen flex flex-col"
->
-  <header
-    data-testid="header"
-  />
+<DocumentFragment>
   <div
-    data-testid="alarm-banner"
-  />
-  <div
-    data-testid="invitation-banner"
-  />
-  <main
-    class="flex-1"
+    class="min-h-screen flex flex-col"
   >
+    <header
+      data-testid="header"
+    />
     <div
-      data-testid="page"
+      data-testid="alarm-banner"
+    />
+    <div
+      data-testid="invitation-banner"
+    />
+    <main
+      class="flex-1"
     >
-      Page
-    </div>
-  </main>
-</div>
+      <div
+        data-testid="page"
+      >
+        Page
+      </div>
+    </main>
+  </div>
+</DocumentFragment>
 `;

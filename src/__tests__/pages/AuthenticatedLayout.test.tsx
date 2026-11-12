@@ -81,8 +81,8 @@ beforeEach(() => {
 
 describe('AuthenticatedLayout – rendering', () => {
   it('matches snapshot', () => {
-    const { container } = renderLayout();
-    expect(container.firstChild).toMatchSnapshot();
+    const { asFragment } = renderLayout();
+    expect(asFragment()).toMatchSnapshot();
   });
 
   it('renders the header, banners and page once place data is ready', () => {

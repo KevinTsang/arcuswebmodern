@@ -10,8 +10,8 @@ const makeDevice = (state: string, phase: string) => ({
 
 describe('DeviceStateRow', () => {
   it('matches snapshot', () => {
-    const { container } = render(<DeviceStateRow device={makeDevice('PAIRING', 'JOIN')} />);
-    expect(container.firstChild).toMatchSnapshot();
+    const { asFragment } = render(<DeviceStateRow device={makeDevice('PAIRING', 'JOIN')} />);
+    expect(asFragment()).toMatchSnapshot();
   });
 
   it('labels a device left from an earlier pairing', () => {

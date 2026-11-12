@@ -28,8 +28,8 @@ beforeEach(() => jest.clearAllMocks());
 
 describe('CustomizeStage – device pairing', () => {
   it('matches snapshot', () => {
-    const { container } = render(<CustomizeStage {...defaultProps} product={mockProduct} />);
-    expect(container.firstChild).toMatchSnapshot();
+    const { asFragment } = render(<CustomizeStage {...defaultProps} product={mockProduct} />);
+    expect(asFragment()).toMatchSnapshot();
   });
 
   it('disables Save & Finish while the customization is saving', () => {

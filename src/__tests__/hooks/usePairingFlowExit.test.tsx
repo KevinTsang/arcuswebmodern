@@ -1,5 +1,5 @@
 import { StrictMode, type ReactNode } from 'react';
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { configureStore, isAction, type Middleware } from '@reduxjs/toolkit';
 import { PairingDevice, PairingSubsystem } from '@arcus/core';
@@ -113,11 +113,6 @@ function requestsSent(): Array<[string, string]> {
 
 function commandsSent(command: string): number {
   return mockBridgeRequest.mock.calls.filter(([c]) => c === command).length;
-}
-
-/** Let the fire-and-forget requests settle. */
-async function flush() {
-  await act(async () => {});
 }
 
 /** A Bridge response the test resolves or rejects by hand. */
@@ -323,9 +318,9 @@ describe('usePairingFlowExit – failures', () => {
     const { navigate } = renderAt('/pairing', store);
 
     navigate('/home');
-    await flush();
 
-    expect(warn).toHaveBeenCalledWith(expect.stringContaining(PairingSubsystem.CMD_DISMISSALL), error);
+    await waitFor(() =>
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining(PairingSubsystem.CMD_DISMISSALL), error));
     expect(actionsSeen).not.toContain('ui/addNotification');
     expect(store.getState().pairing.flow).toBeNull();
   });
@@ -339,59 +334,58 @@ describe('usePairingFlowExit – failures', () => {
     const { navigate } = renderAt('/pairing', store);
 
     navigate('/home');
-    await flush();
 
-    expect(warn).toHaveBeenCalledWith(expect.stringContaining(PairingSubsystem.CMD_STOPSEARCHING), error);
+    await waitFor(() =>
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining(PairingSubsystem.CMD_STOPSEARCHING), error));
     expect(commandsSent(PairingSubsystem.CMD_DISMISSALL)).toBe(1);
     expect(store.getState().pairing.flow).toBeNull();
   });
 });
 
 describe('usePairingFlowExit – with the pairing pages', () => {
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
   it('sends DismissAll once when the user leaves while Go to Devices is finishing', async () => {
     jest.useFakeTimers();
-    try {
-      // The snapshot is empty, then the search pairs the motion sensor.
-      let lists = 0;
-      const dismissAll = deferred();
-      mockBridgeRequest.mockImplementation((command: string) => {
-        if (command === PairingSubsystem.CMD_LISTPAIRINGDEVICES) {
-          lists += 1;
-          return Promise.resolve({ devices: lists === 1 ? [] : [motionSensor] });
-        }
-        if (command === PairingSubsystem.CMD_DISMISSALL) return dismissAll.promise;
-        return Promise.resolve({});
-      });
-      const store = makeStore(null);
-      const { navigate } = renderAt('/pairing', store, <PairingPage />);
+    // The snapshot is empty, then the search pairs the motion sensor.
+    let lists = 0;
+    const dismissAll = deferred();
+    mockBridgeRequest.mockImplementation((command: string) => {
+      if (command === PairingSubsystem.CMD_LISTPAIRINGDEVICES) {
+        lists += 1;
+        return Promise.resolve({ devices: lists === 1 ? [] : [motionSensor] });
+      }
+      if (command === PairingSubsystem.CMD_DISMISSALL) return dismissAll.promise;
+      return Promise.resolve({});
+    });
+    const store = makeStore(null);
+    const { navigate } = renderAt('/pairing', store, <PairingPage />);
 
-      // Search, find the motion sensor on the first poll, and save its customization.
-      await act(async () => {
-        await jest.advanceTimersByTimeAsync(3000);
-      });
-      expect(store.getState().pairing.stage).toBe('customize');
-      await act(async () => {
-        await capturedCustomizeProps!.onCustomize();
-      });
-      expect(store.getState().pairing.stage).toBe('completed');
+    // Search, find the motion sensor on the first poll, and save its customization.
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(3000);
+    });
+    expect(store.getState().pairing.stage).toBe('customize');
+    await act(async () => {
+      await capturedCustomizeProps!.onCustomize();
+    });
+    expect(store.getState().pairing.stage).toBe('completed');
 
-      // Go to Devices, then a header link while its DismissAll is in flight.
-      let finish: Promise<void> = Promise.resolve();
-      act(() => {
-        finish = capturedCompletedProps!.onFinish();
-      });
-      navigate('/home');
-      dismissAll.resolve({});
-      await act(async () => {
-        await finish;
-      });
+    // Go to Devices, then a header link while its DismissAll is in flight.
+    let finish: Promise<void> = Promise.resolve();
+    act(() => {
+      finish = capturedCompletedProps!.onFinish();
+    });
+    navigate('/home');
+    dismissAll.resolve({});
+    await act(async () => {
+      await finish;
+    });
 
-      expect(commandsSent(PairingSubsystem.CMD_DISMISSALL)).toBe(1);
-      expect(store.getState().pairing.flow).toBeNull();
-    } finally {
-      jest.clearAllTimers();
-      jest.useRealTimers();
-    }
+    expect(commandsSent(PairingSubsystem.CMD_DISMISSALL)).toBe(1);
+    expect(store.getState().pairing.flow).toBeNull();
   });
 
   it('sends DismissAll once when the user leaves while Kit Activation is finishing', async () => {
@@ -409,9 +403,8 @@ describe('usePairingFlowExit – with the pairing pages', () => {
 
     fireEvent.click(await screen.findByTestId('kit-finish'));
     navigate('/home');
-    await act(async () => {
-      dismissAll.resolve({});
-    });
+    dismissAll.resolve({});
+    await act(() => dismissAll.promise);
 
     expect(commandsSent(PairingSubsystem.CMD_DISMISSALL)).toBe(1);
     expect(store.getState().pairing.flow).toBeNull();

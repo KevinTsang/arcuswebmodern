@@ -166,6 +166,7 @@ async function nextPoll() {
 
 beforeEach(() => {
   jest.clearAllMocks();
+  mockBridgeRequest.mockResolvedValue({});
   capturedStepsProps = {};
   capturedSearchingProps = {};
   capturedCustomizeProps = {};
@@ -196,6 +197,7 @@ beforeEach(() => {
 afterEach(() => {
   warnSpy?.mockRestore();
   warnSpy = undefined;
+  jest.useRealTimers();
 });
 
 // ── Tests ─────────────────────────────────────────────────────────────
@@ -303,7 +305,6 @@ describe('PairingPage – lifecycle', () => {
   it('calls StopSearching on unmount when pairing subsystem is available', () => {
     const pairingSubAddr = 'SERV:subpairing:place-1';
     mockSubsystems = { [pairingSubAddr]: { id: pairingSubAddr, [Base.ATTR_ADDRESS]: pairingSubAddr } };
-    mockBridgeRequest.mockResolvedValue({});
 
     const { unmount } = render(<PairingPage />);
     mockBridgeRequest.mockClear();
@@ -319,7 +320,6 @@ describe('PairingPage – lifecycle', () => {
   it('calls StopSearching on beforeunload when pairing subsystem is available', () => {
     const pairingSubAddr = 'SERV:subpairing:place-1';
     mockSubsystems = { [pairingSubAddr]: { id: pairingSubAddr, [Base.ATTR_ADDRESS]: pairingSubAddr } };
-    mockBridgeRequest.mockResolvedValue({});
 
     render(<PairingPage />);
     mockBridgeRequest.mockClear();
@@ -335,7 +335,6 @@ describe('PairingPage – lifecycle', () => {
   it('removes beforeunload listener on unmount', () => {
     const pairingSubAddr = 'SERV:subpairing:place-1';
     mockSubsystems = { [pairingSubAddr]: { id: pairingSubAddr, [Base.ATTR_ADDRESS]: pairingSubAddr } };
-    mockBridgeRequest.mockResolvedValue({});
 
     const { unmount } = render(<PairingPage />);
     unmount();
@@ -475,7 +474,7 @@ describe('PairingPage – error handling', () => {
     };
     sessionStorage.setItem('pairing:product', JSON.stringify(product));
     mockPairingState = { ...mockPairingState, product };
-    mockBridgeRequest.mockRejectedValue(new Error('Hub offline'));
+    mockBridgeRequest.mockRejectedValueOnce(new Error('Hub offline'));
 
     render(<PairingPage />);
 
@@ -489,7 +488,7 @@ describe('PairingPage – error handling', () => {
 
   it('dispatches error notification when Search fails', async () => {
     // No product — triggers generic search path
-    mockBridgeRequest.mockRejectedValue(new Error('Network error'));
+    mockBridgeRequest.mockRejectedValueOnce(new Error('Network error'));
 
     render(<PairingPage />);
 
@@ -503,33 +502,28 @@ describe('PairingPage – error handling', () => {
 
   it('logs warning when device poll fails but does not crash', async () => {
     jest.useFakeTimers();
-    try {
-      const warn = spyOnWarn();
-      const pollError = new Error('Poll failed');
-      let listCalls = 0;
-      mockBridgeRequest.mockImplementation((command: string) => {
-        if (command !== PairingSubsystem.CMD_LISTPAIRINGDEVICES) return Promise.resolve({});
-        listCalls += 1;
-        // The first ListPairingDevices is the flow snapshot; the polls after it fail.
-        return listCalls === 1 ? Promise.resolve({ devices: [] }) : Promise.reject(pollError);
-      });
+    const warn = spyOnWarn();
+    const pollError = new Error('Poll failed');
+    let listCalls = 0;
+    mockBridgeRequest.mockImplementation((command: string) => {
+      if (command !== PairingSubsystem.CMD_LISTPAIRINGDEVICES) return Promise.resolve({});
+      listCalls += 1;
+      // The first ListPairingDevices is the flow snapshot; the polls after it fail.
+      return listCalls === 1 ? Promise.resolve({ devices: [] }) : Promise.reject(pollError);
+    });
 
-      render(<PairingPage />);
-      await settle();
-      expect(commandsSent()).toEqual([PairingSubsystem.CMD_LISTPAIRINGDEVICES, PairingSubsystem.CMD_SEARCH]);
+    render(<PairingPage />);
+    await settle();
+    expect(commandsSent()).toEqual([PairingSubsystem.CMD_LISTPAIRINGDEVICES, PairingSubsystem.CMD_SEARCH]);
 
-      await nextPoll();
-      expect(listCalls).toBe(2);
-      expect(warn).toHaveBeenCalledWith('Pairing device poll failed:', pollError);
+    await nextPoll();
+    expect(listCalls).toBe(2);
+    expect(warn).toHaveBeenCalledWith('Pairing device poll failed:', pollError);
 
-      // The search keeps polling after a failed poll
-      await nextPoll();
-      expect(listCalls).toBe(3);
-      expect(screen.getByTestId('stage-indicator')).toBeInTheDocument();
-    } finally {
-      jest.clearAllTimers();
-      jest.useRealTimers();
-    }
+    // The search keeps polling after a failed poll
+    await nextPoll();
+    expect(listCalls).toBe(3);
+    expect(screen.getByTestId('stage-indicator')).toBeInTheDocument();
   });
 
   it('dispatches error notification when hub name customization fails', async () => {
@@ -540,18 +534,16 @@ describe('PairingPage – error handling', () => {
       isHubPairing: true,
       deviceName: 'My Hub',
     };
-    mockBridgeRequest.mockRejectedValue(new Error('SetAttributes failed'));
+    mockBridgeRequest.mockRejectedValueOnce(new Error('SetAttributes failed'));
 
     render(<PairingPage />);
 
     // Trigger the onCustomize callback
-    await capturedCustomizeProps.onCustomize();
+    await act(() => capturedCustomizeProps.onCustomize());
 
-    await waitFor(() => {
-      expect(mockDispatch).toHaveBeenCalledWith({
-        type: 'ui/addNotification',
-        payload: { type: 'error', message: 'Failed to set hub name.' },
-      });
+    expect(mockDispatch).toHaveBeenCalledWith({
+      type: 'ui/addNotification',
+      payload: { type: 'error', message: 'Failed to set hub name.' },
     });
 
     // Should still dispatch customizationComplete
@@ -570,17 +562,15 @@ describe('PairingPage – error handling', () => {
       deviceName: 'Living Room Plug',
       isFavorite: true,
     };
-    mockBridgeRequest.mockRejectedValue(new Error('Customize failed'));
+    mockBridgeRequest.mockRejectedValueOnce(new Error('Customize failed'));
 
     render(<PairingPage />);
 
-    await capturedCustomizeProps.onCustomize();
+    await act(() => capturedCustomizeProps.onCustomize());
 
-    await waitFor(() => {
-      expect(mockDispatch).toHaveBeenCalledWith({
-        type: 'ui/addNotification',
-        payload: { type: 'error', message: 'Failed to save device customization. You can rename the device later from the Devices page.' },
-      });
+    expect(mockDispatch).toHaveBeenCalledWith({
+      type: 'ui/addNotification',
+      payload: { type: 'error', message: 'Failed to save device customization. You can rename the device later from the Devices page.' },
     });
 
     // Should still dispatch customizationComplete
@@ -589,15 +579,13 @@ describe('PairingPage – error handling', () => {
 
   it('navigates to /devices even when DismissAll fails on finish', async () => {
     mockPairingState = { ...mockPairingState, stage: 'completed' };
-    mockBridgeRequest.mockRejectedValue(new Error('DismissAll failed'));
+    mockBridgeRequest.mockRejectedValueOnce(new Error('DismissAll failed'));
 
     render(<PairingPage />);
 
-    await capturedCompletedProps.onFinish();
+    await act(() => capturedCompletedProps.onFinish());
 
-    await waitFor(() => {
-      expect(mockPush).toHaveBeenCalledWith('/devices');
-    });
+    expect(mockPush).toHaveBeenCalledWith('/devices');
   });
 });
 
@@ -863,8 +851,6 @@ describe('PairingPage – dismissing customized devices', () => {
   });
 
   it('customizes the newly paired device and then dismisses it', async () => {
-    mockBridgeRequest.mockResolvedValue({});
-
     render(<PairingPage />);
     await act(async () => {
       await capturedCustomizeProps.onCustomize();
@@ -923,7 +909,6 @@ describe('PairingPage – Pair Another', () => {
   it('dismisses the completed device and returns to the catalog', async () => {
     mockPairingState = { ...mockPairingState, stage: 'completed', activeDevice: contactSensor };
     sessionStorage.setItem('pairing:product', JSON.stringify({ [Product.ATTR_ID]: 'contact' }));
-    mockBridgeRequest.mockResolvedValue({});
 
     render(<PairingPage />);
     await act(async () => {
@@ -944,7 +929,6 @@ describe('PairingPage – Pair Another', () => {
       activeDevice: contactSensor,
       deviceName: 'Front Door',
     };
-    mockBridgeRequest.mockResolvedValue({});
 
     const { rerender } = render(<PairingPage />);
     await act(async () => {
@@ -964,7 +948,6 @@ describe('PairingPage – Pair Another', () => {
   it('does not dismiss a mispaired device', async () => {
     const mispaired = makePairingDevice('lock', PairingDevice.PAIRINGSTATE_MISPAIRED);
     mockPairingState = { ...mockPairingState, stage: 'completed', activeDevice: mispaired };
-    mockBridgeRequest.mockResolvedValue({});
 
     render(<PairingPage />);
     await act(async () => {
@@ -978,7 +961,7 @@ describe('PairingPage – Pair Another', () => {
   it('still returns to the catalog when Dismiss fails', async () => {
     spyOnWarn();
     mockPairingState = { ...mockPairingState, stage: 'completed', activeDevice: contactSensor };
-    mockBridgeRequest.mockRejectedValue(new Error('Dismiss failed'));
+    mockBridgeRequest.mockRejectedValueOnce(new Error('Dismiss failed'));
 
     render(<PairingPage />);
     await act(async () => {
