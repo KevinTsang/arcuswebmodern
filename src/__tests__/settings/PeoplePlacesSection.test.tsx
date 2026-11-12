@@ -334,15 +334,17 @@ describe('PeoplePlacesSection – add place', () => {
   }
 
   it('matches snapshot at a place the user owns', async () => {
-    render(<PeoplePlacesSection />);
-    expect(await screen.findByTestId('add-place-section')).toMatchSnapshot();
+    const { asFragment } = render(<PeoplePlacesSection />);
+    await screen.findByTestId('add-place-section');
+    expect(asFragment()).toMatchSnapshot();
   });
 
   it('matches snapshot while a guest place is active', async () => {
     mockActivePlaceId = 'place-2';
     mockActivePlace = guestPlaceData;
-    render(<PeoplePlacesSection />);
-    expect(await screen.findByTestId('add-place-section')).toMatchSnapshot();
+    const { asFragment } = render(<PeoplePlacesSection />);
+    await screen.findByTestId('add-place-section');
+    expect(asFragment()).toMatchSnapshot();
   });
 
   it('enables Add Place when the active place is one the user owns', async () => {

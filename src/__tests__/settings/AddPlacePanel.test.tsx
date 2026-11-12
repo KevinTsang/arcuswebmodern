@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { Base, Account, Place } from '@arcus/core';
 import { AddPlacePanel } from '@/components/settings/AddPlacePanel';
 import type { PlaceData } from '@/store/entityTypes';
@@ -7,10 +7,7 @@ import type { PlaceData } from '@/store/entityTypes';
 
 const mockCloseRight = jest.fn();
 const mockBridgeRequest = jest.fn();
-const mockSwitchUnwrap = jest.fn();
-const mockDispatch = jest.fn((action: { type: string }) =>
-  action.type === 'place/switchPlace' ? { unwrap: mockSwitchUnwrap } : action,
-);
+const mockDispatch = jest.fn();
 
 jest.mock('@arcus/core/bridge', () => ({
   __esModule: true,
@@ -58,7 +55,6 @@ function createPlace(name = 'Beach House') {
 beforeEach(() => {
   jest.clearAllMocks();
   mockBridgeRequest.mockResolvedValue({ place: newPlace });
-  mockSwitchUnwrap.mockResolvedValue('place-new');
 });
 
 // ── Tests ─────────────────────────────────────────────────────────────
@@ -150,6 +146,7 @@ describe('AddPlacePanel – creating a place', () => {
       payload: { type: 'success', message: 'Place created!' },
     });
     expect(mockOnSaved).toHaveBeenCalledTimes(1);
+    // PlaceAddedView (tested on its own) takes over with the switch offer.
     expect(screen.getByTestId('add-place-switch')).toHaveTextContent('Switch to Beach House');
     expect(mockCloseRight).not.toHaveBeenCalled();
   });
@@ -174,7 +171,7 @@ describe('AddPlacePanel – creating a place', () => {
 
   it('falls back to the entered name when the response has none', async () => {
     const { [Place.ATTR_NAME]: _, ...unnamed } = newPlace;
-    mockBridgeRequest.mockResolvedValue({ place: unnamed });
+    mockBridgeRequest.mockResolvedValueOnce({ place: unnamed });
     renderPanel();
     createPlace('  Cabin  ');
 
@@ -186,7 +183,7 @@ describe('AddPlacePanel – creating a place', () => {
   it('reports success without a Switch button when the reply has no place', async () => {
     // The platform created the place; a malformed reply must not read as a
     // failure, or a retry would create a second place.
-    mockBridgeRequest.mockResolvedValue({});
+    mockBridgeRequest.mockResolvedValueOnce({});
     renderPanel();
     createPlace('Cabin');
 
@@ -224,7 +221,7 @@ describe('AddPlacePanel – creating a place', () => {
   });
 
   it('shows an error and keeps the form on failure', async () => {
-    mockBridgeRequest.mockRejectedValue(new Error('fail'));
+    mockBridgeRequest.mockRejectedValueOnce(new Error('fail'));
     renderPanel();
     createPlace();
 
@@ -244,61 +241,5 @@ describe('AddPlacePanel – creating a place', () => {
     fireEvent.click(screen.getByText('Cancel'));
     expect(mockCloseRight).toHaveBeenCalled();
     expect(mockBridgeRequest).not.toHaveBeenCalled();
-  });
-});
-
-describe('AddPlacePanel – after the place is added', () => {
-  async function renderAdded() {
-    renderPanel();
-    createPlace();
-    await waitFor(() => expect(screen.getByTestId('add-place-switch')).toBeInTheDocument());
-    mockDispatch.mockClear();
-  }
-
-  it('switches to the new place with switchPlaceThunk and closes the panel', async () => {
-    await renderAdded();
-    fireEvent.click(screen.getByTestId('add-place-switch'));
-
-    await waitFor(() => expect(mockCloseRight).toHaveBeenCalled());
-    expect(mockDispatch).toHaveBeenCalledWith({ type: 'place/switchPlace', payload: 'place-new' });
-    expect(mockSwitchUnwrap).toHaveBeenCalled();
-  });
-
-  it('shows an error and stays open when switching fails', async () => {
-    mockSwitchUnwrap.mockRejectedValue(new Error('fail'));
-    await renderAdded();
-    fireEvent.click(screen.getByTestId('add-place-switch'));
-
-    await waitFor(() =>
-      expect(mockDispatch).toHaveBeenCalledWith({
-        type: 'ui/addNotification',
-        payload: { type: 'error', message: 'Failed to switch to the new place.' },
-      }),
-    );
-    expect(mockCloseRight).not.toHaveBeenCalled();
-    expect(screen.getByTestId('add-place-switch')).not.toBeDisabled();
-  });
-
-  it('does not close another panel if this one was closed during the switch', async () => {
-    renderPanel();
-    createPlace();
-    await waitFor(() => expect(screen.getByTestId('add-place-switch')).toBeInTheDocument());
-
-    fireEvent.click(screen.getByTestId('add-place-switch'));
-    expect(screen.getByTestId('add-place-switch')).toHaveTextContent('Switching…');
-    // The user closes this panel (and may open another) before the switch ends
-    cleanup();
-    // The panel is unmounted, so no act: wait for the switch itself to finish.
-    await expect(mockSwitchUnwrap.mock.results[0].value).resolves.toBe('place-new');
-
-    expect(mockCloseRight).not.toHaveBeenCalled();
-  });
-
-  it('closes without switching on Done', async () => {
-    await renderAdded();
-    fireEvent.click(screen.getByTestId('add-place-done'));
-
-    expect(mockCloseRight).toHaveBeenCalled();
-    expect(mockDispatch).not.toHaveBeenCalled();
   });
 });
