@@ -3,8 +3,8 @@ import { ArcusLogo } from '@/components/shared/ArcusLogo';
 
 describe('ArcusLogo', () => {
   it('matches snapshot', () => {
-    const { container } = render(<ArcusLogo className="w-8 h-8" />);
-    expect(container.firstChild).toMatchSnapshot();
+    const { asFragment } = render(<ArcusLogo className="w-8 h-8" />);
+    expect(asFragment()).toMatchSnapshot();
   });
 
   it('renders six sectors and four cube faces', () => {

@@ -4,7 +4,7 @@
 
 This document catalogs the full feature set of the legacy Arcus web client (`~/arcusweb`, DoneJS/CanJS) and maps it against the modern client (`~/arcuswebmodern`, Next.js 16 / React 19) to identify gaps that must be closed for feature parity.
 
-Status legend: **Done** = fully implemented, **Partial** = core flow works but missing sub-features, **Missing** = not yet built, **Broken** = built but not functioning correctly (regression / bug to fix).
+Status legend: **Done** = fully implemented, **Partial** = core flow works but missing sub-features, **Missing** = not yet built, **Broken** = built but not functioning correctly (regression / bug to fix), **N/A** = deliberately not offered by either client.
 
 ---
 
@@ -55,7 +55,7 @@ None.
 | Device naming | Yes | Yes | **Done** |
 | Device favorite toggle | Yes | Yes | **Done** |
 | Device identification (blink/beep) | Yes | Yes | **Done** |
-| Device removal with confirmation | Yes | Yes | **Done** |
+| Device removal with confirmation | Yes (removal steps, Cancel, Force Remove after timeout) | Yes (removal steps, waits for `base:Deleted`, Cancel/close stops hub unpairing, Force Remove after 4 min) | **Done** |
 | Device settings/configuration panel | Yes | Yes (enum, range, text parameter types) | **Done** |
 | Power usage display (instantaneous) | Yes | No | **Missing** |
 | OTA firmware update status | Yes | No | **Missing** |
@@ -207,7 +207,7 @@ None.
 | Alarm delays / grace period configuration | Yes | Yes (exit/entrance delay per mode) | **Done** |
 | Strobe / siren settings | Yes | Yes (silent alarm toggle per mode) | **Done** |
 | Silent / audible mode toggle | Yes | Yes (per mode) | **Done** |
-| Panic button | Yes | Yes | **Done** |
+| Panic button | No | No (removed; panic comes from keypads, pendants and rules) | **N/A** |
 
 ### Gaps
 
@@ -231,7 +231,7 @@ None.
 | Care call tree / notification settings | Yes | No | **Missing** |
 | Alarm mode (ON / VISIT) | Yes | No | **Missing** |
 | Silent mode toggle | Yes | Yes (display only) | **Partial** |
-| Panic alert | Yes | No | **Missing** |
+| Panic alert | No | No (panic comes from keypads, pendants and rules) | **N/A** |
 
 ### Gaps
 
@@ -239,7 +239,6 @@ None.
 - Activity timeline.
 - Care-specific notification/call tree management.
 - Alarm mode switching (ON vs VISIT).
-- Panic alert trigger.
 
 ---
 
@@ -446,6 +445,7 @@ None.
 
 ### Gaps
 
+- ~~**Bug:** Saving Profile → Edit Contact Info could blank the user's first and last name.~~ **DONE.** The form was seeded from `auth.person` (often just the session payload, with no names) and always wrote all three fields. `ContactInfoPanel` now loads the person with `base:GetAttributes` and stays disabled until that succeeds (error toast + retry on failure; a sign-in-again message with no session). It sends only the fields that changed, trimmed, and checks only those: names can't be blanked, and a changed phone must be a US number (phone characters only, 10 digits or 11 starting with 1, via `useFormValidation`'s new `phoneNumber` rule). Phones are sent as `(555) 123-4567`, the format the platform stores. Errors show after Save and follow typing, not blur. The Profile card refreshes after a save once #13 (`auth.person` follows the person's `base:ValueChange`) is merged.
 - Billing and subscription management is entirely absent.
 - Notification preferences and call tree management.
 - Account-level features (email management, phone verification, security questions, account deletion).
@@ -614,6 +614,26 @@ This is a new feature in the modern client with no legacy equivalent.
 
 ---
 
+## 26. Deployment (Docker Images)
+
+| Feature | Legacy | Modern | Status |
+|---------|--------|--------|--------|
+| `ui-server` image (nginx, `:8096`) | Yes | Yes (`docker/ui-server`: Next static export served by nginx) | **Done** |
+| `static-server` image (nginx, `:8097`, device/brand images) | Yes | No (the legacy image is still deployed) | **Missing** |
+| Platform URLs set at runtime from `ARCUS_HTTP_URI` / `ARCUS_WS_URI` | Yes (`server.json`) | Yes (same `server.json` path and keys, read by `initializeCoreConfig`) | **Done** |
+| Runs read-only as uid 1000 under the arcus-k8s mounts and limits | Yes | Yes | **Done** |
+| Browsers still running the legacy page move to this client | — | Yes (legacy `/build/dist/*.js` bundle requests get a script that reloads the page once) | **Done** |
+| Build / tag / push | Yes (gradle `:tools:khakis:pushDocker`) | Yes (`docker/bin/build.sh [--push]`) | **Done** |
+| CI image publishing | No | No | **Missing** |
+
+### Gaps
+
+- `server.json` holds only the two platform URLs. `run-nginx` ignores legacy's `ARCUS_REDIRECT_URI`, `ARCUS_ENABLE_HUB_WIFI_SCAN`, `ARCUS_ENABLE_BATTERY_PERCENTAGE`, `ARCUS_ENABLE_YEARLY_SUBSCRIPTION`, `ARCUS_IOS_DOWNLOAD_URI` and `ARCUS_ANDROID_DOWNLOAD_URI`. Nothing in this client reads them, and battery percentages are always shown (legacy showed them only with the flag on, which arcus-k8s sets). When a feature needs one (hub WiFi scan, billing, app download links), add its key to `run-nginx`, `ServerConfig` and `ArcusCoreConfig` together. A `NEXT_PUBLIC_*` value won't do, because the image bakes none in.
+- No workflow builds and pushes the image. For now it is published by hand with `docker/bin/build.sh --push`.
+- **TODO — static-server:** arcus-k8s points `staticResourceBaseUrl`, `secureStaticResourceBaseUrl` and the notification service's resource URL at `static-server`, which still runs the legacy arcusweb image (Iris brand logo and 22 device-type icons). The mobile apps, legacy web and platform emails also request catalog product and pairing-step images, customization and action images, more brand logos and device types, and the email/invoice assets (`o/res_templates`). Those exist in the old Iris resource root (about 120 MB once unused parts are dropped) but aren't in any repo. Decide where they live (licensing, and whether a 120 MB set belongs in this repo, a separate repo or a private bucket), then build a replacement image.
+
+---
+
 ## Priority Summary
 
 ### Tier 1 — High-Impact Gaps (Core Smart Home Functionality)
@@ -621,7 +641,7 @@ This is a new feature in the modern client with no legacy equivalent.
 These are commonly used features that users will expect:
 
 1. **Camera streaming & recording** — Live HLS streaming, recording playback, clips browser, camera settings. This is the single largest gap.
-2. ~~**Alarm device participation & settings**~~ — **DONE.** Device participation (ON/PARTIAL/both/none), notification call tree (ordered, enable/disable, reorder), delay settings (exit/entrance per mode), silent alarm, arming sounds, panic button.
+2. ~~**Alarm device participation & settings**~~ — **DONE.** Device participation (ON/PARTIAL/both/none), notification call tree (ordered, enable/disable, reorder), delay settings (exit/entrance per mode), silent alarm, arming sounds.
 3. **Thermostat scheduling** — Temperature programs by time-of-day and day-of-week.
 4. **Notification call tree (Care)** — Ordered contact escalation for care events (alarm call tree is done).
 5. **Billing & subscription management** — Service plan display, payment methods, invoicing.
@@ -675,6 +695,65 @@ These are commonly used features that users will expect:
     device lists that live on the alarm subsystem itself — the per-alert `Alarm`
     capability instances, `alarm:devices:<SECURITY|PANIC|SMOKE|CO|WATER>`.
     Covered by `src/__tests__/hooks/useSubsystem.test.ts`.
+27. ~~**Share person validation across sign-up, invite and the contact panel**~~ —
+    **DONE.** The rules now live in `src/lib/validationRules.ts` (email, new
+    password, password confirmation, name, optional and required phone), and
+    each form builds its own constraint map from them: sign-up and the invite
+    page share `NEW_LOGIN_CONSTRAINTS`, and the contact panel and the login
+    page's password reset use the individual rules.
+    - Sign-up and the invite page now validate the optional phone and send it as
+      "(555) 123-4567", the format the contact panel saves.
+    - Still open: whether the platform rejects a malformed phone at sign-up.
+      With the phone validated first, the app no longer sends one.
+    - Item 25 (splitting `login/page.tsx`) should import its rules from this
+      module instead of adding a separate `constraints.ts`.
+28. ~~**Move side panels onto the shell header and Suspense**~~ — **DONE.**
+    The `SidePanel` shell (`src/components/SidePanelFrame.tsx`) draws the panel
+    title and the only close button, and wraps content in `<Suspense>` inside
+    `SidePanelErrorBoundary`. Every opener passes its title with
+    `openRight(content, { title })`, and the title stays visible while content
+    suspends. The device panels' duplicate "Done" buttons are gone. Sub-view
+    headings ("Choose Device", "Create a PIN Code", a scene action's name) stay
+    in the content. E2E specs read the title from `side-panel-right-title`.
+    - **Loading panels suspend.** `PlaceSelector`, `ContactInfoPanel`,
+      `ScenePanel` and `RulePanel` read a promise with `use()`. The promise is
+      started by the opener, outside the suspending tree, through
+      `loadAvailablePlaces`, `useOpenContactInfoPanel`, `useOpenScenePanel` and
+      `useOpenRulePanel`. The loaders catch their own failures and keep each
+      panel's behavior (empty list, error toast, or ContactInfo's Retry, which
+      reopens the panel with a fresh load). The error boundary is a backstop for
+      anything unexpected.
+    - **Behavior changes.** A load that fails after the panel is closed still
+      shows its error toast. `ScenePanel` now seeds an edited scene's actions
+      from the scene even when resolving fails, so saving can't drop them.
+    - **Panels are keyed.** `openRight`/`openLeft` require a `key`, and the
+      frame keys the error and Suspense boundaries with it, so new content
+      remounts with fresh state and its own loading fallback instead of reusing
+      the previous panel's instance. Entity panels use `<panel>:<address>`
+      (`device-details:…`, `scene:new`, `rule:new:<template>`); panels without
+      an entity use a fixed name (`change-password`, `place-selector`).
+      Reopening the same key while the panel is open keeps its state.
+    - **Place-scoped invites kept.** Merging `main` (PR #25,
+      `fix/place-card-scoped-actions`) brought `PlaceCard.handleInvite`, which
+      passes the card's `placeId`/`placeName` to `AddPersonPanel`. It now opens
+      with `{ title: 'Invite a Person', key: 'add-person:<placeId>' }`; the
+      panel's own "Invite a Person" heading is gone (the header shows it) but
+      its "Send an invitation to join <place>" line stays. The panel key
+      replaces the element `key={place.placeId}` that gave another card's
+      Invite a fresh form.
+29. ~~**Fix three stale E2E specs**~~ — **DONE in code; confirmation run pending.**
+    Each spec expected behavior its component deliberately dropped:
+    - `settings.cy.ts` "shows the profile and plan, without the account state"
+      now asserts `info-card-account-value-account-state` does not exist, as
+      `ProfileSection`'s unit test does.
+    - `devices.cy.ts` "shows device metadata and identifies the device" expects
+      the readable protocol "Zigbee" instead of the raw `ZIGB`.
+    - `rules.cy.ts` "resolves template variables to device names when editing"
+      expects three requests: `base:SetAttributes` with the name,
+      `rule:UpdateContext`, then `base:SetAttributes` with the description,
+      matching `RulePanel`'s deliberate save order.
+    - The last full run (before these fixes) passed every other spec: 208 of
+      212 tests, with 1 test skipped in `history.cy.ts` by design.
 
 ---
 

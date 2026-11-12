@@ -95,14 +95,14 @@ describe('AlarmNotificationList', () => {
   // ── Snapshot ──────────────────────────────────────────────────────
 
   it('matches snapshot', () => {
-    const { container } = render(<AlarmNotificationList />);
-    expect(container.firstChild).toMatchSnapshot();
+    const { asFragment } = render(<AlarmNotificationList />);
+    expect(asFragment()).toMatchSnapshot();
   });
 
   it('matches snapshot for empty state', () => {
     resetAlarm({ callTree: [] });
-    const { container } = render(<AlarmNotificationList />);
-    expect(container.firstChild).toMatchSnapshot();
+    const { asFragment } = render(<AlarmNotificationList />);
+    expect(asFragment()).toMatchSnapshot();
   });
 
   // ── Rendering ─────────────────────────────────────────────────────

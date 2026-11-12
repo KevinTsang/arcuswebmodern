@@ -49,7 +49,6 @@ export default function ChangePasswordPanel() {
 
   return (
     <div className="p-4 space-y-4">
-      <h3 data-testid="password-panel-title" className="text-lg font-semibold text-swift">Change Password</h3>
       <Field label="Current Password" value={currentPw} onChange={setCurrentPw} type="password" />
       <Field label="New Password" value={newPw} onChange={setNewPw} type="password" />
       <Field label="Confirm New Password" value={confirmPw} onChange={setConfirmPw} type="password" />

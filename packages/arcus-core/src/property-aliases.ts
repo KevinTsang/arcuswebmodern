@@ -7,8 +7,6 @@
  * Ported from src/cornea/property-aliases.js.
  */
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 export interface PropertyAliasMap {
   alias: Record<string, (obj: any) => void>;
   unalias: Record<string, (obj: any) => void>;

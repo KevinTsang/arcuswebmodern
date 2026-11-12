@@ -1,140 +1,144 @@
 // Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
 
 exports[`AlarmDeviceParticipation matches snapshot 1`] = `
-<div>
-  <h3
-    class="text-base font-medium text-swift mb-1"
-  >
-    Device Participation
-  </h3>
-  <p
-    class="text-xs text-grouse mb-3"
-  >
-    Choose which alarm modes each device participates in.
-  </p>
-  <div
-    class="space-y-2"
-  >
-    <div
-      class="flex items-center justify-between gap-3 px-3 py-2.5 rounded border border-heron"
-      data-testid="participation-DRIV:dev:motion-1"
+<DocumentFragment>
+  <div>
+    <h3
+      class="text-base font-medium text-swift mb-1"
     >
-      <span
-        class="text-sm text-swift flex-1 min-w-0 truncate"
-      >
-        Front Door Motion
-      </span>
-      <select
-        class="text-sm border border-heron rounded px-2 py-1 bg-crane text-swift disabled:opacity-50"
-        data-testid="participation-select-DRIV:dev:motion-1"
-      >
-        <option
-          value="both"
-        >
-          ON & Partial
-        </option>
-        <option
-          value="on"
-        >
-          ON Only
-        </option>
-        <option
-          value="partial"
-        >
-          Partial Only
-        </option>
-        <option
-          value="none"
-        >
-          Not Participating
-        </option>
-      </select>
-    </div>
-    <div
-      class="flex items-center justify-between gap-3 px-3 py-2.5 rounded border border-heron"
-      data-testid="participation-DRIV:dev:contact-2"
+      Device Participation
+    </h3>
+    <p
+      class="text-xs text-grouse mb-3"
     >
-      <span
-        class="text-sm text-swift flex-1 min-w-0 truncate"
-      >
-        Back Door Contact
-      </span>
-      <select
-        class="text-sm border border-heron rounded px-2 py-1 bg-crane text-swift disabled:opacity-50"
-        data-testid="participation-select-DRIV:dev:contact-2"
-      >
-        <option
-          value="both"
-        >
-          ON & Partial
-        </option>
-        <option
-          value="on"
-        >
-          ON Only
-        </option>
-        <option
-          value="partial"
-        >
-          Partial Only
-        </option>
-        <option
-          value="none"
-        >
-          Not Participating
-        </option>
-      </select>
-    </div>
+      Choose which alarm modes each device participates in.
+    </p>
     <div
-      class="flex items-center justify-between gap-3 px-3 py-2.5 rounded border border-heron"
-      data-testid="participation-DRIV:dev:glass-3"
+      class="space-y-2"
     >
-      <span
-        class="text-sm text-swift flex-1 min-w-0 truncate"
+      <div
+        class="flex items-center justify-between gap-3 px-3 py-2.5 rounded border border-heron"
+        data-testid="participation-DRIV:dev:motion-1"
       >
-        Living Room Glass Break
-      </span>
-      <select
-        class="text-sm border border-heron rounded px-2 py-1 bg-crane text-swift disabled:opacity-50"
-        data-testid="participation-select-DRIV:dev:glass-3"
+        <span
+          class="text-sm text-swift flex-1 min-w-0 truncate"
+        >
+          Front Door Motion
+        </span>
+        <select
+          class="text-sm border border-heron rounded px-2 py-1 bg-crane text-swift disabled:opacity-50"
+          data-testid="participation-select-DRIV:dev:motion-1"
+        >
+          <option
+            value="both"
+          >
+            ON & Partial
+          </option>
+          <option
+            value="on"
+          >
+            ON Only
+          </option>
+          <option
+            value="partial"
+          >
+            Partial Only
+          </option>
+          <option
+            value="none"
+          >
+            Not Participating
+          </option>
+        </select>
+      </div>
+      <div
+        class="flex items-center justify-between gap-3 px-3 py-2.5 rounded border border-heron"
+        data-testid="participation-DRIV:dev:contact-2"
       >
-        <option
-          value="both"
+        <span
+          class="text-sm text-swift flex-1 min-w-0 truncate"
         >
-          ON & Partial
-        </option>
-        <option
-          value="on"
+          Back Door Contact
+        </span>
+        <select
+          class="text-sm border border-heron rounded px-2 py-1 bg-crane text-swift disabled:opacity-50"
+          data-testid="participation-select-DRIV:dev:contact-2"
         >
-          ON Only
-        </option>
-        <option
-          value="partial"
+          <option
+            value="both"
+          >
+            ON & Partial
+          </option>
+          <option
+            value="on"
+          >
+            ON Only
+          </option>
+          <option
+            value="partial"
+          >
+            Partial Only
+          </option>
+          <option
+            value="none"
+          >
+            Not Participating
+          </option>
+        </select>
+      </div>
+      <div
+        class="flex items-center justify-between gap-3 px-3 py-2.5 rounded border border-heron"
+        data-testid="participation-DRIV:dev:glass-3"
+      >
+        <span
+          class="text-sm text-swift flex-1 min-w-0 truncate"
         >
-          Partial Only
-        </option>
-        <option
-          value="none"
+          Living Room Glass Break
+        </span>
+        <select
+          class="text-sm border border-heron rounded px-2 py-1 bg-crane text-swift disabled:opacity-50"
+          data-testid="participation-select-DRIV:dev:glass-3"
         >
-          Not Participating
-        </option>
-      </select>
+          <option
+            value="both"
+          >
+            ON & Partial
+          </option>
+          <option
+            value="on"
+          >
+            ON Only
+          </option>
+          <option
+            value="partial"
+          >
+            Partial Only
+          </option>
+          <option
+            value="none"
+          >
+            Not Participating
+          </option>
+        </select>
+      </div>
     </div>
   </div>
-</div>
+</DocumentFragment>
 `;
 
 exports[`AlarmDeviceParticipation matches snapshot for empty state 1`] = `
-<div>
-  <h3
-    class="text-base font-medium text-swift mb-2"
-  >
-    Device Participation
-  </h3>
-  <p
-    class="text-sm text-grouse"
-  >
-    No security devices configured.
-  </p>
-</div>
+<DocumentFragment>
+  <div>
+    <h3
+      class="text-base font-medium text-swift mb-2"
+    >
+      Device Participation
+    </h3>
+    <p
+      class="text-sm text-grouse"
+    >
+      No security devices configured.
+    </p>
+  </div>
+</DocumentFragment>
 `;

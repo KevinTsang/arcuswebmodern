@@ -50,7 +50,6 @@ export default function AddPlacePanel() {
 
   return (
     <div className="p-4 space-y-4">
-      <h3 data-testid="add-place-panel-title" className="text-lg font-semibold text-swift">Add a Place</h3>
       <Field label="Place Name" value={name} onChange={setName} placeholder="e.g. Lake House" />
       <Field label="Street Address" value={street1} onChange={setStreet1} />
       <Field label="City" value={city} onChange={setCity} />

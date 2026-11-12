@@ -41,8 +41,7 @@ beforeEach(() => {
 describe('PersonDetailPanel', () => {
   it('shows person details', () => {
     render(<PersonDetailPanel person={mockPerson} placeId="place-1" />);
-    // Name appears in heading + InfoRow
-    expect(screen.getAllByText('Jane Smith')).toHaveLength(2);
+    expect(screen.getByText('Jane Smith')).toBeInTheDocument();
     expect(screen.getByText('jane@test.com')).toBeInTheDocument();
     expect(screen.getByText('555-5678')).toBeInTheDocument();
   });

@@ -1,5 +1,7 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { screen, fireEvent, waitFor } from '@testing-library/react';
 import { ScenePanel } from '@/components/scenes/ScenePanel';
+import type { ResolveResult } from '@/components/scenes/resolveSceneActions';
+import { renderSuspended } from '../helpers/renderSuspended';
 import { Base, Scene } from '@arcus/core';
 import Bridge from '@arcus/core/bridge';
 import type { SceneEntity } from '@/store/entityTypes';
@@ -23,11 +25,6 @@ jest.mock('@/store/slices/uiSlice', () => ({
   addNotification: (payload: unknown) => ({ type: 'ui/addNotification', payload }),
 }));
 
-const mockResolveSceneActions = jest.fn();
-jest.mock('@/components/scenes/resolveSceneActions', () => ({
-  resolveSceneActions: (...args: unknown[]) => mockResolveSceneActions(...args),
-}));
-
 jest.mock('@arcus/core/bridge', () => ({
   __esModule: true,
   default: { request: jest.fn() },
@@ -37,7 +34,6 @@ jest.mock('@arcus/core/bridge', () => ({
 jest.mock('@/components/scenes/ActionCategoryList', () => ({
   ActionCategoryList: ({
     name,
-    heading,
     saveLabel,
     onSelectAction,
     onSave,
@@ -46,7 +42,6 @@ jest.mock('@/components/scenes/ActionCategoryList', () => ({
     saving,
   }: any) => (
     <div data-testid="category-list">
-      <span data-testid="heading">{heading as string}</span>
       <span data-testid="scene-name">{name as string}</span>
       <span data-testid="save-label">{saveLabel as string}</span>
       <span data-testid="action-count">{(satisfiableActions as unknown[]).length}</span>
@@ -85,73 +80,68 @@ const mockScene: SceneEntity = {
   ],
 };
 
+const RESOLVED: ResolveResult = {
+  actions: [
+    { id: 'action1', name: 'Lights', satisfiable: true, selectors: { 'DRIV:dev:light1': [] } },
+    { id: 'action2', name: 'Locks', satisfiable: false, selectors: {} },
+  ],
+  templateAddress: 'SERV:scenetmpl:custom',
+};
+
+/** What loadSceneActions resolves to when resolving fails. */
+const UNRESOLVED: ResolveResult = { actions: [], templateAddress: '' };
+
+function renderPanel(scene?: SceneEntity, resolved: ResolveResult = RESOLVED) {
+  return renderSuspended(<ScenePanel scene={scene} actions={Promise.resolve(resolved)} />);
+}
+
 beforeEach(() => {
   jest.clearAllMocks();
-  mockResolveSceneActions.mockResolvedValue({
-    actions: [
-      { id: 'action1', name: 'Lights', satisfiable: true, selectors: { 'DRIV:dev:light1': [] } },
-      { id: 'action2', name: 'Locks', satisfiable: false, selectors: {} },
-    ],
-    templateAddress: 'SERV:scenetmpl:custom',
-  });
   mockBridge.mockResolvedValue({});
 });
 
 // ── Create Mode ───────────────────────────────────────────────────────
 
 describe('ScenePanel (create mode)', () => {
-  it('shows loading state initially', () => {
-    mockResolveSceneActions.mockReturnValue(new Promise(() => {}));
-    render(<ScenePanel />);
-    expect(screen.getByText('Loading actions...')).toBeInTheDocument();
-    expect(screen.getByText('Create Scene')).toBeInTheDocument();
+  it('matches snapshot', async () => {
+    const { asFragment } = await renderPanel();
+    expect(asFragment()).toMatchSnapshot();
+  });
+
+  it('shows the fallback until the actions resolve', async () => {
+    await renderSuspended(<ScenePanel actions={new Promise(() => {})} />);
+    expect(screen.getByTestId('suspense-fallback')).toBeInTheDocument();
+    expect(screen.queryByTestId('category-list')).not.toBeInTheDocument();
+  });
+
+  it('does not create a scene when the actions could not be resolved', async () => {
+    await renderPanel(undefined, UNRESOLVED);
+    expect(screen.getByTestId('action-count')).toHaveTextContent('0');
+    fireEvent.click(screen.getByText('save'));
+    expect(mockBridge).not.toHaveBeenCalled();
   });
 
   it('loads actions and renders ActionCategoryList', async () => {
-    render(<ScenePanel />);
-    await waitFor(() => {
-      expect(screen.getByTestId('category-list')).toBeInTheDocument();
-    });
+    await renderPanel();
+    expect(screen.getByTestId('category-list')).toBeInTheDocument();
     expect(screen.getByTestId('scene-name')).toHaveTextContent('New Scene');
     expect(screen.getByTestId('action-count')).toHaveTextContent('1');
   });
 
-  it('calls resolveSceneActions with placeId only', async () => {
-    render(<ScenePanel />);
-    await waitFor(() => screen.getByTestId('category-list'));
-    expect(mockResolveSceneActions).toHaveBeenCalledWith('place-1', undefined);
-  });
-
-  it('dispatches error notification on load failure', async () => {
-    mockResolveSceneActions.mockRejectedValue(new Error('fail'));
-    render(<ScenePanel />);
-    await waitFor(() => {
-      expect(mockDispatch).toHaveBeenCalledWith(
-        expect.objectContaining({
-          payload: expect.objectContaining({ type: 'error', message: 'Failed to load scene actions' }),
-        }),
-      );
-    });
-  });
-
-  it('renders with Create Scene heading and label', async () => {
-    render(<ScenePanel />);
-    await waitFor(() => screen.getByTestId('category-list'));
-    expect(screen.getByTestId('heading')).toHaveTextContent('Create Scene');
+  it('renders with the Create Scene label', async () => {
+    await renderPanel();
     expect(screen.getByTestId('save-label')).toHaveTextContent('Create Scene');
   });
 
   it('navigates to device configurator when action selected', async () => {
-    render(<ScenePanel />);
-    await waitFor(() => screen.getByTestId('category-list'));
+    await renderPanel();
     fireEvent.click(screen.getByText('select-action'));
     expect(screen.getByTestId('device-configurator')).toBeInTheDocument();
     expect(screen.getByText('Lights')).toBeInTheDocument();
   });
 
   it('navigates back from device configurator', async () => {
-    render(<ScenePanel />);
-    await waitFor(() => screen.getByTestId('category-list'));
+    await renderPanel();
     fireEvent.click(screen.getByText('select-action'));
     expect(screen.getByTestId('device-configurator')).toBeInTheDocument();
     fireEvent.click(screen.getByText('back'));
@@ -159,15 +149,13 @@ describe('ScenePanel (create mode)', () => {
   });
 
   it('calls closeRight on cancel', async () => {
-    render(<ScenePanel />);
-    await waitFor(() => screen.getByTestId('category-list'));
+    await renderPanel();
     fireEvent.click(screen.getByText('cancel'));
     expect(mockCloseRight).toHaveBeenCalled();
   });
 
   it('does not show delete button', async () => {
-    render(<ScenePanel />);
-    await waitFor(() => screen.getByTestId('category-list'));
+    await renderPanel();
     expect(screen.queryByText('Delete Scene')).not.toBeInTheDocument();
   });
 });
@@ -175,63 +163,32 @@ describe('ScenePanel (create mode)', () => {
 // ── Edit Mode ─────────────────────────────────────────────────────────
 
 describe('ScenePanel (edit mode)', () => {
-  it('shows loading state with Edit Scene heading', () => {
-    mockResolveSceneActions.mockReturnValue(new Promise(() => {}));
-    render(<ScenePanel scene={mockScene} />);
-    expect(screen.getByText('Loading actions...')).toBeInTheDocument();
-    expect(screen.getByText('Edit Scene')).toBeInTheDocument();
-  });
-
-  it('renders with Edit Scene heading and Save label', async () => {
-    render(<ScenePanel scene={mockScene} />);
-    await waitFor(() => screen.getByTestId('category-list'));
-    expect(screen.getByTestId('heading')).toHaveTextContent('Edit Scene');
+  it('renders with the Save label', async () => {
+    await renderPanel(mockScene);
     expect(screen.getByTestId('save-label')).toHaveTextContent('Save');
   });
 
   it('pre-populates scene name from existing scene', async () => {
-    render(<ScenePanel scene={mockScene} />);
-    await waitFor(() => screen.getByTestId('category-list'));
+    await renderPanel(mockScene);
     expect(screen.getByTestId('scene-name')).toHaveTextContent('Morning Routine');
   });
 
-  it('calls resolveSceneActions with placeId and template id', async () => {
-    render(<ScenePanel scene={mockScene} />);
-    await waitFor(() => screen.getByTestId('category-list'));
-    expect(mockResolveSceneActions).toHaveBeenCalledWith('place-1', 'custom');
-  });
-
-  it('dispatches error notification on load failure', async () => {
-    mockResolveSceneActions.mockRejectedValue(new Error('fail'));
-    render(<ScenePanel scene={mockScene} />);
-    await waitFor(() => {
-      expect(mockDispatch).toHaveBeenCalledWith(
-        expect.objectContaining({
-          payload: expect.objectContaining({ type: 'error', message: 'Failed to load scene actions' }),
-        }),
-      );
-    });
-  });
-
   it('navigates to device configurator when action selected', async () => {
-    render(<ScenePanel scene={mockScene} />);
-    await waitFor(() => screen.getByTestId('category-list'));
+    await renderPanel(mockScene);
     fireEvent.click(screen.getByText('select-action'));
     expect(screen.getByTestId('device-configurator')).toBeInTheDocument();
     expect(screen.getByText('Lights')).toBeInTheDocument();
   });
 
   it('navigates back from device configurator', async () => {
-    render(<ScenePanel scene={mockScene} />);
-    await waitFor(() => screen.getByTestId('category-list'));
+    await renderPanel(mockScene);
     fireEvent.click(screen.getByText('select-action'));
     fireEvent.click(screen.getByText('back'));
     expect(screen.getByTestId('category-list')).toBeInTheDocument();
   });
 
   it('saves via base:SetAttributes with scene:name and scene:actions', async () => {
-    render(<ScenePanel scene={mockScene} />);
-    await waitFor(() => screen.getByTestId('category-list'));
+    await renderPanel(mockScene);
     fireEvent.click(screen.getByText('save'));
 
     await waitFor(() => {
@@ -249,29 +206,25 @@ describe('ScenePanel (edit mode)', () => {
   });
 
   it('calls closeRight on cancel', async () => {
-    render(<ScenePanel scene={mockScene} />);
-    await waitFor(() => screen.getByTestId('category-list'));
+    await renderPanel(mockScene);
     fireEvent.click(screen.getByText('cancel'));
     expect(mockCloseRight).toHaveBeenCalled();
   });
 
   it('shows delete button', async () => {
-    render(<ScenePanel scene={mockScene} />);
-    await waitFor(() => screen.getByTestId('category-list'));
+    await renderPanel(mockScene);
     expect(screen.getByText('Delete Scene')).toBeInTheDocument();
   });
 
   it('shows confirmation on delete click', async () => {
-    render(<ScenePanel scene={mockScene} />);
-    await waitFor(() => screen.getByTestId('category-list'));
+    await renderPanel(mockScene);
     fireEvent.click(screen.getByText('Delete Scene'));
     expect(screen.getByText('Are you sure you want to delete this scene?')).toBeInTheDocument();
     expect(screen.getByText('Yes, Delete')).toBeInTheDocument();
   });
 
   it('deletes scene on confirm', async () => {
-    render(<ScenePanel scene={mockScene} />);
-    await waitFor(() => screen.getByTestId('category-list'));
+    await renderPanel(mockScene);
     fireEvent.click(screen.getByText('Delete Scene'));
     fireEvent.click(screen.getByText('Yes, Delete'));
 
@@ -280,9 +233,37 @@ describe('ScenePanel (edit mode)', () => {
     });
   });
 
+  it('keeps the saved actions when the actions could not be resolved', async () => {
+    await renderPanel(mockScene, UNRESOLVED);
+    fireEvent.click(screen.getByText('save'));
+
+    await waitFor(() => {
+      expect(mockBridge).toHaveBeenCalledWith(
+        Base.CMD_SETATTRIBUTES,
+        'SERV:scene:abc-123',
+        expect.objectContaining({
+          [Scene.ATTR_ACTIONS]: [
+            { name: 'Turn Lights On or Off', template: 'action1', context: { 'DRIV:dev:light1': { switch: 'ON' } } },
+          ],
+        }),
+      );
+    });
+  });
+
+  it('dispatches an error notification when saving fails', async () => {
+    mockBridge.mockRejectedValueOnce(new Error('fail'));
+    await renderPanel(mockScene);
+    fireEvent.click(screen.getByText('save'));
+    await waitFor(() =>
+      expect(mockDispatch).toHaveBeenCalledWith(
+        expect.objectContaining({ payload: { type: 'error', message: 'Failed to save scene' } }),
+      ),
+    );
+    expect(mockCloseRight).not.toHaveBeenCalled();
+  });
+
   it('cancels delete confirmation', async () => {
-    render(<ScenePanel scene={mockScene} />);
-    await waitFor(() => screen.getByTestId('category-list'));
+    await renderPanel(mockScene);
     fireEvent.click(screen.getByText('Delete Scene'));
     const cancelButtons = screen.getAllByText('Cancel');
     fireEvent.click(cancelButtons[cancelButtons.length - 1]);

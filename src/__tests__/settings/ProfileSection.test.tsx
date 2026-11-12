@@ -4,9 +4,14 @@ import ProfileSection from '@/components/settings/ProfileSection';
 import type { PersonEntity, AccountData, PlaceData } from '@/store/entityTypes';
 
 const mockOpenRight = jest.fn();
+const mockOpenContactInfo = jest.fn();
 
 jest.mock('@/components/SidePanel', () => ({
   useSidePanel: () => ({ openRight: mockOpenRight }),
+}));
+
+jest.mock('@/components/settings/useOpenContactInfoPanel', () => ({
+  useOpenContactInfoPanel: () => mockOpenContactInfo,
 }));
 
 let mockPerson: PersonEntity | null = null;
@@ -63,16 +68,16 @@ describe('ProfileSection', () => {
     expect(screen.getByText('Premium')).toBeInTheDocument();
   });
 
-  it('shows account state', () => {
+  it('does not show the account sign-up state', () => {
     render(<ProfileSection />);
-    expect(screen.getByText('Account')).toBeInTheDocument();
-    expect(screen.getByText('ACTIVE')).toBeInTheDocument();
+    expect(screen.queryByText('Account State')).not.toBeInTheDocument();
+    expect(screen.queryByText('ACTIVE')).not.toBeInTheDocument();
   });
 
   it('opens ContactInfoPanel on Edit click', () => {
     render(<ProfileSection />);
     fireEvent.click(screen.getByText('Edit'));
-    expect(mockOpenRight).toHaveBeenCalled();
+    expect(mockOpenContactInfo).toHaveBeenCalled();
   });
 
   it('opens ChangePasswordPanel on Change click', () => {
@@ -80,7 +85,7 @@ describe('ProfileSection', () => {
     const changeButtons = screen.getAllByText('Change');
     // First "Change" is the Password card
     fireEvent.click(changeButtons[0]);
-    expect(mockOpenRight).toHaveBeenCalled();
+    expect(mockOpenRight).toHaveBeenCalledWith(expect.anything(), { title: 'Change Password', key: 'change-password' });
   });
 
   it('shows PIN Code card with Change button', () => {
@@ -95,6 +100,6 @@ describe('ProfileSection', () => {
     render(<ProfileSection />);
     const changeButtons = screen.getAllByText('Change');
     fireEvent.click(changeButtons[1]);
-    expect(mockOpenRight).toHaveBeenCalled();
+    expect(mockOpenRight).toHaveBeenCalledWith(expect.anything(), { title: 'Change PIN Code', key: 'change-pin' });
   });
 });

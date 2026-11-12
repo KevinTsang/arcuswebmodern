@@ -1,0 +1,115 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`PlaceInfoPanel matches snapshot 1`] = `
+<DocumentFragment>
+  <div
+    class="p-4 space-y-4"
+  >
+    <div>
+      <label
+        class="block text-sm text-grouse mb-1"
+        for="_r_0_"
+      >
+        Place Name
+      </label>
+      <input
+        class="w-full border border-heron rounded-[var(--border-radius-base)] px-3 py-2 text-sm text-swift focus:outline-none focus:border-peacock disabled:opacity-50"
+        data-testid="field-place-name"
+        id="_r_0_"
+        type="text"
+        value="Test Home"
+      />
+    </div>
+    <div>
+      <label
+        class="block text-sm text-grouse mb-1"
+        for="_r_1_"
+      >
+        Street Address
+      </label>
+      <input
+        class="w-full border border-heron rounded-[var(--border-radius-base)] px-3 py-2 text-sm text-swift focus:outline-none focus:border-peacock disabled:opacity-50"
+        data-testid="field-street-address"
+        id="_r_1_"
+        type="text"
+        value="123 Main St"
+      />
+    </div>
+    <div>
+      <label
+        class="block text-sm text-grouse mb-1"
+        for="_r_2_"
+      >
+        Street Address 2
+      </label>
+      <input
+        class="w-full border border-heron rounded-[var(--border-radius-base)] px-3 py-2 text-sm text-swift focus:outline-none focus:border-peacock disabled:opacity-50"
+        data-testid="field-street-address-2"
+        id="_r_2_"
+        type="text"
+        value=""
+      />
+    </div>
+    <div>
+      <label
+        class="block text-sm text-grouse mb-1"
+        for="_r_3_"
+      >
+        City
+      </label>
+      <input
+        class="w-full border border-heron rounded-[var(--border-radius-base)] px-3 py-2 text-sm text-swift focus:outline-none focus:border-peacock disabled:opacity-50"
+        data-testid="field-city"
+        id="_r_3_"
+        type="text"
+        value="Springfield"
+      />
+    </div>
+    <div>
+      <label
+        class="block text-sm text-grouse mb-1"
+        for="_r_4_"
+      >
+        State
+      </label>
+      <input
+        class="w-full border border-heron rounded-[var(--border-radius-base)] px-3 py-2 text-sm text-swift focus:outline-none focus:border-peacock disabled:opacity-50"
+        data-testid="field-state"
+        id="_r_4_"
+        type="text"
+        value="IL"
+      />
+    </div>
+    <div>
+      <label
+        class="block text-sm text-grouse mb-1"
+        for="_r_5_"
+      >
+        ZIP Code
+      </label>
+      <input
+        class="w-full border border-heron rounded-[var(--border-radius-base)] px-3 py-2 text-sm text-swift focus:outline-none focus:border-peacock disabled:opacity-50"
+        data-testid="field-zip-code"
+        id="_r_5_"
+        type="text"
+        value="62701"
+      />
+    </div>
+    <div
+      class="flex gap-2 pt-2"
+    >
+      <button
+        class="px-4 py-2 bg-peacock text-crane rounded-[var(--border-radius-base)] text-sm font-medium hover:bg-peacock/90 disabled:opacity-50"
+        data-testid="place-save"
+      >
+        Save
+      </button>
+      <button
+        class="px-4 py-2 border border-heron rounded-[var(--border-radius-base)] text-sm text-coot hover:bg-pigeon"
+      >
+        Cancel
+      </button>
+    </div>
+  </div>
+</DocumentFragment>
+`;
