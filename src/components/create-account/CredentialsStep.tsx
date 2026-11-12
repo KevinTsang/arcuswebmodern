@@ -11,6 +11,8 @@ import type { SessionCreatedEvent, Account } from '@/arcus/types';
 import { useCreateAccount } from './CreateAccountContext';
 import { setField, setLoading, setError, clearError, accountCreated } from './createAccountSlice';
 import FormField from './FormField';
+import { NEW_LOGIN_FIELDS } from '@/lib/validationRules';
+import { formatPhoneNumber } from '@/lib/phoneNumber';
 
 export default function CredentialsStep() {
   const { state, dispatch, credForm } = useCreateAccount();
@@ -18,20 +20,20 @@ export default function CredentialsStep() {
 
   const { email, password, confirmPassword, firstName, lastName, phone, optIn, loading } = state;
   const allValues = useMemo(
-    () => ({ email, password, confirmPassword, firstName, lastName }),
-    [email, password, confirmPassword, firstName, lastName],
+    () => ({ email, password, confirmPassword, firstName, lastName, phone }),
+    [email, password, confirmPassword, firstName, lastName, phone],
   );
 
   const handleSubmit = useCallback(
     async (ev: FormEvent) => {
       ev.preventDefault();
-      if (!credForm.formValidates(['email', 'password', 'confirmPassword', 'firstName', 'lastName'], allValues)) return;
+      if (!credForm.formValidates(NEW_LOGIN_FIELDS, allValues)) return;
 
       dispatch(setLoading(true));
       dispatch(clearError());
 
       try {
-        initializeCoreConfig();
+        await initializeCoreConfig();
 
         const result = await AccountService.CreateAccount({
           email,
@@ -40,7 +42,9 @@ export default function CredentialsStep() {
           person: {
             [Person.ATTR_FIRSTNAME]: firstName,
             [Person.ATTR_LASTNAME]: lastName,
-            [Person.ATTR_MOBILENUMBER]: phone || undefined,
+            // Stored the way the platform formats it, "(555) 123-4567". Validation has already
+            // rejected anything that isn't a phone number, so null only means the field was empty.
+            [Person.ATTR_MOBILENUMBER]: formatPhoneNumber(phone) ?? undefined,
             [Person.ATTR_EMAIL]: email,
           },
           place: {},
@@ -99,6 +103,7 @@ export default function CredentialsStep() {
         label="Phone (optional)" id="phone" type="tel" autoComplete="tel"
         value={phone}
         onChange={(v) => dispatch(setField({ field: 'phone', value: v }))}
+        form={credForm} allValues={allValues}
       />
       <FormField
         label="Password" id="password" type="password" autoComplete="new-password"

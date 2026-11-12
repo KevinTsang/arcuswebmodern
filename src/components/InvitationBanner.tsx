@@ -21,7 +21,7 @@ export default function InvitationBanner() {
 
   return (
     <button
-      onClick={() => openRight(<AcceptInvitationPanel />)}
+      onClick={() => openRight(<AcceptInvitationPanel />, { title: 'Invitations', key: 'accept-invitation' })}
       data-testid="invitation-banner"
       className="w-full bg-peacock text-crane px-4 py-2.5 text-sm font-medium flex items-center justify-center gap-2 hover:bg-peacock/90 transition-colors"
     >

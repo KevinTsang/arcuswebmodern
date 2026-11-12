@@ -174,7 +174,6 @@ export default function AcceptInvitationPanel() {
   // ── Invitations list view ───────────────────────────────────────────
   return (
     <div className="p-4 space-y-4">
-      <h3 data-testid="invitations-panel-title" className="text-lg font-semibold text-swift">Invitations</h3>
       <hr className="border-heron" />
 
       {formError && (

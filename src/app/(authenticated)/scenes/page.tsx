@@ -11,8 +11,7 @@ import { useCallback } from 'react';
 import { Place } from '@arcus/core';
 import { useAppSelector } from '@/store/hooks';
 import { selectAllScenes } from '@/store/slices/scenesSlice';
-import { useSidePanel } from '@/components/SidePanel';
-import { ScenePanel } from '@/components/scenes/ScenePanel';
+import { useOpenScenePanel } from '@/components/scenes/useOpenScenePanel';
 import { SceneCard } from '@/components/scenes/SceneCard';
 import type { SceneEntity } from '@/store/entityTypes';
 
@@ -23,20 +22,11 @@ export default function ScenesPage() {
   const placeName = useAppSelector(
     (s) => s.place.place?.[Place.ATTR_NAME] ?? 'Your Home',
   );
-  const { openRight, expandRight } = useSidePanel();
+  const openScenePanel = useOpenScenePanel();
 
-  const handleEdit = useCallback(
-    (scene: SceneEntity) => {
-      openRight(<ScenePanel scene={scene} />);
-      expandRight();
-    },
-    [openRight, expandRight],
-  );
+  const handleEdit = useCallback((scene: SceneEntity) => openScenePanel(scene), [openScenePanel]);
 
-  const handleAddScene = useCallback(() => {
-    openRight(<ScenePanel />);
-    expandRight();
-  }, [openRight, expandRight]);
+  const handleAddScene = useCallback(() => openScenePanel(), [openScenePanel]);
 
   return (
     <div className="p-[var(--gutter)]">

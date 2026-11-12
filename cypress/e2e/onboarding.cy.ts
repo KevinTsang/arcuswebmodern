@@ -29,6 +29,8 @@ describe('Create account wizard', () => {
     }).its('attributes.person').should('deep.include', {
       'person:firstName': 'Taylor',
       'person:lastName': 'Brooks',
+      // Sent the way the platform stores it.
+      'person:mobileNumber': '(555) 000-1111',
     });
 
     // Step 2 — address
@@ -103,7 +105,7 @@ describe('Accept invitation wizard', () => {
     cy.expectRequestAttrs('invite:AcceptInvitationCreateLogin', {
       code: 'INVITE-42',
       inviteeEmail: 'jordan@example.com',
-    });
+    }).its('attributes.person').should('deep.include', { 'person:mobileNumber': '(555) 222-3333' });
 
     cy.get('input#change-pin', { timeout: 20000 }).type('1357');
     cy.get('input#change-pin-confirm').type('1357');
@@ -114,6 +116,23 @@ describe('Accept invitation wizard', () => {
     tid('invite-finish').click();
     cy.location('pathname', { timeout: 20000 }).should('eq', '/home');
     tid('dashboard-place-name').should('contain', 'River Cabin');
+  });
+
+  it('rejects a phone that is not a US number', () => {
+    cy.visit('/invite');
+    cy.get('input#inviteCode').type('INVITE-42');
+    cy.get('input#inviteeEmail').type('jordan@example.com');
+    tid('invite-lookup').click();
+    tid('invite-next').click();
+
+    cy.get('input#lastName').type('Lee');
+    cy.get('input#phone').type('555-123');
+    cy.get('input#password').type('Welcome123');
+    cy.get('input#confirmPassword').type('Welcome123');
+    tid('invite-create-login').click();
+
+    tid('field-error-phone').should('have.text', 'must be a valid phone number');
+    cy.platform().invoke('requestsOf', 'invite:AcceptInvitationCreateLogin').should('have.length', 0);
   });
 
   it('rejects an unknown invitation code', () => {

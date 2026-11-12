@@ -11,7 +11,6 @@
 import { Device } from '@arcus/core';
 import { useDevice } from '@/hooks/useDeviceCapability';
 import { useDeviceConfigurators } from '@/hooks/useDeviceConfig';
-import { useSidePanel } from '@/components/SidePanel';
 import BrightnessConfigurator from './BrightnessConfigurator';
 import FanSpeedConfigurator from './FanSpeedConfigurator';
 import ThermostatModeConfigurator from './ThermostatModeConfigurator';
@@ -26,7 +25,6 @@ interface DeviceConfigurationPanelProps {
 export function DeviceConfigurationPanel({ address }: DeviceConfigurationPanelProps) {
   const device = useDevice(address);
   const configurators = useDeviceConfigurators(address);
-  const { closeRight } = useSidePanel();
 
   if (!device) return null;
 
@@ -34,10 +32,6 @@ export function DeviceConfigurationPanel({ address }: DeviceConfigurationPanelPr
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-4">
-        <h3 data-testid="device-config-title" className="text-lg font-semibold text-swift">Configuration</h3>
-        <button onClick={closeRight} className="text-grouse hover:text-swift text-sm">Done</button>
-      </div>
       <p className="text-sm text-grouse mb-6">{name}</p>
 
       {configurators.length === 0 ? (

@@ -10,6 +10,7 @@ let mockDevice: DeviceEntity;
 const mockDispatch = jest.fn();
 const mockSetFavorite = jest.fn();
 const mockSetAttribute = jest.fn();
+const mockOpenRight = jest.fn();
 
 jest.mock('@/hooks/useDeviceCapability', () => ({
   useDevice: () => mockDevice,
@@ -27,7 +28,7 @@ jest.mock('@/hooks/useDeviceConfig', () => ({
 }));
 
 jest.mock('@/components/SidePanel', () => ({
-  useSidePanel: () => ({ openRight: jest.fn() }),
+  useSidePanel: () => ({ openRight: mockOpenRight }),
 }));
 
 jest.mock('@/store/hooks', () => ({
@@ -126,5 +127,19 @@ describe('DevicePanel – error indicator', () => {
     mockDevice = { ...device(), [DeviceAdvanced.ATTR_ERRORS]: { ERR_JAM: 'Lock is jammed' } };
     render(<DevicePanel address={ADDRESS} />);
     expect(screen.getByTitle('Device has errors')).toBeInTheDocument();
+  });
+});
+
+describe('DevicePanel – side panels', () => {
+  it('opens the configuration panel with its title in the side panel header', () => {
+    render(<DevicePanel address={ADDRESS} />);
+    fireEvent.click(screen.getByTestId(`device-config-${ADDRESS}`));
+    expect(mockOpenRight).toHaveBeenCalledWith(expect.anything(), { title: 'Configuration', key: `device-config:${ADDRESS}` });
+  });
+
+  it('opens the details panel with its title in the side panel header', () => {
+    render(<DevicePanel address={ADDRESS} />);
+    fireEvent.click(screen.getByTestId(`device-details-${ADDRESS}`));
+    expect(mockOpenRight).toHaveBeenCalledWith(expect.anything(), { title: 'Device Details', key: `device-details:${ADDRESS}` });
   });
 });

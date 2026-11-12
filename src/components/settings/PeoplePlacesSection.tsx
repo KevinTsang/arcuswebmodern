@@ -57,7 +57,10 @@ export default function PeoplePlacesSection() {
 
   const handleAddPlace = useCallback(() => {
     if (!addPlaceAccountId) return;
-    openRight(<AddPlacePanel accountId={addPlaceAccountId} onSaved={refresh} />);
+    openRight(<AddPlacePanel accountId={addPlaceAccountId} onSaved={refresh} />, {
+      title: 'Add a Place',
+      key: 'add-place',
+    });
   }, [addPlaceAccountId, openRight, refresh]);
 
   useEffect(() => {

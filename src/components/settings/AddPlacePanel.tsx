@@ -103,7 +103,6 @@ export function AddPlacePanel({ accountId, onSaved }: AddPlacePanelProps) {
   if (added) {
     return (
       <div className="p-4 space-y-4">
-        <h3 data-testid="add-place-panel-title" className="text-lg font-semibold text-swift">Add a Place</h3>
         <p data-testid="add-place-added" className="text-sm text-coot">
           <span className="font-medium text-swift">{added.name}</span> has been added to your account.
         </p>
@@ -136,7 +135,6 @@ export function AddPlacePanel({ accountId, onSaved }: AddPlacePanelProps) {
 
   return (
     <div className="p-4 space-y-4">
-      <h3 data-testid="add-place-panel-title" className="text-lg font-semibold text-swift">Add a Place</h3>
       <Field label="Place Name" value={name} onChange={setName} placeholder="e.g. Lake House" />
       <Field label="Street Address" value={street1} onChange={setStreet1} />
       <Field label="City" value={city} onChange={setCity} />

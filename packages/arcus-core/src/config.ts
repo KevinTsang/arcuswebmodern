@@ -8,13 +8,7 @@
 export interface ArcusCoreConfig {
   apiUrl: string;
   wsUrl: string;
-  redirectUrl: string;
   version: string;
-  isProduction: boolean;
-  iosDownloadUrl?: string;
-  androidDownloadUrl?: string;
-  enableYearlySubscription?: boolean;
-  enableHubWifiScan?: boolean;
 }
 
 let _config: ArcusCoreConfig | null = null;

@@ -5,21 +5,17 @@ exports[`PlaceInfoPanel matches snapshot 1`] = `
   <div
     class="p-4 space-y-4"
   >
-    <h3
-      class="text-lg font-semibold text-swift"
-      data-testid="place-panel-title"
-    >
-      Edit Place
-    </h3>
     <div>
       <label
         class="block text-sm text-grouse mb-1"
+        for="_r_0_"
       >
         Place Name
       </label>
       <input
-        class="w-full border border-heron rounded-[var(--border-radius-base)] px-3 py-2 text-sm text-swift focus:outline-none focus:border-peacock"
+        class="w-full border border-heron rounded-[var(--border-radius-base)] px-3 py-2 text-sm text-swift focus:outline-none focus:border-peacock disabled:opacity-50"
         data-testid="field-place-name"
+        id="_r_0_"
         type="text"
         value="Test Home"
       />
@@ -27,12 +23,14 @@ exports[`PlaceInfoPanel matches snapshot 1`] = `
     <div>
       <label
         class="block text-sm text-grouse mb-1"
+        for="_r_1_"
       >
         Street Address
       </label>
       <input
-        class="w-full border border-heron rounded-[var(--border-radius-base)] px-3 py-2 text-sm text-swift focus:outline-none focus:border-peacock"
+        class="w-full border border-heron rounded-[var(--border-radius-base)] px-3 py-2 text-sm text-swift focus:outline-none focus:border-peacock disabled:opacity-50"
         data-testid="field-street-address"
+        id="_r_1_"
         type="text"
         value="123 Main St"
       />
@@ -40,12 +38,14 @@ exports[`PlaceInfoPanel matches snapshot 1`] = `
     <div>
       <label
         class="block text-sm text-grouse mb-1"
+        for="_r_2_"
       >
         Street Address 2
       </label>
       <input
-        class="w-full border border-heron rounded-[var(--border-radius-base)] px-3 py-2 text-sm text-swift focus:outline-none focus:border-peacock"
+        class="w-full border border-heron rounded-[var(--border-radius-base)] px-3 py-2 text-sm text-swift focus:outline-none focus:border-peacock disabled:opacity-50"
         data-testid="field-street-address-2"
+        id="_r_2_"
         type="text"
         value=""
       />
@@ -53,12 +53,14 @@ exports[`PlaceInfoPanel matches snapshot 1`] = `
     <div>
       <label
         class="block text-sm text-grouse mb-1"
+        for="_r_3_"
       >
         City
       </label>
       <input
-        class="w-full border border-heron rounded-[var(--border-radius-base)] px-3 py-2 text-sm text-swift focus:outline-none focus:border-peacock"
+        class="w-full border border-heron rounded-[var(--border-radius-base)] px-3 py-2 text-sm text-swift focus:outline-none focus:border-peacock disabled:opacity-50"
         data-testid="field-city"
+        id="_r_3_"
         type="text"
         value="Springfield"
       />
@@ -66,12 +68,14 @@ exports[`PlaceInfoPanel matches snapshot 1`] = `
     <div>
       <label
         class="block text-sm text-grouse mb-1"
+        for="_r_4_"
       >
         State
       </label>
       <input
-        class="w-full border border-heron rounded-[var(--border-radius-base)] px-3 py-2 text-sm text-swift focus:outline-none focus:border-peacock"
+        class="w-full border border-heron rounded-[var(--border-radius-base)] px-3 py-2 text-sm text-swift focus:outline-none focus:border-peacock disabled:opacity-50"
         data-testid="field-state"
+        id="_r_4_"
         type="text"
         value="IL"
       />
@@ -79,12 +83,14 @@ exports[`PlaceInfoPanel matches snapshot 1`] = `
     <div>
       <label
         class="block text-sm text-grouse mb-1"
+        for="_r_5_"
       >
         ZIP Code
       </label>
       <input
-        class="w-full border border-heron rounded-[var(--border-radius-base)] px-3 py-2 text-sm text-swift focus:outline-none focus:border-peacock"
+        class="w-full border border-heron rounded-[var(--border-radius-base)] px-3 py-2 text-sm text-swift focus:outline-none focus:border-peacock disabled:opacity-50"
         data-testid="field-zip-code"
+        id="_r_5_"
         type="text"
         value="62701"
       />

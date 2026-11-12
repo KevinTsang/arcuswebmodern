@@ -69,9 +69,9 @@ describe('AddPlacePanel – rendering', () => {
     expect(asFragment()).toMatchSnapshot();
   });
 
-  it('shows heading', () => {
+  it('leaves the title to the side panel header', () => {
     renderPanel();
-    expect(screen.getByTestId('add-place-panel-title')).toHaveTextContent('Add a Place');
+    expect(screen.queryByText('Add a Place')).not.toBeInTheDocument();
   });
 
   it('shows all address fields', () => {

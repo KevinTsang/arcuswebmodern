@@ -13,7 +13,7 @@ import { usePathname } from 'next/navigation';
 import { Person } from '@arcus/core';
 import { useAppSelector } from '@/store/hooks';
 import { useSidePanel } from '@/components/SidePanel';
-import PlaceSelector from '@/components/PlaceSelector';
+import PlaceSelector, { loadAvailablePlaces } from '@/components/PlaceSelector';
 import { ArcusLogo } from '@/components/shared/ArcusLogo';
 import { testIdSlug } from '@/lib/testId';
 
@@ -37,7 +37,7 @@ export default function Header() {
 
   const handlePlaceSelector = useCallback(() => {
     if (isAccountLoading) return;
-    openRight(<PlaceSelector />);
+    openRight(<PlaceSelector places={loadAvailablePlaces()} />, { title: 'Choose a Place', key: 'place-selector' });
   }, [isAccountLoading, openRight]);
 
   const toggleMobileNav = useCallback(() => {

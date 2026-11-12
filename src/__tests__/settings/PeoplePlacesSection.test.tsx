@@ -244,7 +244,29 @@ describe('PeoplePlacesSection – actions', () => {
       expect(screen.getByText('Edit')).toBeInTheDocument();
     });
     fireEvent.click(screen.getByText('Edit'));
-    expect(mockOpenRight).toHaveBeenCalled();
+    expect(mockOpenRight).toHaveBeenCalledWith(expect.anything(), { title: 'Edit Place', key: 'place-info:place-1' });
+  });
+
+  it('opens the Add a Place panel', async () => {
+    render(<PeoplePlacesSection />);
+    fireEvent.click(await screen.findByText('+ Add Place'));
+    expect(mockOpenRight).toHaveBeenCalledWith(expect.anything(), { title: 'Add a Place', key: 'add-place' });
+  });
+
+  it('opens the Invite a Person panel', async () => {
+    render(<PeoplePlacesSection />);
+    fireEvent.click(await screen.findByText('+ Invite'));
+    expect(mockOpenRight).toHaveBeenCalledWith(expect.anything(), { title: 'Invite a Person', key: 'add-person:place-1' });
+  });
+
+  it("opens a person's details titled with their name", async () => {
+    render(<PeoplePlacesSection />);
+    await screen.findByText('Jane Smith');
+    fireEvent.click(screen.getAllByText('Details')[0]);
+    expect(mockOpenRight).toHaveBeenCalledWith(expect.anything(), {
+      title: 'Jane Smith',
+      key: 'person-detail:place-1:SERV:person:p2',
+    });
   });
 
   it('shows Details on people at owner places', async () => {

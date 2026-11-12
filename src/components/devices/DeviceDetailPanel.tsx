@@ -62,11 +62,6 @@ export function DeviceDetailPanel({ address }: DeviceDetailPanelProps) {
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <h3 data-testid="device-details-title" className="text-lg font-semibold text-swift">Device Details</h3>
-        <button onClick={closeRight} className="text-grouse hover:text-swift text-sm">Done</button>
-      </div>
-
-      <div className="flex items-center justify-between mb-4">
         <h4 className="text-base font-medium text-swift">{name}</h4>
         {supportsIdentify && (
           <button

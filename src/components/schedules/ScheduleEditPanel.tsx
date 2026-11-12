@@ -96,8 +96,7 @@ export function ScheduleEditPanel({
 
   return (
     <div>
-      <h3 data-testid="schedule-title" className="text-lg font-semibold text-swift mb-1">Schedule</h3>
-      <p className="text-sm text-grouse mb-4">{targetName}</p>
+      <p data-testid="schedule-target" className="text-sm text-grouse mb-4">{targetName}</p>
 
       {/* Mode selector (for multi-mode devices like thermostats) */}
       {modes && modes.length > 1 && (

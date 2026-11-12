@@ -1,5 +1,6 @@
 'use client';
 
+import { useCallback } from 'react';
 import Link from 'next/link';
 import { Base, Place, Person as PersonCap } from '@arcus/core';
 import { useSidePanel } from '@/components/SidePanel';
@@ -29,6 +30,16 @@ export default function PlaceCard({
 }: PlaceCardProps) {
   const { openRight } = useSidePanel();
   const placeData = place.placeData;
+  const placeName = place.name || 'Unnamed Place';
+
+  // Invitations and API keys act on THIS card's place, not the active place.
+  // Keyed by place so another card's Invite opens a fresh form.
+  const handleInvite = useCallback(() => {
+    openRight(<AddPersonPanel placeId={place.placeId} placeName={placeName} onSent={onRefresh} />, {
+      title: 'Invite a Person',
+      key: `add-person:${place.placeId}`,
+    });
+  }, [openRight, place.placeId, placeName, onRefresh]);
 
   const address = placeData
     ? [
@@ -53,7 +64,10 @@ export default function PlaceCard({
   const editAction = isOwner && placeData ? (
     <button
       onClick={() =>
-        openRight(<PlaceInfoPanel placeData={placeData} onSaved={onRefresh} />)
+        openRight(<PlaceInfoPanel placeData={placeData} onSaved={onRefresh} />, {
+          title: 'Edit Place',
+          key: `place-info:${place.placeId}`,
+        })
       }
       data-testid={`place-edit-${place.placeId}`}
       className="text-sm text-peacock hover:underline"
@@ -64,7 +78,7 @@ export default function PlaceCard({
 
   return (
     <div data-testid={`place-card-${place.placeId}`} data-active={isActive}>
-    <InfoCard title={place.name || 'Unnamed Place'} action={editAction} testId={`place-info-${place.placeId}`}>
+    <InfoCard title={placeName} action={editAction} testId={`place-info-${place.placeId}`}>
       {address && <InfoRow label="Address" value={address} />}
       <InfoRow label="Service Level" value={serviceLevel} />
       <InfoRow label="Role" value={formatRole(place.role)} />
@@ -74,7 +88,11 @@ export default function PlaceCard({
       {isOwner && placeData && (
         <div className="flex justify-between text-sm pt-1">
           <span className="text-grouse">API Access</span>
-          <Link href="/settings/api-keys" data-testid={`manage-api-keys-${place.placeId}`} className="text-peacock hover:underline">
+          <Link
+            href={`/settings/api-keys?placeId=${encodeURIComponent(place.placeId)}`}
+            data-testid={`manage-api-keys-${place.placeId}`}
+            className="text-peacock hover:underline"
+          >
             Manage API Keys
           </Link>
         </div>
@@ -86,13 +104,7 @@ export default function PlaceCard({
           <span className="text-sm font-medium text-swift">People</span>
           {isOwner && (
             <button
-              onClick={() =>
-                openRight(
-                  <AddPersonPanel
-                    onSent={onRefresh}
-                  />,
-                )
-              }
+              onClick={handleInvite}
               data-testid={`place-invite-${place.placeId}`}
               className="text-xs text-peacock hover:underline"
             >
@@ -124,6 +136,10 @@ export default function PlaceCard({
                               placeId={place.placeId}
                               onRemoved={onRefresh}
                             />,
+                            {
+                              title: personName || personEmail || 'Person',
+                              key: `person-detail:${place.placeId}:${person[Base.ATTR_ADDRESS]}`,
+                            },
                           )
                       : undefined
                   }
