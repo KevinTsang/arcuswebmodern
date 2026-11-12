@@ -5,12 +5,6 @@ exports[`AddPersonPanel – rendering matches snapshot 1`] = `
   <div
     class="p-4 space-y-4"
   >
-    <h3
-      class="text-lg font-semibold text-swift"
-      data-testid="invite-panel-title"
-    >
-      Invite a Person
-    </h3>
     <p
       class="text-sm text-grouse"
       data-testid="invite-panel-place"
@@ -26,12 +20,14 @@ exports[`AddPersonPanel – rendering matches snapshot 1`] = `
     <div>
       <label
         class="block text-sm text-grouse mb-1"
+        for="_r_0_"
       >
         First Name
       </label>
       <input
-        class="w-full border border-heron rounded-[var(--border-radius-base)] px-3 py-2 text-sm text-swift focus:outline-none focus:border-peacock"
+        class="w-full border border-heron rounded-[var(--border-radius-base)] px-3 py-2 text-sm text-swift focus:outline-none focus:border-peacock disabled:opacity-50"
         data-testid="field-first-name"
+        id="_r_0_"
         type="text"
         value=""
       />
@@ -39,12 +35,14 @@ exports[`AddPersonPanel – rendering matches snapshot 1`] = `
     <div>
       <label
         class="block text-sm text-grouse mb-1"
+        for="_r_1_"
       >
         Last Name
       </label>
       <input
-        class="w-full border border-heron rounded-[var(--border-radius-base)] px-3 py-2 text-sm text-swift focus:outline-none focus:border-peacock"
+        class="w-full border border-heron rounded-[var(--border-radius-base)] px-3 py-2 text-sm text-swift focus:outline-none focus:border-peacock disabled:opacity-50"
         data-testid="field-last-name"
+        id="_r_1_"
         type="text"
         value=""
       />
@@ -52,12 +50,14 @@ exports[`AddPersonPanel – rendering matches snapshot 1`] = `
     <div>
       <label
         class="block text-sm text-grouse mb-1"
+        for="_r_2_"
       >
         Email
       </label>
       <input
-        class="w-full border border-heron rounded-[var(--border-radius-base)] px-3 py-2 text-sm text-swift focus:outline-none focus:border-peacock"
+        class="w-full border border-heron rounded-[var(--border-radius-base)] px-3 py-2 text-sm text-swift focus:outline-none focus:border-peacock disabled:opacity-50"
         data-testid="field-email"
+        id="_r_2_"
         placeholder="person@example.com"
         type="email"
         value=""

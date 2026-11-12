@@ -1,4 +1,4 @@
-import type { ReactElement } from 'react';
+import { Fragment, type ReactElement } from 'react';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { Base, Person, Place } from '@arcus/core';
 import PlaceCard from '@/components/settings/PlaceCard';
@@ -85,9 +85,13 @@ function renderOpenedPanel() {
   return render(mockOpenRight.mock.calls[0][0] as ReactElement);
 }
 
-/** The element most recently pushed into the side panel. */
+/**
+ * The element most recently pushed into the side panel, keyed by the key it
+ * was opened with, as SidePanelFrame does, so a new key remounts it.
+ */
 function lastOpenedPanel(): ReactElement {
-  return mockOpenRight.mock.calls[mockOpenRight.mock.calls.length - 1][0] as ReactElement;
+  const [content, options] = mockOpenRight.mock.calls[mockOpenRight.mock.calls.length - 1];
+  return <Fragment key={options.key}>{content}</Fragment>;
 }
 
 /** An owned "Home" card shown next to the Lake House card. */
@@ -156,6 +160,10 @@ describe('PlaceCard – invite', () => {
     fireEvent.click(screen.getByTestId('place-invite-place-lake'));
 
     renderOpenedPanel();
+    expect(mockOpenRight).toHaveBeenCalledWith(expect.anything(), {
+      title: 'Invite a Person',
+      key: 'add-person:place-lake',
+    });
     expect(screen.getByTestId('invite-panel-place')).toHaveTextContent('Send an invitation to join Lake House.');
   });
 

@@ -35,14 +35,10 @@ export default function PlaceCard({
   // Invitations and API keys act on THIS card's place, not the active place.
   // Keyed by place so another card's Invite opens a fresh form.
   const handleInvite = useCallback(() => {
-    openRight(
-      <AddPersonPanel
-        key={place.placeId}
-        placeId={place.placeId}
-        placeName={placeName}
-        onSent={onRefresh}
-      />,
-    );
+    openRight(<AddPersonPanel placeId={place.placeId} placeName={placeName} onSent={onRefresh} />, {
+      title: 'Invite a Person',
+      key: `add-person:${place.placeId}`,
+    });
   }, [openRight, place.placeId, placeName, onRefresh]);
 
   const address = placeData
@@ -108,14 +104,7 @@ export default function PlaceCard({
           <span className="text-sm font-medium text-swift">People</span>
           {isOwner && (
             <button
-              onClick={() =>
-                openRight(
-                  <AddPersonPanel
-                    onSent={onRefresh}
-                  />,
-                  { title: 'Invite a Person', key: `add-person:${place.placeId}` },
-                )
-              }
+              onClick={handleInvite}
               data-testid={`place-invite-${place.placeId}`}
               className="text-xs text-peacock hover:underline"
             >

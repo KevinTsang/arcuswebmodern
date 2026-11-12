@@ -71,7 +71,9 @@ export default function AddPersonPanel({ placeId, placeName, onSent }: AddPerson
 
   return (
     <div className="p-4 space-y-4">
-      <p className="text-sm text-grouse">Send an invitation to join this place.</p>
+      <p data-testid="invite-panel-place" className="text-sm text-grouse">
+        Send an invitation to join <span className="font-medium text-swift">{placeName}</span>.
+      </p>
       <Field label="First Name" value={firstName} onChange={setFirstName} />
       <Field label="Last Name" value={lastName} onChange={setLastName} />
       <Field label="Email" value={inviteEmail} onChange={setInviteEmail} type="email" placeholder="person@example.com" />

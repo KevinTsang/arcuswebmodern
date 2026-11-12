@@ -21,12 +21,11 @@ describe('Profile settings', () => {
     cy.signIn({ path: '/settings' });
   });
 
-  it('shows the profile, plan and account state', () => {
+  it('shows the profile and plan', () => {
     profileValue('contact-information', 'name').should('have.text', 'Alex Rivera');
     profileValue('contact-information', 'email').should('have.text', LOGIN.email);
     profileValue('contact-information', 'phone').should('have.text', '5551234567');
     profileValue('service-plan', 'current-plan').should('have.text', 'Basic');
-    profileValue('account', 'account-state').should('have.text', 'COMPLETE');
   });
 
   it('edits contact information', () => {

@@ -148,7 +148,7 @@ describe('Devices page', () => {
       tid('side-panel-right-title').should('have.text', 'Device Details');
       cy.get('[data-testid="device-detail-manufacturer"]').should('have.text', 'Acme');
       cy.get('[data-testid="device-detail-model"]').should('have.text', 'Dimmer-1');
-      cy.get('[data-testid="device-detail-protocol"]').should('have.text', 'ZIGB');
+      cy.get('[data-testid="device-detail-protocol"]').should('have.text', 'Zigbee');
       cy.get('[data-testid="device-detail-firmware"]').should('have.text', '1.2.3');
       cy.get('[data-testid="device-detail-connection"]').should('have.text', 'ONLINE');
       cy.get('[data-testid="device-detail-power"]').should('have.text', 'Plugged In');

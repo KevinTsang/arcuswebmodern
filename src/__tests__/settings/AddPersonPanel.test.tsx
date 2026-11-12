@@ -78,9 +78,15 @@ beforeEach(() => {
 // ── Tests ─────────────────────────────────────────────────────────────
 
 describe('AddPersonPanel – rendering', () => {
-  it('shows the description', () => {
-    render(<AddPersonPanel />);
-    expect(screen.getByText('Send an invitation to join this place.')).toBeInTheDocument();
+  it('matches snapshot', () => {
+    const { asFragment } = render(<AddPersonPanel {...defaultProps} />);
+    expect(asFragment()).toMatchSnapshot();
+  });
+
+  it('names the place being invited to, leaving the title to the panel header', () => {
+    render(<AddPersonPanel {...defaultProps} />);
+    expect(screen.getByTestId('invite-panel-place')).toHaveTextContent('Send an invitation to join Lake House.');
+    expect(screen.queryByText('Invite a Person')).not.toBeInTheDocument();
   });
 
   it('shows First Name, Last Name, Email, and Relationship fields', () => {

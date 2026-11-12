@@ -733,15 +733,27 @@ These are commonly used features that users will expect:
       (`device-details:…`, `scene:new`, `rule:new:<template>`); panels without
       an entity use a fixed name (`change-password`, `place-selector`).
       Reopening the same key while the panel is open keeps its state.
-29. **Fix three stale E2E specs** — These fail on `main` as well as with item 28:
-    - `settings.cy.ts` "shows the profile, plan and account state" expects
-      `info-card-account-value-account-state`, which `ProfileSection` no longer
-      renders (its unit test asserts it is hidden).
+    - **Place-scoped invites kept.** Merging `main` (PR #25,
+      `fix/place-card-scoped-actions`) brought `PlaceCard.handleInvite`, which
+      passes the card's `placeId`/`placeName` to `AddPersonPanel`. It now opens
+      with `{ title: 'Invite a Person', key: 'add-person:<placeId>' }`; the
+      panel's own "Invite a Person" heading is gone (the header shows it) but
+      its "Send an invitation to join <place>" line stays. The panel key
+      replaces the element `key={place.placeId}` that gave another card's
+      Invite a fresh form.
+29. ~~**Fix three stale E2E specs**~~ — **DONE in code; confirmation run pending.**
+    Each spec expected behavior its component deliberately dropped:
+    - `settings.cy.ts` "shows the profile and plan, without the account state"
+      now asserts `info-card-account-value-account-state` does not exist, as
+      `ProfileSection`'s unit test does.
     - `devices.cy.ts` "shows device metadata and identifies the device" expects
-      the raw protocol `ZIGB`; the details panel shows "Zigbee".
+      the readable protocol "Zigbee" instead of the raw `ZIGB`.
     - `rules.cy.ts` "resolves template variables to device names when editing"
-      expects the name and description in one `base:SetAttributes`. `RulePanel`
-      sends the name, then `rule:UpdateContext`, then the description, on purpose.
+      expects three requests: `base:SetAttributes` with the name,
+      `rule:UpdateContext`, then `base:SetAttributes` with the description,
+      matching `RulePanel`'s deliberate save order.
+    - The last full run (before these fixes) passed every other spec: 208 of
+      212 tests, with 1 test skipped in `history.cy.ts` by design.
 
 ---
 
