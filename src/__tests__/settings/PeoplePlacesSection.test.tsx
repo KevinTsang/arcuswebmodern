@@ -318,6 +318,9 @@ describe('PeoplePlacesSection – only guest places', () => {
   });
 });
 
+// Which Add Place state applies is tested in lib/addPlaceAccess.test.ts, and
+// how each state renders in AddPlaceControls.test.tsx. These tests check that
+// the section feeds them the session, the active place and the fetched list.
 describe('PeoplePlacesSection – add place', () => {
   // A place the user added (or joined) after signing in: it isn't in the
   // SessionCreated snapshot, only in the fetched places list.
@@ -347,13 +350,6 @@ describe('PeoplePlacesSection – add place', () => {
     expect(asFragment()).toMatchSnapshot();
   });
 
-  it('enables Add Place when the active place is one the user owns', async () => {
-    render(<PeoplePlacesSection />);
-    await waitFor(() => expect(screen.getByTestId('add-place')).toBeInTheDocument());
-    expect(screen.getByTestId('add-place')).not.toBeDisabled();
-    expect(screen.queryByTestId('add-place-hint')).not.toBeInTheDocument();
-  });
-
   it("opens AddPlacePanel for the active place's account", async () => {
     render(<PeoplePlacesSection />);
     await waitFor(() => expect(screen.getByTestId('add-place')).toBeInTheDocument());
@@ -364,20 +360,6 @@ describe('PeoplePlacesSection – add place', () => {
     // place:account of the active place, not s.auth.account (acct-other)
     expect(panel.props.accountId).toBe('acct-own');
     expect(panel.props.onSaved).toEqual(expect.any(Function));
-  });
-
-  it.each([
-    ['fails to load', () => mockListAvailablePlaces.mockRejectedValue(new Error('timeout'))],
-    ['is empty', () => mockListAvailablePlaces.mockResolvedValue({ places: [] })],
-  ])('keeps Add Place enabled at an owned place when the places list %s', async (_, setUp) => {
-    setUp();
-    render(<PeoplePlacesSection />);
-    await waitFor(() => expect(screen.getByText('No places found.')).toBeInTheDocument());
-
-    expect(screen.getByTestId('add-place')).not.toBeDisabled();
-    expect(screen.queryByTestId('add-place-hint')).not.toBeInTheDocument();
-    fireEvent.click(screen.getByTestId('add-place'));
-    expect(openedPanel().props.accountId).toBe('acct-own');
   });
 
   it('enables Add Place at an owned place added since sign-in', async () => {
@@ -398,18 +380,6 @@ describe('PeoplePlacesSection – add place', () => {
     mockListAvailablePlaces.mockRejectedValue(new Error('timeout'));
     render(<PeoplePlacesSection />);
     await waitFor(() => expect(screen.getByText('No places found.')).toBeInTheDocument());
-
-    expect(screen.queryByTestId('add-place')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('add-place-hint')).not.toBeInTheDocument();
-  });
-
-  it.each([
-    ['has not loaded', null],
-    ['is still the previous place', guestPlaceData],
-  ])("hides Add Place while the active place's record %s", async (_, record) => {
-    mockActivePlace = record;
-    render(<PeoplePlacesSection />);
-    await waitFor(() => expect(screen.getByText('My Home')).toBeInTheDocument());
 
     expect(screen.queryByTestId('add-place')).not.toBeInTheDocument();
     expect(screen.queryByTestId('add-place-hint')).not.toBeInTheDocument();
@@ -436,18 +406,6 @@ describe('PeoplePlacesSection – add place', () => {
     await waitFor(() => expect(screen.getByTestId('place-card-place-3')).toBeInTheDocument());
   });
 
-  it('disables Add Place with a hint while a guest place is active', async () => {
-    mockActivePlaceId = 'place-2';
-    mockActivePlace = guestPlaceData;
-    render(<PeoplePlacesSection />);
-    await waitFor(() => expect(screen.getByTestId('add-place')).toBeInTheDocument());
-
-    expect(screen.getByTestId('add-place')).toBeDisabled();
-    expect(screen.getByTestId('add-place-hint')).toHaveTextContent('To add a place, first switch to a place you own.');
-    fireEvent.click(screen.getByTestId('add-place'));
-    expect(mockOpenRight).not.toHaveBeenCalled();
-  });
-
   describe('when the person is only a guest', () => {
     beforeEach(() => {
       mockActivePlaceId = 'place-2';
@@ -461,37 +419,5 @@ describe('PeoplePlacesSection – add place', () => {
       await screen.findByTestId('add-place-section');
       expect(asFragment()).toMatchSnapshot();
     });
-
-    it('disables Add Place and suggests creating a new account', async () => {
-      render(<PeoplePlacesSection />);
-      await screen.findByTestId('add-place-section');
-
-      expect(screen.getByTestId('add-place')).toBeDisabled();
-      expect(screen.getByTestId('add-place-hint')).toHaveTextContent(
-        'To add your own place, create a new account using a different email address.',
-      );
-      fireEvent.click(screen.getByTestId('add-place'));
-      expect(mockOpenRight).not.toHaveBeenCalled();
-    });
-
-    it('still suggests creating an account when the places list fails to load', async () => {
-      mockListAvailablePlaces.mockRejectedValueOnce(new Error('timeout'));
-      render(<PeoplePlacesSection />);
-      await screen.findByTestId('add-place-section');
-
-      expect(screen.getByTestId('add-place-hint')).toHaveTextContent('create a new account');
-    });
-  });
-
-  it('suggests switching, not a new account, to a guest who owns a place added since sign-in', async () => {
-    // Only a guest at sign-in, then added a place of their own
-    mockActivePlaceId = 'place-2';
-    mockActivePlace = guestPlaceData;
-    mockSessionPlaces = [guestSessionPlace];
-    mockListAvailablePlaces.mockResolvedValue({ places: [guestPlace, cabinPlace] });
-    render(<PeoplePlacesSection />);
-    await waitFor(() => expect(screen.getByTestId('place-card-place-3')).toBeInTheDocument());
-
-    expect(screen.getByTestId('add-place-hint')).toHaveTextContent('To add a place, first switch to a place you own.');
   });
 });

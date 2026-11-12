@@ -21,6 +21,8 @@ import PlaceCard from './PlaceCard';
 import { type PlaceWithPeople, type PlaceData } from './types';
 import type { ListPersonsResponse } from '@/arcus/types';
 import { AddPlacePanel } from './AddPlacePanel';
+import { AddPlaceControls } from './AddPlaceControls';
+import { getAddPlaceAccess } from '@/lib/addPlaceAccess';
 
 const OWNER = 'OWNER';
 
@@ -36,34 +38,20 @@ export default function PeoplePlacesSection() {
 
   const refresh = useCallback(() => setRefreshKey((k) => k + 1), []);
 
-  // account:AddPlace is only authorized while the session's active place is
-  // one the person owns (RoleAuthorizer checks the active place), and a person
-  // owns at most one account. So both the check and the destination come from
-  // the active place: its role, and its place:account.
-  const sessionPlaces = currentPerson?.places ?? [];
-  const activeRole =
-    sessionPlaces.find((p) => p.placeId === activePlaceId)?.role
-    // A place added or joined since sign-in is only in the fetched list
-    ?? places.find((p) => p.placeId === activePlaceId)?.role;
-  // Read the account only from the active place's own record: the platform
-  // adds the new place to whichever account the request is sent to.
-  const activeAccountId = activePlace?.[Base.ATTR_ID] === activePlaceId
-    ? activePlace?.[Place.ATTR_ACCOUNT]
-    : undefined;
-  const addPlaceAccountId = activeRole === OWNER ? activeAccountId : undefined;
-  // At a guest place, Add Place is shown disabled. The hint points the person
-  // at a place they own to switch to, or, when they own none (they only joined
-  // other people's places), at creating their own account, as legacy did.
-  const ownsAPlace = [...sessionPlaces, ...places].some((p) => p.role === OWNER);
-  const atGuestPlace = activeRole !== undefined && activeRole !== OWNER;
+  // Whether Add Place is enabled, and for which account: see getAddPlaceAccess.
+  const addPlaceAccess = getAddPlaceAccess({
+    activePlaceId,
+    activePlace,
+    sessionPlaces: currentPerson?.places ?? [],
+    places,
+  });
 
-  const handleAddPlace = useCallback(() => {
-    if (!addPlaceAccountId) return;
-    openRight(<AddPlacePanel accountId={addPlaceAccountId} onSaved={refresh} />, {
+  const handleAddPlace = useCallback((accountId: string) => {
+    openRight(<AddPlacePanel accountId={accountId} onSaved={refresh} />, {
       title: 'Add a Place',
       key: 'add-place',
     });
-  }, [addPlaceAccountId, openRight, refresh]);
+  }, [openRight, refresh]);
 
   useEffect(() => {
     let cancelled = false;
@@ -156,26 +144,7 @@ export default function PeoplePlacesSection() {
         <p className="text-sm text-grouse">No places found.</p>
       )}
 
-      {/* Add place — enabled only while the active place is one the person owns */}
-      {(addPlaceAccountId || atGuestPlace) && (
-        <div data-testid="add-place-section" className="space-y-2">
-          <button
-            onClick={handleAddPlace}
-            data-testid="add-place"
-            disabled={!addPlaceAccountId}
-            className="px-4 py-2 bg-peacock text-crane rounded-[var(--border-radius-base)] text-sm font-medium hover:bg-peacock/90 disabled:opacity-50"
-          >
-            + Add Place
-          </button>
-          {atGuestPlace && (
-            <p data-testid="add-place-hint" className="text-xs text-grouse">
-              {ownsAPlace
-                ? 'To add a place, first switch to a place you own.'
-                : 'To add your own place, create a new account using a different email address.'}
-            </p>
-          )}
-        </div>
-      )}
+      <AddPlaceControls access={addPlaceAccess} onAdd={handleAddPlace} />
     </div>
   );
 }
