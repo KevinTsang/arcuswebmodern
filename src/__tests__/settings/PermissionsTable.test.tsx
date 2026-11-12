@@ -5,8 +5,8 @@ import { TestIdScope } from '@/lib/testIdScope';
 
 describe('PermissionsTable', () => {
   it('matches snapshot', () => {
-    const { container } = render(<PermissionsTable perms={emptyPermSet()} />);
-    expect(container.firstChild).toMatchSnapshot();
+    const { asFragment } = render(<PermissionsTable perms={emptyPermSet()} />);
+    expect(asFragment()).toMatchSnapshot();
   });
 
   it('renders all category labels', () => {

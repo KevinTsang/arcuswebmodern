@@ -4,7 +4,7 @@ import { useState, useCallback } from 'react';
 import Bridge from '@arcus/core/bridge';
 import { Base, Place } from '@arcus/core';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
-import { setPlace } from '@/store/slices/placeSlice';
+import { updatePlace } from '@/store/slices/placeSlice';
 import { addNotification } from '@/store/slices/uiSlice';
 import { useSidePanel } from '@/components/SidePanel';
 import Field from './Field';
@@ -45,9 +45,11 @@ export default function PlaceInfoPanel({ placeData, onSaved }: PlaceInfoPanelPro
       };
       await Bridge.request(Base.CMD_SETATTRIBUTES, address, attrs);
 
-      // Update Redux if this is the active place
+      // Merge just the saved attributes into the active place. placeData is
+      // the snapshot this panel opened with, so writing it back would revert
+      // anything that changed since.
       if (isActivePlace) {
-        dispatch(setPlace({ ...placeData, ...attrs }));
+        dispatch(updatePlace({ [Base.ATTR_ADDRESS]: address, ...attrs }));
       }
 
       dispatch(addNotification({ type: 'success', message: 'Place info updated.' }));
@@ -62,7 +64,6 @@ export default function PlaceInfoPanel({ placeData, onSaved }: PlaceInfoPanelPro
 
   return (
     <div className="p-4 space-y-4">
-      <h3 data-testid="place-panel-title" className="text-lg font-semibold text-swift">Edit Place</h3>
       <Field label="Place Name" value={name} onChange={setName} />
       <Field label="Street Address" value={street1} onChange={setStreet1} />
       <Field label="Street Address 2" value={street2} onChange={setStreet2} />

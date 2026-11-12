@@ -30,6 +30,7 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
+      - run: npm run lint
       - run: npm test
       - uses: actions/cache@v6
         with:

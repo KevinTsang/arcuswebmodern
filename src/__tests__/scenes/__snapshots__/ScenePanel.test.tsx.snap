@@ -1,0 +1,41 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`ScenePanel (create mode) matches snapshot 1`] = `
+<DocumentFragment>
+  <div>
+    <div
+      data-testid="category-list"
+    >
+      <span
+        data-testid="scene-name"
+      >
+        New Scene
+      </span>
+      <span
+        data-testid="save-label"
+      >
+        Create Scene
+      </span>
+      <span
+        data-testid="action-count"
+      >
+        1
+      </span>
+      <span
+        data-testid="saving"
+      >
+        false
+      </span>
+      <button>
+        select-action
+      </button>
+      <button>
+        save
+      </button>
+      <button>
+        cancel
+      </button>
+    </div>
+  </div>
+</DocumentFragment>
+`;

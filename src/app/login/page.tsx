@@ -10,55 +10,42 @@
  *   /login?view=reset-confirmation — forgot password step 3
  */
 
-import { useState, useCallback, Suspense, FormEvent } from 'react';
+import { useState, useCallback, useMemo, Suspense, FormEvent } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { loginThunk } from '@/store/thunks/loginThunk';
 import { loadPlaceDataThunk } from '@/store/thunks/loadPlaceDataThunk';
 import { useFormValidation, type ValidationConstraints } from '@/hooks/useFormValidation';
+import { EMAIL_RULE, NEW_PASSWORD_RULE, confirmPasswordRule } from '@/lib/validationRules';
 import { PersonService } from '@arcus/core/services';
 import { ArcusLogo } from '@/components/shared/ArcusLogo';
+import { takeNextPage } from '@/lib/nextPage';
 
 // ── Validation constraints ────────────────────────────────────────────
 
 const LOGIN_CONSTRAINTS: ValidationConstraints = {
-  emailAddress: {
-    presence: true,
-    email: { message: 'is invalid' },
-  },
+  emailAddress: EMAIL_RULE,
   password: {
     presence: true,
   },
 };
 
 const SEND_CODE_CONSTRAINTS: ValidationConstraints = {
-  emailAddress: {
-    presence: true,
-    email: { message: 'is invalid' },
-  },
+  emailAddress: EMAIL_RULE,
 };
 
 function getResetPasswordConstraints(emailAddress: string): ValidationConstraints {
   return {
-    emailAddress: {
-      presence: true,
-      email: { message: 'is invalid' },
-    },
+    emailAddress: EMAIL_RULE,
     code: {
       presence: true,
     },
     newPassword: {
-      presence: true,
-      length: { minimum: 8, message: 'must be at least 8 characters' },
+      ...NEW_PASSWORD_RULE,
       exclusion: { within: [emailAddress], message: 'cannot be your email address' },
-      oneLetterOneNumber: true,
-      noSpaces: true,
     },
-    confirmPassword: {
-      presence: true,
-      equality: { attribute: 'newPassword', message: '^Passwords do not match' },
-    },
+    confirmPassword: confirmPasswordRule('newPassword'),
   };
 }
 
@@ -99,14 +86,13 @@ function LoginForm() {
           await dispatch(loadPlaceDataThunk(result.placeId)).unwrap();
         }
 
-        const redirect = searchParams.get('redirect') ?? '/';
-        router.replace(redirect);
+        router.replace(takeNextPage());
       } catch {
         setSaving(false);
         form.setFormError('Invalid username or password');
       }
     },
-    [emailAddress, password, isPublic, dispatch, router, searchParams, form],
+    [emailAddress, password, isPublic, dispatch, router, form],
   );
 
   return (
@@ -332,7 +318,10 @@ function ResetPasswordForm() {
   const constraints = getResetPasswordConstraints(emailAddress);
   const form = useFormValidation(constraints);
 
-  const allValues = { emailAddress, code, newPassword, confirmPassword };
+  const allValues = useMemo(
+    () => ({ emailAddress, code, newPassword, confirmPassword }),
+    [emailAddress, code, newPassword, confirmPassword],
+  );
 
   const handleSubmit = useCallback(
     async (ev: FormEvent) => {

@@ -64,48 +64,12 @@ export const initialState: CreateAccountState = {
   pinError: null,
 };
 
-// ── Actions ───────────────────────────────────────────────────────
+// ── Field names (payload of `setField`) ───────────────────────────
 
-/** String form fields that SET_FIELD can target. */
-type FormStringField =
+/** String form fields `setField` can target. */
+export type FormStringField =
   | 'email' | 'password' | 'confirmPassword'
   | 'firstName' | 'lastName' | 'phone'
   | 'street1' | 'street2' | 'city' | 'state' | 'zip';
 
-type FormBooleanField = 'optIn';
-
-export type CreateAccountAction =
-  | { type: 'SET_FIELD'; field: FormStringField; value: string }
-  | { type: 'SET_FIELD'; field: FormBooleanField; value: boolean }
-  | { type: 'SET_STEP'; step: Step }
-  | { type: 'SET_LOADING'; loading: boolean }
-  | { type: 'SET_ERROR'; error: string }
-  | { type: 'CLEAR_ERROR' }
-  | { type: 'ACCOUNT_CREATED'; personData: SessionCreatedEvent; placeId: string | null }
-  | { type: 'SET_PIN_ERROR'; pinError: string | null };
-
-// ── Reducer ───────────────────────────────────────────────────────
-
-export function createAccountReducer(
-  state: CreateAccountState,
-  action: CreateAccountAction,
-): CreateAccountState {
-  switch (action.type) {
-    case 'SET_FIELD':
-      return { ...state, [action.field]: action.value };
-    case 'SET_STEP':
-      return { ...state, step: action.step };
-    case 'SET_LOADING':
-      return { ...state, loading: action.loading, ...(action.loading ? { pinError: null } : {}) };
-    case 'SET_ERROR':
-      return { ...state, error: action.error };
-    case 'CLEAR_ERROR':
-      return { ...state, error: '' };
-    case 'ACCOUNT_CREATED':
-      return { ...state, personData: action.personData, placeId: action.placeId, step: 'address' };
-    case 'SET_PIN_ERROR':
-      return { ...state, pinError: action.pinError };
-    default:
-      return state;
-  }
-}
+export type FormBooleanField = 'optIn';

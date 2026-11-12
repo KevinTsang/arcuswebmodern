@@ -1,5 +1,5 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { Base, Device } from '@arcus/core';
+import { Base, Device, DeviceAdvanced } from '@arcus/core';
 import { DevicePanel } from '@/components/devices/DevicePanel';
 import type { DeviceEntity } from '@/store/entityTypes';
 
@@ -10,6 +10,7 @@ let mockDevice: DeviceEntity;
 const mockDispatch = jest.fn();
 const mockSetFavorite = jest.fn();
 const mockSetAttribute = jest.fn();
+const mockOpenRight = jest.fn();
 
 jest.mock('@/hooks/useDeviceCapability', () => ({
   useDevice: () => mockDevice,
@@ -27,7 +28,7 @@ jest.mock('@/hooks/useDeviceConfig', () => ({
 }));
 
 jest.mock('@/components/SidePanel', () => ({
-  useSidePanel: () => ({ openRight: jest.fn() }),
+  useSidePanel: () => ({ openRight: mockOpenRight }),
 }));
 
 jest.mock('@/store/hooks', () => ({
@@ -107,5 +108,38 @@ describe('DevicePanel – favorite toggle', () => {
         }),
       ),
     );
+  });
+});
+
+describe('DevicePanel – error indicator', () => {
+  it('hides the indicator when devadv:errors is absent', () => {
+    render(<DevicePanel address={ADDRESS} />);
+    expect(screen.queryByTitle('Device has errors')).not.toBeInTheDocument();
+  });
+
+  it('hides the indicator when devadv:errors is an empty map', () => {
+    mockDevice = { ...device(), [DeviceAdvanced.ATTR_ERRORS]: {} };
+    render(<DevicePanel address={ADDRESS} />);
+    expect(screen.queryByTitle('Device has errors')).not.toBeInTheDocument();
+  });
+
+  it('shows the indicator when devadv:errors has entries', () => {
+    mockDevice = { ...device(), [DeviceAdvanced.ATTR_ERRORS]: { ERR_JAM: 'Lock is jammed' } };
+    render(<DevicePanel address={ADDRESS} />);
+    expect(screen.getByTitle('Device has errors')).toBeInTheDocument();
+  });
+});
+
+describe('DevicePanel – side panels', () => {
+  it('opens the configuration panel with its title in the side panel header', () => {
+    render(<DevicePanel address={ADDRESS} />);
+    fireEvent.click(screen.getByTestId(`device-config-${ADDRESS}`));
+    expect(mockOpenRight).toHaveBeenCalledWith(expect.anything(), { title: 'Configuration', key: `device-config:${ADDRESS}` });
+  });
+
+  it('opens the details panel with its title in the side panel header', () => {
+    render(<DevicePanel address={ADDRESS} />);
+    fireEvent.click(screen.getByTestId(`device-details-${ADDRESS}`));
+    expect(mockOpenRight).toHaveBeenCalledWith(expect.anything(), { title: 'Device Details', key: `device-details:${ADDRESS}` });
   });
 });

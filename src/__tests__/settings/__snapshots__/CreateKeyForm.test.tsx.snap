@@ -1,0 +1,495 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`CreateKeyForm matches snapshot 1`] = `
+<DocumentFragment>
+  <div
+    class="border border-heron rounded-[var(--border-radius-base)] overflow-hidden mb-6"
+  >
+    <div
+      class="px-4 py-3 bg-pigeon/30"
+    >
+      <h3
+        class="text-sm font-medium text-swift"
+      >
+        Create API Key
+      </h3>
+    </div>
+    <div
+      class="px-4 py-3 space-y-4"
+    >
+      <div>
+        <label
+          class="block text-sm text-grouse mb-1"
+        >
+          Name
+        </label>
+        <input
+          class="w-full max-w-md border border-heron rounded-[var(--border-radius-base)] px-3 py-2 text-sm text-swift focus:outline-none focus:border-peacock"
+          data-testid="apikey-label"
+          maxlength="64"
+          placeholder="e.g. Home Assistant Integration"
+          type="text"
+          value=""
+        />
+      </div>
+      <div>
+        <label
+          class="block text-sm text-grouse mb-2"
+        >
+          Permissions
+        </label>
+        <div
+          class="overflow-x-auto"
+        >
+          <table
+            class="text-sm"
+          >
+            <thead>
+              <tr
+                class="text-left text-xs text-grouse uppercase"
+              >
+                <th
+                  class="pr-8 py-1 font-medium"
+                >
+                  Category
+                </th>
+                <th
+                  class="px-4 py-1 font-medium text-center"
+                >
+                  Read
+                </th>
+                <th
+                  class="px-4 py-1 font-medium text-center"
+                >
+                  Write
+                </th>
+                <th
+                  class="px-4 py-1 font-medium text-center"
+                >
+                  Execute
+                </th>
+                <th
+                  class="px-4 py-1 font-medium text-center"
+                >
+                  All
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                class="border-t border-heron/50"
+              >
+                <td
+                  class="pr-8 py-1.5 text-swift"
+                >
+                  Devices
+                </td>
+                <td
+                  class="px-4 py-1.5 text-center"
+                >
+                  <input
+                    aria-label="Devices read"
+                    class="rounded"
+                    data-testid="apikey-new-perm-dev-r"
+                    type="checkbox"
+                  />
+                </td>
+                <td
+                  class="px-4 py-1.5 text-center"
+                >
+                  <input
+                    aria-label="Devices write"
+                    class="rounded"
+                    data-testid="apikey-new-perm-dev-w"
+                    type="checkbox"
+                  />
+                </td>
+                <td
+                  class="px-4 py-1.5 text-center"
+                >
+                  <input
+                    aria-label="Devices execute"
+                    class="rounded"
+                    data-testid="apikey-new-perm-dev-x"
+                    type="checkbox"
+                  />
+                </td>
+                <td
+                  class="px-4 py-1.5 text-center"
+                >
+                  <input
+                    aria-label="Devices all"
+                    class="rounded"
+                    data-testid="apikey-new-perm-dev-all"
+                    type="checkbox"
+                  />
+                </td>
+              </tr>
+              <tr
+                class="border-t border-heron/50"
+              >
+                <td
+                  class="pr-8 py-1.5 text-swift"
+                >
+                  Scenes
+                </td>
+                <td
+                  class="px-4 py-1.5 text-center"
+                >
+                  <input
+                    aria-label="Scenes read"
+                    class="rounded"
+                    data-testid="apikey-new-perm-scene-r"
+                    type="checkbox"
+                  />
+                </td>
+                <td
+                  class="px-4 py-1.5 text-center"
+                >
+                  <input
+                    aria-label="Scenes write"
+                    class="rounded"
+                    data-testid="apikey-new-perm-scene-w"
+                    type="checkbox"
+                  />
+                </td>
+                <td
+                  class="px-4 py-1.5 text-center"
+                >
+                  <input
+                    aria-label="Scenes execute"
+                    class="rounded"
+                    data-testid="apikey-new-perm-scene-x"
+                    type="checkbox"
+                  />
+                </td>
+                <td
+                  class="px-4 py-1.5 text-center"
+                >
+                  <input
+                    aria-label="Scenes all"
+                    class="rounded"
+                    data-testid="apikey-new-perm-scene-all"
+                    type="checkbox"
+                  />
+                </td>
+              </tr>
+              <tr
+                class="border-t border-heron/50"
+              >
+                <td
+                  class="pr-8 py-1.5 text-swift"
+                >
+                  Rules
+                </td>
+                <td
+                  class="px-4 py-1.5 text-center"
+                >
+                  <input
+                    aria-label="Rules read"
+                    class="rounded"
+                    data-testid="apikey-new-perm-rule-r"
+                    type="checkbox"
+                  />
+                </td>
+                <td
+                  class="px-4 py-1.5 text-center"
+                >
+                  <input
+                    aria-label="Rules write"
+                    class="rounded"
+                    data-testid="apikey-new-perm-rule-w"
+                    type="checkbox"
+                  />
+                </td>
+                <td
+                  class="px-4 py-1.5 text-center"
+                >
+                  <input
+                    aria-label="Rules execute"
+                    class="rounded"
+                    data-testid="apikey-new-perm-rule-x"
+                    type="checkbox"
+                  />
+                </td>
+                <td
+                  class="px-4 py-1.5 text-center"
+                >
+                  <input
+                    aria-label="Rules all"
+                    class="rounded"
+                    data-testid="apikey-new-perm-rule-all"
+                    type="checkbox"
+                  />
+                </td>
+              </tr>
+              <tr
+                class="border-t border-heron/50"
+              >
+                <td
+                  class="pr-8 py-1.5 text-swift"
+                >
+                  Schedulers
+                </td>
+                <td
+                  class="px-4 py-1.5 text-center"
+                >
+                  <input
+                    aria-label="Schedulers read"
+                    class="rounded"
+                    data-testid="apikey-new-perm-scheduler-r"
+                    type="checkbox"
+                  />
+                </td>
+                <td
+                  class="px-4 py-1.5 text-center"
+                >
+                  <input
+                    aria-label="Schedulers write"
+                    class="rounded"
+                    data-testid="apikey-new-perm-scheduler-w"
+                    type="checkbox"
+                  />
+                </td>
+                <td
+                  class="px-4 py-1.5 text-center"
+                >
+                  <input
+                    aria-label="Schedulers execute"
+                    class="rounded"
+                    data-testid="apikey-new-perm-scheduler-x"
+                    type="checkbox"
+                  />
+                </td>
+                <td
+                  class="px-4 py-1.5 text-center"
+                >
+                  <input
+                    aria-label="Schedulers all"
+                    class="rounded"
+                    data-testid="apikey-new-perm-scheduler-all"
+                    type="checkbox"
+                  />
+                </td>
+              </tr>
+              <tr
+                class="border-t border-heron/50"
+              >
+                <td
+                  class="pr-8 py-1.5 text-swift"
+                >
+                  Subsystems
+                </td>
+                <td
+                  class="px-4 py-1.5 text-center"
+                >
+                  <input
+                    aria-label="Subsystems read"
+                    class="rounded"
+                    data-testid="apikey-new-perm-sub-r"
+                    type="checkbox"
+                  />
+                </td>
+                <td
+                  class="px-4 py-1.5 text-center"
+                >
+                  <input
+                    aria-label="Subsystems write"
+                    class="rounded"
+                    data-testid="apikey-new-perm-sub-w"
+                    type="checkbox"
+                  />
+                </td>
+                <td
+                  class="px-4 py-1.5 text-center"
+                >
+                  <input
+                    aria-label="Subsystems execute"
+                    class="rounded"
+                    data-testid="apikey-new-perm-sub-x"
+                    type="checkbox"
+                  />
+                </td>
+                <td
+                  class="px-4 py-1.5 text-center"
+                >
+                  <input
+                    aria-label="Subsystems all"
+                    class="rounded"
+                    data-testid="apikey-new-perm-sub-all"
+                    type="checkbox"
+                  />
+                </td>
+              </tr>
+              <tr
+                class="border-t border-heron/50"
+              >
+                <td
+                  class="pr-8 py-1.5 text-swift"
+                >
+                  Hub
+                </td>
+                <td
+                  class="px-4 py-1.5 text-center"
+                >
+                  <input
+                    aria-label="Hub read"
+                    class="rounded"
+                    data-testid="apikey-new-perm-hub-r"
+                    type="checkbox"
+                  />
+                </td>
+                <td
+                  class="px-4 py-1.5 text-center"
+                >
+                  <input
+                    aria-label="Hub write"
+                    class="rounded"
+                    data-testid="apikey-new-perm-hub-w"
+                    type="checkbox"
+                  />
+                </td>
+                <td
+                  class="px-4 py-1.5 text-center"
+                >
+                  <input
+                    aria-label="Hub execute"
+                    class="rounded"
+                    data-testid="apikey-new-perm-hub-x"
+                    type="checkbox"
+                  />
+                </td>
+                <td
+                  class="px-4 py-1.5 text-center"
+                >
+                  <input
+                    aria-label="Hub all"
+                    class="rounded"
+                    data-testid="apikey-new-perm-hub-all"
+                    type="checkbox"
+                  />
+                </td>
+              </tr>
+              <tr
+                class="border-t border-heron/50"
+              >
+                <td
+                  class="pr-8 py-1.5 text-swift"
+                >
+                  People
+                </td>
+                <td
+                  class="px-4 py-1.5 text-center"
+                >
+                  <input
+                    aria-label="People read"
+                    class="rounded"
+                    data-testid="apikey-new-perm-person-r"
+                    type="checkbox"
+                  />
+                </td>
+                <td
+                  class="px-4 py-1.5 text-center"
+                >
+                  <input
+                    aria-label="People write"
+                    class="rounded"
+                    data-testid="apikey-new-perm-person-w"
+                    type="checkbox"
+                  />
+                </td>
+                <td
+                  class="px-4 py-1.5 text-center"
+                >
+                  <input
+                    aria-label="People execute"
+                    class="rounded"
+                    data-testid="apikey-new-perm-person-x"
+                    type="checkbox"
+                  />
+                </td>
+                <td
+                  class="px-4 py-1.5 text-center"
+                >
+                  <input
+                    aria-label="People all"
+                    class="rounded"
+                    data-testid="apikey-new-perm-person-all"
+                    type="checkbox"
+                  />
+                </td>
+              </tr>
+              <tr
+                class="border-t border-heron/50"
+              >
+                <td
+                  class="pr-8 py-1.5 text-swift"
+                >
+                  Place
+                </td>
+                <td
+                  class="px-4 py-1.5 text-center"
+                >
+                  <input
+                    aria-label="Place read"
+                    class="rounded"
+                    data-testid="apikey-new-perm-place-r"
+                    type="checkbox"
+                  />
+                </td>
+                <td
+                  class="px-4 py-1.5 text-center"
+                >
+                  <input
+                    aria-label="Place write"
+                    class="rounded"
+                    data-testid="apikey-new-perm-place-w"
+                    type="checkbox"
+                  />
+                </td>
+                <td
+                  class="px-4 py-1.5 text-center"
+                >
+                  <input
+                    aria-label="Place execute"
+                    class="rounded"
+                    data-testid="apikey-new-perm-place-x"
+                    type="checkbox"
+                  />
+                </td>
+                <td
+                  class="px-4 py-1.5 text-center"
+                >
+                  <input
+                    aria-label="Place all"
+                    class="rounded"
+                    data-testid="apikey-new-perm-place-all"
+                    type="checkbox"
+                  />
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div
+        class="flex gap-2 pt-1"
+      >
+        <button
+          class="px-4 py-2 bg-peacock text-crane rounded-[var(--border-radius-base)] text-sm font-medium hover:bg-peacock/90 disabled:opacity-50"
+          data-testid="apikey-create"
+          disabled=""
+        >
+          Create Key
+        </button>
+        <button
+          class="px-4 py-2 border border-heron rounded-[var(--border-radius-base)] text-sm text-coot hover:bg-pigeon"
+          data-testid="apikey-cancel"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+</DocumentFragment>
+`;

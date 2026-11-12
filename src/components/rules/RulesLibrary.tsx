@@ -1,18 +1,13 @@
 import { useCallback, useMemo } from 'react';
 import { useAppSelector } from '@/store/hooks';
-import { useSidePanel } from '@/components/SidePanel';
 import { Accordion, AccordionPanel } from '@/components/shared/Accordion';
-import { RulePanel } from './RulePanel';
+import { useOpenRulePanel } from './useOpenRulePanel';
 import { Base } from '@arcus/core';
 import type { RuleTemplateEntity } from '@/store/entityTypes';
 
-interface RulesLibraryProps {
-  placeId: string;
-}
-
-export function RulesLibrary({ placeId }: RulesLibraryProps) {
+export function RulesLibrary() {
   const ruleTemplates = useAppSelector((s) => s.rules.ruleTemplates);
-  const { openRight } = useSidePanel();
+  const openRulePanel = useOpenRulePanel();
 
   // Group templates by category
   const categories = useMemo(() => {
@@ -32,9 +27,9 @@ export function RulesLibrary({ placeId }: RulesLibraryProps) {
 
   const handleTemplateClick = useCallback(
     (tmpl: RuleTemplateEntity) => {
-      openRight(<RulePanel template={tmpl} placeId={placeId} />);
+      openRulePanel({ template: tmpl });
     },
-    [openRight, placeId],
+    [openRulePanel],
   );
 
   if (ruleTemplates.length === 0) {

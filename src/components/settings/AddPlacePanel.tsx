@@ -4,14 +4,26 @@ import { useState, useCallback } from 'react';
 import Bridge from '@arcus/core/bridge';
 import { Base, Account, Place } from '@arcus/core';
 import type { AddPlaceResponse } from '@/arcus/types';
-import { useAppSelector, useAppDispatch } from '@/store/hooks';
+import { useAppDispatch } from '@/store/hooks';
 import { addNotification } from '@/store/slices/uiSlice';
-import { setPlace } from '@/store/slices/placeSlice';
 import { useSidePanel } from '@/components/SidePanel';
 import Field from './Field';
+import { PlaceAddedView } from './PlaceAddedView';
 
-export default function AddPlacePanel() {
-  const account = useAppSelector((s) => s.auth.account);
+interface AddPlacePanelProps {
+  /** The signed-in person's own account; the new place is added to it. */
+  accountId: string;
+  /** Called after the place is created so the places list can refresh. */
+  onSaved?: () => void;
+}
+
+interface AddedPlace {
+  /** Missing if the platform's reply didn't include the new place. */
+  placeId?: string;
+  name: string;
+}
+
+export function AddPlacePanel({ accountId, onSaved }: AddPlacePanelProps) {
   const dispatch = useAppDispatch();
   const { closeRight } = useSidePanel();
 
@@ -21,36 +33,54 @@ export default function AddPlacePanel() {
   const [stateProv, setStateProv] = useState('');
   const [zip, setZip] = useState('');
   const [saving, setSaving] = useState(false);
-
-  const accountAddress = account?.[Base.ATTR_ADDRESS] ?? '';
-
+  const [added, setAdded] = useState<AddedPlace | null>(null);
   const handleCreate = useCallback(async () => {
-    if (!accountAddress || !name.trim()) return;
+    const placeName = name.trim();
+    if (!placeName) return;
     setSaving(true);
+    let resp: AddPlaceResponse | undefined;
     try {
-      const resp = await Bridge.request<AddPlaceResponse>(Account.CMD_ADDPLACE, accountAddress, {
+      resp = await Bridge.request<AddPlaceResponse>(Account.CMD_ADDPLACE, `SERV:account:${accountId}`, {
         place: {
-          [Place.ATTR_NAME]: name.trim(),
+          [Place.ATTR_NAME]: placeName,
           [Place.ATTR_STREETADDRESS1]: street1.trim(),
           [Place.ATTR_CITY]: city.trim(),
           [Place.ATTR_STATEPROV]: stateProv.trim(),
           [Place.ATTR_ZIPCODE]: zip.trim(),
         },
-        serviceLevel: 'BASIC',
+        serviceLevel: Place.SERVICELEVEL_BASIC,
       });
-      dispatch(setPlace(resp.place));
-      dispatch(addNotification({ type: 'success', message: 'Place created!' }));
-      closeRight();
     } catch {
       dispatch(addNotification({ type: 'error', message: 'Failed to create place.' }));
+      return;
     } finally {
       setSaving(false);
     }
-  }, [accountAddress, name, street1, city, stateProv, zip, dispatch, closeRight]);
+
+    // The place now exists on the platform, so nothing past this point may
+    // report a failure (a retry would create a second place): read the reply
+    // defensively. Adding a place doesn't change the session's active place,
+    // so the active-place state is left alone; PlaceAddedView offers a switch.
+    const created = resp?.place;
+    setAdded({
+      placeId: created?.[Base.ATTR_ID],
+      name: created?.[Place.ATTR_NAME] ?? placeName,
+    });
+    dispatch(addNotification({ type: 'success', message: 'Place created!' }));
+    try {
+      onSaved?.();
+    } catch (e) {
+      // A failed list refresh is not a failed create
+      console.error('Failed to refresh places after adding one:', e);
+    }
+  }, [accountId, name, street1, city, stateProv, zip, dispatch, onSaved]);
+
+  if (added) {
+    return <PlaceAddedView placeId={added.placeId} name={added.name} />;
+  }
 
   return (
     <div className="p-4 space-y-4">
-      <h3 data-testid="add-place-panel-title" className="text-lg font-semibold text-swift">Add a Place</h3>
       <Field label="Place Name" value={name} onChange={setName} placeholder="e.g. Lake House" />
       <Field label="Street Address" value={street1} onChange={setStreet1} />
       <Field label="City" value={city} onChange={setCity} />

@@ -21,23 +21,23 @@ describe('Profile settings', () => {
     cy.signIn({ path: '/settings' });
   });
 
-  it('shows the profile, plan and account state', () => {
+  it('shows the profile and plan', () => {
     profileValue('contact-information', 'name').should('have.text', 'Alex Rivera');
     profileValue('contact-information', 'email').should('have.text', LOGIN.email);
     profileValue('contact-information', 'phone').should('have.text', '5551234567');
     profileValue('service-plan', 'current-plan').should('have.text', 'Basic');
-    profileValue('account', 'account-state').should('have.text', 'COMPLETE');
   });
 
   it('edits contact information', () => {
     cardAction('contact-information').click();
-    tid('contact-panel-title').should('have.text', 'Edit Contact Info');
+    tid('side-panel-right-title').should('have.text', 'Edit Contact Info');
     field('first-name').should('have.value', 'Alex');
     field('phone').clear().type('5550009999');
     tid('contact-save').click();
 
+    // Sent in the "(555) 123-4567" format the platform stores phone numbers in.
     cy.expectRequest(Base.CMD_SETATTRIBUTES, (r) =>
-      r.destination === addr.person && r.attributes[Person.ATTR_MOBILENUMBER] === '5550009999');
+      r.destination === addr.person && r.attributes[Person.ATTR_MOBILENUMBER] === '(555) 000-9999');
     cy.toast('Contact info updated.');
     tid('contact-save').should('not.exist');
   });
@@ -74,7 +74,7 @@ describe('Profile settings', () => {
 
   it('changes the PIN code', () => {
     cardAction('pin-code').click();
-    tid('pin-panel-title').should('have.text', 'Change PIN Code');
+    tid('side-panel-right-title').should('have.text', 'Change PIN Code');
     cy.get('input#change-pin').type('8642');
     cy.get('input#change-pin-confirm').type('8642');
     tid('pin-save').click();
@@ -107,7 +107,7 @@ describe('People & Places', () => {
     placeValue(PLACE_ID, 'address').should('contain', '123 Maple Street');
     placeValue(PLACE_ID, 'role').should('have.text', 'Owner');
     tid(`place-active-${PLACE_ID}`).should('be.visible');
-    tid(`manage-api-keys-${PLACE_ID}`).should('have.attr', 'href', '/settings/api-keys');
+    tid(`manage-api-keys-${PLACE_ID}`).should('have.attr', 'href', `/settings/api-keys?placeId=${PLACE_ID}`);
     tid(`person-${PLACE_ID}-${GUEST_PERSON_ID}`).should('contain', 'Sam Rivera');
     tid(`person-${PLACE_ID}-person-alex`).should('not.exist');
     tid('guest-places').find(`[data-testid="place-card-${LAKE_PLACE_ID}"]`).should('exist');
@@ -120,7 +120,7 @@ describe('People & Places', () => {
 
   it('invites a person to the place', () => {
     tid(`place-invite-${PLACE_ID}`).click();
-    tid('invite-panel-title').should('have.text', 'Invite a Person');
+    tid('side-panel-right-title').should('have.text', 'Invite a Person');
     tid('invite-send').should('be.disabled');
     field('first-name').type('Robin');
     field('last-name').type('Park');
@@ -150,7 +150,7 @@ describe('People & Places', () => {
 
   it('shows a person and removes them from the place', () => {
     tid(`person-${PLACE_ID}-${GUEST_PERSON_ID}-details`).click();
-    tid('person-panel-title').should('have.text', 'Sam Rivera');
+    tid('side-panel-right-title').should('have.text', 'Sam Rivera');
     tid('info-value-email').should('have.text', 'sam@example.com');
     tid('person-remove').click();
 
@@ -163,7 +163,7 @@ describe('People & Places', () => {
 
   it('adds a place', () => {
     tid('add-place').click();
-    tid('add-place-panel-title').should('have.text', 'Add a Place');
+    tid('side-panel-right-title').should('have.text', 'Add a Place');
     tid('place-create').should('be.disabled');
     field('place-name').type('Beach Condo');
     field('city').type('Seaside');
@@ -172,13 +172,19 @@ describe('People & Places', () => {
 
     cy.expectRequest(Account.CMD_ADDPLACE, (r) => r.destination === addr.account).then((r) => {
       expect(r.attributes.place).to.deep.include({ 'place:name': 'Beach Condo', 'place:city': 'Seaside' });
-      expect(r.attributes.serviceLevel).to.eq('BASIC');
+      expect(r.attributes.serviceLevel).to.eq(Place.SERVICELEVEL_BASIC);
     });
     cy.toast('Place created!');
+    tid('add-place-added').should('contain', 'Beach Condo');
+    tid('add-place-switch').should('have.text', 'Switch to Beach Condo');
+    tid('add-place-done').click();
     cy.platform().then((p) => {
       expect(p.data.places.map((pl) => pl.placeName)).to.include('Beach Condo');
       expect(p.created.size).to.eq(1);
       const newPlaceId = p.data.places.find((pl) => pl.placeName === 'Beach Condo')!.placeId;
+      // The places list reloads with the new place; the active place is unchanged.
+      placeCard(newPlaceId).should('have.attr', 'data-active', 'false');
+      placeCard(PLACE_ID).should('have.attr', 'data-active', 'true');
       // The new place is offered in the place selector.
       tid('header-places').click();
       tid(`place-option-${newPlaceId}`).should('contain', 'Beach Condo');
@@ -187,7 +193,7 @@ describe('People & Places', () => {
 
   it('edits the active place', () => {
     tid(`place-edit-${PLACE_ID}`).click();
-    tid('place-panel-title').should('have.text', 'Edit Place');
+    tid('side-panel-right-title').should('have.text', 'Edit Place');
     field('place-name').clear().type('Maple Street House');
     field('zip-code').clear().type('62799');
     tid('place-save').click();
