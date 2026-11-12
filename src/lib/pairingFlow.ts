@@ -69,26 +69,99 @@ export function isInSearch(device: PairingDeviceData, flow: PairingFlow): boolea
     && (device[PairingDevice.ATTR_CUSTOMIZATIONS] ?? []).length === 0;
 }
 
-/** Records found by the current search, in any state. */
-export function searchDevices(devices: PairingDeviceData[], flow: PairingFlow): PairingDeviceData[] {
-  return devices.filter((d) => isInSearch(d, flow));
-}
-
-/** The device the current search paired, if any. */
-export function findPairedDevice(devices: PairingDeviceData[], flow: PairingFlow): PairingDeviceData | undefined {
-  return devices.find((d) => isPaired(d) && isInSearch(d, flow));
-}
-
-/** A device the current search paired improperly, if any. */
-export function findMispairedDevice(devices: PairingDeviceData[], flow: PairingFlow): PairingDeviceData | undefined {
-  return devices.find((d) => isMispaired(d) && isInSearch(d, flow));
+/**
+ * What the pairing page knows about the current search beyond the flow: the
+ * product being searched for, and the records carried over from an earlier
+ * search in the flow.
+ */
+export interface SearchScope {
+  /** The product being searched for, or null when there is none. */
+  productAddress: string | null;
+  /**
+   * Records already PAIRED, MISPAIRED or MISCONFIGURED, but not settled, when
+   * this page's first search started: devices that joined during an earlier
+   * search in the flow (for example a second device that joined alongside the
+   * one customized before Pair Another), mapped to the state each was in, as
+   * in `PairingFlow.settled`. A record whose state has changed since (a reset
+   * mispaired device pairing again) is no longer carried over.
+   */
+  carriedOver: Readonly<Record<string, string>>;
 }
 
 /**
- * Improperly paired records left from before the current search. The legacy
- * client keeps listing past mispairs, so the search screen shows them too,
- * labeled as earlier, without treating them as this search's result.
+ * The records that are already a finished pairing result but not settled,
+ * mapped to their states: the carried-over records of a `SearchScope`.
  */
-export function earlierMispairedDevices(devices: PairingDeviceData[], flow: PairingFlow): PairingDeviceData[] {
-  return devices.filter((d) => !isKitDevice(d) && isMispaired(d) && isSettled(d, flow));
+export function carriedOverStates(devices: PairingDeviceData[], flow: PairingFlow): Record<string, string> {
+  const carriedOver: Record<string, string> = {};
+  for (const device of devices) {
+    if ((isPaired(device) || isMispaired(device)) && isInSearch(device, flow)) {
+      carriedOver[device[Base.ATTR_ADDRESS]] = device[PairingDevice.ATTR_PAIRINGSTATE];
+    }
+  }
+  return carriedOver;
+}
+
+/**
+ * The record's product is unknown, or is the product being searched for.
+ * `pairdev:productAddress` is the product the driver identified, which can
+ * differ from the catalog entry the user picked (rebranded or generic products),
+ * so it only rules out carried-over records, never devices that pair during
+ * the current search.
+ */
+function matchesProduct(device: PairingDeviceData, productAddress: string | null): boolean {
+  const deviceProduct = device[PairingDevice.ATTR_PRODUCTADDRESS];
+  return !productAddress || !deviceProduct || deviceProduct === productAddress;
+}
+
+/**
+ * The record is still in the state it was carried over in, and was identified
+ * as a product other than the one being searched for. Without this check, a
+ * contact sensor that joined during an earlier search would be customized as
+ * the motion sensor the user is now pairing.
+ */
+function isCarriedOverOtherProduct(device: PairingDeviceData, scope?: SearchScope): boolean {
+  if (!scope) return false;
+  const carriedOverState = scope.carriedOver[device[Base.ATTR_ADDRESS]];
+  return carriedOverState === device[PairingDevice.ATTR_PAIRINGSTATE] && !matchesProduct(device, scope.productAddress);
+}
+
+/** The record can be the current search's result. */
+function isSearchResult(device: PairingDeviceData, flow: PairingFlow, scope?: SearchScope): boolean {
+  return isInSearch(device, flow) && !isCarriedOverOtherProduct(device, scope);
+}
+
+/** Records found by the current search, in any state. */
+export function searchDevices(devices: PairingDeviceData[], flow: PairingFlow, scope?: SearchScope): PairingDeviceData[] {
+  return devices.filter((d) => isSearchResult(d, flow, scope));
+}
+
+/** The device the current search paired, if any. */
+export function findPairedDevice(
+  devices: PairingDeviceData[],
+  flow: PairingFlow,
+  scope?: SearchScope,
+): PairingDeviceData | undefined {
+  return devices.find((d) => isPaired(d) && isSearchResult(d, flow, scope));
+}
+
+/** A device the current search paired improperly, if any. */
+export function findMispairedDevice(
+  devices: PairingDeviceData[],
+  flow: PairingFlow,
+  scope?: SearchScope,
+): PairingDeviceData | undefined {
+  return devices.find((d) => isMispaired(d) && isSearchResult(d, flow, scope));
+}
+
+/**
+ * Records from an earlier pairing that the search screen lists, labeled as
+ * earlier, without treating them as this search's result: improperly paired
+ * records left from before the flow (the legacy client keeps listing past
+ * mispairs), and carried-over records identified as another product.
+ */
+export function earlierDevices(devices: PairingDeviceData[], flow: PairingFlow, scope?: SearchScope): PairingDeviceData[] {
+  return devices.filter((d) =>
+    (!isKitDevice(d) && isMispaired(d) && isSettled(d, flow))
+    || (isInSearch(d, flow) && isCarriedOverOtherProduct(d, scope)));
 }

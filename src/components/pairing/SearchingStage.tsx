@@ -10,7 +10,10 @@ interface SearchingStageProps {
   isHubPairing: boolean;
   /** Pairing records found by the current search. */
   devices: PairingDevice[];
-  /** Improperly paired records left from an earlier pairing. */
+  /**
+   * Records from an earlier pairing, labeled as such: past improperly paired
+   * records, and devices from an earlier search identified as another product.
+   */
   earlierDevices: PairingDevice[];
   searchTimedOut: boolean;
   searchFailed: boolean;

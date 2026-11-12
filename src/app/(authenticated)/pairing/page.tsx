@@ -51,13 +51,15 @@ import {
 } from '@/components/pairing';
 import type { PairingFlow } from '@/components/pairing';
 import {
-  earlierMispairedDevices,
+  carriedOverStates,
+  earlierDevices as findEarlierDevices,
   findMispairedDevice,
   findPairedDevice,
   isPaired,
   newPairingFlow,
   searchDevices,
 } from '@/lib/pairingFlow';
+import type { SearchScope } from '@/lib/pairingFlow';
 
 export default function PairingPage() {
   const router = useRouter();
@@ -76,6 +78,18 @@ export default function PairingPage() {
   // The current pairing flow, readable by async work before the store update
   // that starts a flow has re-rendered the page.
   const flowRef = useRef<PairingFlow | null>(pairing.flow);
+  // Records carried over from an earlier search in the flow (see SearchScope),
+  // read once per page before this page first puts the hub in pairing mode, or
+  // null until then. Try Again keeps them, so a slow device of this product that
+  // finishes after the timeout is still customized. The ref is for async search
+  // work; the state labels carried-over devices of another product on the
+  // search screen.
+  const carriedOverRef = useRef<Readonly<Record<string, string>> | null>(null);
+  const [carriedOver, setCarriedOver] = useState<Readonly<Record<string, string>> | null>(null);
+  const recordCarriedOver = useCallback((records: Readonly<Record<string, string>> | null) => {
+    carriedOverRef.current = records;
+    setCarriedOver(records);
+  }, []);
   // Pairing devices this page has dismissed or is dismissing, so they aren't dismissed twice.
   const dismissedRef = useRef<Set<string>>(new Set());
   // Save & Finish, Go to Devices and Pair Another run one at a time.
@@ -127,27 +141,37 @@ export default function PairingPage() {
     window.addEventListener('beforeunload', stopPairing);
     return () => {
       liveSubsystemRef.current = null;
+      recordCarriedOver(null);
       window.removeEventListener('beforeunload', stopPairing);
       stopPairing();
     };
-  }, [pairingSubAddr, stopPolling]);
+  }, [pairingSubAddr, stopPolling, recordCarriedOver]);
 
   // ── Pairing flow ───────────────────────────────────────────
 
   // Return this place's pairing flow, starting one from the current pairing
   // list if there is none. Called before StartPairing (or Search, when there are
-  // no steps), so the list is read before this flow puts the hub in pairing mode.
+  // no steps), so the list is read before this page puts the hub in pairing mode.
+  // When the flow already exists, the list read there gives the records carried
+  // over from its earlier searches.
   const ensureFlow = useCallback(async (subAddr: string): Promise<PairingFlow> => {
     const current = flowRef.current;
-    if (current?.pairingSubsystem === subAddr) return current;
+    if (current?.pairingSubsystem === subAddr && carriedOverRef.current) return current;
     const resp = await Bridge.request<ListPairingDevicesResponse>(PairingSubsystem.CMD_LISTPAIRINGDEVICES, subAddr, {});
-    const flow = newPairingFlow(subAddr, resp.devices ?? []);
+    const devices = resp.devices ?? [];
+    if (current?.pairingSubsystem === subAddr) {
+      if (liveSubsystemRef.current === subAddr) recordCarriedOver(carriedOverStates(devices, current));
+      return current;
+    }
+    const flow = newPairingFlow(subAddr, devices);
     // The page left while the list loaded, so nothing was started: don't start a flow.
     if (liveSubsystemRef.current !== subAddr) return flow;
     flowRef.current = flow;
+    // Every finished record in a new flow's snapshot is settled: nothing is carried over.
+    recordCarriedOver({});
     dispatch(startPairingFlow(flow));
     return flow;
-  }, [dispatch]);
+  }, [dispatch, recordCarriedOver]);
 
   // Remove a PAIRED device from the pairing list once the user is done with it.
   // Callers don't await it: it is best-effort and can take up to the request timeout.
@@ -180,8 +204,10 @@ export default function PairingPage() {
     try {
       const flow = await ensureFlow(subAddr);
       if (liveSubsystemRef.current !== subAddr) return;
+      const productAddress = pairing.product?.[Base.ATTR_ADDRESS] ?? null;
+      const scope: SearchScope = { productAddress, carriedOver: carriedOverRef.current ?? {} };
       await Bridge.request(PairingSubsystem.CMD_SEARCH, subAddr, {
-        productAddress: pairing.product?.[Base.ATTR_ADDRESS] ?? '',
+        productAddress: productAddress ?? '',
       });
       if (liveSubsystemRef.current !== subAddr) return;
 
@@ -194,7 +220,7 @@ export default function PairingPage() {
           const devList = resp.devices ?? [];
           dispatch(setDevices(devList));
 
-          const paired = findPairedDevice(devList, flow);
+          const paired = findPairedDevice(devList, flow, scope);
           if (paired) {
             found = true;
             stopPolling();
@@ -207,7 +233,7 @@ export default function PairingPage() {
             return;
           }
 
-          const mispaired = findMispairedDevice(devList, flow);
+          const mispaired = findMispairedDevice(devList, flow, scope);
           if (mispaired) {
             found = true;
             stopPolling();
@@ -429,10 +455,15 @@ export default function PairingPage() {
     : '';
 
   // Show only what the current search found, plus earlier improperly paired
-  // devices (labeled as such), never leftovers the search ignores.
+  // devices and carried-over devices of another product (labeled as from an
+  // earlier pairing), never leftovers the search ignores.
   const flow = pairing.flow?.pairingSubsystem === pairingSubAddr ? pairing.flow : null;
-  const foundDevices = flow ? searchDevices(pairing.devices, flow) : [];
-  const earlierDevices = flow ? earlierMispairedDevices(pairing.devices, flow) : [];
+  const searchScope: SearchScope = {
+    productAddress: pairing.product?.[Base.ATTR_ADDRESS] ?? null,
+    carriedOver: carriedOver ?? {},
+  };
+  const foundDevices = flow ? searchDevices(pairing.devices, flow, searchScope) : [];
+  const earlierDevices = flow ? findEarlierDevices(pairing.devices, flow, searchScope) : [];
 
   return (
     <div className="p-[var(--gutter)]">

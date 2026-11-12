@@ -1,7 +1,8 @@
 import { Base, PairingDevice } from '@arcus/core';
 import {
   KIT_TAG,
-  earlierMispairedDevices,
+  carriedOverStates,
+  earlierDevices,
   findMispairedDevice,
   findPairedDevice,
   isInSearch,
@@ -13,6 +14,7 @@ import {
   searchDevices,
 } from '@/lib/pairingFlow';
 import type { PairingFlow } from '@/components/pairing/types';
+import type { SearchScope } from '@/lib/pairingFlow';
 import { makePairingDevice } from '../helpers/factories';
 
 // ── Helpers ───────────────────────────────────────────────────────────
@@ -120,10 +122,71 @@ describe('pairingFlow – finding the search result', () => {
     expect(searchDevices(list, flow)).toEqual([joining, newMispair]);
   });
 
-  it('earlierMispairedDevices lists past mispairs but not KIT records or leftover PAIRED devices', () => {
+  it('earlierDevices lists past mispairs but not KIT records or leftover PAIRED devices', () => {
     const kitMispair = makePairingDevice('kit-lock', PAIRINGSTATE_MISPAIRED, { [Base.ATTR_TAGS]: [KIT_TAG] });
     const withKit = newPairingFlow(PAIRING_SUBSYSTEM, [leftoverPlug, pastMispair, pastMisconfigured, kitMispair]);
-    expect(earlierMispairedDevices([leftoverPlug, pastMispair, pastMisconfigured, kitMispair, newMispair], withKit))
+    expect(earlierDevices([leftoverPlug, pastMispair, pastMisconfigured, kitMispair, newMispair], withKit))
       .toEqual([pastMispair, pastMisconfigured]);
+  });
+});
+
+describe('pairingFlow – search scope', () => {
+  const MOTION = 'SERV:product:motion';
+  const CONTACT = 'SERV:product:contact';
+  const withProduct = (id: string, state: string, product?: string) =>
+    makePairingDevice(id, state, product ? { [PairingDevice.ATTR_PRODUCTADDRESS]: product } : {});
+
+  const carriedContact = withProduct('contact-2', PAIRINGSTATE_PAIRED, CONTACT);
+  const carriedMotion = withProduct('motion-early', PAIRINGSTATE_PAIRED, MOTION);
+  const carriedUnknown = withProduct('unknown', PAIRINGSTATE_PAIRED);
+  const carriedMispair = withProduct('contact-3', PAIRINGSTATE_MISPAIRED, CONTACT);
+  const scope = (productAddress: string | null): SearchScope => ({
+    productAddress,
+    carriedOver: carriedOverStates([carriedContact, carriedMotion, carriedUnknown, carriedMispair], flow),
+  });
+
+  it('carriedOverStates records finished records that are not settled, KIT or customized, with their states', () => {
+    const list = [leftoverPlug, pastMispair, stillPairing, kit('kit', PAIRINGSTATE_PAIRED), customized('c'), carriedContact, carriedMispair];
+    expect(carriedOverStates(list, flow)).toEqual({
+      [carriedContact[Base.ATTR_ADDRESS]]: PAIRINGSTATE_PAIRED,
+      [carriedMispair[Base.ATTR_ADDRESS]]: PAIRINGSTATE_MISPAIRED,
+    });
+  });
+
+  it('skips carried-over records identified as another product', () => {
+    expect(findPairedDevice([carriedContact], flow, scope(MOTION))).toBeUndefined();
+    expect(findMispairedDevice([carriedMispair], flow, scope(MOTION))).toBeUndefined();
+  });
+
+  it('keeps carried-over records of the product, or of an unknown product', () => {
+    expect(findPairedDevice([carriedContact, carriedMotion], flow, scope(MOTION))).toBe(carriedMotion);
+    expect(findPairedDevice([carriedContact, carriedUnknown], flow, scope(MOTION))).toBe(carriedUnknown);
+  });
+
+  it('keeps every carried-over record when no product is being paired', () => {
+    expect(findPairedDevice([carriedContact], flow, scope(null))).toBe(carriedContact);
+  });
+
+  it('counts a carried-over record again once its state has changed', () => {
+    // The carried-over mispair was reset and paired again
+    const repaired = withProduct('contact-3', PAIRINGSTATE_PAIRED, CONTACT);
+    expect(findPairedDevice([repaired], flow, scope(MOTION))).toBe(repaired);
+  });
+
+  it('lists carried-over records of another product as earlier, not as found by this search', () => {
+    const joining = withProduct('joining', PAIRINGSTATE_PAIRING);
+    const list = [leftoverPlug, pastMispair, carriedContact, carriedMotion, carriedMispair, joining];
+    expect(searchDevices(list, flow, scope(MOTION))).toEqual([carriedMotion, joining]);
+    expect(earlierDevices(list, flow, scope(MOTION))).toEqual([pastMispair, carriedContact, carriedMispair]);
+  });
+
+  it('lists every carried-over record as found when no product is being paired', () => {
+    expect(searchDevices([carriedContact], flow, scope(null))).toEqual([carriedContact]);
+    expect(earlierDevices([carriedContact], flow, scope(null))).toEqual([]);
+  });
+
+  it('keeps a device that paired during this search whatever product it was identified as', () => {
+    const rebranded = withProduct('rebranded', PAIRINGSTATE_PAIRED, 'SERV:product:other-brand');
+    expect(findPairedDevice([carriedContact, rebranded], flow, scope(MOTION))).toBe(rebranded);
   });
 });

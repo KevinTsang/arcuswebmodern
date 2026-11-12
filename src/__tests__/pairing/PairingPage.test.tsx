@@ -1166,7 +1166,8 @@ describe('PairingPage – one snapshot per pairing flow', () => {
 
     render(<PairingPage />);
     await settle();
-    expect(commandsSent()).toEqual([PairingSubsystem.CMD_SEARCH]);
+    // The list is read for carried-over records, not for a new snapshot
+    expect(commandsSent()).toEqual([PairingSubsystem.CMD_LISTPAIRINGDEVICES, PairingSubsystem.CMD_SEARCH]);
     expect(dispatchesOf('pairing/startPairingFlow')).toHaveLength(0);
 
     await nextPoll();
@@ -1183,7 +1184,129 @@ describe('PairingPage – one snapshot per pairing flow', () => {
 
     render(<PairingPage />);
     await settle();
-    expect(commandsSent()).toEqual([PairingSubsystem.CMD_STARTPAIRING]);
+    expect(commandsSent()).toEqual([PairingSubsystem.CMD_LISTPAIRINGDEVICES, PairingSubsystem.CMD_STARTPAIRING]);
+    expect(dispatchesOf('pairing/startPairingFlow')).toHaveLength(0);
+  });
+
+  describe('records carried over from an earlier search', () => {
+    const motionProduct = {
+      [Base.ATTR_ADDRESS]: 'SERV:product:motion',
+      [Product.ATTR_ID]: 'motion',
+      [Product.ATTR_NAME]: 'Motion Sensor',
+    };
+    const secondContact = makePairingDevice('contact-2', PairingDevice.PAIRINGSTATE_PAIRED, {
+      [PairingDevice.ATTR_PRODUCTADDRESS]: 'SERV:product:contact',
+    });
+
+    beforeEach(() => {
+      // Pair Another: the contact sensor was customized, and the user now pairs a motion sensor
+      sessionStorage.setItem('pairing:product', JSON.stringify(motionProduct));
+      mockPairingState = {
+        ...mockPairingState,
+        product: motionProduct,
+        flow: {
+          pairingSubsystem: pairingSubAddr,
+          settled: { [contactSensor[Base.ATTR_ADDRESS]]: PairingDevice.PAIRINGSTATE_PAIRED },
+        },
+      };
+    });
+
+    it('does not customize a carried-over device identified as another product', async () => {
+      const motion = makePairingDevice('motion', PairingDevice.PAIRINGSTATE_PAIRED, {
+        [PairingDevice.ATTR_PRODUCTADDRESS]: motionProduct[Base.ATTR_ADDRESS],
+      });
+      // A second contact sensor joined during the earlier search
+      mockPlatform([[contactSensor, secondContact], [contactSensor, secondContact], [contactSensor, secondContact, motion]]);
+
+      render(<PairingPage />);
+      await settle();
+      expect(commandsSent()).toEqual([
+        PairingSubsystem.CMD_LISTPAIRINGDEVICES,
+        PairingSubsystem.CMD_STARTPAIRING,
+        PairingSubsystem.CMD_SEARCH,
+      ]);
+
+      await nextPoll();
+      expect(devicePairedDispatches()).toHaveLength(0);
+
+      await nextPoll();
+      expect(devicePairedDispatches()).toEqual([
+        expect.objectContaining({ payload: expect.objectContaining({ device: motion }) }),
+      ]);
+    });
+
+    it('does not end the search on a carried-over mispair identified as another product', async () => {
+      const contactMispair = makePairingDevice('contact-3', PairingDevice.PAIRINGSTATE_MISPAIRED, {
+        [PairingDevice.ATTR_PRODUCTADDRESS]: 'SERV:product:contact',
+      });
+      mockPlatform([[contactMispair]]);
+
+      render(<PairingPage />);
+      await settle();
+      await nextPoll();
+      expect(dispatchesOf('pairing/deviceMispaired')).toHaveLength(0);
+    });
+
+    it('customizes a carried-over device of the product being paired', async () => {
+      const earlyMotion = makePairingDevice('motion', PairingDevice.PAIRINGSTATE_PAIRED, {
+        [PairingDevice.ATTR_PRODUCTADDRESS]: motionProduct[Base.ATTR_ADDRESS],
+      });
+      mockPlatform([[contactSensor, secondContact, earlyMotion]]);
+
+      render(<PairingPage />);
+      await settle();
+      await nextPoll();
+      expect(devicePairedDispatches()).toEqual([
+        expect.objectContaining({ payload: expect.objectContaining({ device: earlyMotion }) }),
+      ]);
+    });
+
+    it('customizes a device that pairs during this search even when it is identified as another product', async () => {
+      // A rebranded sensor: the driver identifies a different catalog entry than the one picked
+      const rebranded = makePairingDevice('rebranded', PairingDevice.PAIRINGSTATE_PAIRED, {
+        [PairingDevice.ATTR_PRODUCTADDRESS]: 'SERV:product:other-brand-motion',
+      });
+      mockPlatform([[contactSensor], [contactSensor, rebranded]]);
+
+      render(<PairingPage />);
+      await settle();
+      await nextPoll();
+      expect(devicePairedDispatches()).toEqual([
+        expect.objectContaining({ payload: expect.objectContaining({ device: rebranded }) }),
+      ]);
+    });
+
+    it('labels a carried-over device of another product as from an earlier pairing on the search screen', async () => {
+      const joining = makePairingDevice('motion', PairingDevice.PAIRINGSTATE_PAIRING);
+      mockPlatform([[contactSensor, secondContact]]);
+
+      const { rerender } = render(<PairingPage />);
+      await settle();
+
+      mockPairingState = { ...mockPairingState, stage: 'searching', devices: [contactSensor, secondContact, joining] };
+      rerender(<PairingPage />);
+      expect(capturedSearchingProps.devices).toEqual([joining]);
+      expect(capturedSearchingProps.earlierDevices).toEqual([secondContact]);
+    });
+
+    it('reads the carried-over records once per page, not again on Try Again', async () => {
+      mockPlatform([[contactSensor]]);
+
+      const { rerender } = render(<PairingPage />);
+      await settle();
+      await act(async () => {
+        await jest.advanceTimersByTimeAsync(180000);
+      });
+      expect(mockDispatch).toHaveBeenCalledWith({ type: 'pairing/searchTimedOut' });
+      mockBridgeRequest.mockClear();
+
+      mockPairingState = { ...mockPairingState, stage: 'searching', searchTimedOut: true };
+      rerender(<PairingPage />);
+      await act(async () => {
+        await capturedSearchingProps.onStartSearch();
+      });
+      expect(commandsSent()).toEqual([PairingSubsystem.CMD_SEARCH]);
+    });
   });
 
   it('does not end the next search in the flow on a device the flow already reported as mispaired', async () => {
