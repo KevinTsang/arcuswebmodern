@@ -51,9 +51,11 @@ export default function PeoplePlacesSection() {
     ? activePlace?.[Place.ATTR_ACCOUNT]
     : undefined;
   const addPlaceAccountId = activeRole === OWNER ? activeAccountId : undefined;
-  // Only point guests at a place of their own when they have one to switch to.
+  // At a guest place, Add Place is shown disabled. The hint points the person
+  // at a place they own to switch to, or, when they own none (they only joined
+  // other people's places), at creating their own account, as legacy did.
   const ownsAPlace = [...sessionPlaces, ...places].some((p) => p.role === OWNER);
-  const atGuestPlace = activeRole !== undefined && activeRole !== OWNER && ownsAPlace;
+  const atGuestPlace = activeRole !== undefined && activeRole !== OWNER;
 
   const handleAddPlace = useCallback(() => {
     if (!addPlaceAccountId) return;
@@ -154,7 +156,7 @@ export default function PeoplePlacesSection() {
         <p className="text-sm text-grouse">No places found.</p>
       )}
 
-      {/* Add place — only while the active place is one the person owns */}
+      {/* Add place — enabled only while the active place is one the person owns */}
       {(addPlaceAccountId || atGuestPlace) && (
         <div data-testid="add-place-section" className="space-y-2">
           <button
@@ -167,7 +169,9 @@ export default function PeoplePlacesSection() {
           </button>
           {atGuestPlace && (
             <p data-testid="add-place-hint" className="text-xs text-grouse">
-              To add a place, first switch to a place you own.
+              {ownsAPlace
+                ? 'To add a place, first switch to a place you own.'
+                : 'To add your own place, create a new account using a different email address.'}
             </p>
           )}
         </div>

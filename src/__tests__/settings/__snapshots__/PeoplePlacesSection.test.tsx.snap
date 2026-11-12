@@ -646,3 +646,165 @@ exports[`PeoplePlacesSection – add place matches snapshot while a guest place 
   </div>
 </DocumentFragment>
 `;
+
+exports[`PeoplePlacesSection – add place when the person is only a guest matches snapshot 1`] = `
+<DocumentFragment>
+  <div
+    class="space-y-8"
+  >
+    <div
+      class="space-y-4"
+      data-testid="guest-places"
+    >
+      <h3
+        class="text-sm font-medium text-grouse uppercase tracking-wide"
+      >
+        Guest At
+      </h3>
+      <div
+        data-active="true"
+        data-testid="place-card-place-2"
+      >
+        <div
+          class="border border-heron rounded-[var(--border-radius-base)] overflow-hidden"
+          data-testid="place-info-place-2"
+        >
+          <div
+            class="flex items-center justify-between px-4 py-3 bg-pigeon/30"
+          >
+            <h3
+              class="text-sm font-medium text-swift"
+            >
+              Beach House
+            </h3>
+            <span
+              data-testid="place-info-place-2-action"
+            />
+          </div>
+          <div
+            class="px-4 py-3 space-y-2"
+          >
+            <div
+              class="flex justify-between text-sm"
+            >
+              <span
+                class="text-grouse"
+              >
+                Address
+              </span>
+              <span
+                class="text-swift"
+                data-testid="place-info-place-2-value-address"
+              >
+                456 Ocean Dr, Malibu, CA, 90265
+              </span>
+            </div>
+            <div
+              class="flex justify-between text-sm"
+            >
+              <span
+                class="text-grouse"
+              >
+                Service Level
+              </span>
+              <span
+                class="text-swift"
+                data-testid="place-info-place-2-value-service-level"
+              >
+                Basic
+              </span>
+            </div>
+            <div
+              class="flex justify-between text-sm"
+            >
+              <span
+                class="text-grouse"
+              >
+                Role
+              </span>
+              <span
+                class="text-swift"
+                data-testid="place-info-place-2-value-role"
+              >
+                Full Access
+              </span>
+            </div>
+            <span
+              class="inline-block text-xs text-honeycreeper font-medium"
+              data-testid="place-active-place-2"
+            >
+              Active Place
+            </span>
+            <div
+              class="border-t border-heron mt-3 pt-3"
+            >
+              <div
+                class="flex items-center justify-between mb-2"
+              >
+                <span
+                  class="text-sm font-medium text-swift"
+                >
+                  People
+                </span>
+              </div>
+              <div
+                class="space-y-2"
+              >
+                <div
+                  class="flex items-center justify-between px-3 py-2 rounded border border-heron"
+                  data-testid="person-place-2-SERV:person:p3"
+                >
+                  <div
+                    class="flex items-center gap-3 min-w-0"
+                  >
+                    <div
+                      class="w-8 h-8 rounded-full bg-peacock/10 text-peacock flex items-center justify-center text-sm font-medium flex-shrink-0"
+                    >
+                      B
+                    </div>
+                    <div
+                      class="min-w-0"
+                    >
+                      <p
+                        class="text-sm text-swift truncate"
+                      >
+                        Bob Jones
+                      </p>
+                      <p
+                        class="text-xs text-grouse truncate"
+                      >
+                        bob@test.com
+                      </p>
+                    </div>
+                  </div>
+                  <div
+                    class="flex items-center gap-2 flex-shrink-0"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div
+      class="space-y-2"
+      data-testid="add-place-section"
+    >
+      <button
+        class="px-4 py-2 bg-peacock text-crane rounded-[var(--border-radius-base)] text-sm font-medium hover:bg-peacock/90 disabled:opacity-50"
+        data-testid="add-place"
+        disabled=""
+      >
+        + Add Place
+      </button>
+      <p
+        class="text-xs text-grouse"
+        data-testid="add-place-hint"
+      >
+        To add your own place, create a new account using a different email address.
+      </p>
+    </div>
+  </div>
+</DocumentFragment>
+`;

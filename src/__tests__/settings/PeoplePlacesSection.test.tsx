@@ -448,15 +448,50 @@ describe('PeoplePlacesSection – add place', () => {
     expect(mockOpenRight).not.toHaveBeenCalled();
   });
 
-  it('hides Add Place when the user owns no account', async () => {
+  describe('when the person is only a guest', () => {
+    beforeEach(() => {
+      mockActivePlaceId = 'place-2';
+      mockActivePlace = guestPlaceData;
+      mockSessionPlaces = [guestSessionPlace];
+      mockListAvailablePlaces.mockResolvedValue({ places: [guestPlace] });
+    });
+
+    it('matches snapshot', async () => {
+      const { asFragment } = render(<PeoplePlacesSection />);
+      await screen.findByTestId('add-place-section');
+      expect(asFragment()).toMatchSnapshot();
+    });
+
+    it('disables Add Place and suggests creating a new account', async () => {
+      render(<PeoplePlacesSection />);
+      await screen.findByTestId('add-place-section');
+
+      expect(screen.getByTestId('add-place')).toBeDisabled();
+      expect(screen.getByTestId('add-place-hint')).toHaveTextContent(
+        'To add your own place, create a new account using a different email address.',
+      );
+      fireEvent.click(screen.getByTestId('add-place'));
+      expect(mockOpenRight).not.toHaveBeenCalled();
+    });
+
+    it('still suggests creating an account when the places list fails to load', async () => {
+      mockListAvailablePlaces.mockRejectedValueOnce(new Error('timeout'));
+      render(<PeoplePlacesSection />);
+      await screen.findByTestId('add-place-section');
+
+      expect(screen.getByTestId('add-place-hint')).toHaveTextContent('create a new account');
+    });
+  });
+
+  it('suggests switching, not a new account, to a guest who owns a place added since sign-in', async () => {
+    // Only a guest at sign-in, then added a place of their own
     mockActivePlaceId = 'place-2';
     mockActivePlace = guestPlaceData;
     mockSessionPlaces = [guestSessionPlace];
-    mockListAvailablePlaces.mockResolvedValue({ places: [guestPlace] });
+    mockListAvailablePlaces.mockResolvedValue({ places: [guestPlace, cabinPlace] });
     render(<PeoplePlacesSection />);
-    await waitFor(() => expect(screen.getByText('Beach House')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByTestId('place-card-place-3')).toBeInTheDocument());
 
-    expect(screen.queryByTestId('add-place')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('add-place-hint')).not.toBeInTheDocument();
+    expect(screen.getByTestId('add-place-hint')).toHaveTextContent('To add a place, first switch to a place you own.');
   });
 });
