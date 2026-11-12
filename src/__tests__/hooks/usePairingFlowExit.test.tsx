@@ -1,5 +1,5 @@
 import { StrictMode, type ReactNode } from 'react';
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, renderHook, screen, waitFor } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { configureStore, isAction, type Middleware } from '@reduxjs/toolkit';
 import { PairingDevice, PairingSubsystem } from '@arcus/core';
@@ -83,26 +83,37 @@ function makeStore(flow: PairingFlow | null) {
 
 type TestStore = ReturnType<typeof makeStore>;
 
-function Harness({ children }: { children?: ReactNode }) {
-  usePairingFlowExit();
-  return <>{children}</>;
-}
-
-/**
- * Render the hook at `pathname`, optionally with the page shown there.
- * `navigate` moves to another route; the page, if any, unmounts as it would.
- */
-function renderAt(pathname: string, store: TestStore, page?: ReactNode, { strict = false } = {}) {
-  const tree = (content?: ReactNode) => {
-    const app = <Provider store={store}><Harness>{content}</Harness></Provider>;
+/** Provides the store, and StrictMode when asked, to the hook and the pages. */
+function wrapperFor(store: TestStore, { strict = false } = {}) {
+  return function Wrapper({ children }: { children: ReactNode }) {
+    const app = <Provider store={store}>{children}</Provider>;
     return strict ? <StrictMode>{app}</StrictMode> : app;
   };
+}
+
+/** Render the hook at `pathname`. `navigate` moves to another route. */
+function renderAt(pathname: string, store: TestStore, { strict = false } = {}) {
   mockPathname = pathname;
-  const view = render(tree(page));
+  const { rerender } = renderHook(() => usePairingFlowExit(), { wrapper: wrapperFor(store, { strict }) });
   return {
     navigate(to: string) {
       mockPathname = to;
-      view.rerender(tree());
+      rerender();
+    },
+  };
+}
+
+/**
+ * Render `page` at `pathname` next to the hook, both on `store`. `navigate`
+ * leaves the page, which unmounts as it would, and moves the hook along.
+ */
+function renderPageAt(pathname: string, store: TestStore, page: ReactNode) {
+  const shown = render(page, { wrapper: wrapperFor(store) });
+  const { navigate } = renderAt(pathname, store);
+  return {
+    navigate(to: string) {
+      shown.unmount();
+      navigate(to);
     },
   };
 }
@@ -113,15 +124,6 @@ function requestsSent(): Array<[string, string]> {
 
 function commandsSent(command: string): number {
   return mockBridgeRequest.mock.calls.filter(([c]) => c === command).length;
-}
-
-/** A Bridge response the test resolves or rejects by hand. */
-function deferred<T = object>() {
-  let resolve!: (value: T) => void;
-  const promise = new Promise<T>((res) => {
-    resolve = res;
-  });
-  return { promise, resolve };
 }
 
 let warnSpy: jest.SpyInstance | undefined;
@@ -199,7 +201,7 @@ describe('usePairingFlowExit – leaving pairing', () => {
 
   it('sends DismissAll once under StrictMode', () => {
     const store = makeStore(newPairingFlow(PAIRING_SUB, []));
-    renderAt('/home', store, undefined, { strict: true });
+    renderAt('/home', store, { strict: true });
 
     expect(commandsSent(PairingSubsystem.CMD_DISMISSALL)).toBe(1);
   });
@@ -349,62 +351,52 @@ describe('usePairingFlowExit – with the pairing pages', () => {
 
   it('sends DismissAll once when the user leaves while Go to Devices is finishing', async () => {
     jest.useFakeTimers();
-    // The snapshot is empty, then the search pairs the motion sensor.
+    // The snapshot is empty, then the search pairs the motion sensor. Go to
+    // Devices' DismissAll is held open: the flow must already be cleared when
+    // it goes out, so leaving sends nothing more, whenever it would settle.
     let lists = 0;
-    const dismissAll = deferred();
     mockBridgeRequest.mockImplementation((command: string) => {
       if (command === PairingSubsystem.CMD_LISTPAIRINGDEVICES) {
         lists += 1;
         return Promise.resolve({ devices: lists === 1 ? [] : [motionSensor] });
       }
-      if (command === PairingSubsystem.CMD_DISMISSALL) return dismissAll.promise;
+      if (command === PairingSubsystem.CMD_DISMISSALL) return new Promise(() => {});
       return Promise.resolve({});
     });
     const store = makeStore(null);
-    const { navigate } = renderAt('/pairing', store, <PairingPage />);
+    const { navigate } = renderPageAt('/pairing', store, <PairingPage />);
 
     // Search, find the motion sensor on the first poll, and save its customization.
-    await act(async () => {
-      await jest.advanceTimersByTimeAsync(3000);
-    });
+    await act(() => jest.advanceTimersByTimeAsync(3000));
     expect(store.getState().pairing.stage).toBe('customize');
-    await act(async () => {
-      await capturedCustomizeProps!.onCustomize();
-    });
+    await act(() => capturedCustomizeProps!.onCustomize());
     expect(store.getState().pairing.stage).toBe('completed');
 
     // Go to Devices, then a header link while its DismissAll is in flight.
-    let finish: Promise<void> = Promise.resolve();
     act(() => {
-      finish = capturedCompletedProps!.onFinish();
+      void capturedCompletedProps!.onFinish();
     });
     navigate('/home');
-    dismissAll.resolve({});
-    await act(async () => {
-      await finish;
-    });
 
     expect(commandsSent(PairingSubsystem.CMD_DISMISSALL)).toBe(1);
     expect(store.getState().pairing.flow).toBeNull();
   });
 
   it('sends DismissAll once when the user leaves while Kit Activation is finishing', async () => {
-    const dismissAll = deferred();
+    // Finish's DismissAll is held open, as above.
     mockBridgeRequest.mockImplementation((command: string) => {
       if (command === PairingSubsystem.CMD_GETKITINFORMATION) {
         return Promise.resolve({ kitInfo: [{ productId: 'sensor1', protocolAddress: 'ZIGB:proto1' }] });
       }
       if (command === PairingSubsystem.CMD_LISTPAIRINGDEVICES) return Promise.resolve({ devices: [] as PairingDeviceData[] });
-      if (command === PairingSubsystem.CMD_DISMISSALL) return dismissAll.promise;
+      if (command === PairingSubsystem.CMD_DISMISSALL) return new Promise(() => {});
       return Promise.resolve({});
     });
     const store = makeStore(newPairingFlow(PAIRING_SUB, []));
-    const { navigate } = renderAt('/kit-activate', store, <KitActivatePage />);
+    const { navigate } = renderPageAt('/kit-activate', store, <KitActivatePage />);
 
     fireEvent.click(await screen.findByTestId('kit-finish'));
     navigate('/home');
-    dismissAll.resolve({});
-    await act(() => dismissAll.promise);
 
     expect(commandsSent(PairingSubsystem.CMD_DISMISSALL)).toBe(1);
     expect(store.getState().pairing.flow).toBeNull();

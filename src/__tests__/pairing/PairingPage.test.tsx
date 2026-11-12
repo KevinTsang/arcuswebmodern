@@ -131,17 +131,6 @@ function devicePairedDispatches() {
   return dispatchesOf('pairing/devicePaired');
 }
 
-/** A Bridge response the test resolves or rejects by hand. */
-function deferred<T = object>() {
-  let resolve!: (value: T) => void;
-  let reject!: (reason: Error) => void;
-  const promise = new Promise<T>((res, rej) => {
-    resolve = res;
-    reject = rej;
-  });
-  return { promise, resolve, reject };
-}
-
 let warnSpy: jest.SpyInstance | undefined;
 
 /** Silence console.warn for one test; restored in afterEach even if the test fails. */
@@ -993,6 +982,18 @@ describe('PairingPage – leaving while pairing starts', () => {
     jest.useRealTimers();
   });
 
+  /**
+   * The platform's answer arrives RESPONSE_DELAY ms after the request, on the
+   * fake clock, so the test can unmount the page while the request is in
+   * flight and then let the answer land on the unmounted page.
+   */
+  const RESPONSE_DELAY = 1000;
+  function respondLater<T>(value: T): Promise<T> {
+    return new Promise((resolve) => {
+      setTimeout(() => resolve(value), RESPONSE_DELAY);
+    });
+  }
+
   /** Let three minutes pass: every poll and the search timeout would have fired. */
   async function waitOutSearch() {
     await act(async () => {
@@ -1003,17 +1004,15 @@ describe('PairingPage – leaving while pairing starts', () => {
   it('does not send StartPairing when the page unmounts during the flow snapshot', async () => {
     sessionStorage.setItem('pairing:product', JSON.stringify(product));
     mockPairingState = { ...mockPairingState, product };
-    const snapshot = deferred<{ devices: PairingDeviceData[] }>();
     mockBridgeRequest.mockImplementation((command: string) =>
-      command === PairingSubsystem.CMD_LISTPAIRINGDEVICES ? snapshot.promise : Promise.resolve({ steps: [] }));
+      command === PairingSubsystem.CMD_LISTPAIRINGDEVICES ? respondLater({ devices: [] }) : Promise.resolve({ steps: [] }));
 
     const { unmount } = render(<PairingPage />);
     await settle();
     unmount();
     expect(commandsSent()).toEqual([PairingSubsystem.CMD_LISTPAIRINGDEVICES, PairingSubsystem.CMD_STOPSEARCHING]);
 
-    snapshot.resolve({ devices: [] });
-    await settle();
+    // The snapshot answers after the unmount
     await waitOutSearch();
     expect(commandsSent()).toEqual([PairingSubsystem.CMD_LISTPAIRINGDEVICES, PairingSubsystem.CMD_STOPSEARCHING]);
     expect(dispatchesOf('pairing/setSteps')).toHaveLength(0);
@@ -1021,31 +1020,26 @@ describe('PairingPage – leaving while pairing starts', () => {
   });
 
   it('does not send Search when the page unmounts during the flow snapshot', async () => {
-    const snapshot = deferred<{ devices: PairingDeviceData[] }>();
     mockBridgeRequest.mockImplementation((command: string) =>
-      command === PairingSubsystem.CMD_LISTPAIRINGDEVICES ? snapshot.promise : Promise.resolve({}));
+      command === PairingSubsystem.CMD_LISTPAIRINGDEVICES ? respondLater({ devices: [] }) : Promise.resolve({}));
 
     const { unmount } = render(<PairingPage />);
     await settle();
     unmount();
 
-    snapshot.resolve({ devices: [] });
-    await settle();
     await waitOutSearch();
     expect(commandsSent()).toEqual([PairingSubsystem.CMD_LISTPAIRINGDEVICES, PairingSubsystem.CMD_STOPSEARCHING]);
   });
 
   it('starts no flow when the page unmounts during the flow snapshot', async () => {
-    const snapshot = deferred<{ devices: PairingDeviceData[] }>();
     mockBridgeRequest.mockImplementation((command: string) =>
-      command === PairingSubsystem.CMD_LISTPAIRINGDEVICES ? snapshot.promise : Promise.resolve({}));
+      command === PairingSubsystem.CMD_LISTPAIRINGDEVICES ? respondLater({ devices: [motionSensor] }) : Promise.resolve({}));
 
     const { unmount } = render(<PairingPage />);
     await settle();
     unmount();
 
-    snapshot.resolve({ devices: [motionSensor] });
-    await settle();
+    await waitOutSearch();
     // Nothing was started, so there is no flow for leaving pairing to end.
     expect(dispatchesOf('pairing/startPairingFlow')).toHaveLength(0);
   });
@@ -1053,9 +1047,8 @@ describe('PairingPage – leaving while pairing starts', () => {
   it('does not search when the page unmounts while StartPairing is in flight', async () => {
     sessionStorage.setItem('pairing:product', JSON.stringify(product));
     mockPairingState = { ...mockPairingState, product };
-    const startPairing = deferred<{ steps: [] }>();
     mockBridgeRequest.mockImplementation((command: string) => {
-      if (command === PairingSubsystem.CMD_STARTPAIRING) return startPairing.promise;
+      if (command === PairingSubsystem.CMD_STARTPAIRING) return respondLater({ steps: [] });
       return Promise.resolve({ devices: [] });
     });
 
@@ -1063,8 +1056,6 @@ describe('PairingPage – leaving while pairing starts', () => {
     await settle();
     unmount();
 
-    startPairing.resolve({ steps: [] });
-    await settle();
     await waitOutSearch();
     expect(commandsSent()).toEqual([
       PairingSubsystem.CMD_LISTPAIRINGDEVICES,
@@ -1075,9 +1066,8 @@ describe('PairingPage – leaving while pairing starts', () => {
   });
 
   it('starts no poll when the page unmounts while Search is in flight', async () => {
-    const search = deferred();
     mockBridgeRequest.mockImplementation((command: string) => {
-      if (command === PairingSubsystem.CMD_SEARCH) return search.promise;
+      if (command === PairingSubsystem.CMD_SEARCH) return respondLater({});
       return Promise.resolve({ devices: [] });
     });
 
@@ -1085,8 +1075,6 @@ describe('PairingPage – leaving while pairing starts', () => {
     await settle();
     unmount();
 
-    search.resolve({});
-    await settle();
     await waitOutSearch();
     expect(commandsSent()).toEqual([
       PairingSubsystem.CMD_LISTPAIRINGDEVICES,
@@ -1111,12 +1099,11 @@ describe('PairingPage – leaving while pairing starts', () => {
   });
 
   it('drops a poll that finishes after the page unmounted', async () => {
-    const poll = deferred<{ devices: PairingDeviceData[] }>();
     let listCalls = 0;
     mockBridgeRequest.mockImplementation((command: string) => {
       if (command !== PairingSubsystem.CMD_LISTPAIRINGDEVICES) return Promise.resolve({});
       listCalls += 1;
-      return listCalls === 1 ? Promise.resolve({ devices: [] }) : poll.promise;
+      return listCalls === 1 ? Promise.resolve({ devices: [] }) : respondLater({ devices: [motionSensor] });
     });
 
     const { unmount } = render(<PairingPage />);
@@ -1124,8 +1111,7 @@ describe('PairingPage – leaving while pairing starts', () => {
     await nextPoll(); // this poll is still waiting for its answer
     unmount();
 
-    poll.resolve({ devices: [motionSensor] });
-    await settle();
+    await waitOutSearch();
     expect(dispatchesOf('pairing/setDevices')).toHaveLength(0);
     expect(devicePairedDispatches()).toHaveLength(0);
   });
@@ -1316,27 +1302,34 @@ describe('PairingPage – one action at a time', () => {
     return commandsSent().filter((c) => c === PairingDevice.CMD_DISMISS);
   }
 
-  it('saves once when Save & Finish is clicked twice, and is disabled while saving', async () => {
+  it('is disabled while saving, and sends Customize once when Save & Finish is clicked twice', () => {
     mockPairingState = { ...mockPairingState, stage: 'customize', activeDevice: motionSensor, deviceName: 'Hall' };
-    const customize = deferred();
+    // Customize is held open, so the page stays mid-save
     mockBridgeRequest.mockImplementation((command: string) =>
-      command === PairingDevice.CMD_CUSTOMIZE ? customize.promise : Promise.resolve({}));
+      command === PairingDevice.CMD_CUSTOMIZE ? never() : Promise.resolve({}));
 
     render(<PairingPage />);
     expect(capturedCustomizeProps.saving).toBe(false);
 
+    act(() => {
+      void capturedCustomizeProps.onCustomize();
+      void capturedCustomizeProps.onCustomize();
+    });
+    expect(capturedCustomizeProps.saving).toBe(true);
+    expect(commandsSent().filter((c) => c === PairingDevice.CMD_CUSTOMIZE)).toHaveLength(1);
+  });
+
+  it('saves and dismisses once when Save & Finish is clicked twice, then re-enables', async () => {
+    mockPairingState = { ...mockPairingState, stage: 'customize', activeDevice: motionSensor, deviceName: 'Hall' };
+
+    render(<PairingPage />);
     let first: Promise<void> = Promise.resolve();
     let second: Promise<void> = Promise.resolve();
     act(() => {
       first = capturedCustomizeProps.onCustomize();
       second = capturedCustomizeProps.onCustomize();
     });
-    expect(capturedCustomizeProps.saving).toBe(true);
-
-    customize.resolve({});
-    await act(async () => {
-      await Promise.all([first, second]);
-    });
+    await act(() => Promise.all([first, second]));
 
     expect(commandsSent().filter((c) => c === PairingDevice.CMD_CUSTOMIZE)).toHaveLength(1);
     expect(dismissesSent()).toHaveLength(1);
@@ -1375,32 +1368,44 @@ describe('PairingPage – one action at a time', () => {
     expect(capturedCompletedProps.busy).toBe(true);
   });
 
-  it('ignores Pair Another while Go to Devices is finishing', async () => {
+  describe('Pair Another while Go to Devices is finishing', () => {
     const pairingSubAddr = 'SERV:subpairing:place-1';
-    mockSubsystems = { [pairingSubAddr]: { id: pairingSubAddr, [Base.ATTR_ADDRESS]: pairingSubAddr } };
-    mockPairingState = { ...mockPairingState, stage: 'completed', activeDevice: motionSensor };
-    const dismissAll = deferred();
-    mockBridgeRequest.mockImplementation((command: string) =>
-      command === PairingSubsystem.CMD_DISMISSALL ? dismissAll.promise : Promise.resolve({}));
 
-    render(<PairingPage />);
-    let finish: Promise<void> = Promise.resolve();
-    act(() => {
-      finish = capturedCompletedProps.onFinish();
+    beforeEach(() => {
+      mockSubsystems = { [pairingSubAddr]: { id: pairingSubAddr, [Base.ATTR_ADDRESS]: pairingSubAddr } };
+      mockPairingState = { ...mockPairingState, stage: 'completed', activeDevice: motionSensor };
     });
-    expect(capturedCompletedProps.busy).toBe(true);
-    act(() => {
-      capturedCompletedProps.onPairAnother();
-    });
-    expect(dismissesSent()).toHaveLength(0);
-    expect(mockPush).not.toHaveBeenCalled();
 
-    dismissAll.resolve({});
-    await act(async () => {
-      await finish;
+    it('is ignored while DismissAll is in flight', () => {
+      // DismissAll is held open, so Go to Devices stays busy
+      mockBridgeRequest.mockImplementation((command: string) =>
+        command === PairingSubsystem.CMD_DISMISSALL ? never() : Promise.resolve({}));
+
+      render(<PairingPage />);
+      act(() => {
+        void capturedCompletedProps.onFinish();
+      });
+      expect(capturedCompletedProps.busy).toBe(true);
+      act(() => {
+        capturedCompletedProps.onPairAnother();
+      });
+      expect(dismissesSent()).toHaveLength(0);
+      expect(mockPush).not.toHaveBeenCalled();
     });
-    expect(mockPush).toHaveBeenCalledTimes(1);
-    expect(mockPush).toHaveBeenCalledWith('/devices');
+
+    it('leaves Go to Devices to navigate once, to the devices page', async () => {
+      render(<PairingPage />);
+      let finish: Promise<void> = Promise.resolve();
+      act(() => {
+        finish = capturedCompletedProps.onFinish();
+        capturedCompletedProps.onPairAnother();
+      });
+      await act(() => finish);
+
+      expect(dismissesSent()).toHaveLength(0);
+      expect(mockPush).toHaveBeenCalledTimes(1);
+      expect(mockPush).toHaveBeenCalledWith('/devices');
+    });
   });
 
   it('lets Pair Another retry a Dismiss that failed after customizing', async () => {
