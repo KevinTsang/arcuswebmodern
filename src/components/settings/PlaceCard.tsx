@@ -35,14 +35,10 @@ export default function PlaceCard({
   // Invitations and API keys act on THIS card's place, not the active place.
   // Keyed by place so another card's Invite opens a fresh form.
   const handleInvite = useCallback(() => {
-    openRight(
-      <AddPersonPanel
-        key={place.placeId}
-        placeId={place.placeId}
-        placeName={placeName}
-        onSent={onRefresh}
-      />,
-    );
+    openRight(<AddPersonPanel placeId={place.placeId} placeName={placeName} onSent={onRefresh} />, {
+      title: 'Invite a Person',
+      key: `add-person:${place.placeId}`,
+    });
   }, [openRight, place.placeId, placeName, onRefresh]);
 
   const address = placeData
@@ -68,7 +64,10 @@ export default function PlaceCard({
   const editAction = isOwner && placeData ? (
     <button
       onClick={() =>
-        openRight(<PlaceInfoPanel placeData={placeData} onSaved={onRefresh} />)
+        openRight(<PlaceInfoPanel placeData={placeData} onSaved={onRefresh} />, {
+          title: 'Edit Place',
+          key: `place-info:${place.placeId}`,
+        })
       }
       data-testid={`place-edit-${place.placeId}`}
       className="text-sm text-peacock hover:underline"
@@ -137,6 +136,10 @@ export default function PlaceCard({
                               placeId={place.placeId}
                               onRemoved={onRefresh}
                             />,
+                            {
+                              title: personName || personEmail || 'Person',
+                              key: `person-detail:${place.placeId}:${person[Base.ATTR_ADDRESS]}`,
+                            },
                           )
                       : undefined
                   }

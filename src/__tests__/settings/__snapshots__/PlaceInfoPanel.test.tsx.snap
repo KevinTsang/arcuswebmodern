@@ -5,12 +5,6 @@ exports[`PlaceInfoPanel matches snapshot 1`] = `
   <div
     class="p-4 space-y-4"
   >
-    <h3
-      class="text-lg font-semibold text-swift"
-      data-testid="place-panel-title"
-    >
-      Edit Place
-    </h3>
     <div>
       <label
         class="block text-sm text-grouse mb-1"

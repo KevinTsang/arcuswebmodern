@@ -125,7 +125,7 @@ export default function PeoplePlacesSection() {
 
       {/* Add place */}
       <button
-        onClick={() => openRight(<AddPlacePanel />)}
+        onClick={() => openRight(<AddPlacePanel />, { title: 'Add a Place', key: 'add-place' })}
         data-testid="add-place"
         className="px-4 py-2 bg-peacock text-crane rounded-[var(--border-radius-base)] text-sm font-medium hover:bg-peacock/90"
       >

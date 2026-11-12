@@ -5,14 +5,10 @@ import type { RuleEntity } from '@/store/entityTypes';
 
 // ── Mocks ─────────────────────────────────────────────────────────────
 
-const mockOpenRight = jest.fn();
+const mockOpenRulePanel = jest.fn();
 
-jest.mock('@/components/SidePanel', () => ({
-  useSidePanel: () => ({ openRight: mockOpenRight }),
-}));
-
-jest.mock('@/components/rules/RulePanel', () => ({
-  RulePanel: () => <div>RulePanel</div>,
+jest.mock('@/components/rules/useOpenRulePanel', () => ({
+  useOpenRulePanel: () => mockOpenRulePanel,
 }));
 
 jest.mock('@/components/rules/RuleListItem', () => {
@@ -28,7 +24,7 @@ jest.mock('@/components/rules/RuleListItem', () => {
 });
 
 jest.mock('@/components/rules/RulesLibrary', () => ({
-  RulesLibrary: ({ placeId }: any) => <div data-testid="rules-library">Library for {placeId}</div>,
+  RulesLibrary: () => <div data-testid="rules-library">Library</div>,
 }));
 
 let mockRules: RuleEntity[] = [];
@@ -109,7 +105,7 @@ describe('RulesPage – with rules', () => {
     render(<RulesPage />);
     const editButtons = screen.getAllByText('Edit');
     fireEvent.click(editButtons[0]);
-    expect(mockOpenRight).toHaveBeenCalled();
+    expect(mockOpenRulePanel).toHaveBeenCalledWith({ rule: expect.objectContaining({ [Rule.ATTR_NAME]: 'Lock at Night' }) });
   });
 });
 
@@ -126,12 +122,6 @@ describe('RulesPage – view toggle', () => {
     fireEvent.click(screen.getByText('Rules Library'));
     expect(screen.getByTestId('rules-library')).toBeInTheDocument();
     expect(screen.queryByText('No rules configured yet.')).not.toBeInTheDocument();
-  });
-
-  it('passes placeId to RulesLibrary', () => {
-    render(<RulesPage />);
-    fireEvent.click(screen.getByText('Rules Library'));
-    expect(screen.getByText('Library for place-1')).toBeInTheDocument();
   });
 
   it('switches back to My Rules view', () => {

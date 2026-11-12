@@ -1,8 +1,10 @@
-import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
+import { screen, fireEvent, waitFor, within } from '@testing-library/react';
 import { RulePanel, parseTemplateString } from '@/components/rules/RulePanel';
+import { findRuleTemplate, resolveRuleSelectors } from '@/components/rules/resolveRuleSelectors';
+import { renderSuspended } from '../helpers/renderSuspended';
 import Bridge from '@arcus/core/bridge';
 import { Base, Rule, RuleTemplate } from '@arcus/core';
-import type { RuleTemplateEntity } from '@/store/entityTypes';
+import type { RuleEntity, RuleTemplateEntity } from '@/store/entityTypes';
 import { makeRule } from '../helpers/factories';
 
 // ── Mocks ─────────────────────────────────────────────────────────────
@@ -92,10 +94,15 @@ const resolvedSelectors = {
 
 // ── Helpers ───────────────────────────────────────────────────────────
 
-const waitForLoad = () =>
-  waitFor(() => {
-    expect(screen.queryByText('Loading template...')).not.toBeInTheDocument();
-  });
+/**
+ * Render the panel the way useOpenRulePanel opens it: resolving the template's selectors
+ * through the Bridge mock first, and waiting for them.
+ */
+function renderPanel({ rule, template }: { rule?: RuleEntity; template?: RuleTemplateEntity }) {
+  const templateAddress = findRuleTemplate(rule, template, [mockTemplate])?.[Base.ATTR_ADDRESS];
+  const selectors = resolveRuleSelectors(templateAddress, 'place-1', mockDispatch);
+  return renderSuspended(<RulePanel rule={rule} template={template} placeId="place-1" selectors={selectors} />);
+}
 
 /** Bridge commands sent so far, in order. */
 const bridgeCommands = () => mockBridge.mock.calls.map(([command]) => command);
@@ -162,33 +169,94 @@ describe('parseTemplateString', () => {
   });
 });
 
+// ── findRuleTemplate ──────────────────────────────────────────────────
+
+describe('findRuleTemplate', () => {
+  it('prefers the template it is given', () => {
+    expect(findRuleTemplate(mockRule, mockTemplate, [])).toBe(mockTemplate);
+  });
+
+  it("finds the catalog entry for the rule's template id", () => {
+    expect(findRuleTemplate(mockRule, undefined, [mockTemplate])).toBe(mockTemplate);
+  });
+
+  it('finds nothing when the template is not in the catalog', () => {
+    const retired = makeRule(RULE_ADDRESS, { ...mockRule, [Rule.ATTR_TEMPLATE]: 'retired-template' });
+    expect(findRuleTemplate(retired, undefined, [mockTemplate])).toBeUndefined();
+  });
+
+  it('finds nothing without a rule or template', () => {
+    expect(findRuleTemplate(undefined, undefined, [mockTemplate])).toBeUndefined();
+  });
+});
+
+// ── resolveRuleSelectors ──────────────────────────────────────────────
+
+describe('resolveRuleSelectors', () => {
+  it('parses option tuples into named options', async () => {
+    await expect(resolveRuleSelectors('SERV:ruletmpl:button-chime', 'place-1', mockDispatch)).resolves.toEqual({
+      button: {
+        type: 'LIST',
+        name: 'button',
+        options: [
+          { name: 'Smart Button 1', value: 'DRIV:dev:btn-1' },
+          { name: 'Smart Button 2', value: 'DRIV:dev:btn-2' },
+        ],
+      },
+      chime: {
+        type: 'LIST',
+        name: 'chime',
+        options: [
+          { name: 'Ding Dong', value: 'DING_DONG' },
+          { name: 'Chime', value: 'CHIME' },
+        ],
+      },
+    });
+  });
+
+  it('accepts selectors at the top level of the response', async () => {
+    mockBridge.mockResolvedValueOnce({ chime: { type: 'LIST', options: [['Chime', 'CHIME']] }, other: 'ignored' });
+    await expect(resolveRuleSelectors('SERV:ruletmpl:button-chime', 'place-1', mockDispatch)).resolves.toEqual({
+      chime: { type: 'LIST', name: 'chime', options: [{ name: 'Chime', value: 'CHIME' }] },
+    });
+  });
+
+  it('resolves to no selectors, without calling the platform, when there is no template', async () => {
+    await expect(resolveRuleSelectors(undefined, 'place-1', mockDispatch)).resolves.toEqual({});
+    expect(mockBridge).not.toHaveBeenCalled();
+  });
+
+  it('resolves to no selectors and notifies when Resolve fails', async () => {
+    mockBridge.mockRejectedValueOnce(new Error('fail'));
+    await expect(resolveRuleSelectors('SERV:ruletmpl:button-chime', 'place-1', mockDispatch)).resolves.toEqual({});
+    expect(mockDispatch).toHaveBeenCalledWith(
+      expect.objectContaining({ payload: { type: 'error', message: 'Failed to resolve rule template' } }),
+    );
+  });
+});
+
 // ── Create Mode ───────────────────────────────────────────────────────
 
 describe('RulePanel (create mode)', () => {
   it('matches snapshot', async () => {
-    const { asFragment } = render(<RulePanel template={mockTemplate} placeId="place-1" />);
-    await waitForLoad();
+    const { asFragment } = await renderPanel({ template: mockTemplate });
     expect(asFragment()).toMatchSnapshot();
   });
 
-  it('shows loading state initially', () => {
-    mockBridge.mockReturnValue(new Promise(() => {}));
-    render(<RulePanel template={mockTemplate} placeId="place-1" />);
-    expect(screen.getByText('Loading template...')).toBeInTheDocument();
-    expect(screen.getByText('Create Rule')).toBeInTheDocument();
+  it('shows the fallback until the selectors resolve', async () => {
+    await renderSuspended(<RulePanel template={mockTemplate} placeId="place-1" selectors={new Promise(() => {})} />);
+    expect(screen.getByTestId('suspense-fallback')).toBeInTheDocument();
+    expect(screen.queryByTestId('rule-name-input')).not.toBeInTheDocument();
   });
 
   it('renders template variables as buttons after loading', async () => {
-    render(<RulePanel template={mockTemplate} placeId="place-1" />);
-    await waitFor(() => {
-      expect(screen.queryByText('Loading template...')).not.toBeInTheDocument();
-    });
+    await renderPanel({ template: mockTemplate });
     expect(screen.getByText('button')).toBeInTheDocument();
     expect(screen.getByText('chime')).toBeInTheDocument();
   });
 
   it('calls ruletmpl:Resolve with template address', async () => {
-    render(<RulePanel template={mockTemplate} placeId="place-1" />);
+    await renderPanel({ template: mockTemplate });
     await waitFor(() => {
       expect(mockBridge).toHaveBeenCalledWith(
         RuleTemplate.CMD_RESOLVE,
@@ -199,26 +267,17 @@ describe('RulePanel (create mode)', () => {
   });
 
   it('pre-populates name from template', async () => {
-    render(<RulePanel template={mockTemplate} placeId="place-1" />);
-    await waitFor(() => {
-      expect(screen.queryByText('Loading template...')).not.toBeInTheDocument();
-    });
+    await renderPanel({ template: mockTemplate });
     expect(screen.getByDisplayValue('Chime on Button Press')).toBeInTheDocument();
   });
 
   it('shows instruction text when no variable selected', async () => {
-    render(<RulePanel template={mockTemplate} placeId="place-1" />);
-    await waitFor(() => {
-      expect(screen.queryByText('Loading template...')).not.toBeInTheDocument();
-    });
+    await renderPanel({ template: mockTemplate });
     expect(screen.getByText('Click a word or phrase above to edit.')).toBeInTheDocument();
   });
 
   it('shows device radio list when device variable clicked', async () => {
-    render(<RulePanel template={mockTemplate} placeId="place-1" />);
-    await waitFor(() => {
-      expect(screen.queryByText('Loading template...')).not.toBeInTheDocument();
-    });
+    await renderPanel({ template: mockTemplate });
     fireEvent.click(screen.getByText('button'));
     expect(screen.getByText('Choose Device')).toBeInTheDocument();
     expect(screen.getByText('Smart Button 1')).toBeInTheDocument();
@@ -227,20 +286,14 @@ describe('RulePanel (create mode)', () => {
   });
 
   it('shows select dropdown for generic variable', async () => {
-    render(<RulePanel template={mockTemplate} placeId="place-1" />);
-    await waitFor(() => {
-      expect(screen.queryByText('Loading template...')).not.toBeInTheDocument();
-    });
+    await renderPanel({ template: mockTemplate });
     fireEvent.click(screen.getByText('chime'));
     expect(screen.getByRole('combobox')).toBeInTheDocument();
     expect(screen.getByText('Select an option...')).toBeInTheDocument();
   });
 
   it('selects device via radio and updates variable display', async () => {
-    render(<RulePanel template={mockTemplate} placeId="place-1" />);
-    await waitFor(() => {
-      expect(screen.queryByText('Loading template...')).not.toBeInTheDocument();
-    });
+    await renderPanel({ template: mockTemplate });
     fireEvent.click(screen.getByText('button'));
     const radios = screen.getAllByRole('radio');
     fireEvent.click(radios[0]);
@@ -251,10 +304,7 @@ describe('RulePanel (create mode)', () => {
   });
 
   it('calls ruletmpl:CreateRule on save when all filled', async () => {
-    render(<RulePanel template={mockTemplate} placeId="place-1" />);
-    await waitFor(() => {
-      expect(screen.queryByText('Loading template...')).not.toBeInTheDocument();
-    });
+    await renderPanel({ template: mockTemplate });
     // Select device via radio
     fireEvent.click(screen.getByText('button'));
     const radios = screen.getAllByRole('radio');
@@ -284,8 +334,7 @@ describe('RulePanel (create mode)', () => {
       [RuleTemplate.ATTR_TEMPLATE]: 'When ${button} is pressed at ${time}',
     };
     mockBridge.mockResolvedValue({ selectors: { button: resolvedSelectors.selectors.button } });
-    render(<RulePanel template={timedTemplate} placeId="place-1" />);
-    await waitForLoad();
+    await renderPanel({ template: timedTemplate });
     pickButton('DRIV:dev:btn-1');
     fireEvent.click(screen.getByTestId('rule-save'));
     await waitFor(() => {
@@ -300,33 +349,24 @@ describe('RulePanel (create mode)', () => {
   });
 
   it('disables save when not all variables filled', async () => {
-    render(<RulePanel template={mockTemplate} placeId="place-1" />);
-    await waitFor(() => {
-      expect(screen.queryByText('Loading template...')).not.toBeInTheDocument();
-    });
+    await renderPanel({ template: mockTemplate });
     expect(screen.getByRole('button', { name: 'Create Rule' })).toBeDisabled();
   });
 
   it('calls closeRight on cancel', async () => {
-    render(<RulePanel template={mockTemplate} placeId="place-1" />);
-    await waitFor(() => {
-      expect(screen.queryByText('Loading template...')).not.toBeInTheDocument();
-    });
+    await renderPanel({ template: mockTemplate });
     fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
     expect(mockCloseRight).toHaveBeenCalled();
   });
 
   it('does not show delete button', async () => {
-    render(<RulePanel template={mockTemplate} placeId="place-1" />);
-    await waitFor(() => {
-      expect(screen.queryByText('Loading template...')).not.toBeInTheDocument();
-    });
+    await renderPanel({ template: mockTemplate });
     expect(screen.queryByText('Delete Rule')).not.toBeInTheDocument();
   });
 
   it('dispatches error on resolve failure', async () => {
     mockBridge.mockRejectedValue(new Error('fail'));
-    render(<RulePanel template={mockTemplate} placeId="place-1" />);
+    await renderPanel({ template: mockTemplate });
     await waitFor(() => {
       expect(mockDispatch).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -340,32 +380,21 @@ describe('RulePanel (create mode)', () => {
 // ── Edit Mode ─────────────────────────────────────────────────────────
 
 describe('RulePanel (edit mode)', () => {
-  it('shows Edit Rule heading', async () => {
-    render(<RulePanel rule={mockRule} placeId="place-1" />);
-    await waitFor(() => {
-      expect(screen.queryByText('Loading template...')).not.toBeInTheDocument();
-    });
-    expect(screen.getByText('Edit Rule')).toBeInTheDocument();
-  });
-
   it('pre-populates name from rule', async () => {
-    render(<RulePanel rule={mockRule} placeId="place-1" />);
-    await waitFor(() => {
-      expect(screen.queryByText('Loading template...')).not.toBeInTheDocument();
-    });
+    await renderPanel({ rule: mockRule });
     expect(screen.getByDisplayValue('Door Bell Button')).toBeInTheDocument();
   });
 
   it('pre-populates context showing selected option names in template buttons', async () => {
-    render(<RulePanel rule={mockRule} placeId="place-1" />);
+    await renderPanel({ rule: mockRule });
     await waitFor(() => {
       expect(screen.getByRole('button', { name: 'Smart Button 1' })).toBeInTheDocument();
     });
     expect(screen.getByRole('button', { name: 'Ding Dong' })).toBeInTheDocument();
   });
 
-  it('resolves template from rule:template id', async () => {
-    render(<RulePanel rule={mockRule} placeId="place-1" />);
+  it('resolves the template found from rule:template', async () => {
+    await renderPanel({ rule: mockRule });
     await waitFor(() => {
       expect(mockBridge).toHaveBeenCalledWith(
         RuleTemplate.CMD_RESOLVE,
@@ -376,14 +405,12 @@ describe('RulePanel (edit mode)', () => {
   });
 
   it('matches snapshot', async () => {
-    const { asFragment } = render(<RulePanel rule={mockRule} placeId="place-1" />);
-    await waitForLoad();
+    const { asFragment } = await renderPanel({ rule: mockRule });
     expect(asFragment()).toMatchSnapshot();
   });
 
   it('saves the name, then re-applies the context, on a rename', async () => {
-    render(<RulePanel rule={mockRule} placeId="place-1" />);
-    await waitForLoad();
+    await renderPanel({ rule: mockRule });
     renameRule('Front Door Chime');
     fireEvent.click(screen.getByTestId('rule-save'));
     await waitFor(() => {
@@ -401,8 +428,7 @@ describe('RulePanel (edit mode)', () => {
   });
 
   it('sends nothing when Save is clicked without changes', async () => {
-    render(<RulePanel rule={mockRule} placeId="place-1" />);
-    await waitForLoad();
+    await renderPanel({ rule: mockRule });
     fireEvent.click(screen.getByTestId('rule-save'));
     await waitFor(() => {
       expect(mockCloseRight).toHaveBeenCalled();
@@ -412,8 +438,7 @@ describe('RulePanel (edit mode)', () => {
   });
 
   it('writes the new description only after UpdateContext applies a changed selection', async () => {
-    render(<RulePanel rule={mockRule} placeId="place-1" />);
-    await waitForLoad();
+    await renderPanel({ rule: mockRule });
     pickButton('DRIV:dev:btn-2');
     fireEvent.click(screen.getByTestId('rule-save'));
     await waitFor(() => {
@@ -430,8 +455,7 @@ describe('RulePanel (edit mode)', () => {
   });
 
   it('saves name, context and description in that order when both change', async () => {
-    render(<RulePanel rule={mockRule} placeId="place-1" />);
-    await waitForLoad();
+    await renderPanel({ rule: mockRule });
     renameRule('Front Door Chime');
     pickChime('CHIME');
     fireEvent.click(screen.getByTestId('rule-save'));
@@ -447,8 +471,7 @@ describe('RulePanel (edit mode)', () => {
 
   it('does not write the new description when UpdateContext fails', async () => {
     failCommand(Rule.CMD_UPDATECONTEXT);
-    render(<RulePanel rule={mockRule} placeId="place-1" />);
-    await waitForLoad();
+    await renderPanel({ rule: mockRule });
     renameRule('Front Door Chime');
     pickButton('DRIV:dev:btn-2');
     fireEvent.click(screen.getByTestId('rule-save'));
@@ -467,8 +490,7 @@ describe('RulePanel (edit mode)', () => {
     ['blank', ''],
     ['raw-address', 'When DRIV:dev:btn-1 is pressed, play DING_DONG'],
   ])('repairs a %s description on Save without other changes', async (_label, brokenDescription) => {
-    render(<RulePanel rule={makeRule(RULE_ADDRESS, { ...mockRule, [Rule.ATTR_DESCRIPTION]: brokenDescription })} placeId="place-1" />);
-    await waitForLoad();
+    await renderPanel({ rule: makeRule(RULE_ADDRESS, { ...mockRule, [Rule.ATTR_DESCRIPTION]: brokenDescription }) });
     fireEvent.click(screen.getByTestId('rule-save'));
     await waitFor(() => {
       expect(mockCloseRight).toHaveBeenCalled();
@@ -480,8 +502,7 @@ describe('RulePanel (edit mode)', () => {
   });
 
   it('blocks Save and explains why when a selection is cleared', async () => {
-    render(<RulePanel rule={mockRule} placeId="place-1" />);
-    await waitForLoad();
+    await renderPanel({ rule: mockRule });
     expect(screen.queryByTestId('rule-incomplete')).not.toBeInTheDocument();
     pickChime('');
     expect(screen.getByTestId('rule-save')).toBeDisabled();
@@ -499,8 +520,7 @@ describe('RulePanel (edit mode)', () => {
         chime: resolvedSelectors.selectors.chime,
       },
     });
-    render(<RulePanel rule={mockRule} placeId="place-1" />);
-    await waitForLoad();
+    await renderPanel({ rule: mockRule });
     expect(screen.getByTestId('rule-var-button')).toHaveTextContent('button');
     expect(screen.getByTestId('rule-incomplete')).toHaveTextContent('Please choose a setting for BUTTON.');
     pickChime('CHIME');
@@ -520,8 +540,7 @@ describe('RulePanel (edit mode)', () => {
 
   it('re-applies the saved context on a rename without writing raw addresses when Resolve fails', async () => {
     failCommand(RuleTemplate.CMD_RESOLVE);
-    render(<RulePanel rule={mockRule} placeId="place-1" />);
-    await waitForLoad();
+    await renderPanel({ rule: mockRule });
     renameRule('Front Door Chime');
     fireEvent.click(screen.getByTestId('rule-save'));
     await waitFor(() => {
@@ -535,8 +554,7 @@ describe('RulePanel (edit mode)', () => {
   });
 
   it('saves only the name when the rule template is not in the catalog', async () => {
-    render(<RulePanel rule={makeRule(RULE_ADDRESS, { ...mockRule, [Rule.ATTR_TEMPLATE]: 'retired-template' })} placeId="place-1" />);
-    await waitForLoad();
+    await renderPanel({ rule: makeRule(RULE_ADDRESS, { ...mockRule, [Rule.ATTR_TEMPLATE]: 'retired-template' }) });
     renameRule('Front Door Chime');
     fireEvent.click(screen.getByTestId('rule-save'));
     await waitFor(() => {
@@ -548,28 +566,19 @@ describe('RulePanel (edit mode)', () => {
   });
 
   it('shows delete button', async () => {
-    render(<RulePanel rule={mockRule} placeId="place-1" />);
-    await waitFor(() => {
-      expect(screen.queryByText('Loading template...')).not.toBeInTheDocument();
-    });
+    await renderPanel({ rule: mockRule });
     expect(screen.getByText('Delete Rule')).toBeInTheDocument();
   });
 
   it('shows confirmation on delete click', async () => {
-    render(<RulePanel rule={mockRule} placeId="place-1" />);
-    await waitFor(() => {
-      expect(screen.queryByText('Loading template...')).not.toBeInTheDocument();
-    });
+    await renderPanel({ rule: mockRule });
     fireEvent.click(screen.getByText('Delete Rule'));
     expect(screen.getByText('Are you sure you want to delete this rule?')).toBeInTheDocument();
     expect(screen.getByText('Yes, Delete')).toBeInTheDocument();
   });
 
   it('deletes rule on confirm', async () => {
-    render(<RulePanel rule={mockRule} placeId="place-1" />);
-    await waitFor(() => {
-      expect(screen.queryByText('Loading template...')).not.toBeInTheDocument();
-    });
+    await renderPanel({ rule: mockRule });
     fireEvent.click(screen.getByText('Delete Rule'));
     fireEvent.click(screen.getByText('Yes, Delete'));
     await waitFor(() => {
@@ -578,10 +587,7 @@ describe('RulePanel (edit mode)', () => {
   });
 
   it('cancels delete confirmation', async () => {
-    render(<RulePanel rule={mockRule} placeId="place-1" />);
-    await waitFor(() => {
-      expect(screen.queryByText('Loading template...')).not.toBeInTheDocument();
-    });
+    await renderPanel({ rule: mockRule });
     fireEvent.click(screen.getByText('Delete Rule'));
     const cancelButtons = screen.getAllByText('Cancel');
     fireEvent.click(cancelButtons[cancelButtons.length - 1]);
@@ -589,7 +595,7 @@ describe('RulePanel (edit mode)', () => {
   });
 
   it('allows changing a variable selection via radio', async () => {
-    render(<RulePanel rule={mockRule} placeId="place-1" />);
+    await renderPanel({ rule: mockRule });
     await waitFor(() => {
       expect(screen.getByText('Smart Button 1')).toBeInTheDocument();
     });

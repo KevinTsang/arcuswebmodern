@@ -93,5 +93,6 @@ describe('InvitationBanner', () => {
     render(<InvitationBanner />);
     fireEvent.click(screen.getByRole('button'));
     expect(mockOpenRight).toHaveBeenCalledTimes(1);
+    expect(mockOpenRight).toHaveBeenCalledWith(expect.anything(), { title: 'Invitations', key: 'accept-invitation' });
   });
 });

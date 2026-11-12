@@ -83,10 +83,10 @@ describe('AddPersonPanel – rendering', () => {
     expect(asFragment()).toMatchSnapshot();
   });
 
-  it('shows heading and names the place being invited to', () => {
+  it('names the place being invited to, leaving the title to the panel header', () => {
     render(<AddPersonPanel {...defaultProps} />);
-    expect(screen.getByTestId('invite-panel-title')).toHaveTextContent('Invite a Person');
     expect(screen.getByTestId('invite-panel-place')).toHaveTextContent('Send an invitation to join Lake House.');
+    expect(screen.queryByText('Invite a Person')).not.toBeInTheDocument();
   });
 
   it('shows First Name, Last Name, Email, and Relationship fields', () => {

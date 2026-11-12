@@ -3,12 +3,6 @@
 exports[`RulePanel (create mode) matches snapshot 1`] = `
 <DocumentFragment>
   <div>
-    <h3
-      class="text-lg font-semibold text-swift mb-4"
-      data-testid="rule-panel-title"
-    >
-      Create Rule
-    </h3>
     <div
       class="mb-4"
     >
@@ -89,12 +83,6 @@ exports[`RulePanel (create mode) matches snapshot 1`] = `
 exports[`RulePanel (edit mode) matches snapshot 1`] = `
 <DocumentFragment>
   <div>
-    <h3
-      class="text-lg font-semibold text-swift mb-4"
-      data-testid="rule-panel-title"
-    >
-      Edit Rule
-    </h3>
     <div
       class="mb-4"
     >

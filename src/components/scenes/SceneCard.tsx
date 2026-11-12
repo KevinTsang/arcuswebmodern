@@ -68,6 +68,7 @@ export function SceneCard({
         scheduleId={SCENE_FIRE_SCHEDULE}
         messageType={Scene.CMD_FIRE}
       />,
+      { title: 'Schedule', key: `schedule:${address}` },
     );
   }, [openRight, address, name]);
 

@@ -44,7 +44,6 @@ export default function PersonDetailPanel({ person, placeId, onRemoved }: Person
 
   return (
     <div className="p-4 space-y-4">
-      <h3 data-testid="person-panel-title" className="text-lg font-semibold text-swift">{name || email || 'Person'}</h3>
       <InfoRow label="Name" value={name || '—'} />
       <InfoRow label="Email" value={email || '—'} />
       <InfoRow label="Phone" value={phone || '—'} />
