@@ -7,6 +7,9 @@
  * Reads the SessionCreated snapshot (`auth.person.places`), preferring the
  * active place's live name. Only a place missing from that snapshot (e.g. one
  * added after sign-in) is looked up with `sess:ListAvailablePlaces`.
+ *
+ * A failed lookup shows an error toast unless `notifyOnError` is false, for a
+ * caller that reports (or quietly handles) its own failures.
  */
 
 import { useEffect, useState } from 'react';
@@ -26,6 +29,11 @@ export interface PlaceAccess {
   role: string;
 }
 
+export interface UsePlaceAccessOptions {
+  /** Show an error toast when the lookup fails. Defaults to true. */
+  notifyOnError?: boolean;
+}
+
 interface LookedUpPlace {
   placeId: string;
   name: string;
@@ -33,7 +41,10 @@ interface LookedUpPlace {
   failed: boolean;
 }
 
-export function usePlaceAccess(placeId: string | null): PlaceAccess {
+export function usePlaceAccess(
+  placeId: string | null | undefined,
+  { notifyOnError = true }: UsePlaceAccessOptions = {},
+): PlaceAccess {
   const dispatch = useAppDispatch();
   const sessionPlace = useAppSelector((s) =>
     s.auth.person?.places?.find((p) => p.placeId === placeId),
@@ -55,11 +66,13 @@ export function usePlaceAccess(placeId: string | null): PlaceAccess {
       })
       .catch(() => {
         if (cancelled) return;
-        dispatch(addNotification({ type: 'error', message: 'Failed to load place details.' }));
+        if (notifyOnError) {
+          dispatch(addNotification({ type: 'error', message: 'Failed to load place details.' }));
+        }
         setLookedUp({ placeId, name: '', role: '', failed: true });
       });
     return () => { cancelled = true; };
-  }, [placeId, inSession, dispatch]);
+  }, [placeId, inSession, notifyOnError, dispatch]);
 
   if (sessionPlace) {
     return { status: 'ready', name: activeName || sessionPlace.placeName, role: sessionPlace.role };

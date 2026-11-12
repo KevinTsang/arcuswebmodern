@@ -45,6 +45,7 @@ const guestSessionPlace: SessionPlace = { placeId: 'place-2', placeName: 'Beach 
 let mockActivePlaceId = 'place-1';
 let mockActivePlace: PlaceData | null = null;
 let mockSessionPlaces: SessionPlace[] = [];
+const mockDispatch = jest.fn();
 
 jest.mock('@/store/hooks', () => ({
   useAppSelector: (sel: (s: any) => any) =>
@@ -56,7 +57,8 @@ jest.mock('@/store/hooks', () => ({
         account: { [Base.ATTR_ADDRESS]: 'SERV:account:acct-other' },
       },
     }),
-  useAppDispatch: () => jest.fn(),
+  // Stable, like the real dispatch: usePlaceAccess's lookup effect depends on it.
+  useAppDispatch: () => mockDispatch,
 }));
 
 const ownerPlace = {
@@ -374,7 +376,8 @@ describe('PeoplePlacesSection – add place', () => {
     expect(openedPanel().props.accountId).toBe('acct-own');
   });
 
-  it("shows no Add Place or hint when the active place's role is unknown", async () => {
+  it("shows no Add Place, hint or error toast when the active place's role can't be looked up", async () => {
+    // Added since sign-in, so its role needs the places list, which fails
     mockActivePlaceId = 'place-3';
     mockActivePlace = cabinPlaceData;
     mockListAvailablePlaces.mockRejectedValue(new Error('timeout'));
@@ -383,6 +386,8 @@ describe('PeoplePlacesSection – add place', () => {
 
     expect(screen.queryByTestId('add-place')).not.toBeInTheDocument();
     expect(screen.queryByTestId('add-place-hint')).not.toBeInTheDocument();
+    // The section shows "No places found."; usePlaceAccess adds no toast of its own
+    expect(mockDispatch).not.toHaveBeenCalled();
   });
 
   it('reloads the places list when a place is added, keeping the current list on screen', async () => {

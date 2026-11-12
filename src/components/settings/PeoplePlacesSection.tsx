@@ -23,6 +23,7 @@ import type { ListPersonsResponse } from '@/arcus/types';
 import { AddPlacePanel } from './AddPlacePanel';
 import { AddPlaceControls } from './AddPlaceControls';
 import { getAddPlaceAccess } from '@/lib/addPlaceAccess';
+import { usePlaceAccess } from '@/hooks/usePlaceAccess';
 
 const OWNER = 'OWNER';
 
@@ -38,12 +39,15 @@ export default function PeoplePlacesSection() {
 
   const refresh = useCallback(() => setRefreshKey((k) => k + 1), []);
 
+  // The person's role at the active place. This section loads the places list
+  // itself and shows "No places found." when that fails, so no second toast.
+  const activeAccess = usePlaceAccess(activePlaceId, { notifyOnError: false });
   // Whether Add Place is enabled, and for which account: see getAddPlaceAccess.
   const addPlaceAccess = getAddPlaceAccess({
     activePlaceId,
     activePlace,
-    sessionPlaces: currentPerson?.places ?? [],
-    places,
+    activeAccess,
+    places: [...(currentPerson?.places ?? []), ...places],
   });
 
   const handleAddPlace = useCallback((accountId: string) => {

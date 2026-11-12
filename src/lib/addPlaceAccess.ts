@@ -4,17 +4,18 @@
  * account:AddPlace is only authorized while the session's active place is one
  * the person owns: the client bridge runs RoleAuthorizer, which checks the
  * actor's grant for the active place. A person owns at most one account. So
- * both the check and the destination come from the active place: its role,
- * and its place:account.
+ * both the check and the destination come from the active place: its role
+ * (from usePlaceAccess), and its place:account.
  */
 
 import { Base, Place } from '@arcus/core';
 import type { PlaceData } from '@/store/entityTypes';
+import type { PlaceAccess } from '@/hooks/usePlaceAccess';
 
 const OWNER = 'OWNER';
 
 /** A place and the person's role there, from SessionCreated or ListAvailablePlaces. */
-export interface PlaceRole {
+export interface PlaceWithRole {
   placeId: string;
   role?: string;
 }
@@ -24,10 +25,10 @@ export interface AddPlaceAccessInput {
   activePlaceId: string | null | undefined;
   /** The loaded active-place record; it can still be the previous place's during a switch. */
   activePlace: PlaceData | null | undefined;
-  /** The places from SessionCreated, as of sign-in. */
-  sessionPlaces: PlaceRole[];
-  /** The fetched places list, which also has places added or joined since sign-in. */
-  places: PlaceRole[];
+  /** usePlaceAccess for the active place: the person's role there. */
+  activeAccess: PlaceAccess;
+  /** Every place the person can access (SessionCreated and the fetched list), to tell whether they own one. */
+  places: PlaceWithRole[];
 }
 
 export type AddPlaceAccess =
@@ -45,16 +46,13 @@ export type AddPlaceAccess =
 export function getAddPlaceAccess({
   activePlaceId,
   activePlace,
-  sessionPlaces,
+  activeAccess,
   places,
 }: AddPlaceAccessInput): AddPlaceAccess {
-  const activeRole =
-    sessionPlaces.find((p) => p.placeId === activePlaceId)?.role
-    // A place added or joined since sign-in is only in the fetched list
-    ?? places.find((p) => p.placeId === activePlaceId)?.role;
-  if (activeRole === undefined) return { status: 'hidden' };
+  // Still loading, failed, or not one of the person's places
+  if (activeAccess.status !== 'ready' || !activeAccess.role) return { status: 'hidden' };
 
-  if (activeRole === OWNER) {
+  if (activeAccess.role === OWNER) {
     // Read the account only from the active place's own record: the platform
     // adds the new place to whichever account the request is sent to.
     const accountId = activePlace?.[Base.ATTR_ID] === activePlaceId
@@ -63,6 +61,6 @@ export function getAddPlaceAccess({
     return accountId ? { status: 'enabled', accountId } : { status: 'hidden' };
   }
 
-  const ownsAPlace = [...sessionPlaces, ...places].some((p) => p.role === OWNER);
+  const ownsAPlace = places.some((p) => p.role === OWNER);
   return { status: 'disabled', hint: ownsAPlace ? 'switch' : 'new-account' };
 }

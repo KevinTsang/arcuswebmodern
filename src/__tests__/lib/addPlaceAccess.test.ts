@@ -1,15 +1,14 @@
 import { Base, Place } from '@arcus/core';
-import { getAddPlaceAccess, type AddPlaceAccessInput, type PlaceRole } from '@/lib/addPlaceAccess';
+import { getAddPlaceAccess, type AddPlaceAccessInput, type PlaceWithRole } from '@/lib/addPlaceAccess';
+import type { PlaceAccess } from '@/hooks/usePlaceAccess';
 import type { PlaceData } from '@/store/entityTypes';
 
 // ── Helpers ───────────────────────────────────────────────────────────
 
 // The person owns place-1 (account acct-own) and is a guest at place-2
 // (someone else's account, acct-other).
-const owned: PlaceRole = { placeId: 'place-1', role: 'OWNER' };
-const guest: PlaceRole = { placeId: 'place-2', role: 'FULL_ACCESS' };
-// Added (or joined) after sign-in, so only in the fetched list
-const addedSinceSignIn: PlaceRole = { placeId: 'place-3', role: 'OWNER' };
+const owned: PlaceWithRole = { placeId: 'place-1', role: 'OWNER' };
+const guest: PlaceWithRole = { placeId: 'place-2', role: 'FULL_ACCESS' };
 
 function placeRecord(placeId: string, accountId: string): PlaceData {
   return {
@@ -22,11 +21,15 @@ function placeRecord(placeId: string, accountId: string): PlaceData {
 const ownedRecord = placeRecord('place-1', 'acct-own');
 const guestRecord = placeRecord('place-2', 'acct-other');
 
+function ready(role: string): PlaceAccess {
+  return { status: 'ready', name: '', role };
+}
+
 function access(overrides: Partial<AddPlaceAccessInput> = {}) {
   return getAddPlaceAccess({
     activePlaceId: 'place-1',
     activePlace: ownedRecord,
-    sessionPlaces: [owned, guest],
+    activeAccess: ready('OWNER'),
     places: [owned, guest],
     ...overrides,
   });
@@ -39,22 +42,8 @@ describe('getAddPlaceAccess – owned active place', () => {
     expect(access()).toEqual({ status: 'enabled', accountId: 'acct-own' });
   });
 
-  it('stays enabled from the session places when the places list failed to load or is empty', () => {
-    // The section passes [] in both cases
+  it("is enabled whatever the places list holds, since the role comes from the active place's access", () => {
     expect(access({ places: [] })).toEqual({ status: 'enabled', accountId: 'acct-own' });
-  });
-
-  it('is enabled at an owned place added since sign-in, from the fetched list', () => {
-    expect(access({
-      activePlaceId: 'place-3',
-      activePlace: placeRecord('place-3', 'acct-own'),
-      places: [owned, guest, addedSinceSignIn],
-    })).toEqual({ status: 'enabled', accountId: 'acct-own' });
-  });
-
-  it('prefers the session role over the fetched list', () => {
-    expect(access({ places: [{ placeId: 'place-1', role: 'FULL_ACCESS' }] }))
-      .toEqual({ status: 'enabled', accountId: 'acct-own' });
   });
 
   it.each([
@@ -69,21 +58,18 @@ describe('getAddPlaceAccess – owned active place', () => {
   });
 });
 
-describe('getAddPlaceAccess – unknown role', () => {
-  it('is hidden when the active place is in neither list', () => {
-    expect(access({
-      activePlaceId: 'place-3',
-      activePlace: placeRecord('place-3', 'acct-own'),
-    })).toEqual({ status: 'hidden' });
-  });
-
-  it('is hidden without an active place', () => {
-    expect(access({ activePlaceId: null, activePlace: null })).toEqual({ status: 'hidden' });
+describe('getAddPlaceAccess – role not known', () => {
+  it.each<[string, PlaceAccess]>([
+    ['still loading', { status: 'loading', name: '', role: '' }],
+    ['failed', { status: 'failed', name: '', role: '' }],
+    ['not one of the person\'s places', ready('')],
+  ])('is hidden while the active place access is %s', (_, activeAccess) => {
+    expect(access({ activeAccess })).toEqual({ status: 'hidden' });
   });
 });
 
 describe('getAddPlaceAccess – guest active place', () => {
-  const atGuestPlace = { activePlaceId: 'place-2', activePlace: guestRecord };
+  const atGuestPlace = { activePlaceId: 'place-2', activePlace: guestRecord, activeAccess: ready('FULL_ACCESS') };
 
   it('is disabled with the switch hint when the person owns a place', () => {
     expect(access(atGuestPlace)).toEqual({ status: 'disabled', hint: 'switch' });
@@ -94,17 +80,12 @@ describe('getAddPlaceAccess – guest active place', () => {
   });
 
   it('is disabled with the new-account hint when the person owns no place', () => {
-    expect(access({ ...atGuestPlace, sessionPlaces: [guest], places: [guest] }))
-      .toEqual({ status: 'disabled', hint: 'new-account' });
-  });
-
-  it('suggests a new account when the places list fails to load and the session has no owned place', () => {
-    expect(access({ ...atGuestPlace, sessionPlaces: [guest], places: [] }))
-      .toEqual({ status: 'disabled', hint: 'new-account' });
+    expect(access({ ...atGuestPlace, places: [guest] })).toEqual({ status: 'disabled', hint: 'new-account' });
   });
 
   it('suggests switching to a guest who added a place of their own since sign-in', () => {
-    expect(access({ ...atGuestPlace, sessionPlaces: [guest], places: [guest, addedSinceSignIn] }))
+    const addedSinceSignIn: PlaceWithRole = { placeId: 'place-3', role: 'OWNER' };
+    expect(access({ ...atGuestPlace, places: [guest, addedSinceSignIn] }))
       .toEqual({ status: 'disabled', hint: 'switch' });
   });
 
