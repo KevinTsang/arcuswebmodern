@@ -20,11 +20,17 @@ import { useSidePanel } from '@/components/SidePanel';
 import PlaceCard from './PlaceCard';
 import { type PlaceWithPeople, type PlaceData } from './types';
 import type { ListPersonsResponse } from '@/arcus/types';
-import AddPlacePanel from './AddPlacePanel';
+import { AddPlacePanel } from './AddPlacePanel';
+import { AddPlaceControls } from './AddPlaceControls';
+import { getAddPlaceAccess } from '@/lib/addPlaceAccess';
+import { usePlaceAccess } from '@/hooks/usePlaceAccess';
+
+const OWNER = 'OWNER';
 
 export default function PeoplePlacesSection() {
   const { openRight } = useSidePanel();
   const activePlaceId = useAppSelector((s) => s.place.placeId);
+  const activePlace = useAppSelector((s) => s.place.place);
   const currentPerson = useAppSelector((s) => s.auth.person);
 
   const [places, setPlaces] = useState<PlaceWithPeople[]>([]);
@@ -33,11 +39,30 @@ export default function PeoplePlacesSection() {
 
   const refresh = useCallback(() => setRefreshKey((k) => k + 1), []);
 
+  // The person's role at the active place. This section loads the places list
+  // itself and shows "No places found." when that fails, so no second toast.
+  const activeAccess = usePlaceAccess(activePlaceId, { notifyOnError: false });
+  // Whether Add Place is enabled, and for which account: see getAddPlaceAccess.
+  const addPlaceAccess = getAddPlaceAccess({
+    activePlaceId,
+    activePlace,
+    activeAccess,
+    places: [...(currentPerson?.places ?? []), ...places],
+  });
+
+  const handleAddPlace = useCallback((accountId: string) => {
+    openRight(<AddPlacePanel accountId={accountId} onSaved={refresh} />, {
+      title: 'Add a Place',
+      key: 'add-place',
+    });
+  }, [openRight, refresh]);
+
   useEffect(() => {
     let cancelled = false;
 
+    // Only the first load shows "Loading places…"; a refresh keeps the
+    // current list on screen until the new one arrives.
     async function fetchAll() {
-      setLoading(true);
       try {
         const res = await SessionService.ListAvailablePlaces();
         const available = res.places ?? [];
@@ -80,8 +105,8 @@ export default function PeoplePlacesSection() {
     return <p className="text-grouse">Loading places…</p>;
   }
 
-  const ownerPlaces = places.filter((p) => p.role === 'OWNER');
-  const guestPlaces = places.filter((p) => p.role !== 'OWNER');
+  const ownerPlaces = places.filter((p) => p.role === OWNER);
+  const guestPlaces = places.filter((p) => p.role !== OWNER);
 
   return (
     <div className="space-y-8">
@@ -123,14 +148,7 @@ export default function PeoplePlacesSection() {
         <p className="text-sm text-grouse">No places found.</p>
       )}
 
-      {/* Add place */}
-      <button
-        onClick={() => openRight(<AddPlacePanel />, { title: 'Add a Place', key: 'add-place' })}
-        data-testid="add-place"
-        className="px-4 py-2 bg-peacock text-crane rounded-[var(--border-radius-base)] text-sm font-medium hover:bg-peacock/90"
-      >
-        + Add Place
-      </button>
+      <AddPlaceControls access={addPlaceAccess} onAdd={handleAddPlace} />
     </div>
   );
 }
