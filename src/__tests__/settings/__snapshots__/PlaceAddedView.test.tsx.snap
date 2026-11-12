@@ -1,0 +1,72 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`PlaceAddedView – rendering matches snapshot 1`] = `
+<DocumentFragment>
+  <div
+    class="p-4 space-y-4"
+  >
+    <p
+      class="text-sm text-coot"
+      data-testid="add-place-added"
+    >
+      <span
+        class="font-medium text-swift"
+      >
+        Beach House
+      </span>
+       has been added to your account.
+    </p>
+    <p
+      class="text-sm text-grouse"
+    >
+      Switch to it now to set it up, or keep using your current place.
+    </p>
+    <div
+      class="flex gap-2 pt-2"
+    >
+      <button
+        class="px-4 py-2 bg-peacock text-crane rounded-[var(--border-radius-base)] text-sm font-medium hover:bg-peacock/90 disabled:opacity-50"
+        data-testid="add-place-switch"
+      >
+        Switch to Beach House
+      </button>
+      <button
+        class="px-4 py-2 border border-heron rounded-[var(--border-radius-base)] text-sm text-coot hover:bg-pigeon disabled:opacity-50"
+        data-testid="add-place-done"
+      >
+        Done
+      </button>
+    </div>
+  </div>
+</DocumentFragment>
+`;
+
+exports[`PlaceAddedView – rendering matches snapshot without a place id 1`] = `
+<DocumentFragment>
+  <div
+    class="p-4 space-y-4"
+  >
+    <p
+      class="text-sm text-coot"
+      data-testid="add-place-added"
+    >
+      <span
+        class="font-medium text-swift"
+      >
+        Cabin
+      </span>
+       has been added to your account.
+    </p>
+    <div
+      class="flex gap-2 pt-2"
+    >
+      <button
+        class="px-4 py-2 border border-heron rounded-[var(--border-radius-base)] text-sm text-coot hover:bg-pigeon disabled:opacity-50"
+        data-testid="add-place-done"
+      >
+        Done
+      </button>
+    </div>
+  </div>
+</DocumentFragment>
+`;
