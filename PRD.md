@@ -614,6 +614,26 @@ This is a new feature in the modern client with no legacy equivalent.
 
 ---
 
+## 26. Deployment (Docker Images)
+
+| Feature | Legacy | Modern | Status |
+|---------|--------|--------|--------|
+| `ui-server` image (nginx, `:8096`) | Yes | Yes (`docker/ui-server`: Next static export served by nginx) | **Done** |
+| `static-server` image (nginx, `:8097`, device/brand images) | Yes | No (the legacy image is still deployed) | **Missing** |
+| Platform URLs set at runtime from `ARCUS_HTTP_URI` / `ARCUS_WS_URI` | Yes (`server.json`) | Yes (same `server.json` path and keys, read by `initializeCoreConfig`) | **Done** |
+| Runs read-only as uid 1000 under the arcus-k8s mounts and limits | Yes | Yes | **Done** |
+| Browsers still running the legacy page move to this client | — | Yes (legacy `/build/dist/*.js` bundle requests get a script that reloads the page once) | **Done** |
+| Build / tag / push | Yes (gradle `:tools:khakis:pushDocker`) | Yes (`docker/bin/build.sh [--push]`) | **Done** |
+| CI image publishing | No | No | **Missing** |
+
+### Gaps
+
+- `server.json` holds only the two platform URLs. `run-nginx` ignores legacy's `ARCUS_REDIRECT_URI`, `ARCUS_ENABLE_HUB_WIFI_SCAN`, `ARCUS_ENABLE_BATTERY_PERCENTAGE`, `ARCUS_ENABLE_YEARLY_SUBSCRIPTION`, `ARCUS_IOS_DOWNLOAD_URI` and `ARCUS_ANDROID_DOWNLOAD_URI`. Nothing in this client reads them, and battery percentages are always shown (legacy showed them only with the flag on, which arcus-k8s sets). When a feature needs one (hub WiFi scan, billing, app download links), add its key to `run-nginx`, `ServerConfig` and `ArcusCoreConfig` together. A `NEXT_PUBLIC_*` value won't do, because the image bakes none in.
+- No workflow builds and pushes the image. For now it is published by hand with `docker/bin/build.sh --push`.
+- **TODO — static-server:** arcus-k8s points `staticResourceBaseUrl`, `secureStaticResourceBaseUrl` and the notification service's resource URL at `static-server`, which still runs the legacy arcusweb image (Iris brand logo and 22 device-type icons). The mobile apps, legacy web and platform emails also request catalog product and pairing-step images, customization and action images, more brand logos and device types, and the email/invoice assets (`o/res_templates`). Those exist in the old Iris resource root (about 120 MB once unused parts are dropped) but aren't in any repo. Decide where they live (licensing, and whether a 120 MB set belongs in this repo, a separate repo or a private bucket), then build a replacement image.
+
+---
+
 ## Priority Summary
 
 ### Tier 1 — High-Impact Gaps (Core Smart Home Functionality)
@@ -675,30 +695,18 @@ These are commonly used features that users will expect:
     device lists that live on the alarm subsystem itself — the per-alert `Alarm`
     capability instances, `alarm:devices:<SECURITY|PANIC|SMOKE|CO|WATER>`.
     Covered by `src/__tests__/hooks/useSubsystem.test.ts`.
-27. **Share person validation across sign-up, invite and the contact panel** —
-    A follow-up to this PR (#22, contact info validation), building on the
-    phone rule and formatter it adds.
-    - **Validate and format the phone at sign-up and invite.** Sign-up
-      (`src/components/create-account/CredentialsStep.tsx`) and the invite page
-      (`src/app/invite/page.tsx`) send `person:mobileNumber` exactly as typed,
-      unchecked and unformatted. Give both the optional `phoneNumber` rule (the
-      validator skips empty fields), and send the number through
-      `formatPhoneNumber` so it's stored as "(555) 123-4567", like the contact
-      panel saves it. Check first whether the platform rejects a malformed
-      phone. If it does, sign-up currently reports the misleading "The email may
-      already be in use".
-    - **Remove the duplicated sign-up rules.** `CREDENTIALS_CONSTRAINTS`
-      (`src/components/create-account/CreateAccountContext.tsx`) and the invite
-      page's `LOGIN_CONSTRAINTS` are identical: email, password, confirm password,
-      first and last name. Move them into one shared module that both import.
-    - **Share rules, not field maps.** The contact panel keys its constraints by
-      `person:*` attribute names, while sign-up and invite key theirs by form
-      field names. So export reusable rules (required name, optional or required
-      phone, password) and let each form build its own map. Keep the contact
-      panel's field list, empty values and changed-fields comparison in the panel,
-      since they're specific to editing an existing person.
-    - This overlaps with item 25 (splitting `login/page.tsx`), which also plans a
-      shared `constraints.ts`. Use the same module for both.
+27. ~~**Share person validation across sign-up, invite and the contact panel**~~ —
+    **DONE.** The rules now live in `src/lib/validationRules.ts` (email, new
+    password, password confirmation, name, optional and required phone), and
+    each form builds its own constraint map from them: sign-up and the invite
+    page share `NEW_LOGIN_CONSTRAINTS`, and the contact panel and the login
+    page's password reset use the individual rules.
+    - Sign-up and the invite page now validate the optional phone and send it as
+      "(555) 123-4567", the format the contact panel saves.
+    - Still open: whether the platform rejects a malformed phone at sign-up.
+      With the phone validated first, the app no longer sends one.
+    - Item 25 (splitting `login/page.tsx`) should import its rules from this
+      module instead of adding a separate `constraints.ts`.
 28. ~~**Move side panels onto the shell header and Suspense**~~ — **DONE.**
     The `SidePanel` shell (`src/components/SidePanelFrame.tsx`) draws the panel
     title and the only close button, and wraps content in `<Suspense>` inside
@@ -734,6 +742,7 @@ These are commonly used features that users will expect:
     - `rules.cy.ts` "resolves template variables to device names when editing"
       expects the name and description in one `base:SetAttributes`. `RulePanel`
       sends the name, then `rule:UpdateContext`, then the description, on purpose.
+
 
 ---
 

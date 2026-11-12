@@ -2,26 +2,12 @@
 
 import { createContext, useContext, useReducer, type ReactNode } from 'react';
 import { useFormValidation, type ValidationConstraints } from '@/hooks/useFormValidation';
+import { NEW_LOGIN_CONSTRAINTS } from '@/lib/validationRules';
 import { initialState, type CreateAccountState } from './types';
 import { createAccountReducer, type CreateAccountAction } from './createAccountSlice';
 
 // ── Validation constraints ───────────────────────────────────────
 
-export const CREDENTIALS_CONSTRAINTS: ValidationConstraints = {
-  email: { presence: true, email: { message: 'is invalid' } },
-  password: {
-    presence: true,
-    length: { minimum: 8, message: 'must be at least 8 characters' },
-    oneLetterOneNumber: true,
-    noSpaces: true,
-  },
-  confirmPassword: {
-    presence: true,
-    equality: { attribute: 'password', message: '^Passwords do not match' },
-  },
-  firstName: { presence: true },
-  lastName: { presence: true },
-};
 
 export const ADDRESS_CONSTRAINTS: ValidationConstraints = {
   street1: { presence: true },
@@ -43,7 +29,8 @@ const CreateAccountContext = createContext<CreateAccountContextValue | null>(nul
 
 export function CreateAccountProvider({ children, initialStateOverride }: { children: ReactNode; initialStateOverride?: Partial<CreateAccountState> }) {
   const [state, dispatch] = useReducer(createAccountReducer, { ...initialState, ...initialStateOverride });
-  const credForm = useFormValidation(CREDENTIALS_CONSTRAINTS);
+  // Sign-up checks the same login and person fields as accepting an invitation.
+  const credForm = useFormValidation(NEW_LOGIN_CONSTRAINTS);
   const addrForm = useFormValidation(ADDRESS_CONSTRAINTS);
 
   return (
