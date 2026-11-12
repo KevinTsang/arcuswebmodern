@@ -743,7 +743,6 @@ These are commonly used features that users will expect:
       expects the name and description in one `base:SetAttributes`. `RulePanel`
       sends the name, then `rule:UpdateContext`, then the description, on purpose.
 
-
 ---
 
 ## Testing
