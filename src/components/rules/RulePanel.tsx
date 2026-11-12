@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect, useMemo } from 'react';
+import { use, useState, useCallback, useMemo } from 'react';
 import Bridge from '@arcus/core/bridge';
 import { Base, Rule, RuleTemplate } from '@arcus/core';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
@@ -8,7 +8,7 @@ import { addNotification } from '@/store/slices/uiSlice';
 import { useSidePanel } from '@/components/SidePanel';
 import { RuleSelectorSection } from './RuleSelectorSection';
 import type { ResolvedSelector } from './RuleSelectorSection';
-import type { ResolveResponse, ServerSelector, ServerOptionTuple } from './types';
+import { findRuleTemplate } from './resolveRuleSelectors';
 import type { RuleEntity, RuleTemplateEntity } from '@/store/entityTypes';
 
 type TemplateSegment = { type: 'text'; text: string } | { type: 'variable'; text: string; name: string };
@@ -66,13 +66,28 @@ function savedSelections(rule: RuleEntity | undefined): Record<string, string> {
   return result;
 }
 
+/** The saved selections, with any that are no longer offered (e.g. a removed device) cleared to be picked again. */
+function offeredSelections(
+  saved: Record<string, string>,
+  selectors: Record<string, ResolvedSelector>,
+): Record<string, string> {
+  const next = { ...saved };
+  for (const [key, sel] of Object.entries(selectors)) {
+    if (next[key] && !sel.options.some((o) => o.value === next[key])) next[key] = '';
+  }
+  return next;
+}
+
 interface RulePanelProps {
   rule?: RuleEntity;
   template?: RuleTemplateEntity;
   placeId: string;
+  /** The template's selectors, resolved when the panel was opened (see useOpenRulePanel). */
+  selectors: Promise<Record<string, ResolvedSelector>>;
 }
 
-export function RulePanel({ rule, template, placeId }: RulePanelProps) {
+export function RulePanel({ rule, template, placeId, selectors: selectorsPromise }: RulePanelProps) {
+  const selectors = use(selectorsPromise);
   const isEdit = !!rule;
   const dispatch = useAppDispatch();
   const { closeRight } = useSidePanel();
@@ -81,13 +96,10 @@ export function RulePanel({ rule, template, placeId }: RulePanelProps) {
   const address = rule?.[Base.ATTR_ADDRESS] as string | undefined;
 
   // In edit mode, find the template from the rule's template id
-  const resolvedTemplate = useMemo(() => {
-    if (template) return template;
-    if (!rule) return undefined;
-    const templateId = rule[Rule.ATTR_TEMPLATE] as string | undefined;
-    if (!templateId) return undefined;
-    return ruleTemplates.find((t) => t[Base.ATTR_ID] === templateId);
-  }, [template, rule, ruleTemplates]);
+  const resolvedTemplate = useMemo(
+    () => findRuleTemplate(rule, template, ruleTemplates),
+    [template, rule, ruleTemplates],
+  );
 
   const templateAddress = resolvedTemplate?.[Base.ATTR_ADDRESS] as string | undefined;
   const templateString = (resolvedTemplate?.[RuleTemplate.ATTR_TEMPLATE] as string) ?? '';
@@ -96,58 +108,13 @@ export function RulePanel({ rule, template, placeId }: RulePanelProps) {
   const [name, setName] = useState(
     isEdit ? ((rule[Rule.ATTR_NAME] as string) ?? '') : ((resolvedTemplate?.[RuleTemplate.ATTR_NAME] as string) ?? ''),
   );
-  const [selectors, setSelectors] = useState<Record<string, ResolvedSelector>>({});
   // The rule's saved selections, kept to tell whether the user changed any of them
   const savedContext = useMemo(() => savedSelections(rule), [rule]);
-  const [context, setContext] = useState<Record<string, string>>(savedContext);
+  const [context, setContext] = useState(() => offeredSelections(savedContext, selectors));
   const [activeSelector, setActiveSelector] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
-
-  useEffect(() => {
-    if (!templateAddress) {
-      setLoading(false);
-      return;
-    }
-    let cancelled = false;
-    (async () => {
-      try {
-        const result = await Bridge.request<ResolveResponse>(RuleTemplate.CMD_RESOLVE, templateAddress, { placeId });
-        if (cancelled) return;
-        // Server may return selectors under a 'selectors' key or directly at the top level
-        const selectorMap = result.selectors ?? (result as Record<string, ServerSelector>);
-        const parsed: Record<string, ResolvedSelector> = {};
-        for (const [key, sel] of Object.entries(selectorMap)) {
-          if (!sel || typeof sel !== 'object' || !('options' in sel)) continue;
-          const rawOptions = sel.options ?? [];
-          const options = rawOptions.map((tuple: ServerOptionTuple) => ({
-            name: tuple[0] ?? '',
-            value: tuple[1] ?? tuple[0] ?? '',
-          }));
-          parsed[key] = {
-            type: sel.type ?? 'LIST',
-            name: sel.name ?? key,
-            options,
-          };
-        }
-        setSelectors(parsed);
-        // A saved selection that is no longer offered (e.g. a removed device) must be picked again
-        setContext((prev) => {
-          const next = { ...prev };
-          for (const [key, sel] of Object.entries(parsed)) {
-            if (next[key] && !sel.options.some((o) => o.value === next[key])) next[key] = '';
-          }
-          return next;
-        });
-      } catch {
-        dispatch(addNotification({ type: 'error', message: 'Failed to resolve rule template' }));
-      }
-      setLoading(false);
-    })();
-    return () => { cancelled = true; };
-  }, [templateAddress, placeId, dispatch]);
 
   const selectorKeys = Object.keys(selectors);
   const missingSelections = selectorKeys.filter((k) => !context[k]);
@@ -222,21 +189,8 @@ export function RulePanel({ rule, template, placeId }: RulePanelProps) {
 
   const activeResolvedSelector = activeSelector ? selectors[activeSelector] : null;
 
-  const heading = isEdit ? 'Edit Rule' : 'Create Rule';
-
-  if (loading) {
-    return (
-      <div>
-        <h3 data-testid="rule-panel-title" className="text-lg font-semibold text-swift mb-4">{heading}</h3>
-        <p className="text-sm text-grouse">Loading template...</p>
-      </div>
-    );
-  }
-
   return (
     <div>
-      <h3 data-testid="rule-panel-title" className="text-lg font-semibold text-swift mb-4">{heading}</h3>
-
       <div className="mb-4">
         <label htmlFor="ruleName" className="block text-sm font-medium text-swift mb-1">
           Rule Name

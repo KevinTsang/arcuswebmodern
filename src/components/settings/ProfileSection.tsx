@@ -6,7 +6,7 @@ import { useSidePanel } from '@/components/SidePanel';
 import InfoCard from './InfoCard';
 import InfoRow from './InfoRow';
 import { formatServiceLevel } from './settingsHelper';
-import ContactInfoPanel from './ContactInfoPanel';
+import { useOpenContactInfoPanel } from './useOpenContactInfoPanel';
 import ChangePasswordPanel from './ChangePasswordPanel';
 import ChangePinPanel from './ChangePinPanel';
 
@@ -14,6 +14,7 @@ export default function ProfileSection() {
   const person = useAppSelector((s) => s.auth.person);
   const place = useAppSelector((s) => s.place.place);
   const { openRight } = useSidePanel();
+  const openContactInfo = useOpenContactInfoPanel();
 
   if (!person) {
     return <p className="text-grouse">Loading profile…</p>;
@@ -31,7 +32,7 @@ export default function ProfileSection() {
         title="Contact Information"
         action={
           <button
-            onClick={() => openRight(<ContactInfoPanel />)}
+            onClick={openContactInfo}
             className="text-sm text-peacock hover:underline"
           >
             Edit
@@ -47,7 +48,7 @@ export default function ProfileSection() {
         title="Password"
         action={
           <button
-            onClick={() => openRight(<ChangePasswordPanel />)}
+            onClick={() => openRight(<ChangePasswordPanel />, { title: 'Change Password', key: 'change-password' })}
             className="text-sm text-peacock hover:underline"
           >
             Change
@@ -61,7 +62,7 @@ export default function ProfileSection() {
         title="PIN Code"
         action={
           <button
-            onClick={() => openRight(<ChangePinPanel />)}
+            onClick={() => openRight(<ChangePinPanel />, { title: 'Change PIN Code', key: 'change-pin' })}
             className="text-sm text-peacock hover:underline"
           >
             Change

@@ -1,13 +1,16 @@
-import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
+import { screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { Base, Person } from '@arcus/core';
 import ContactInfoPanel from '@/components/settings/ContactInfoPanel';
+import { loadContactInfo, type ContactLoad } from '@/components/settings/contactInfo';
 import { makePerson } from '../helpers/factories';
+import { renderSuspended } from '../helpers/renderSuspended';
 import type { PersonEntity } from '@/store/entityTypes';
 
 // ── Mocks ─────────────────────────────────────────────────────────────
 
 const mockCloseRight = jest.fn();
 const mockDispatch = jest.fn();
+const mockReload = jest.fn();
 const mockBridgeRequest = jest.fn();
 /** base:GetAttributes on a person. */
 const mockGetAttributes = jest.fn();
@@ -55,9 +58,18 @@ function setAttributesCalls() {
   return mockBridgeRequest.mock.calls.filter(([cmd]) => cmd === Base.CMD_SETATTRIBUTES);
 }
 
+const panel = (person: Promise<ContactLoad> | null) => (
+  <ContactInfoPanel person={person} onReload={mockReload} />
+);
+
+/** Render the panel the way useOpenContactInfoPanel opens it for p1, and wait for the load. */
+function renderPanel(person: Promise<ContactLoad> | null = loadContactInfo('p1', mockDispatch)) {
+  return renderSuspended(panel(person));
+}
+
 /** Render the panel and wait for the person's attributes to load. */
 async function renderLoaded() {
-  const result = render(<ContactInfoPanel />);
+  const result = await renderPanel();
   await screen.findByTestId('field-first-name');
   return result;
 }
@@ -90,15 +102,9 @@ describe('ContactInfoPanel', () => {
       expect(asFragment()).toMatchSnapshot();
     });
 
-    it('matches snapshot while loading', () => {
-      mockGetAttributes.mockReturnValueOnce(new Promise(() => {}));
-      const { asFragment } = render(<ContactInfoPanel />);
-      expect(asFragment()).toMatchSnapshot();
-    });
-
     it('matches snapshot when loading fails', async () => {
       mockGetAttributes.mockRejectedValueOnce(new Error('load failed'));
-      const { asFragment } = render(<ContactInfoPanel />);
+      const { asFragment } = await renderPanel();
       await screen.findByTestId('contact-load-error');
       expect(asFragment()).toMatchSnapshot();
     });
@@ -112,9 +118,9 @@ describe('ContactInfoPanel', () => {
       expect(asFragment()).toMatchSnapshot();
     });
 
-    it('matches snapshot when signed out', () => {
+    it('matches snapshot when signed out', async () => {
       mockSessionPerson = null;
-      const { asFragment } = render(<ContactInfoPanel />);
+      const { asFragment } = await renderPanel(null);
       expect(asFragment()).toMatchSnapshot();
     });
 
@@ -163,105 +169,113 @@ describe('ContactInfoPanel', () => {
     });
   });
 
-  describe('loading', () => {
-    it('shows no form and keeps Save disabled while the person loads', () => {
-      mockGetAttributes.mockReturnValueOnce(new Promise(() => {}));
-      render(<ContactInfoPanel />);
-      expect(screen.getByTestId('contact-loading')).toHaveTextContent('Loading contact info…');
-      expect(screen.queryByTestId('field-first-name')).not.toBeInTheDocument();
-      expect(screen.getByTestId('contact-save')).toBeDisabled();
+  describe('loadContactInfo', () => {
+    it('resolves to the loaded name and phone', async () => {
+      await expect(loadContactInfo('p1', mockDispatch)).resolves.toEqual({
+        status: 'ready',
+        personId: 'p1',
+        loaded: {
+          [Person.ATTR_FIRSTNAME]: 'John',
+          [Person.ATTR_LASTNAME]: 'Doe',
+          [Person.ATTR_MOBILENUMBER]: '(555) 123-4567',
+        },
+      });
+      expect(mockBridgeRequest).toHaveBeenCalledWith(Base.CMD_GETATTRIBUTES, PERSON_ADDRESS, {});
     });
 
-    it('never saves when the person fails to load', async () => {
+    it('fills missing attributes with empty strings', async () => {
+      mockGetAttributes.mockResolvedValueOnce(makePerson(PERSON_ADDRESS, {}));
+      await expect(loadContactInfo('p1', mockDispatch)).resolves.toMatchObject({
+        loaded: { [Person.ATTR_FIRSTNAME]: '', [Person.ATTR_LASTNAME]: '', [Person.ATTR_MOBILENUMBER]: '' },
+      });
+    });
+
+    it('resolves to an error and notifies when the load fails', async () => {
       mockGetAttributes.mockRejectedValueOnce(new Error('load failed'));
-      render(<ContactInfoPanel />);
+      await expect(loadContactInfo('p1', mockDispatch)).resolves.toEqual({ status: 'error', personId: 'p1' });
+      expect(mockDispatch).toHaveBeenCalledWith(LOAD_ERROR);
+    });
+  });
+
+  describe('loading', () => {
+    it('suspends, showing no form, while the person loads', async () => {
+      mockGetAttributes.mockReturnValueOnce(new Promise(() => {}));
+      await renderPanel();
+      expect(screen.getByTestId('suspense-fallback')).toBeInTheDocument();
+      expect(screen.queryByTestId('field-first-name')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('contact-save')).not.toBeInTheDocument();
+    });
+
+    it('never offers Save when the person fails to load', async () => {
+      mockGetAttributes.mockRejectedValueOnce(new Error('load failed'));
+      await renderPanel();
       expect(await screen.findByTestId('contact-load-error')).toHaveTextContent('Unable to load your contact info.');
       expect(screen.queryByTestId('field-first-name')).not.toBeInTheDocument();
-      expect(screen.getByTestId('contact-save')).toBeDisabled();
-      clickSave();
+      expect(screen.queryByTestId('contact-save')).not.toBeInTheDocument();
       expect(setAttributesCalls()).toHaveLength(0);
     });
 
-    it('dispatches an error notification when the person fails to load', async () => {
+    it('reopens the panel for the person on Try again', async () => {
       mockGetAttributes.mockRejectedValueOnce(new Error('load failed'));
-      render(<ContactInfoPanel />);
-      await screen.findByTestId('contact-load-error');
-      expect(mockDispatch).toHaveBeenCalledWith(LOAD_ERROR);
+      await renderPanel();
+      fireEvent.click(await screen.findByTestId('contact-retry'));
+      expect(mockReload).toHaveBeenCalledWith('p1');
     });
 
-    it('reloads the person on Try again', async () => {
-      mockGetAttributes.mockRejectedValueOnce(new Error('load failed'));
-      render(<ContactInfoPanel />);
-      await screen.findByTestId('contact-load-error');
-
-      fireEvent.click(screen.getByTestId('contact-retry'));
-
-      expect(await screen.findByTestId('field-first-name')).toHaveValue('John');
-      expect(screen.queryByTestId('contact-load-error')).not.toBeInTheDocument();
-    });
-
-    it('asks the user to sign in again, with no retry, without a person id', () => {
+    it('asks the user to sign in again, with no retry, without a person', async () => {
       mockSessionPerson = null;
-      render(<ContactInfoPanel />);
+      await renderPanel(null);
       expect(screen.getByTestId('contact-signed-out')).toHaveTextContent(
         'Your session has ended. Sign in again to edit your contact info.',
       );
       expect(screen.queryByTestId('contact-retry')).not.toBeInTheDocument();
-      expect(screen.queryByTestId('contact-loading')).not.toBeInTheDocument();
-      expect(screen.getByTestId('contact-save')).toBeDisabled();
+      expect(screen.queryByTestId('contact-save')).not.toBeInTheDocument();
       expect(mockBridgeRequest).not.toHaveBeenCalled();
     });
 
     it('stops offering Save when the session ends while the panel is open', async () => {
-      const { rerender } = await renderLoaded();
+      const person = loadContactInfo('p1', mockDispatch);
+      const { rerender } = await renderPanel(person);
       type('field-first-name', 'Jane');
 
       mockSessionPerson = null;
-      rerender(<ContactInfoPanel />);
+      rerender(panel(person));
 
       expect(screen.getByTestId('contact-signed-out')).toBeInTheDocument();
       expect(screen.queryByTestId('field-first-name')).not.toBeInTheDocument();
-      expect(screen.getByTestId('contact-save')).toBeDisabled();
+      expect(screen.queryByTestId('contact-save')).not.toBeInTheDocument();
     });
 
-    it('ignores a load that finishes after the person changed', async () => {
-      // p1 answers while p2 is still loading. If p1's answer were applied, John would appear.
-      mockGetAttributes
-        .mockResolvedValueOnce(makePerson(PERSON_ADDRESS, { [Person.ATTR_FIRSTNAME]: 'John' }))
-        .mockReturnValueOnce(new Promise(() => {}));
+    it('reloads instead of showing a person loaded before the signed-in person changed', async () => {
+      const person = loadContactInfo('p1', mockDispatch);
+      const { rerender } = await renderPanel(person);
 
-      const { rerender } = render(<ContactInfoPanel />);
       mockSessionPerson = { personId: 'p2' };
-      rerender(<ContactInfoPanel />);
-      expect(mockBridgeRequest).toHaveBeenLastCalledWith(Base.CMD_GETATTRIBUTES, 'SERV:person:p2', {});
+      await act(async () => rerender(panel(person)));
 
-      await act(() => mockGetAttributes.mock.results[0].value);
-      await waitFor(() => expect(screen.getByTestId('contact-loading')).toBeInTheDocument());
+      expect(mockReload).toHaveBeenCalledWith('p2');
+      expect(screen.getByTestId('contact-loading')).toBeInTheDocument();
       expect(screen.queryByTestId('field-first-name')).not.toBeInTheDocument();
     });
 
-    it('ignores a load failure after the person changed', async () => {
+    it('reloads instead of showing a load failure for a previous person', async () => {
       mockGetAttributes.mockRejectedValueOnce(new Error('load failed'));
+      const person = loadContactInfo('p1', mockDispatch);
+      const { rerender } = await renderPanel(person);
 
-      const { rerender } = render(<ContactInfoPanel />);
       mockSessionPerson = { personId: 'p2' };
-      rerender(<ContactInfoPanel />);
-      await screen.findByTestId('field-first-name');
-      await act(() => expect(mockGetAttributes.mock.results[0].value).rejects.toThrow('load failed'));
+      await act(async () => rerender(panel(person)));
 
+      expect(mockReload).toHaveBeenCalledWith('p2');
       expect(screen.queryByTestId('contact-load-error')).not.toBeInTheDocument();
-      expect(screen.getByTestId('field-first-name')).toHaveValue('John');
-      expect(mockDispatch).not.toHaveBeenCalled();
     });
 
-    it('does nothing when the load fails after the panel closed', async () => {
-      mockGetAttributes.mockRejectedValueOnce(new Error('load failed'));
-
-      const { unmount } = render(<ContactInfoPanel />);
-      unmount();
-      await expect(mockGetAttributes.mock.results[0].value).rejects.toThrow('load failed');
-
-      expect(mockDispatch).not.toHaveBeenCalled();
+    it('saves to the person the form was loaded for', async () => {
+      await renderLoaded();
+      type('field-first-name', 'Jane');
+      clickSave();
+      await waitFor(() => expect(setAttributesCalls()).toHaveLength(1));
+      expect(setAttributesCalls()[0][1]).toBe(PERSON_ADDRESS);
     });
   });
 

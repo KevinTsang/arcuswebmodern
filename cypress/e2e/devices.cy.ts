@@ -145,7 +145,7 @@ describe('Devices page', () => {
       cy.signIn({ path: '/devices' });
       tid(`device-details-${DEVICE.lamp}`).click();
 
-      tid('device-details-title').should('have.text', 'Device Details');
+      tid('side-panel-right-title').should('have.text', 'Device Details');
       cy.get('[data-testid="device-detail-manufacturer"]').should('have.text', 'Acme');
       cy.get('[data-testid="device-detail-model"]').should('have.text', 'Dimmer-1');
       cy.get('[data-testid="device-detail-protocol"]').should('have.text', 'ZIGB');
@@ -190,7 +190,7 @@ describe('Devices page', () => {
     it('sets dimmer brightness with the slider', () => {
       cy.signIn({ path: '/devices' });
       tid(`device-config-${DEVICE.lamp}`).click();
-      tid('device-config-title').should('have.text', 'Configuration');
+      tid('side-panel-right-title').should('have.text', 'Configuration');
       cy.contains('label', 'Brightness: 75%').should('be.visible');
       cy.get('[data-testid="brightness-slider"]').setRange(40);
       cy.expectRequest(Base.CMD_SETATTRIBUTES, (r) =>

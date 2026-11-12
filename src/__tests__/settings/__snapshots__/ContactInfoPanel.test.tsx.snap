@@ -5,12 +5,6 @@ exports[`ContactInfoPanel rendering matches snapshot 1`] = `
   <div
     class="p-4 space-y-4"
   >
-    <h3
-      class="text-lg font-semibold text-swift"
-      data-testid="contact-panel-title"
-    >
-      Edit Contact Info
-    </h3>
     <div>
       <label
         class="block text-sm text-grouse mb-1"
@@ -87,121 +81,32 @@ exports[`ContactInfoPanel rendering matches snapshot 1`] = `
 exports[`ContactInfoPanel rendering matches snapshot when loading fails 1`] = `
 <DocumentFragment>
   <div
-    class="p-4 space-y-4"
+    class="p-4 space-y-2"
   >
-    <h3
-      class="text-lg font-semibold text-swift"
-      data-testid="contact-panel-title"
+    <p
+      class="text-sm text-cardinal"
+      data-testid="contact-load-error"
     >
-      Edit Contact Info
-    </h3>
-    <div
-      class="space-y-2"
+      Unable to load your contact info.
+    </p>
+    <button
+      class="text-sm text-peacock hover:underline"
+      data-testid="contact-retry"
     >
-      <p
-        class="text-sm text-cardinal"
-        data-testid="contact-load-error"
-      >
-        Unable to load your contact info.
-      </p>
-      <button
-        class="text-sm text-peacock hover:underline"
-        data-testid="contact-retry"
-      >
-        Try again
-      </button>
-    </div>
-    <div
-      class="flex gap-2 pt-2"
-    >
-      <button
-        class="px-4 py-2 bg-peacock text-crane rounded-[var(--border-radius-base)] text-sm font-medium hover:bg-peacock/90 disabled:opacity-50"
-        data-testid="contact-save"
-        disabled=""
-      >
-        Save
-      </button>
-      <button
-        class="px-4 py-2 border border-heron rounded-[var(--border-radius-base)] text-sm text-coot hover:bg-pigeon"
-      >
-        Cancel
-      </button>
-    </div>
+      Try again
+    </button>
   </div>
 </DocumentFragment>
 `;
 
 exports[`ContactInfoPanel rendering matches snapshot when signed out 1`] = `
 <DocumentFragment>
-  <div
-    class="p-4 space-y-4"
+  <p
+    class="p-4 text-sm text-cardinal"
+    data-testid="contact-signed-out"
   >
-    <h3
-      class="text-lg font-semibold text-swift"
-      data-testid="contact-panel-title"
-    >
-      Edit Contact Info
-    </h3>
-    <p
-      class="text-sm text-cardinal"
-      data-testid="contact-signed-out"
-    >
-      Your session has ended. Sign in again to edit your contact info.
-    </p>
-    <div
-      class="flex gap-2 pt-2"
-    >
-      <button
-        class="px-4 py-2 bg-peacock text-crane rounded-[var(--border-radius-base)] text-sm font-medium hover:bg-peacock/90 disabled:opacity-50"
-        data-testid="contact-save"
-        disabled=""
-      >
-        Save
-      </button>
-      <button
-        class="px-4 py-2 border border-heron rounded-[var(--border-radius-base)] text-sm text-coot hover:bg-pigeon"
-      >
-        Cancel
-      </button>
-    </div>
-  </div>
-</DocumentFragment>
-`;
-
-exports[`ContactInfoPanel rendering matches snapshot while loading 1`] = `
-<DocumentFragment>
-  <div
-    class="p-4 space-y-4"
-  >
-    <h3
-      class="text-lg font-semibold text-swift"
-      data-testid="contact-panel-title"
-    >
-      Edit Contact Info
-    </h3>
-    <p
-      class="text-sm text-grouse"
-      data-testid="contact-loading"
-    >
-      Loading contact info…
-    </p>
-    <div
-      class="flex gap-2 pt-2"
-    >
-      <button
-        class="px-4 py-2 bg-peacock text-crane rounded-[var(--border-radius-base)] text-sm font-medium hover:bg-peacock/90 disabled:opacity-50"
-        data-testid="contact-save"
-        disabled=""
-      >
-        Save
-      </button>
-      <button
-        class="px-4 py-2 border border-heron rounded-[var(--border-radius-base)] text-sm text-coot hover:bg-pigeon"
-      >
-        Cancel
-      </button>
-    </div>
-  </div>
+    Your session has ended. Sign in again to edit your contact info.
+  </p>
 </DocumentFragment>
 `;
 
@@ -210,12 +115,6 @@ exports[`ContactInfoPanel rendering matches snapshot with field errors 1`] = `
   <div
     class="p-4 space-y-4"
   >
-    <h3
-      class="text-lg font-semibold text-swift"
-      data-testid="contact-panel-title"
-    >
-      Edit Contact Info
-    </h3>
     <div>
       <label
         class="block text-sm text-grouse mb-1"

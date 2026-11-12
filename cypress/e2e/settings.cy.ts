@@ -31,7 +31,7 @@ describe('Profile settings', () => {
 
   it('edits contact information', () => {
     cardAction('contact-information').click();
-    tid('contact-panel-title').should('have.text', 'Edit Contact Info');
+    tid('side-panel-right-title').should('have.text', 'Edit Contact Info');
     field('first-name').should('have.value', 'Alex');
     field('phone').clear().type('5550009999');
     tid('contact-save').click();
@@ -75,7 +75,7 @@ describe('Profile settings', () => {
 
   it('changes the PIN code', () => {
     cardAction('pin-code').click();
-    tid('pin-panel-title').should('have.text', 'Change PIN Code');
+    tid('side-panel-right-title').should('have.text', 'Change PIN Code');
     cy.get('input#change-pin').type('8642');
     cy.get('input#change-pin-confirm').type('8642');
     tid('pin-save').click();
@@ -121,7 +121,7 @@ describe('People & Places', () => {
 
   it('invites a person to the place', () => {
     tid(`place-invite-${PLACE_ID}`).click();
-    tid('invite-panel-title').should('have.text', 'Invite a Person');
+    tid('side-panel-right-title').should('have.text', 'Invite a Person');
     tid('invite-send').should('be.disabled');
     field('first-name').type('Robin');
     field('last-name').type('Park');
@@ -151,7 +151,7 @@ describe('People & Places', () => {
 
   it('shows a person and removes them from the place', () => {
     tid(`person-${PLACE_ID}-${GUEST_PERSON_ID}-details`).click();
-    tid('person-panel-title').should('have.text', 'Sam Rivera');
+    tid('side-panel-right-title').should('have.text', 'Sam Rivera');
     tid('info-value-email').should('have.text', 'sam@example.com');
     tid('person-remove').click();
 
@@ -164,7 +164,7 @@ describe('People & Places', () => {
 
   it('adds a place', () => {
     tid('add-place').click();
-    tid('add-place-panel-title').should('have.text', 'Add a Place');
+    tid('side-panel-right-title').should('have.text', 'Add a Place');
     tid('place-create').should('be.disabled');
     field('place-name').type('Beach Condo');
     field('city').type('Seaside');
@@ -188,7 +188,7 @@ describe('People & Places', () => {
 
   it('edits the active place', () => {
     tid(`place-edit-${PLACE_ID}`).click();
-    tid('place-panel-title').should('have.text', 'Edit Place');
+    tid('side-panel-right-title').should('have.text', 'Edit Place');
     field('place-name').clear().type('Maple Street House');
     field('zip-code').clear().type('62799');
     tid('place-save').click();

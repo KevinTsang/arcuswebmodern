@@ -11,7 +11,6 @@ interface ActionCategoryListProps {
   onSelectAction: (actionId: string) => void;
   onSave: () => void;
   onCancel: () => void;
-  heading?: string;
   saveLabel?: string;
   savingLabel?: string;
 }
@@ -27,14 +26,11 @@ export function ActionCategoryList({
   onSelectAction,
   onSave,
   onCancel,
-  heading = 'Create Scene',
   saveLabel = 'Create Scene',
   savingLabel = 'Creating...',
 }: ActionCategoryListProps) {
   return (
     <div>
-      <h3 data-testid="scene-panel-title" className="text-lg font-semibold text-swift mb-4">{heading}</h3>
-
       <div className="mb-4">
         <label htmlFor="newSceneName" className="block text-sm font-medium text-swift mb-1">
           Scene Name

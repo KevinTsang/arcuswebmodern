@@ -699,6 +699,41 @@ These are commonly used features that users will expect:
       since they're specific to editing an existing person.
     - This overlaps with item 25 (splitting `login/page.tsx`), which also plans a
       shared `constraints.ts`. Use the same module for both.
+28. ~~**Move side panels onto the shell header and Suspense**~~ — **DONE.**
+    The `SidePanel` shell (`src/components/SidePanelFrame.tsx`) draws the panel
+    title and the only close button, and wraps content in `<Suspense>` inside
+    `SidePanelErrorBoundary`. Every opener passes its title with
+    `openRight(content, { title })`, and the title stays visible while content
+    suspends. The device panels' duplicate "Done" buttons are gone. Sub-view
+    headings ("Choose Device", "Create a PIN Code", a scene action's name) stay
+    in the content. E2E specs read the title from `side-panel-right-title`.
+    - **Loading panels suspend.** `PlaceSelector`, `ContactInfoPanel`,
+      `ScenePanel` and `RulePanel` read a promise with `use()`. The promise is
+      started by the opener, outside the suspending tree, through
+      `loadAvailablePlaces`, `useOpenContactInfoPanel`, `useOpenScenePanel` and
+      `useOpenRulePanel`. The loaders catch their own failures and keep each
+      panel's behavior (empty list, error toast, or ContactInfo's Retry, which
+      reopens the panel with a fresh load). The error boundary is a backstop for
+      anything unexpected.
+    - **Behavior changes.** A load that fails after the panel is closed still
+      shows its error toast. `ScenePanel` now seeds an edited scene's actions
+      from the scene even when resolving fails, so saving can't drop them.
+    - **Panels are keyed.** `openRight`/`openLeft` require a `key`, and the
+      frame keys the error and Suspense boundaries with it, so new content
+      remounts with fresh state and its own loading fallback instead of reusing
+      the previous panel's instance. Entity panels use `<panel>:<address>`
+      (`device-details:…`, `scene:new`, `rule:new:<template>`); panels without
+      an entity use a fixed name (`change-password`, `place-selector`).
+      Reopening the same key while the panel is open keeps its state.
+29. **Fix three stale E2E specs** — These fail on `main` as well as with item 28:
+    - `settings.cy.ts` "shows the profile, plan and account state" expects
+      `info-card-account-value-account-state`, which `ProfileSection` no longer
+      renders (its unit test asserts it is hidden).
+    - `devices.cy.ts` "shows device metadata and identifies the device" expects
+      the raw protocol `ZIGB`; the details panel shows "Zigbee".
+    - `rules.cy.ts` "resolves template variables to device names when editing"
+      expects the name and description in one `base:SetAttributes`. `RulePanel`
+      sends the name, then `rule:UpdateContext`, then the description, on purpose.
 
 ---
 

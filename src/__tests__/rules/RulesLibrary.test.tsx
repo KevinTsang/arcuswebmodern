@@ -3,14 +3,14 @@ import { RulesLibrary } from '@/components/rules/RulesLibrary';
 import { Base, RuleTemplate } from '@arcus/core';
 import type { RuleTemplateEntity } from '@/store/entityTypes';
 
-const mockOpenRight = jest.fn();
+const mockOpenRulePanel = jest.fn();
 
 jest.mock('@/store/hooks', () => ({
   useAppSelector: jest.fn(),
 }));
 
-jest.mock('@/components/SidePanel', () => ({
-  useSidePanel: () => ({ openRight: mockOpenRight }),
+jest.mock('@/components/rules/useOpenRulePanel', () => ({
+  useOpenRulePanel: () => mockOpenRulePanel,
 }));
 
 // Mock Accordion to just render children
@@ -22,11 +22,6 @@ jest.mock('@/components/shared/Accordion', () => ({
       {children}
     </div>
   ),
-}));
-
-// Mock RulePanel to avoid its dependencies
-jest.mock('@/components/rules/RulePanel', () => ({
-  RulePanel: () => <div data-testid="rule-panel" />,
 }));
 
 import { useAppSelector } from '@/store/hooks';
@@ -59,7 +54,7 @@ describe('RulesLibrary', () => {
     mockUseAppSelector.mockImplementation((selector: (s: unknown) => unknown) =>
       selector({ rules: { ruleTemplates: [] } }),
     );
-    render(<RulesLibrary placeId="place-1" />);
+    render(<RulesLibrary />);
     expect(screen.getByText('No rule templates available.')).toBeInTheDocument();
   });
 
@@ -67,7 +62,7 @@ describe('RulesLibrary', () => {
     mockUseAppSelector.mockImplementation((selector: (s: unknown) => unknown) =>
       selector({ rules: { ruleTemplates: templates } }),
     );
-    render(<RulesLibrary placeId="place-1" />);
+    render(<RulesLibrary />);
     const titles = screen.getAllByTestId('panel-title');
     const titleTexts = titles.map((t) => t.textContent);
     expect(titleTexts).toContain('Button Actions (1)');
@@ -79,7 +74,7 @@ describe('RulesLibrary', () => {
     mockUseAppSelector.mockImplementation((selector: (s: unknown) => unknown) =>
       selector({ rules: { ruleTemplates: templates } }),
     );
-    render(<RulesLibrary placeId="place-1" />);
+    render(<RulesLibrary />);
     // Template appears in multiple categories, so use getAllByText
     expect(screen.getAllByText('Chime on Button Press').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('Lock Door at Night')).toBeInTheDocument();
@@ -89,16 +84,16 @@ describe('RulesLibrary', () => {
     mockUseAppSelector.mockImplementation((selector: (s: unknown) => unknown) =>
       selector({ rules: { ruleTemplates: templates } }),
     );
-    render(<RulesLibrary placeId="place-1" />);
+    render(<RulesLibrary />);
     expect(screen.getAllByText('Play a chime when button pressed').length).toBeGreaterThanOrEqual(1);
   });
 
-  it('calls openRight when template clicked', () => {
+  it('opens the rule panel for the clicked template', () => {
     mockUseAppSelector.mockImplementation((selector: (s: unknown) => unknown) =>
       selector({ rules: { ruleTemplates: templates } }),
     );
-    render(<RulesLibrary placeId="place-1" />);
+    render(<RulesLibrary />);
     fireEvent.click(screen.getByText('Lock Door at Night'));
-    expect(mockOpenRight).toHaveBeenCalled();
+    expect(mockOpenRulePanel).toHaveBeenCalledWith({ template: templates[1] });
   });
 });

@@ -1,0 +1,83 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`PlaceSelector matches snapshot 1`] = `
+<DocumentFragment>
+  <div>
+    <ul
+      class="space-y-2 mb-6"
+    >
+      <li>
+        <button
+          class="
+                    w-full flex items-center gap-3 px-4 py-3 rounded-[var(--border-radius-base)]
+                    border transition-colors text-left
+                    border-heron hover:border-grouse text-coot
+                    
+                  "
+          data-current="false"
+          data-testid="place-option-place-2"
+        >
+          <div
+            class="
+                      w-4 h-4 rounded-full border-2 flex-shrink-0
+                      border-grouse
+                    "
+          />
+          <div>
+            <span
+              class="block font-medium"
+            >
+              Cabin
+            </span>
+            <span
+              class="text-xs text-grouse"
+            >
+              Full Access
+            </span>
+          </div>
+        </button>
+      </li>
+      <li>
+        <button
+          class="
+                    w-full flex items-center gap-3 px-4 py-3 rounded-[var(--border-radius-base)]
+                    border transition-colors text-left
+                    border-peacock bg-peacock/5 text-swift
+                    
+                  "
+          data-current="true"
+          data-testid="place-option-place-1"
+        >
+          <div
+            class="
+                      w-4 h-4 rounded-full border-2 flex-shrink-0
+                      border-peacock bg-peacock
+                    "
+          />
+          <div>
+            <span
+              class="block font-medium"
+            >
+              Current Home
+            </span>
+            <span
+              class="text-xs text-grouse"
+            >
+              Owner
+            </span>
+          </div>
+        </button>
+      </li>
+    </ul>
+    <hr
+      class="border-heron mb-4"
+    />
+    <button
+      class="w-full text-center px-4 py-2.5 text-cardinal border border-cardinal rounded-[var(--border-radius-base)] hover:bg-cardinal/5 transition-colors"
+      data-testid="logout"
+    >
+      Log Out
+    </button>
+  </div>
+</DocumentFragment>
+`;

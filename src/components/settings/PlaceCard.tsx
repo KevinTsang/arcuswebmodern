@@ -53,7 +53,10 @@ export default function PlaceCard({
   const editAction = isOwner && placeData ? (
     <button
       onClick={() =>
-        openRight(<PlaceInfoPanel placeData={placeData} onSaved={onRefresh} />)
+        openRight(<PlaceInfoPanel placeData={placeData} onSaved={onRefresh} />, {
+          title: 'Edit Place',
+          key: `place-info:${place.placeId}`,
+        })
       }
       data-testid={`place-edit-${place.placeId}`}
       className="text-sm text-peacock hover:underline"
@@ -91,6 +94,7 @@ export default function PlaceCard({
                   <AddPersonPanel
                     onSent={onRefresh}
                   />,
+                  { title: 'Invite a Person', key: `add-person:${place.placeId}` },
                 )
               }
               data-testid={`place-invite-${place.placeId}`}
@@ -124,6 +128,10 @@ export default function PlaceCard({
                               placeId={place.placeId}
                               onRemoved={onRefresh}
                             />,
+                            {
+                              title: personName || personEmail || 'Person',
+                              key: `person-detail:${place.placeId}:${person[Base.ATTR_ADDRESS]}`,
+                            },
                           )
                       : undefined
                   }

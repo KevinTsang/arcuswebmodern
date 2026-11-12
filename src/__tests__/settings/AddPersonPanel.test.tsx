@@ -75,9 +75,8 @@ beforeEach(() => {
 // ── Tests ─────────────────────────────────────────────────────────────
 
 describe('AddPersonPanel – rendering', () => {
-  it('shows heading and description', () => {
+  it('shows the description', () => {
     render(<AddPersonPanel />);
-    expect(screen.getByText('Invite a Person')).toBeInTheDocument();
     expect(screen.getByText('Send an invitation to join this place.')).toBeInTheDocument();
   });
 

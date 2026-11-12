@@ -50,7 +50,7 @@ describe('Rules', () => {
 
   it('resolves template variables to device names when editing', () => {
     tid(`rule-edit-${LIGHTS_ON_MOTION}`).click();
-    tid('rule-panel-title').should('have.text', 'Edit Rule');
+    tid('side-panel-right-title').should('have.text', 'Edit Rule');
     cy.get('[data-testid="rule-name-input"]').should('have.value', RULE_NAME.lightsOnMotion);
     cy.get('[data-testid="rule-var-light"]').should('have.text', DEVICE_NAME.lamp);
     cy.get('[data-testid="rule-var-motion"]').should('have.text', DEVICE_NAME.motion);
@@ -80,7 +80,7 @@ describe('Rules', () => {
     cy.get('[data-testid="accordion-lights-switches"]').should('contain', 'Lights & Switches (1)').click();
     cy.get('[data-testid="rule-template-motion-light"]').click();
 
-    tid('rule-panel-title').should('have.text', 'Create Rule');
+    tid('side-panel-right-title').should('have.text', 'Create Rule');
     cy.get('[data-testid="rule-name-input"]').should('have.value', 'Lights on motion');
     cy.expectRequest(RuleTemplate.CMD_RESOLVE, (r) => r.destination === addr.ruleTemplate('motion-light'));
     cy.get('[data-testid="rule-save"]').should('be.disabled');

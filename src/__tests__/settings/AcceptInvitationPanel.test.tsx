@@ -85,11 +85,6 @@ beforeEach(() => {
 // ── Tests ─────────────────────────────────────────────────────────────
 
 describe('AcceptInvitationPanel – rendering', () => {
-  it('shows the Invitations heading', () => {
-    render(<AcceptInvitationPanel />);
-    expect(screen.getByText('Invitations')).toBeInTheDocument();
-  });
-
   it('displays invitation place name and invitor', () => {
     render(<AcceptInvitationPanel />);
     expect(screen.getByText('Test Home')).toBeInTheDocument();

@@ -78,13 +78,13 @@ function DevicePanelInner({ address }: DevicePanelProps) {
   };
 
   const handleOpenConfig = () => {
-    openRight(<DeviceConfigurationPanel address={address} />);
+    openRight(<DeviceConfigurationPanel address={address} />, { title: 'Configuration', key: `device-config:${address}` });
   };
 
   const handleOpenDetails = () => {
-    // Keyed so opening another device's details remounts the panel, ending
-    // (and stopping hub unpairing for) any removal in progress.
-    openRight(<DeviceDetailPanel key={address} address={address} />);
+    // Keyed by device so opening another device's details remounts the panel,
+    // ending (and stopping hub unpairing for) any removal in progress.
+    openRight(<DeviceDetailPanel address={address} />, { title: 'Device Details', key: `device-details:${address}` });
   };
 
   return (

@@ -58,7 +58,6 @@ export default function AddPersonPanel({ onSent }: AddPersonPanelProps) {
 
   return (
     <div className="p-4 space-y-4">
-      <h3 data-testid="invite-panel-title" className="text-lg font-semibold text-swift">Invite a Person</h3>
       <p className="text-sm text-grouse">Send an invitation to join this place.</p>
       <Field label="First Name" value={firstName} onChange={setFirstName} />
       <Field label="Last Name" value={lastName} onChange={setLastName} />

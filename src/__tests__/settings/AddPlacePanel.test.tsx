@@ -48,11 +48,6 @@ beforeEach(() => {
 // ── Tests ─────────────────────────────────────────────────────────────
 
 describe('AddPlacePanel – rendering', () => {
-  it('shows heading', () => {
-    render(<AddPlacePanel />);
-    expect(screen.getByText('Add a Place')).toBeInTheDocument();
-  });
-
   it('shows all address fields', () => {
     render(<AddPlacePanel />);
     expect(screen.getByText('Place Name')).toBeInTheDocument();
