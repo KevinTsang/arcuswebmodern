@@ -11,7 +11,16 @@
  * Usage from any component:
  *   import { useSidePanel } from '@/components/SidePanel';
  *   const { openRight, closeRight } = useSidePanel();
- *   openRight(<MyComponent />);
+ *   openRight(<MyComponent />, { title: 'My Panel', key: 'my-panel' });
+ *
+ * The panel frame draws the title and the only close button, and wraps the
+ * content in Suspense, so content should not render its own close control.
+ *
+ * Every open passes a `key` naming what the panel shows. When the key changes,
+ * the content (with its Suspense and error boundaries) remounts instead of
+ * reusing the previous panel's state. Use `<panel>:<entity address>` for
+ * entity panels (e.g. `device-details:DRIV:dev:…`, `scene:new` when creating)
+ * and a fixed name for panels without one (e.g. `change-password`).
  */
 
 import {
@@ -24,19 +33,31 @@ import {
   type ReactNode,
 } from 'react';
 import { usePathname } from 'next/navigation';
+import { SidePanelFrame } from '@/components/SidePanelFrame';
 
 // ── Context ───────────────────────────────────────────────────────────
+
+interface SidePanelOptions {
+  /** Shown in the panel header, including while the content is suspended. */
+  title?: ReactNode;
+  /** Identity of the panel's content; a new key remounts it. See the file header. */
+  key: string;
+}
 
 interface SidePanelState {
   leftContent: ReactNode | null;
   rightContent: ReactNode | null;
+  leftTitle: ReactNode | null;
+  rightTitle: ReactNode | null;
+  leftKey: string | null;
+  rightKey: string | null;
   leftExpanded: boolean;
   rightExpanded: boolean;
 }
 
 interface SidePanelActions {
-  openLeft: (content: ReactNode) => void;
-  openRight: (content: ReactNode) => void;
+  openLeft: (content: ReactNode, options: SidePanelOptions) => void;
+  openRight: (content: ReactNode, options: SidePanelOptions) => void;
   closeLeft: () => void;
   closeRight: () => void;
   close: () => void;
@@ -63,6 +84,10 @@ export function useSidePanel(): SidePanelContextValue {
 export function SidePanelProvider({ children }: { children: ReactNode }) {
   const [leftContent, setLeftContent] = useState<ReactNode | null>(null);
   const [rightContent, setRightContent] = useState<ReactNode | null>(null);
+  const [leftTitle, setLeftTitle] = useState<ReactNode | null>(null);
+  const [rightTitle, setRightTitle] = useState<ReactNode | null>(null);
+  const [leftKey, setLeftKey] = useState<string | null>(null);
+  const [rightKey, setRightKey] = useState<string | null>(null);
   const [leftExpanded, setLeftExpanded] = useState(false);
   const [rightExpanded, setRightExpanded] = useState(false);
   const pathname = usePathname();
@@ -71,31 +96,47 @@ export function SidePanelProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     setLeftContent(null);
     setRightContent(null);
+    setLeftTitle(null);
+    setLeftKey(null);
+    setRightTitle(null);
+    setRightKey(null);
     setLeftExpanded(false);
     setRightExpanded(false);
   }, [pathname]);
 
-  const openLeft = useCallback((content: ReactNode) => {
+  const openLeft = useCallback((content: ReactNode, options: SidePanelOptions) => {
     setLeftContent(content);
+    setLeftTitle(options.title ?? null);
+    setLeftKey(options.key);
   }, []);
 
-  const openRight = useCallback((content: ReactNode) => {
+  const openRight = useCallback((content: ReactNode, options: SidePanelOptions) => {
     setRightContent(content);
+    setRightTitle(options.title ?? null);
+    setRightKey(options.key);
   }, []);
 
   const closeLeft = useCallback(() => {
     setLeftContent(null);
+    setLeftTitle(null);
+    setLeftKey(null);
     setLeftExpanded(false);
   }, []);
 
   const closeRight = useCallback(() => {
     setRightContent(null);
+    setRightTitle(null);
+    setRightKey(null);
     setRightExpanded(false);
   }, []);
 
   const close = useCallback(() => {
     setLeftContent(null);
     setRightContent(null);
+    setLeftTitle(null);
+    setLeftKey(null);
+    setRightTitle(null);
+    setRightKey(null);
     setLeftExpanded(false);
     setRightExpanded(false);
   }, []);
@@ -109,6 +150,10 @@ export function SidePanelProvider({ children }: { children: ReactNode }) {
     () => ({
       leftContent,
       rightContent,
+      leftTitle,
+      rightTitle,
+      leftKey,
+      rightKey,
       leftExpanded,
       rightExpanded,
       openLeft,
@@ -124,6 +169,10 @@ export function SidePanelProvider({ children }: { children: ReactNode }) {
     [
       leftContent,
       rightContent,
+      leftTitle,
+      rightTitle,
+      leftKey,
+      rightKey,
       leftExpanded,
       rightExpanded,
       openLeft,
@@ -152,15 +201,17 @@ function SidePanelOverlay() {
   const {
     leftContent,
     rightContent,
+    leftTitle,
+    rightTitle,
+    leftKey,
+    rightKey,
     leftExpanded,
     rightExpanded,
     closeLeft,
     closeRight,
   } = useSidePanel();
 
-  const hasLeft = leftContent !== null;
-  const hasRight = rightContent !== null;
-  const hasAny = hasLeft || hasRight;
+  const hasAny = leftContent !== null || rightContent !== null;
 
   return (
     <>
@@ -175,53 +226,22 @@ function SidePanelOverlay() {
         />
       )}
 
-      {/* Left panel */}
-      <div
-        className={`
-          fixed top-0 left-0 h-full bg-crane shadow-xl z-[var(--z-modal)]
-          transition-transform duration-300 ease-in-out overflow-y-auto
-          ${leftExpanded ? 'w-[600px]' : 'w-[380px]'}
-          ${hasLeft ? 'translate-x-0' : '-translate-x-full'}
-        `}
-      >
-        {hasLeft && (
-          <div className="relative h-full">
-            <button
-              onClick={closeLeft}
-              data-testid="side-panel-left-close"
-              className="absolute top-4 right-4 text-2xl text-grouse hover:text-swift z-10"
-              aria-label="Close panel"
-            >
-              &times;
-            </button>
-            <div className="p-6 pt-14">{leftContent}</div>
-          </div>
-        )}
-      </div>
-
-      {/* Right panel */}
-      <div
-        className={`
-          fixed top-0 right-0 h-full bg-crane shadow-xl z-[var(--z-modal)]
-          transition-transform duration-300 ease-in-out overflow-y-auto
-          ${rightExpanded ? 'w-[600px]' : 'w-[380px]'}
-          ${hasRight ? 'translate-x-0' : 'translate-x-full'}
-        `}
-      >
-        {hasRight && (
-          <div className="relative h-full">
-            <button
-              onClick={closeRight}
-              data-testid="side-panel-right-close"
-              className="absolute top-4 right-4 text-2xl text-grouse hover:text-swift z-10"
-              aria-label="Close panel"
-            >
-              &times;
-            </button>
-            <div data-testid="side-panel-right" className="p-6 pt-14">{rightContent}</div>
-          </div>
-        )}
-      </div>
+      <SidePanelFrame
+        side="left"
+        title={leftTitle}
+        panelKey={leftKey}
+        content={leftContent}
+        expanded={leftExpanded}
+        onClose={closeLeft}
+      />
+      <SidePanelFrame
+        side="right"
+        title={rightTitle}
+        panelKey={rightKey}
+        content={rightContent}
+        expanded={rightExpanded}
+        onClose={closeRight}
+      />
     </>
   );
 }

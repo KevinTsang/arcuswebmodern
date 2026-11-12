@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useMemo } from 'react';
+import { use, useState, useCallback, useMemo } from 'react';
 import Bridge from '@arcus/core/bridge';
 import { Base, Scene, SceneTemplate } from '@arcus/core';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
@@ -7,8 +7,7 @@ import { useSidePanel } from '@/components/SidePanel';
 import { getDefaultValues } from './sceneDefaults';
 import { ActionCategoryList } from './ActionCategoryList';
 import { ActionDeviceConfigurator } from './ActionDeviceConfigurator';
-import { resolveSceneActions } from './resolveSceneActions';
-import type { ResolvedAction } from './resolveSceneActions';
+import type { ResolvedAction, ResolveResult } from './resolveSceneActions';
 import type { SelectorDef, SelectorValue } from './types';
 import type { SceneEntity } from '@/store/entityTypes';
 
@@ -22,57 +21,39 @@ export interface ActionConfig {
 
 interface ScenePanelProps {
   scene?: SceneEntity;
+  /** The scene actions the place can use, resolved when the panel was opened (see useOpenScenePanel). */
+  actions: Promise<ResolveResult>;
 }
 
-export function ScenePanel({ scene }: ScenePanelProps) {
+/** The scene's saved actions, keyed by action template. */
+function savedActions(scene: SceneEntity | undefined): Map<string, ActionConfig> {
+  const map = new Map<string, ActionConfig>();
+  const existing = scene?.[Scene.ATTR_ACTIONS] as Array<Record<string, unknown>> | undefined;
+  for (const action of existing ?? []) {
+    const template = (action['template'] as string) ?? '';
+    const actionName = (action['name'] as string) ?? '';
+    const context = (action['context'] as Record<string, Record<string, unknown>>) ?? {};
+    map.set(template, { name: actionName, template, context });
+  }
+  return map;
+}
+
+export function ScenePanel({ scene, actions: actionsPromise }: ScenePanelProps) {
+  const { actions, templateAddress } = use(actionsPromise);
   const isEdit = !!scene;
   const dispatch = useAppDispatch();
   const { closeRight } = useSidePanel();
   const placeId = useAppSelector((s) => s.place.placeId) ?? '';
 
   const address = scene?.[Base.ATTR_ADDRESS] as string | undefined;
-  const sceneTemplateId = scene?.[Scene.ATTR_TEMPLATE] as string | undefined;
 
   const [name, setName] = useState(isEdit ? ((scene[Scene.ATTR_NAME] as string) ?? '') : 'New Scene');
-  const [actions, setActions] = useState<ResolvedAction[]>([]);
-  const [templateAddress, setTemplateAddress] = useState('');
-  const [configuredActions, setConfiguredActions] = useState<Map<string, ActionConfig>>(new Map());
+  // Seeded from the saved scene even when resolving failed, so saving never drops its actions.
+  const [configuredActions, setConfiguredActions] = useState(() => savedActions(scene));
   const [activeAction, setActiveAction] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
-
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const result = await resolveSceneActions(placeId, sceneTemplateId);
-        if (cancelled) return;
-        setActions(result.actions);
-        setTemplateAddress(result.templateAddress);
-
-        // Pre-populate configuredActions from existing scene actions (edit mode)
-        if (scene) {
-          const existing = scene[Scene.ATTR_ACTIONS] as Array<Record<string, unknown>> | undefined;
-          if (existing) {
-            const map = new Map<string, ActionConfig>();
-            for (const action of existing) {
-              const template = (action['template'] as string) ?? '';
-              const actionName = (action['name'] as string) ?? '';
-              const context = (action['context'] as Record<string, Record<string, unknown>>) ?? {};
-              map.set(template, { name: actionName, template, context });
-            }
-            setConfiguredActions(map);
-          }
-        }
-      } catch {
-        dispatch(addNotification({ type: 'error', message: 'Failed to load scene actions' }));
-      }
-      setLoading(false);
-    })();
-    return () => { cancelled = true; };
-  }, [placeId, sceneTemplateId, scene, dispatch]);
 
   const satisfiableActions = useMemo(() => actions.filter((a) => a.satisfiable), [actions]);
   const unsatisfiableActions = useMemo(() => actions.filter((a) => !a.satisfiable), [actions]);
@@ -165,15 +146,6 @@ export function ScenePanel({ scene }: ScenePanelProps) {
     setDeleting(false);
   }, [address, dispatch, closeRight]);
 
-  if (loading) {
-    return (
-      <div>
-        <h3 data-testid="scene-panel-title" className="text-lg font-semibold text-swift mb-4">{isEdit ? 'Edit Scene' : 'Create Scene'}</h3>
-        <p className="text-sm text-grouse">Loading actions...</p>
-      </div>
-    );
-  }
-
   if (activeAction) {
     const action = actions.find((a) => a.id === activeAction);
     if (!action) {
@@ -204,7 +176,6 @@ export function ScenePanel({ scene }: ScenePanelProps) {
         onSelectAction={setActiveAction}
         onSave={handleSave}
         onCancel={closeRight}
-        heading={isEdit ? 'Edit Scene' : 'Create Scene'}
         saveLabel={isEdit ? 'Save' : 'Create Scene'}
         savingLabel={isEdit ? 'Saving...' : 'Creating...'}
       />

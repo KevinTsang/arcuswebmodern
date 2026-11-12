@@ -37,11 +37,6 @@ beforeEach(() => {
 });
 
 describe('ChangePinPanel', () => {
-  it('renders heading', () => {
-    render(<ChangePinPanel />);
-    expect(screen.getByText('Change PIN Code')).toBeInTheDocument();
-  });
-
   it('renders PIN form fields', () => {
     render(<ChangePinPanel />);
     expect(screen.getByLabelText('PIN Code')).toBeInTheDocument();

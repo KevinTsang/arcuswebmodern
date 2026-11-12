@@ -97,10 +97,12 @@ describe('Doors & Locks', () => {
   it('opens and closes the garage door', () => {
     cy.signIn({ path: '/services/doors-locks/status' });
     tid(`device-door-toggle-${DEVICE.garageDoor}`).should('have.text', 'Open').click();
-    cy.expectRequest(MotorizedDoor.CMD_OPENGARAGEDOOR, (r) => r.destination === DEVICE.garageDoor);
+    cy.expectRequest(Base.CMD_SETATTRIBUTES, (r) =>
+      r.destination === DEVICE.garageDoor && r.attributes[MotorizedDoor.ATTR_DOORSTATE] === MotorizedDoor.DOORSTATE_OPEN);
     tid('doors-open-count').should('have.text', '1');
     tid(`device-door-toggle-${DEVICE.garageDoor}`).should('have.text', 'Close').click();
-    cy.expectRequest(MotorizedDoor.CMD_CLOSEGARAGEDOOR, (r) => r.destination === DEVICE.garageDoor);
+    cy.expectRequest(Base.CMD_SETATTRIBUTES, (r) =>
+      r.destination === DEVICE.garageDoor && r.attributes[MotorizedDoor.ATTR_DOORSTATE] === MotorizedDoor.DOORSTATE_CLOSED);
     tid('doors-open-count').should('have.text', '0');
   });
 

@@ -4,11 +4,12 @@
  * PlaceSelector — choose between available places.
  *
  * Ported from src/components/place-selector/place-selector.js.
- * Fetches available places via SessionService.ListAvailablePlaces(),
- * displays them as a radio list, and dispatches switchPlaceThunk.
+ * Receives the available places as a promise (see loadAvailablePlaces), so the
+ * side panel shows its loading fallback until they arrive. Displays them as a
+ * radio list and dispatches switchPlaceThunk.
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { use, useState, useCallback } from 'react';
 import { SessionService } from '@arcus/core/services';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { switchPlaceThunk } from '@/store/thunks/switchPlaceThunk';
@@ -17,29 +18,28 @@ import { useSidePanel } from '@/components/SidePanel';
 import { formatRole } from '@/components/settings/settingsHelper';
 import type { AvailablePlace } from '@/arcus/types';
 
-export default function PlaceSelector() {
+/** The places the user can switch to, sorted by name. Resolves to an empty list on failure. */
+export async function loadAvailablePlaces(): Promise<AvailablePlace[]> {
+  try {
+    const res = await SessionService.ListAvailablePlaces();
+    return (res.places ?? []).sort((a: AvailablePlace, b: AvailablePlace) =>
+      (a.name ?? '').localeCompare(b.name ?? ''),
+    );
+  } catch {
+    return [];
+  }
+}
+
+interface PlaceSelectorProps {
+  places: Promise<AvailablePlace[]>;
+}
+
+export default function PlaceSelector({ places: placesPromise }: PlaceSelectorProps) {
+  const places = use(placesPromise);
   const dispatch = useAppDispatch();
   const { closeRight } = useSidePanel();
   const currentPlaceId = useAppSelector((s) => s.place.placeId);
-  const [places, setPlaces] = useState<AvailablePlace[]>([]);
-  const [loading, setLoading] = useState(true);
   const [switching, setSwitching] = useState(false);
-
-  useEffect(() => {
-    SessionService.ListAvailablePlaces()
-      .then((res) => {
-        const sorted = (res.places ?? []).sort(
-          (a: AvailablePlace, b: AvailablePlace) =>
-            (a.name ?? '').localeCompare(b.name ?? ''),
-        );
-        setPlaces(sorted);
-        setLoading(false);
-      })
-      .catch(() => {
-        setPlaces([]);
-        setLoading(false);
-      });
-  }, []);
 
   const handleSelectPlace = useCallback(
     async (place: AvailablePlace) => {
@@ -62,11 +62,7 @@ export default function PlaceSelector() {
 
   return (
     <div>
-      <h3 data-testid="place-selector-title" className="text-lg font-semibold text-swift mb-4">Choose a Place</h3>
-
-      {loading ? (
-        <p className="text-grouse">Loading places...</p>
-      ) : places.length === 0 ? (
+      {places.length === 0 ? (
         <p className="text-grouse">No places available.</p>
       ) : (
         <ul className="space-y-2 mb-6">

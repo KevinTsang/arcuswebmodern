@@ -124,11 +124,6 @@ describe('ActionCategoryList', () => {
     expect(mockOnCancel).toHaveBeenCalled();
   });
 
-  it('uses custom heading when provided', () => {
-    renderList({ heading: 'Edit Scene' });
-    expect(screen.getByText('Edit Scene')).toBeInTheDocument();
-  });
-
   it('uses custom save labels when provided', () => {
     renderList({ hasAnyConfigured: true, saveLabel: 'Save', savingLabel: 'Saving...' });
     expect(screen.getByRole('button', { name: 'Save' })).toBeInTheDocument();

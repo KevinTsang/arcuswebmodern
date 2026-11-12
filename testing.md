@@ -40,13 +40,15 @@ describe('ComponentName', () => {
 
 Every component test file must include:
 
-1. **Snapshot test** — Verify visual rendering with `toMatchSnapshot()`:
+1. **Snapshot test** — Verify visual rendering with `toMatchSnapshot()` on `asFragment()`:
    ```tsx
    it('matches snapshot', () => {
-     const { container } = render(<Component {...defaultProps} />);
-     expect(container.firstChild).toMatchSnapshot();
+     const { asFragment } = render(<Component {...defaultProps} />);
+     expect(asFragment()).toMatchSnapshot();
    });
    ```
+   `asFragment()` records every element the component rendered, without the wrapper `<div>`
+   React Testing Library adds, and copies the DOM at the moment it is called.
 
 2. **Rendering tests** — Verify key elements appear in the DOM (text, roles, attributes).
 
@@ -87,18 +89,243 @@ expect(screen.getByTestId('status-value-on')).toHaveTextContent('2');
 - **Notifications**: `jest.mock('@/store/slices/uiSlice', () => ({ addNotification: (payload: unknown) => ({ type: 'ui/addNotification', payload }) }));`
 - **Device hooks**: `jest.mock('@/hooks/useDeviceCapability', () => ({ useDevice: () => mockDevice }));`
 - Use `waitFor()` for assertions on async operations (Bridge calls, dispatches after promises).
+  See [Testing Promises and Timers](#testing-promises-and-timers) for stubbing results, waiting on a
+  specific promise, and fake timers.
+
+## Testing Promises and Timers
+
+Async code waits on promises, on timers, or on both. Jest controls each one: mocked calls
+decide when a promise settles, and fake timers decide when the clock moves. The test drives
+both, so nothing waits on real time or a real network.
+
+### Stubbing async results
+
+Use `mockResolvedValue` and `mockRejectedValue` instead of writing
+`mockImplementation(() => Promise.resolve(...))` by hand. Set the success value in
+`beforeEach` so every test starts on the happy path, and override a single call with the
+`…Once` variants in the tests that need something else.
+
+```tsx
+const mockBridgeRequest = jest.fn();
+
+beforeEach(() => {
+  jest.clearAllMocks();
+  mockBridgeRequest.mockResolvedValue({ [Place.ATTR_NAME]: 'Beach House' });
+});
+
+it('shows an error when saving fails', async () => {
+  mockBridgeRequest.mockRejectedValueOnce(new Error('fail'));
+  // ...render, click Save...
+  await waitFor(() => expect(mockDispatch).toHaveBeenCalledWith(SAVE_ERROR));
+});
+```
+
+- **Prefer `…Once` for failures.** A test that only fails the first call leaves later calls
+  (a retry, a second load) on the default success value, which is usually what a retry test
+  wants.
+- **Reject with an `Error`** unless the code under test reads a platform error shape. Then
+  reject with that shape, such as `{ code: 'error.unsupported' }`, so the test exercises the
+  same branch the platform would.
+- `mockRejectedValue` builds a new rejected promise on each call, so setting it without
+  calling the mock does not cause an unhandled rejection.
+
+### Asserting on a promise
+
+Use `.resolves` and `.rejects` when the test holds the promise itself — a helper, a thunk's
+`unwrap()`, or a service call. **Always `await` them** (or `return` them).
+
+```tsx
+await expect(fetchPlaces(placeId)).resolves.toEqual([newPlace]);
+await expect(fetchPlaces('missing')).rejects.toThrow('not found');
+await expect(fetchPlaces('legacy')).rejects.toMatchObject({ code: 'error.unsupported' });
+```
+
+Without the `await`, the test finishes before the promise settles. A passing assertion is
+never checked. A failing one surfaces afterwards as an unhandled rejection that crashes the
+whole Jest run instead of failing its own test.
+
+For assertions on what a *component* does with a promise (a toast, a closed panel, a
+re-enabled button), wait on the UI with `waitFor` or `findBy…`, not on the promise.
+
+### Waiting for a mocked promise to settle
+
+When a test has to let a mocked call finish before asserting, wait on that call's own
+promise. `mock.results` holds what each call returned:
+
+```tsx
+fireEvent.click(screen.getByTestId('contact-save'));
+await act(() => mockBridgeRequest.mock.results[0].value);
+expect(mockCloseRight).toHaveBeenCalled();
+```
+
+- **Mounted component:** wrap the wait in `act`, because the component's handler resumes and
+  updates state once the promise settles.
+- **Already unmounted (after `cleanup()`):** `act` is not needed. Await the promise directly,
+  for example with `await expect(mock.mock.results[0].value).resolves.toBe(...)`.
+- **Avoid** `await act(async () => {})` and `await new Promise(process.nextTick)`. Both flush
+  only the promises already queued, so they break silently if the code gains another `await`.
+  Jest's fake timers also replace `process.nextTick` by default, so that version hangs under
+  `jest.useFakeTimers()`.
+
+### Asserting on the in-between state
+
+Verify in-flight states ("still saving", "Stopping…", a disabled button) with `waitFor` or
+`screen.findByTestId`, while the request is held open with `new Promise(() => {})`. A held
+request never settles, so the in-flight state stays on screen for as long as the query needs
+to find it:
+
+```tsx
+mockBridgeRequest.mockReturnValueOnce(new Promise(() => {}));
+
+fireEvent.click(screen.getByTestId('contact-save'));
+await waitFor(() => expect(screen.getByTestId('contact-save')).toBeDisabled());
+expect(await screen.findByTestId('contact-save')).toHaveTextContent('Saving…');
+```
+
+- **Hold the request open.** With a resolved mock, the request can finish before the query
+  looks. `await screen.findByTestId(...)` then hands back an element that has already left the
+  page, and a state set after an earlier `await` is never seen at all.
+- **Pick the query by what the assertion needs.** `screen.findByTestId` waits for an element to
+  appear and returns it, so it suits an element that only exists in flight, such as a spinner.
+  `waitFor` retries an assertion until it passes, so it suits a change to an element that is
+  already there, such as a button becoming disabled.
+- **Test what happens after the request settles separately.** A held request never finishes, so
+  give the settled case its own test with `mockResolvedValueOnce` or `mockRejectedValueOnce`, and
+  wait for the result with `waitFor`:
+
+  ```tsx
+  mockBridgeRequest.mockResolvedValueOnce({});
+  fireEvent.click(screen.getByTestId('contact-save'));
+  await waitFor(() => expect(mockCloseRight).toHaveBeenCalled());
+  ```
+
+- **Wait on the call itself when nothing visible changes.** If the settled result is that
+  nothing happens (no second close, no extra request), `waitFor` passes before the request even
+  settles. Wait on the call's own promise instead, as in
+  [Waiting for a mocked promise to settle](#waiting-for-a-mocked-promise-to-settle), then assert.
+
+- **Wait on a rejection with `.rejects`.** `await act(() => expect(promise).rejects.toThrow('timeout'))`
+  lets a `mockRejectedValueOnce` call fail without an unhandled rejection.
+- **Override with `…Once`.** `mockReturnValue` and `mockImplementation` apply to every later
+  call, and `jest.clearAllMocks()` does not reset them, so a one-test override leaks into the
+  tests that follow.
+- **Hold the call open for timeouts too.** A test that lets a timeout fire while the request is
+  still pending also uses `new Promise(() => {})` (see
+  [Promises that haven't settled yet](#promises-that-havent-settled-yet)).
+
+### Setting up fake timers
+
+Use `jest.useFakeTimers()` when the code under test waits on `setTimeout` or `setInterval`,
+such as a countdown, an auto-dismissing toast, or a request timeout. The test then moves the
+clock itself instead of waiting for real time to pass.
+
+Switch to fake timers before the code schedules anything, and always switch back in
+`afterEach`. The fake clock otherwise stays on for every later test in the file.
+
+```tsx
+afterEach(() => {
+  jest.useRealTimers();
+});
+
+it('ticks down once a second', () => {
+  jest.useFakeTimers();
+  render(<Countdown durationSeconds={5} />);
+
+  act(() => { jest.advanceTimersByTime(2000); });
+  expect(screen.getByText('0:03')).toBeInTheDocument();
+});
+```
+
+- **Call it before `render`.** A timer scheduled while real timers were active stays real, and
+  advancing the fake clock won't fire it.
+- **Turn it on per test** when only a few tests need it, or in `beforeEach` when the whole file
+  does. Either way, restore real timers in `afterEach` rather than at the end of the test, so a
+  failing assertion can't skip the cleanup.
+
+### Advancing the clock
+
+- **Wrap advances in `act`** when a timer updates React state:
+  `act(() => { jest.advanceTimersByTime(1000); })`. Without it, React warns that an update was
+  not wrapped in `act`. Plain modules such as the Bridge client need no `act`.
+- **For intervals, advance by whole periods.** Advancing by three intervals fires the callback
+  three times. `jest.runOnlyPendingTimers()` fires only the timers already queued. Avoid
+  `jest.runAllTimers()` while an interval is running: the interval keeps rescheduling itself, so
+  Jest fires 100,000 timers and then throws.
+
+### Promises that haven't settled yet
+
+Fake timers only move when the test moves them, so a promise that waits on a timer stays
+pending until the test advances the clock.
+
+- **Start the promise, advance the clock, then await it.** Awaiting first never returns: the
+  promise waits on the clock, and the clock waits on the test, so the test hangs until Jest's
+  timeout fails it.
+
+  ```ts
+  const pending = cornea.send(request());
+  jest.advanceTimersByTime(cornea.timeout);
+  await expect(pending).rejects.toEqual({ type: 'Error', message: TIMEOUT_MESSAGE });
+  ```
+
+- **Let a timeout fire while a request is still pending** by holding the call open with
+  `new Promise(() => {})`. Check the in-flight state first, then advance past the deadline:
+
+  ```tsx
+  mockBridgeRequest.mockReturnValueOnce(new Promise(() => {}));
+  fireEvent.click(screen.getByTestId('contact-save'));
+  await waitFor(() => expect(screen.getByTestId('contact-save')).toBeDisabled());
+
+  await act(() => jest.advanceTimersByTimeAsync(REQUEST_TIMEOUT));
+  expect(mockDispatch).toHaveBeenCalledWith(TIMEOUT_ERROR);
+  ```
+
+- **Use `advanceTimersByTimeAsync` when promises and timers interleave.** That covers a timer
+  callback that awaits a promise, and code that awaits a request before it schedules a timer.
+  `advanceTimersByTime` runs synchronously, so it fires nothing that is scheduled after an
+  `await`, and it returns before an awaited callback finishes. The async variant settles the
+  pending promises between timers. Wrap it in an async `act` when it updates React state:
+  `await act(() => jest.advanceTimersByTimeAsync(1000))`.
+
+### What else fake timers change
+
+- **`Date` is faked too.** Advancing the clock moves `Date.now()`. Use
+  `jest.setSystemTime(new Date('2026-01-01T00:00:00Z'))` for code that formats or compares
+  timestamps.
+- **`process.nextTick` is faked**, so `await new Promise(process.nextTick)` never resolves.
+  Promises are not faked: `mockResolvedValue` mocks still settle, and waiting on
+  `mock.results[0].value` works as described in
+  [Waiting for a mocked promise to settle](#waiting-for-a-mocked-promise-to-settle).
+- **`waitFor` and `findBy…` still work.** React Testing Library advances Jest's fake clock while
+  it polls.
+- **`userEvent` needs the clock passed in**:
+  `userEvent.setup({ advanceTimers: jest.advanceTimersByTime })`. Without it, its built-in
+  delays never elapse and the test hangs until it times out.
+
+### Checking that timers are cleaned up
+
+`jest.getTimerCount()` returns how many fake timers are still pending. Check it after an
+unmount, or after a request settles, to catch a timer that was never cleared:
+
+```tsx
+const { unmount } = render(<Countdown durationSeconds={5} />);
+unmount();
+expect(jest.getTimerCount()).toBe(0);
+```
 
 ## Snapshot Best Practices
 
 - One snapshot per component for the default/primary render state.
 - Additional snapshots for significantly different visual states (disabled, loading, error, empty).
-- Keep snapshots focused — snapshot `container.firstChild` not the full container.
+- Snapshot `asFragment()`, not `container` or `container.firstChild`. The full container adds the
+  wrapper `<div>`, and `firstChild` silently drops every root after the first when a component
+  renders a fragment with several siblings.
 - Review snapshot changes carefully on update; they are a safety net against unintended visual regressions.
 
 ## Containerized Testing
 
-Runs a production build of the app in Docker against the dev platform, mirroring
-`npm run dev`'s hostname/HTTPS setup so the platform session cookie keeps working.
+Runs the production images (see [README → Docker images](./README.md#docker-images)) in
+Docker against the dev platform, mirroring `npm run dev`'s hostname/HTTPS setup so the
+platform session cookie keeps working.
 
 ### Prerequisites
 
@@ -108,64 +335,64 @@ Runs a production build of the app in Docker against the dev platform, mirroring
 - An `/etc/hosts` entry so the same-site hostname resolves locally:
 
   ```
-  127.0.0.1  localdev.myDevUrl.com
+  127.0.0.1  localdev.example.com
   ```
 
-- TLS certs at `certs/cert.pem` / `certs/key.pem` covering `localdev.myDevUrl.com`
+- TLS certs at `certs/cert.pem` / `certs/key.pem` covering `localdev.example.com`
   (the same certs `npm run dev` uses; gitignored, kept locally).
+
+`example.com` stands for your platform's domain: replace it here and in `package.json`'s
+`dev` script, `Caddyfile` and `docker-compose.yml`. The page must be same-site with the
+platform, or its auth cookie isn't sent (see [Authentication](#authentication)).
 
 ### Run it
 
 ```bash
-docker compose up --build -d     # build image + start app (web) and TLS proxy (proxy)
-docker compose logs -f           # tail both services
+docker compose up --build -d     # build the image + start app (ui) and TLS proxy (proxy)
+docker compose logs -f           # tail all services
 docker compose down              # stop and remove containers
 ```
 
-Then open **https://localdev.myDevUrl.com:8443** (accept the self-signed cert once)
+Then open **https://localdev.example.com:8443** (accept the self-signed cert once)
 and sign in on **/login**.
 
 ### How it fits together
 
 | Piece | Role |
 |-------|------|
-| `Dockerfile` | Multi-stage build → Next.js `standalone` server on HTTP `:3000` |
-| `docker-compose.yml` | `web` (the app) + `proxy` (Caddy) on one network |
-| `Caddyfile` | Terminates HTTPS at `localdev.myDevUrl.com:8443`, reverse-proxies to `web:3000` |
+| `docker/ui-server/` | Static export of the app served by nginx on HTTP `:8096` |
+| `docker-compose.yml` | `ui` + `proxy` (Caddy) on one network |
+| `Caddyfile` | Terminates HTTPS at `localdev.example.com:8443`, reverse-proxies to `ui:8096` |
 
 The browser loads the app over HTTPS from the same-site hostname; platform API/WebSocket
-traffic goes **directly** from the browser to `client.dev.myDevUrl.com` (there are no
+traffic goes **directly** from the browser to `client.dev.example.com` (there are no
 rewrites in `next.config.ts`), so Caddy only serves the app itself.
 
 ### Authentication
 
 The client talks to the platform over a **browser WebSocket**, which can't carry a custom
 auth header — the only credential it can send is the `irisAuthToken` cookie. That cookie is
-scoped to `.myDevUrl.com` and `SameSite`, so it is attached to the WebSocket handshake
+scoped to `.example.com` and `SameSite`, so it is attached to the WebSocket handshake
 **only** when the page is loaded over HTTPS from a same-site host. That is why both
-`npm run dev` and this container serve from `localdev.myDevUrl.com` rather than
-`localhost` — loading from `localhost` (e.g. plain `next start`) is cross-site and the cookie
+`npm run dev` and this container serve from `localdev.example.com` rather than
+`localhost` — loading from `localhost` (e.g. the `ui` container on its own) is cross-site and the cookie
 is silently withheld, bouncing you to `/login`.
 
 To authenticate, use the **/login** page: it POSTs credentials to the platform, which sets
-`irisAuthToken` for you. (You can also paste a still-valid token onto the `.myDevUrl.com`
+`irisAuthToken` for you. (You can also paste a still-valid token onto the `.example.com`
 domain in DevTools, but scripted login is more robust.)
 
 ### Pointing at a different backend
 
-`NEXT_PUBLIC_*` values are **inlined into the browser bundle at build time**, not read at
-runtime — so `docker run -e ...` won't change them. Override them as build args and rebuild:
+The image reads the platform URLs when the container starts, from the same `ARCUS_*`
+variables as the legacy ui-server. Change them under `ui.environment` in
+`docker-compose.yml` and recreate the container — no rebuild needed:
 
 ```bash
-docker compose build \
-  --build-arg NEXT_PUBLIC_API_URL=https://client.dev.myDevUrl.com \
-  --build-arg NEXT_PUBLIC_WS_URL=wss://client.dev.myDevUrl.com \
-  --build-arg NEXT_PUBLIC_REDIRECT_URL=https://client.dev.myDevUrl.com
-docker compose up -d
+docker compose up -d ui
 ```
 
-Defaults are set in both `docker-compose.yml` (`web.build.args`) and the `Dockerfile`
-(`ARG` lines). A plain `docker compose restart` will **not** pick up new URLs — you must rebuild.
+(`npm run dev` still takes its URLs from the `NEXT_PUBLIC_*` values in `.env.local`.)
 
 ## End-to-End Tests
 
@@ -193,7 +420,7 @@ npx cypress run --spec cypress/e2e/scenes.cy.ts   # a single spec
 
 `dev:e2e` points `NEXT_PUBLIC_API_URL` / `NEXT_PUBLIC_WS_URL` at `localhost:3000`
 so platform traffic stays same-origin and is fully intercepted; the normal
-`npm run dev` (HTTPS on `localdev.arcus.wl-net.net`) is **not** used for E2E.
+`npm run dev` (HTTPS on `localdev.example.com`) is **not** used for E2E.
 
 ### How the fake platform works
 

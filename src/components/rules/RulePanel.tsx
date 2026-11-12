@@ -1,4 +1,6 @@
-import { useState, useCallback, useEffect, useMemo } from 'react';
+'use client';
+
+import { use, useState, useCallback, useMemo } from 'react';
 import Bridge from '@arcus/core/bridge';
 import { Base, Rule, RuleTemplate } from '@arcus/core';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
@@ -6,7 +8,7 @@ import { addNotification } from '@/store/slices/uiSlice';
 import { useSidePanel } from '@/components/SidePanel';
 import { RuleSelectorSection } from './RuleSelectorSection';
 import type { ResolvedSelector } from './RuleSelectorSection';
-import type { ResolveResponse, ServerSelector, ServerOptionTuple } from './types';
+import { findRuleTemplate } from './resolveRuleSelectors';
 import type { RuleEntity, RuleTemplateEntity } from '@/store/entityTypes';
 
 type TemplateSegment = { type: 'text'; text: string } | { type: 'variable'; text: string; name: string };
@@ -29,13 +31,63 @@ export function parseTemplateString(template: string): TemplateSegment[] {
   return segments;
 }
 
+/**
+ * Fill each ${variable} with the name of its selected option. Returns undefined when there is
+ * no template text or any variable has no selected, named option (Resolve failed, a selection
+ * is empty, or the variable is one this panel cannot pick), so a saved description never ends
+ * up blank or holding variable names or raw addresses.
+ */
+function describeSelections(
+  segments: TemplateSegment[],
+  selectors: Record<string, ResolvedSelector>,
+  context: Record<string, string>,
+): string | undefined {
+  if (segments.length === 0) return undefined;
+  let description = '';
+  for (const seg of segments) {
+    if (seg.type === 'text') {
+      description += seg.text;
+      continue;
+    }
+    const value = context[seg.name];
+    const label = value ? selectors[seg.name]?.options.find((o) => o.value === value)?.name : undefined;
+    if (!label) return undefined;
+    description += label;
+  }
+  return description;
+}
+
+/** The rule's saved selections, without the platform-managed keys (_placeId, _accountId, _ruleName). */
+function savedSelections(rule: RuleEntity | undefined): Record<string, string> {
+  const result: Record<string, string> = {};
+  for (const [key, value] of Object.entries(rule?.[Rule.ATTR_CONTEXT] ?? {})) {
+    if (typeof value === 'string' && !key.startsWith('_')) result[key] = value;
+  }
+  return result;
+}
+
+/** The saved selections, with any that are no longer offered (e.g. a removed device) cleared to be picked again. */
+function offeredSelections(
+  saved: Record<string, string>,
+  selectors: Record<string, ResolvedSelector>,
+): Record<string, string> {
+  const next = { ...saved };
+  for (const [key, sel] of Object.entries(selectors)) {
+    if (next[key] && !sel.options.some((o) => o.value === next[key])) next[key] = '';
+  }
+  return next;
+}
+
 interface RulePanelProps {
   rule?: RuleEntity;
   template?: RuleTemplateEntity;
   placeId: string;
+  /** The template's selectors, resolved when the panel was opened (see useOpenRulePanel). */
+  selectors: Promise<Record<string, ResolvedSelector>>;
 }
 
-export function RulePanel({ rule, template, placeId }: RulePanelProps) {
+export function RulePanel({ rule, template, placeId, selectors: selectorsPromise }: RulePanelProps) {
+  const selectors = use(selectorsPromise);
   const isEdit = !!rule;
   const dispatch = useAppDispatch();
   const { closeRight } = useSidePanel();
@@ -44,13 +96,10 @@ export function RulePanel({ rule, template, placeId }: RulePanelProps) {
   const address = rule?.[Base.ATTR_ADDRESS] as string | undefined;
 
   // In edit mode, find the template from the rule's template id
-  const resolvedTemplate = useMemo(() => {
-    if (template) return template;
-    if (!rule) return undefined;
-    const templateId = rule[Rule.ATTR_TEMPLATE] as string | undefined;
-    if (!templateId) return undefined;
-    return ruleTemplates.find((t) => t[Base.ATTR_ID] === templateId);
-  }, [template, rule, ruleTemplates]);
+  const resolvedTemplate = useMemo(
+    () => findRuleTemplate(rule, template, ruleTemplates),
+    [template, rule, ruleTemplates],
+  );
 
   const templateAddress = resolvedTemplate?.[Base.ATTR_ADDRESS] as string | undefined;
   const templateString = (resolvedTemplate?.[RuleTemplate.ATTR_TEMPLATE] as string) ?? '';
@@ -59,98 +108,58 @@ export function RulePanel({ rule, template, placeId }: RulePanelProps) {
   const [name, setName] = useState(
     isEdit ? ((rule[Rule.ATTR_NAME] as string) ?? '') : ((resolvedTemplate?.[RuleTemplate.ATTR_NAME] as string) ?? ''),
   );
-  const [selectors, setSelectors] = useState<Record<string, ResolvedSelector>>({});
-  const [context, setContext] = useState<Record<string, string>>(() => {
-    if (!rule) return {};
-    const ctx = rule[Rule.ATTR_CONTEXT] as Record<string, unknown> | undefined;
-    if (!ctx) return {};
-    const result: Record<string, string> = {};
-    for (const [k, v] of Object.entries(ctx)) {
-      if (typeof v === 'string') result[k] = v;
-    }
-    return result;
-  });
+  // The rule's saved selections, kept to tell whether the user changed any of them
+  const savedContext = useMemo(() => savedSelections(rule), [rule]);
+  const [context, setContext] = useState(() => offeredSelections(savedContext, selectors));
   const [activeSelector, setActiveSelector] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  useEffect(() => {
-    if (!templateAddress) {
-      setLoading(false);
-      return;
-    }
-    let cancelled = false;
-    (async () => {
-      try {
-        const result = await Bridge.request<ResolveResponse>(RuleTemplate.CMD_RESOLVE, templateAddress, { placeId });
-        if (cancelled) return;
-        // Server may return selectors under a 'selectors' key or directly at the top level
-        const selectorMap = result.selectors ?? (result as Record<string, ServerSelector>);
-        const parsed: Record<string, ResolvedSelector> = {};
-        for (const [key, sel] of Object.entries(selectorMap)) {
-          if (!sel || typeof sel !== 'object' || !('options' in sel)) continue;
-          const rawOptions = sel.options ?? [];
-          const options = rawOptions.map((tuple: ServerOptionTuple) => ({
-            name: tuple[0] ?? '',
-            value: tuple[1] ?? tuple[0] ?? '',
-          }));
-          parsed[key] = {
-            type: sel.type ?? 'LIST',
-            name: sel.name ?? key,
-            options,
-          };
-        }
-        setSelectors(parsed);
-      } catch {
-        dispatch(addNotification({ type: 'error', message: 'Failed to resolve rule template' }));
-      }
-      setLoading(false);
-    })();
-    return () => { cancelled = true; };
-  }, [templateAddress, placeId, dispatch]);
-
   const selectorKeys = Object.keys(selectors);
-  const allFilled = selectorKeys.length > 0 && selectorKeys.every((k) => context[k]);
-
-  /** Replace ${variable} placeholders with the selected option's display name. */
-  const resolveDescription = useCallback((): string => {
-    return templateString.replace(/\$\{([^}]+)\}/g, (_match, varName: string) => {
-      const value = context[varName];
-      if (!value) return varName;
-      const option = selectors[varName]?.options.find((o) => o.value === value);
-      return option?.name ?? value;
-    });
-  }, [templateString, context, selectors]);
+  const missingSelections = selectorKeys.filter((k) => !context[k]);
+  // Creating needs every selection. Editing needs every offered selection, but can still
+  // rename a rule whose template could not be resolved (no selectors).
+  const canSave = !!name.trim() && missingSelections.length === 0 && (isEdit || selectorKeys.length > 0);
 
   const handleSave = useCallback(async () => {
-    if (!name.trim()) return;
+    if (!canSave) return;
+    const trimmedName = name.trim();
+    const description = describeSelections(segments, selectors, context);
     setSaving(true);
     try {
-      if (isEdit && address) {
-        await Bridge.request(Base.CMD_SETATTRIBUTES, address, {
-          [Rule.ATTR_NAME]: name.trim(),
-          [Rule.ATTR_DESCRIPTION]: resolveDescription(),
-        });
-        if (selectorKeys.length > 0) {
-          const updateContext: Record<string, string> = {};
-          for (const key of selectorKeys) {
-            if (context[key]) updateContext[key] = context[key];
-          }
+      if (rule && address) {
+        const nameChanged = trimmedName !== rule[Rule.ATTR_NAME];
+        const contextChanged = Object.keys(selectors).some((k) => context[k] !== savedContext[k]);
+        // Also repairs a description an earlier save left blank or full of addresses
+        const newDescription = description !== rule[Rule.ATTR_DESCRIPTION] ? description : undefined;
+        // Name first: UpdateContext copies the saved name into the actions' _ruleName
+        if (nameChanged) {
+          await Bridge.request(Base.CMD_SETATTRIBUTES, address, { [Rule.ATTR_NAME]: trimmedName });
+        }
+        // The platform merges this into the saved context, so it also re-applies the name when
+        // Resolve failed. It rejects a template missing from its catalog; rules.ruleTemplates holds
+        // that whole catalog, so UpdateContext is skipped when the template is not there.
+        if ((nameChanged || contextChanged) && resolvedTemplate) {
           await Bridge.request(Rule.CMD_UPDATECONTEXT, address, {
-            context: updateContext,
-            template: resolvedTemplate?.[Base.ATTR_ID] ?? '',
+            context: { ...context },
+            template: resolvedTemplate[Base.ATTR_ID] ?? '',
           });
         }
-        dispatch(addNotification({ type: 'success', message: 'Rule saved' }));
+        // Last, so a failed UpdateContext never leaves a description of selections it did not apply
+        if (newDescription !== undefined) {
+          await Bridge.request(Base.CMD_SETATTRIBUTES, address, { [Rule.ATTR_DESCRIPTION]: newDescription });
+        }
+        if (nameChanged || contextChanged || newDescription !== undefined) {
+          dispatch(addNotification({ type: 'success', message: 'Rule saved' }));
+        }
       } else if (templateAddress) {
-        if (!allFilled) return;
         await Bridge.request(RuleTemplate.CMD_CREATERULE, templateAddress, {
           placeId,
-          name: name.trim(),
-          description: resolveDescription(),
-          context,
+          name: trimmedName,
+          // Without one the platform uses the template's own description
+          ...(description !== undefined ? { description } : {}),
+          context: { ...context },
         });
         dispatch(addNotification({ type: 'success', message: 'Rule created' }));
       }
@@ -159,7 +168,7 @@ export function RulePanel({ rule, template, placeId }: RulePanelProps) {
       dispatch(addNotification({ type: 'error', message: isEdit ? 'Failed to save rule' : 'Failed to create rule' }));
     }
     setSaving(false);
-  }, [isEdit, address, name, templateAddress, placeId, context, allFilled, selectorKeys, resolvedTemplate, resolveDescription, dispatch, closeRight]);
+  }, [canSave, name, segments, selectors, context, rule, address, savedContext, resolvedTemplate, templateAddress, placeId, isEdit, dispatch, closeRight]);
 
   const handleDelete = useCallback(async () => {
     if (!address) return;
@@ -180,21 +189,8 @@ export function RulePanel({ rule, template, placeId }: RulePanelProps) {
 
   const activeResolvedSelector = activeSelector ? selectors[activeSelector] : null;
 
-  const heading = isEdit ? 'Edit Rule' : 'Create Rule';
-
-  if (loading) {
-    return (
-      <div>
-        <h3 data-testid="rule-panel-title" className="text-lg font-semibold text-swift mb-4">{heading}</h3>
-        <p className="text-sm text-grouse">Loading template...</p>
-      </div>
-    );
-  }
-
   return (
     <div>
-      <h3 data-testid="rule-panel-title" className="text-lg font-semibold text-swift mb-4">{heading}</h3>
-
       <div className="mb-4">
         <label htmlFor="ruleName" className="block text-sm font-medium text-swift mb-1">
           Rule Name
@@ -257,11 +253,17 @@ export function RulePanel({ rule, template, placeId }: RulePanelProps) {
         </>
       )}
 
+      {isEdit && missingSelections.length > 0 && (
+        <p data-testid="rule-incomplete" className="text-sm text-cardinal mb-4">
+          The rule is incomplete. Please choose a setting for {missingSelections.map((k) => k.toUpperCase()).join(', ')}.
+        </p>
+      )}
+
       <div className="flex gap-3 mb-8">
         <button
           onClick={handleSave}
           data-testid="rule-save"
-          disabled={saving || !name.trim() || (!isEdit && !allFilled)}
+          disabled={saving || !canSave}
           className="bg-peacock text-crane px-5 py-2 rounded-[var(--border-radius-base)] hover:opacity-90 disabled:opacity-50 text-sm"
         >
           {saving ? (isEdit ? 'Saving...' : 'Creating...') : (isEdit ? 'Save' : 'Create Rule')}

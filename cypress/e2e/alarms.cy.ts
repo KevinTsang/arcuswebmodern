@@ -1,5 +1,5 @@
 /**
- * PRD §7 — Alarms & Security: status, arm/disarm/partial, panic, incident
+ * PRD §7 — Alarms & Security: status, arm/disarm/partial, incident
  * tracker + banner + redirect, and the settings tab (general toggles, call
  * tree, per-mode delays and sounds, device participation).
  */
@@ -24,6 +24,7 @@ describe('Alarm status', () => {
     tid('alarm-summary').should('contain', '2 devices');
     tid(`alarm-device-status-${DEVICE.contact}`).should('have.text', 'Ready');
     tid(`alarm-device-status-${DEVICE.motion}`).should('have.text', 'Ready');
+    tid('alarm-panic').should('not.exist');
   });
 
   it('arms fully, then disarms', () => {
@@ -32,6 +33,7 @@ describe('Alarm status', () => {
     cy.toast('Alarm armed');
     tid('alarm-state').should('have.text', 'Armed');
     tid('alarm-summary').should('contain', 'Full');
+    tid('alarm-panic').should('not.exist');
 
     tid('alarm-disarm').click();
     cy.expectRequest(SecuritySubsystem.CMD_DISARM, (r) => r.destination === SECURITY);
@@ -53,11 +55,6 @@ describe('Alarm status', () => {
     tid('alarm-state').should('have.text', 'Disarmed');
   });
 
-  it('triggers a panic alarm', () => {
-    tid('alarm-panic').click();
-    cy.expectRequest(AlarmSubsystem.CMD_PANIC, (r) => r.destination === ALARM);
-  });
-
   it('shows triggered devices during an alert', () => {
     cy.platform().invoke('updateEntity', SECURITY, {
       [SecuritySubsystem.ATTR_ALARMSTATE]: SecuritySubsystem.ALARMSTATE_ALERT,
@@ -66,7 +63,6 @@ describe('Alarm status', () => {
     tid('alarm-state').should('have.text', 'ALERT!');
     tid('alarm-triggered').should('have.text', `Triggered: ${DEVICE_NAME.contact}`);
     tid(`alarm-device-status-${DEVICE.contact}`).should('have.text', 'Triggered');
-    tid('alarm-panic').should('not.exist');
   });
 
   it('switches to the settings tab through the route', () => {

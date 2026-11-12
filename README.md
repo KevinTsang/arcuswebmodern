@@ -33,13 +33,13 @@ cutover. [`PRD.md`](./PRD.md) is the living source of truth for what's **Done**,
 | Unit testing | QUnit | Jest 30 + React Testing Library |
 | E2E testing | — | Cypress |
 | Platform transport | Bridge over WebSocket | Bridge over WebSocket (same protocol) |
-| Deployment | — | Docker (multi-stage `standalone` build) + Caddy TLS proxy |
+| Deployment | nginx `ui-server` + `static-server` images | Drop-in `ui-server` image (Next static export served by nginx); `static-server` still the legacy image |
 
 ## What carried over vs. what changed
 
 **Carried over as-is:**
 - The **Bridge pattern** for platform communication — `Bridge.request(command, address, attributes)` against capability constants (`Scene.CMD_FIRE`, `Switch.ATTR_STATE`, etc.), mirroring the legacy client's command/attribute vocabulary so both clients speak the same platform language.
-- Cookie-based WebSocket auth (`irisAuthToken`, same-site, HTTPS) — inherited directly from the legacy client's session model. This is why local dev runs on `https://localdev.myDevUrl.com:8443` instead of `localhost`: the auth cookie is silently withheld cross-site, which would otherwise bounce every request to `/login`. See [`testing.md`](./testing.md#authentication) for the full explanation.
+- Cookie-based WebSocket auth (`irisAuthToken`, same-site, HTTPS) — inherited directly from the legacy client's session model. This is why local dev runs on `https://localdev.example.com:8443` instead of `localhost`: the auth cookie is silently withheld cross-site, which would otherwise bounce every request to `/login`. See [`testing.md`](./testing.md#authentication) for the full explanation.
 - Route structure for the Services section mirrors legacy's `/services/<subsystem>/<action>` path shape.
 
 **Rebuilt / changed:**
@@ -47,7 +47,7 @@ cutover. [`PRD.md`](./PRD.md) is the living source of truth for what's **Done**,
 - State moved from CanJS observables to Redux Toolkit slices (`src/store/slices/`), with typed hooks (`useAppDispatch`/`useAppSelector`) replacing direct store access.
 - A new shared core package, `packages/arcus-core`, centralizes the Bridge client, capability constants, and auth/config logic so they aren't duplicated across the app (`@arcus/core` path alias).
 - Testing moved from QUnit to Jest + React Testing Library with enforced coverage conventions (snapshot + rendering + interaction + edge-case tests per component — see [`testing.md`](./testing.md)), plus Cypress for E2E, replacing whatever the legacy suite used.
-- New deployment path: a Dockerized production build behind a Caddy TLS proxy, versus however the legacy client was previously hosted.
+- Deployment keeps legacy's nginx `ui-server` image and its contract (ports, `ARCUS_*` environment, `server.json`), but the UI is now a Next.js static export instead of a StealJS bundle — see [Docker images](#docker-images).
 - One capability with **no legacy equivalent**: API key generation with role-based permissions, added for `arcus-mqtt-server` integration.
 
 ## Architecture
@@ -95,14 +95,64 @@ See PRD.md's **Priority Summary** for the full tiered breakdown of remaining wor
 ## Running locally
 
 ```bash
-npm run dev          # HTTPS dev server on localhost.arcus.wl-net.net:8443
+npm run dev          # HTTPS dev server on localdev.example.com:8443
 npm test             # Jest unit tests
 npm run test:e2e:ci  # Cypress E2E against an in-browser fake platform (starts/stops the app)
 npm run test:e2e     # Cypress E2E (headless; needs `npm run dev:e2e` running)
-npm run build         # Production build
+npm run build         # Production build (static export to out/)
 npm run lint          # ESLint
 ```
 
-Requires an `/etc/hosts` entry for `localhost.myDevUrl.com:8443` and local TLS certs
+Requires an `/etc/hosts` entry for `localdev.example.com` and local TLS certs
 — see [`testing.md`](./testing.md) for setup, containerized (Docker + Caddy)
 testing, and pointing the client at a different backend.
+
+## Docker images
+
+`docker/` builds a drop-in replacement for the legacy arcusweb `ui-server` image, so an
+existing deployment (e.g. arcus-k8s) only needs the new image tag:
+
+| Image | Port | Serves |
+|-------|------|--------|
+| `arcus/ui-server` | 8096 | The app: `next build` static export, served by nginx |
+
+It uses legacy's base image (`nginx:1.30-trixie`) and runs as uid 1000, the user
+arcus-k8s runs it as, so it is non-root under `docker run` and `docker compose` too.
+Under arcus-k8s it also runs with a read-only root filesystem, given writable mounts at
+`/tmp`, `/var/cache/nginx`, `/var/run` and `/usr/share/nginx/html/build/dist/config`
+(for `server.json`; without it the container exits at start).
+
+The ui-server reads its platform URLs when the container starts, from the same
+environment variables as legacy. `run-nginx` writes them to
+`/usr/share/nginx/html/build/dist/config/server.json` (that directory must be
+writable), and the app fetches that file before it talks to the platform:
+
+| Variable | Purpose |
+|----------|---------|
+| `ARCUS_HTTP_URI` | Platform HTTP base, e.g. `https://client.arcussmarthome.com` |
+| `ARCUS_WS_URI` | Platform WebSocket base, e.g. `wss://client.arcussmarthome.com` |
+
+Both are required: the container exits at start if either is unset, or if it can't write
+`server.json`. Legacy's other `ARCUS_*` variables (`ARCUS_REDIRECT_URI`, the feature flags
+and the app download URIs) are ignored: nothing in this client uses them.
+
+```bash
+docker/bin/build.sh                    # build arcus/ui-server:<version>-<sha> and :latest
+REGISTRY_NAME=us-west1-docker.pkg.dev/<project>/<repo> docker/bin/build.sh --push
+DOCKER_DEFAULT_PLATFORM=linux/amd64 docker/bin/build.sh   # build for another architecture
+```
+
+The image tag (e.g. `2026.11.0-1a2b3c4`) is also the client version the app sends to the
+platform as `X-Client-Version`, so platform logs show which build a session came from.
+The tag doesn't account for uncommitted changes, so build release images from a clean
+checkout. The client version is independent of the platform's; bump `version` in
+`package.json` for a release. Builds without `build.sh` (`npm run dev`, `docker compose`)
+send the bare `package.json` version.
+
+**TODO:** the `static-server` image (device, brand and product images at the platform's
+`staticResourceBaseUrl`) still comes from legacy arcusweb, which only ships a small part of
+what the mobile apps and platform emails request. Where the full image set should live is
+still open; see PRD.md §26.
+
+To run the ui-server against the dev platform locally, see
+[`testing.md` → Containerized Testing](./testing.md#containerized-testing).

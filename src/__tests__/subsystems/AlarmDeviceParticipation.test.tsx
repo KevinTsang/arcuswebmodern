@@ -102,14 +102,14 @@ describe('AlarmDeviceParticipation', () => {
   // ── Snapshot ──────────────────────────────────────────────────────
 
   it('matches snapshot', () => {
-    const { container } = render(<AlarmDeviceParticipation />);
-    expect(container.firstChild).toMatchSnapshot();
+    const { asFragment } = render(<AlarmDeviceParticipation />);
+    expect(asFragment()).toMatchSnapshot();
   });
 
   it('matches snapshot for empty state', () => {
     mockAlarm = { ...defaultAlarm, securityDevices: [], modeSettings: { ON: { ...defaultModeSettings }, PARTIAL: { ...defaultModeSettings } } };
-    const { container } = render(<AlarmDeviceParticipation />);
-    expect(container.firstChild).toMatchSnapshot();
+    const { asFragment } = render(<AlarmDeviceParticipation />);
+    expect(asFragment()).toMatchSnapshot();
   });
 
   // ── Heading and description ───────────────────────────────────────

@@ -289,6 +289,7 @@ describe('SceneCard – schedule', () => {
     render(<SceneCard scene={baseScene()} onEdit={jest.fn()} />);
     fireEvent.click(screen.getByTitle('Schedule'));
     expect(mockOpenRight).toHaveBeenCalledTimes(1);
+    expect(mockOpenRight).toHaveBeenCalledWith(expect.anything(), { title: 'Schedule', key: 'schedule:SERV:scene:s1' });
     const element = mockOpenRight.mock.calls[0][0];
     expect(element.props).toMatchObject({
       targetAddress: 'SERV:scene:s1',

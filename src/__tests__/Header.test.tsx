@@ -25,10 +25,12 @@ jest.mock('@/components/SidePanel', () => ({
   useSidePanel: () => ({ openRight: mockOpenRight }),
 }));
 
-// PlaceSelector fetches places on mount — stub it; Header only passes it to openRight.
+// Header starts the places fetch and passes the promise to PlaceSelector — stub both.
+const mockLoadAvailablePlaces = jest.fn();
 jest.mock('@/components/PlaceSelector', () => ({
   __esModule: true,
   default: () => <div>place selector</div>,
+  loadAvailablePlaces: () => mockLoadAvailablePlaces(),
 }));
 
 // ── Helpers ───────────────────────────────────────────────────────────
@@ -60,8 +62,8 @@ beforeEach(() => {
 
 describe('Header', () => {
   it('matches snapshot', () => {
-    const { container } = render(<Header />);
-    expect(container.firstChild).toMatchSnapshot();
+    const { asFragment } = render(<Header />);
+    expect(asFragment()).toMatchSnapshot();
   });
 
   describe('logo', () => {
@@ -128,6 +130,8 @@ describe('Header', () => {
       render(<Header />);
       fireEvent.click(screen.getByTestId('header-places'));
       expect(mockOpenRight).toHaveBeenCalledTimes(1);
+      expect(mockOpenRight).toHaveBeenCalledWith(expect.anything(), { title: 'Choose a Place', key: 'place-selector' });
+      expect(mockLoadAvailablePlaces).toHaveBeenCalledTimes(1);
       render(mockOpenRight.mock.calls[0][0]);
       expect(screen.getByText('place selector')).toBeInTheDocument();
     });

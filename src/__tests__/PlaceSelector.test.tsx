@@ -1,5 +1,7 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import PlaceSelector from '@/components/PlaceSelector';
+import { screen, fireEvent, waitFor } from '@testing-library/react';
+import PlaceSelector, { loadAvailablePlaces } from '@/components/PlaceSelector';
+import type { AvailablePlace } from '@/arcus/types';
+import { renderSuspended } from './helpers/renderSuspended';
 
 // ── Mocks ─────────────────────────────────────────────────────────────
 
@@ -32,135 +34,109 @@ jest.mock('@arcus/core/services', () => ({
   },
 }));
 
-// ── Tests ─────────────────────────────────────────────────────────────
+// ── Helpers ───────────────────────────────────────────────────────────
+
+const HOME: AvailablePlace = { placeId: 'place-1', name: 'Current Home', role: 'OWNER' };
+const CABIN: AvailablePlace = { placeId: 'place-2', name: 'Cabin', role: 'FULL_ACCESS' };
+
+const renderSelector = (places: AvailablePlace[]) =>
+  renderSuspended(<PlaceSelector places={Promise.resolve(places)} />);
 
 beforeEach(() => {
   jest.clearAllMocks();
 });
 
+// ── Tests ─────────────────────────────────────────────────────────────
+
+describe('loadAvailablePlaces', () => {
+  it('sorts places alphabetically by name, unnamed first', async () => {
+    const zebra = { placeId: 'place-3', name: 'Zebra House', role: 'OWNER' };
+    const unnamed = { placeId: 'place-4', role: 'OWNER' };
+    mockListAvailablePlaces.mockResolvedValue({ places: [zebra, CABIN, unnamed] });
+    await expect(loadAvailablePlaces()).resolves.toEqual([unnamed, CABIN, zebra]);
+  });
+
+  it('resolves to an empty list when the response has no places', async () => {
+    mockListAvailablePlaces.mockResolvedValue({});
+    await expect(loadAvailablePlaces()).resolves.toEqual([]);
+  });
+
+  it('resolves to an empty list on fetch error', async () => {
+    mockListAvailablePlaces.mockRejectedValueOnce(new Error('Network error'));
+    await expect(loadAvailablePlaces()).resolves.toEqual([]);
+  });
+});
+
 describe('PlaceSelector', () => {
-  it('shows loading state initially', () => {
-    mockListAvailablePlaces.mockReturnValue(new Promise(() => {})); // never resolves
-    render(<PlaceSelector />);
-    expect(screen.getByText('Loading places...')).toBeInTheDocument();
+  it('matches snapshot', async () => {
+    const { asFragment } = await renderSelector([CABIN, HOME]);
+    expect(asFragment()).toMatchSnapshot();
   });
 
-  it('displays place names from the name property', async () => {
-    mockListAvailablePlaces.mockResolvedValue({
-      places: [
-        { placeId: 'place-1', name: "Kevin's Home", role: 'OWNER' },
-        { placeId: 'place-2', name: 'Shop @ Site 5022', role: 'FULL_ACCESS' },
-      ],
-    });
-    render(<PlaceSelector />);
-    await waitFor(() => {
-      expect(screen.getByText("Kevin's Home")).toBeInTheDocument();
-      expect(screen.getByText('Shop @ Site 5022')).toBeInTheDocument();
-    });
+  it('shows the fallback until the places arrive', async () => {
+    await renderSuspended(<PlaceSelector places={new Promise(() => {})} />);
+    expect(screen.getByTestId('suspense-fallback')).toBeInTheDocument();
+    expect(screen.queryByTestId('logout')).not.toBeInTheDocument();
   });
 
-  it('sorts places alphabetically by name', async () => {
-    mockListAvailablePlaces.mockResolvedValue({
-      places: [
-        { placeId: 'place-2', name: 'Zebra House', role: 'OWNER' },
-        { placeId: 'place-1', name: 'Alpha Home', role: 'FULL_ACCESS' },
-      ],
-    });
-    render(<PlaceSelector />);
-    await waitFor(() => {
-      expect(screen.getByText('Alpha Home')).toBeInTheDocument();
-    });
-    const buttons = screen.getAllByRole('button');
-    const placeButtons = buttons.filter(
-      (b) => b.textContent?.includes('Alpha Home') || b.textContent?.includes('Zebra House'),
-    );
-    expect(placeButtons[0].textContent).toContain('Alpha Home');
-    expect(placeButtons[1].textContent).toContain('Zebra House');
+  it('lists places in the order given', async () => {
+    await renderSelector([CABIN, HOME]);
+    expect(screen.getByTestId('place-option-place-2')).toHaveTextContent('Cabin');
+    expect(screen.getByTestId('place-option-place-1')).toHaveTextContent('Current Home');
+  });
+
+  it('marks the current place', async () => {
+    await renderSelector([CABIN, HOME]);
+    expect(screen.getByTestId('place-option-place-1')).toHaveAttribute('data-current', 'true');
+    expect(screen.getByTestId('place-option-place-2')).toHaveAttribute('data-current', 'false');
   });
 
   it('shows "Unnamed Place" when name is missing', async () => {
-    mockListAvailablePlaces.mockResolvedValue({
-      places: [
-        { placeId: 'place-3', role: 'OWNER' },
-      ],
-    });
-    render(<PlaceSelector />);
-    await waitFor(() => {
-      expect(screen.getByText('Unnamed Place')).toBeInTheDocument();
-    });
+    await renderSelector([{ placeId: 'place-3', role: 'OWNER' }]);
+    expect(screen.getByText('Unnamed Place')).toBeInTheDocument();
   });
 
   it('shows no places message when list is empty', async () => {
-    mockListAvailablePlaces.mockResolvedValue({ places: [] });
-    render(<PlaceSelector />);
-    await waitFor(() => {
-      expect(screen.getByText('No places available.')).toBeInTheDocument();
-    });
-  });
-
-  it('shows no places message on fetch error', async () => {
-    mockListAvailablePlaces.mockRejectedValue(new Error('Network error'));
-    render(<PlaceSelector />);
-    await waitFor(() => {
-      expect(screen.getByText('No places available.')).toBeInTheDocument();
-    });
+    await renderSelector([]);
+    expect(screen.getByText('No places available.')).toBeInTheDocument();
   });
 
   it('displays a readable role label for each place', async () => {
-    mockListAvailablePlaces.mockResolvedValue({
-      places: [
-        { placeId: 'place-1', name: 'Home', role: 'OWNER' },
-        { placeId: 'place-2', name: 'Cabin', role: 'FULL_ACCESS' },
-      ],
-    });
-    render(<PlaceSelector />);
-    await waitFor(() => {
-      expect(screen.getByText('Owner')).toBeInTheDocument();
-      expect(screen.getByText('Full Access')).toBeInTheDocument();
-    });
+    await renderSelector([HOME, CABIN]);
+    expect(screen.getByText('Owner')).toBeInTheDocument();
+    expect(screen.getByText('Full Access')).toBeInTheDocument();
     expect(screen.queryByText('FULL_ACCESS')).not.toBeInTheDocument();
   });
 
-  it('dispatches switchPlaceThunk when a different place is clicked', async () => {
-    mockListAvailablePlaces.mockResolvedValue({
-      places: [
-        { placeId: 'place-1', name: 'Current Home', role: 'OWNER' },
-        { placeId: 'place-2', name: 'Other Home', role: 'FULL_ACCESS' },
-      ],
-    });
-    render(<PlaceSelector />);
-    await waitFor(() => {
-      expect(screen.getByText('Other Home')).toBeInTheDocument();
-    });
-    fireEvent.click(screen.getByText('Other Home'));
+  it('switches place and closes the panel when a different place is clicked', async () => {
+    await renderSelector([HOME, CABIN]);
+    fireEvent.click(screen.getByText('Cabin'));
     expect(mockDispatch).toHaveBeenCalledWith(
       expect.objectContaining({ type: 'switchPlace', payload: 'place-2' }),
     );
+    await waitFor(() => expect(mockCloseRight).toHaveBeenCalled());
+  });
+
+  it('keeps the panel open when switching fails', async () => {
+    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+    mockDispatch.mockReturnValueOnce({ unwrap: () => Promise.reject(new Error('fail')) });
+    await renderSelector([HOME, CABIN]);
+    fireEvent.click(screen.getByText('Cabin'));
+    // The options are disabled while switching and re-enabled once it fails.
+    await waitFor(() => expect(screen.getByTestId('place-option-place-2')).toBeEnabled());
+    expect(mockCloseRight).not.toHaveBeenCalled();
+    consoleError.mockRestore();
   });
 
   it('does not dispatch when clicking the already-active place', async () => {
-    mockListAvailablePlaces.mockResolvedValue({
-      places: [
-        { placeId: 'place-1', name: 'Current Home', role: 'OWNER' },
-      ],
-    });
-    render(<PlaceSelector />);
-    await waitFor(() => {
-      expect(screen.getByText('Current Home')).toBeInTheDocument();
-    });
+    await renderSelector([HOME]);
     fireEvent.click(screen.getByText('Current Home'));
     expect(mockDispatch).not.toHaveBeenCalled();
   });
 
   it('dispatches logoutThunk when Log Out is clicked', async () => {
-    mockListAvailablePlaces.mockResolvedValue({ places: [] });
-    render(<PlaceSelector />);
-    await waitFor(() => {
-      expect(screen.getByText('Log Out')).toBeInTheDocument();
-    });
+    await renderSelector([]);
     fireEvent.click(screen.getByText('Log Out'));
-    expect(mockDispatch).toHaveBeenCalledWith(
-      expect.objectContaining({ type: 'logout' }),
-    );
+    expect(mockDispatch).toHaveBeenCalledWith(expect.objectContaining({ type: 'logout' }));
   });
 });

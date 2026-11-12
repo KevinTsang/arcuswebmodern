@@ -12,8 +12,7 @@ import { Place } from '@arcus/core';
 import { useAppSelector } from '@/store/hooks';
 import { selectAllRules } from '@/store/slices/rulesSlice';
 import type { RuleEntity } from '@/store/entityTypes';
-import { useSidePanel } from '@/components/SidePanel';
-import { RulePanel } from '@/components/rules/RulePanel';
+import { useOpenRulePanel } from '@/components/rules/useOpenRulePanel';
 import { RuleListItem } from '@/components/rules/RuleListItem';
 import { RulesLibrary } from '@/components/rules/RulesLibrary';
 
@@ -24,17 +23,16 @@ type ViewMode = 'my' | 'library';
 export default function RulesPage() {
   const [view, setView] = useState<ViewMode>('my');
   const rules = useAppSelector(selectAllRules);
-  const placeId = useAppSelector((s) => s.place.placeId) ?? '';
   const placeName = useAppSelector(
     (s) => s.place.place?.[Place.ATTR_NAME] ?? 'Your Home',
   );
-  const { openRight } = useSidePanel();
+  const openRulePanel = useOpenRulePanel();
 
   const handleEdit = useCallback(
     (rule: RuleEntity) => {
-      openRight(<RulePanel rule={rule} placeId={placeId} />);
+      openRulePanel({ rule });
     },
-    [openRight, placeId],
+    [openRulePanel],
   );
 
   return (
@@ -87,7 +85,7 @@ export default function RulesPage() {
           </div>
         )
       ) : (
-        <RulesLibrary placeId={placeId} />
+        <RulesLibrary />
       )}
     </div>
   );

@@ -23,10 +23,22 @@ import {
 
 const DEFAULT_ACTION = 'status';
 
+/** Sub-tabs a view routes to beyond the default (see AlarmsView's tabs). */
+const EXTRA_ACTIONS: Partial<Record<string, string[]>> = {
+  alarms: ['settings'],
+};
+
+/**
+ * The app is a static export, so every URL this route serves must be listed
+ * here: the bare subsystem path, its default action and any extra sub-tabs.
+ */
 export function generateStaticParams() {
   return subsystemConfigs
     .filter((c) => c.visible)
-    .map((c) => ({ subsystem: c.slug, action: [DEFAULT_ACTION] }));
+    .flatMap((c) => [
+      { subsystem: c.slug, action: [] },
+      ...[DEFAULT_ACTION, ...(EXTRA_ACTIONS[c.slug] ?? [])].map((a) => ({ subsystem: c.slug, action: [a] })),
+    ]);
 }
 
 export default async function SubsystemPage({

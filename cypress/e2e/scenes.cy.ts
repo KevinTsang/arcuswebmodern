@@ -72,7 +72,7 @@ describe('Scenes', () => {
 
   it('creates a scene from the custom template and cleans it up', () => {
     cy.get('[data-testid="add-scene"]').click();
-    tid('scene-panel-title').should('have.text', 'Create Scene');
+    tid('side-panel-right-title').should('have.text', 'Create Scene');
     cy.get('[data-testid="scene-action-unavailable-cameras"]').should('contain', 'no compatible devices');
     cy.get('[data-testid="scene-save"]').should('be.disabled');
 
@@ -106,7 +106,7 @@ describe('Scenes', () => {
     cy.toast('Scene created');
     createdSceneId().then((id) => {
       tid(`scene-edit-${id}`).click();
-      tid('scene-panel-title').should('have.text', 'Edit Scene');
+      tid('side-panel-right-title').should('have.text', 'Edit Scene');
       cy.get('[data-testid="scene-delete"]').click();
       cy.contains('Are you sure you want to delete this scene?').should('be.visible');
       cy.get('[data-testid="scene-delete-confirm"]').click();
@@ -120,7 +120,7 @@ describe('Scenes', () => {
 
   it('edits a scene name', () => {
     tid(`scene-edit-${MOVIE_TIME}`).click();
-    tid('scene-panel-title').should('have.text', 'Edit Scene');
+    tid('side-panel-right-title').should('have.text', 'Edit Scene');
     cy.get('[data-testid="scene-name-input"]').should('have.value', SCENE_NAME.movieTime).clear().type('Film Night');
     cy.get('[data-testid="scene-save"]').click();
 
@@ -141,7 +141,7 @@ describe('Scenes', () => {
   describe('scheduling', () => {
     it('shows the existing schedule and adds a weekly event', () => {
       tid(`scene-schedule-${GOOD_NIGHT}`).click();
-      tid('schedule-title').should('have.text', 'Schedule');
+      tid('side-panel-right-title').should('have.text', 'Schedule');
       cy.get('[data-testid^="schedule-event-cmd-1-"]').should('have.length', 5)
         .first().should('have.attr', 'data-time', '22:00:00');
 
