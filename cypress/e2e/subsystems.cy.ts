@@ -4,9 +4,13 @@
  */
 
 import {
-  Base, CareSubsystem, Contact, DoorLock, DoorsNLocksSubsystem, MotorizedDoor, PresenceSubsystem, Valve,
+  Base, CareSubsystem, Contact, DoorLock, DoorsNLocksSubsystem, IrrigationController, LawnNGardenSubsystem,
+  MotorizedDoor, PresenceSubsystem, Valve,
 } from '../../packages/arcus-core/src/capabilities/capabilities';
-import { DEVICE, addr } from '../support/platform/fixtures';
+import {
+  IRRIGATION_ERROR_HAS_OVERLAPS, IrrigationScheduleMode,
+} from '../../packages/arcus-core/src/capabilities/irrigation';
+import { DEVICE, IRRIGATION_EVENT, addr } from '../support/platform/fixtures';
 import { tid } from '../support/selectors';
 
 /** Subsystem views render device panels directly (no list row wrapper). */
@@ -197,6 +201,166 @@ describe('Lawn & Garden', () => {
       },
     });
     tid('lawn-empty').should('be.visible');
+  });
+
+  describe('irrigation control', () => {
+    const SPRINKLER = DEVICE.sprinkler;
+    const zoneId = (name: string, zone: string) => `irrigation-zone-${name}-${SPRINKLER}-${zone}`;
+
+    it('starts and stops a single zone', () => {
+      cy.signIn({ path: '/services/lawn-garden/status' });
+      tid(zoneId('name', 'z2')).should('have.text', 'Back Lawn');
+      tid(zoneId('duration', 'z2')).select('20');
+      tid(zoneId('start', 'z2')).click();
+      cy.expectRequest(IrrigationController.CMD_WATERNOWV2, (r) =>
+        r.destination === SPRINKLER && r.attributes.zone === 'z2' && r.attributes.duration === 20);
+      tid(zoneId('status', 'z2')).should('have.text', 'Watering · 20 min');
+      tid(`irrigation-stop-${SPRINKLER}`).should('be.visible');
+
+      tid(zoneId('stop', 'z2')).click();
+      cy.expectRequest(IrrigationController.CMD_CANCELV2, (r) => r.attributes.zone === 'z2');
+      tid(zoneId('status', 'z2')).should('have.text', 'Idle');
+      tid(`irrigation-water-now-${SPRINKLER}`).should('be.visible');
+    });
+
+    it('waters now from the device row and stops all zones', () => {
+      cy.signIn({ path: '/services/lawn-garden/status' });
+      tid(`irrigation-water-now-${SPRINKLER}`).click();
+      tid('water-now-zone').select('z3');
+      tid('water-now-duration').select('5');
+      tid('water-now-save').click();
+      cy.expectRequest(IrrigationController.CMD_WATERNOWV2, (r) =>
+        r.attributes.zone === 'z3' && r.attributes.duration === 5);
+      tid(zoneId('status', 'z3')).should('have.text', 'Watering · 5 min');
+
+      tid(`irrigation-stop-${SPRINKLER}`).click();
+      tid('stop-watering-all').should('be.checked');
+      tid('stop-watering-save').click();
+      cy.expectRequest(LawnNGardenSubsystem.CMD_STOPWATERING, (r) =>
+        r.attributes.controller === SPRINKLER && r.attributes.currentOnly === false);
+      tid(zoneId('status', 'z3')).should('have.text', 'Idle');
+    });
+
+    it('shows an error when a zone fails to start', () => {
+      cy.signIn({ path: '/services/lawn-garden/status' });
+      cy.platform().invoke('failRequest', IrrigationController.CMD_WATERNOWV2);
+      tid(zoneId('start', 'z1')).click();
+      cy.toast('Failed to start watering Front Lawn');
+      tid(zoneId('status', 'z1')).should('have.text', 'Idle');
+    });
+
+    it('follows the weekly schedule, then skips and resumes it', () => {
+      cy.signIn({ path: '/services/lawn-garden/status' });
+      tid(`irrigation-schedule-status-${SPRINKLER}`).should('contain', 'Manual watering');
+      tid(`device-config-${SPRINKLER}`).click();
+      tid('irrigation-mode-manual').should('be.checked');
+      tid('irrigation-mode-even').should('be.disabled');
+      tid('irrigation-mode-weekly').check();
+      cy.expectRequestAttrs(LawnNGardenSubsystem.CMD_SWITCHSCHEDULEMODE, {
+        controller: SPRINKLER, mode: IrrigationScheduleMode.WEEKLY,
+      });
+      cy.expectRequestAttrs(LawnNGardenSubsystem.CMD_ENABLESCHEDULING, { controller: SPRINKLER });
+      tid('irrigation-mode-weekly').should('be.checked');
+      tid(`irrigation-schedule-status-${SPRINKLER}`).should('contain', 'Weekly schedule');
+      tid('side-panel-right-close').click();
+
+      tid(`irrigation-skip-${SPRINKLER}`).click();
+      tid('skip-watering-48').check();
+      tid('skip-watering-save').click();
+      cy.expectRequestAttrs(LawnNGardenSubsystem.CMD_SKIP, { controller: SPRINKLER, hours: 48 });
+      tid(`irrigation-schedule-status-${SPRINKLER}`).should('contain', 'Skipped until');
+      tid(`irrigation-water-now-${SPRINKLER}`).should('be.disabled');
+
+      tid(`irrigation-cancel-skip-${SPRINKLER}`).click();
+      cy.expectRequestAttrs(LawnNGardenSubsystem.CMD_CANCELSKIP, { controller: SPRINKLER });
+      tid(`irrigation-schedule-status-${SPRINKLER}`).should('not.contain', 'Skipped');
+    });
+
+    it('adjusts the water saver budget', () => {
+      cy.signIn({ path: '/services/lawn-garden/status' });
+      tid(`device-config-${SPRINKLER}`).click();
+      tid('water-saver-value').should('have.text', '100%');
+      tid('water-saver-decrease').click();
+      cy.expectRequest(Base.CMD_SETATTRIBUTES, (r) =>
+        r.destination === SPRINKLER && r.attributes[IrrigationController.ATTR_BUDGET] === 90);
+      tid('water-saver-value').should('have.text', '90%');
+    });
+  });
+
+  describe('irrigation schedules', () => {
+    const SPRINKLER = DEVICE.sprinkler;
+
+    it('edits the days of a weekly event', () => {
+      cy.signIn({ path: '/services/lawn-garden/status' });
+      tid(`irrigation-open-schedule-${SPRINKLER}`).click();
+      tid('irrigation-schedule-tab-weekly').should('have.attr', 'aria-selected', 'true');
+      tid(`irrigation-event-days-${IRRIGATION_EVENT.weekly}`).should('have.text', 'Mon, Thu');
+      tid(`irrigation-event-zones-${IRRIGATION_EVENT.weekly}`).should('contain', 'Front Lawn, Back Lawn');
+      tid(`irrigation-event-edit-${IRRIGATION_EVENT.weekly}`).click();
+      tid('irrigation-event-day-SAT').click();
+      tid('irrigation-event-save').click();
+      cy.expectRequest(LawnNGardenSubsystem.CMD_UPDATEWEEKLYEVENT, (r) =>
+        r.attributes.eventId === IRRIGATION_EVENT.weekly
+        && JSON.stringify(r.attributes.days) === JSON.stringify(['MON', 'THU', 'SAT']));
+      cy.toast('Your event has been updated.');
+      tid(`irrigation-event-days-${IRRIGATION_EVENT.weekly}`).should('have.text', 'Mon, Thu, Sat');
+    });
+
+    it('creates, follows and deletes an interval event', () => {
+      cy.signIn({ path: '/services/lawn-garden/status' });
+      tid(`irrigation-open-schedule-${SPRINKLER}`).click();
+      tid('irrigation-schedule-tab-interval').click();
+      tid('irrigation-schedule-empty').should('be.visible');
+      tid('irrigation-interval-days').select('3');
+      cy.expectRequestAttrs(LawnNGardenSubsystem.CMD_CONFIGUREINTERVALSCHEDULE, { controller: SPRINKLER, days: 3 });
+
+      tid('irrigation-schedule-add').click();
+      tid('irrigation-event-zone-toggle-z4').check();
+      tid('irrigation-event-zone-duration-z4').select('30');
+      tid('irrigation-event-time').type('21:15');
+      tid('irrigation-event-save').click();
+      cy.expectRequest(LawnNGardenSubsystem.CMD_CREATESCHEDULEEVENT, (r) =>
+        r.attributes.mode === IrrigationScheduleMode.INTERVAL
+        && r.attributes.timeOfDay === '21:15:00'
+        && JSON.stringify(r.attributes.zoneDurations) === JSON.stringify([{ zone: 'z4', duration: 30 }]));
+      cy.toast('Your event has been created.');
+      cy.get('[data-testid^="irrigation-event-time-"]').should('have.text', '9:15 PM');
+
+      // The interval mode can now be followed.
+      tid('side-panel-right-close').click();
+      tid(`device-config-${SPRINKLER}`).click();
+      tid('irrigation-mode-interval').should('be.enabled').check();
+      cy.expectRequestAttrs(LawnNGardenSubsystem.CMD_SWITCHSCHEDULEMODE, {
+        controller: SPRINKLER, mode: IrrigationScheduleMode.INTERVAL,
+      });
+      tid(`irrigation-schedule-status-${SPRINKLER}`).should('contain', 'Interval schedule');
+
+      // Deleting the only event of the followed mode falls back to manual watering.
+      tid('irrigation-edit-schedule').click();
+      cy.get('[data-testid^="irrigation-event-edit-"]').click();
+      tid('irrigation-event-delete').click();
+      tid('irrigation-event-delete-confirm').click();
+      cy.expectRequest(LawnNGardenSubsystem.CMD_REMOVESCHEDULEEVENT, (r) =>
+        r.attributes.mode === IrrigationScheduleMode.INTERVAL);
+      cy.expectRequestAttrs(LawnNGardenSubsystem.CMD_DISABLESCHEDULING, { controller: SPRINKLER });
+      tid('irrigation-schedule-empty').should('be.visible');
+      tid(`irrigation-schedule-status-${SPRINKLER}`).should('contain', 'Manual watering');
+      cy.platform().its('created.size').should('eq', 0);
+    });
+
+    it('explains an overlapping start time', () => {
+      cy.signIn({ path: '/services/lawn-garden/status' });
+      cy.platform().invoke(
+        'failRequest', LawnNGardenSubsystem.CMD_CREATESCHEDULEEVENT, IRRIGATION_ERROR_HAS_OVERLAPS, 'overlap',
+      );
+      tid(`irrigation-open-schedule-${SPRINKLER}`).click();
+      tid('irrigation-schedule-tab-odd').click();
+      tid('irrigation-schedule-add').click();
+      tid('irrigation-event-zone-toggle-z1').check();
+      tid('irrigation-event-save').click();
+      cy.toast(/overlaps with the start time/);
+      tid('irrigation-event-editor').should('be.visible');
+    });
   });
 });
 

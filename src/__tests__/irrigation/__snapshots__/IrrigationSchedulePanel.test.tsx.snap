@@ -1,0 +1,147 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`IrrigationSchedulePanel snapshots matches snapshot 1`] = `
+<DocumentFragment>
+  <div
+    class="space-y-4"
+    data-testid="irrigation-schedule-panel"
+  >
+    <p
+      class="text-sm text-grouse"
+    >
+      Backyard Sprinklers
+    </p>
+    <div
+      aria-label="Watering modes"
+      class="flex flex-wrap gap-1"
+      role="tablist"
+    >
+      <button
+        aria-selected="true"
+        class="px-3 py-1.5 text-sm rounded-[var(--border-radius-base)] transition-colors disabled:opacity-50 bg-peacock text-crane"
+        data-active="false"
+        data-testid="irrigation-schedule-tab-weekly"
+        role="tab"
+        type="button"
+      >
+        Weekly
+      </button>
+      <button
+        aria-selected="false"
+        class="px-3 py-1.5 text-sm rounded-[var(--border-radius-base)] transition-colors disabled:opacity-50 bg-pigeon text-coot hover:bg-heron"
+        data-active="false"
+        data-testid="irrigation-schedule-tab-interval"
+        role="tab"
+        type="button"
+      >
+        Interval
+      </button>
+      <button
+        aria-selected="false"
+        class="px-3 py-1.5 text-sm rounded-[var(--border-radius-base)] transition-colors disabled:opacity-50 bg-pigeon text-coot hover:bg-heron"
+        data-active="false"
+        data-testid="irrigation-schedule-tab-even"
+        role="tab"
+        type="button"
+      >
+        Even Days
+      </button>
+      <button
+        aria-selected="false"
+        class="px-3 py-1.5 text-sm rounded-[var(--border-radius-base)] transition-colors disabled:opacity-50 bg-pigeon text-coot hover:bg-heron"
+        data-active="false"
+        data-testid="irrigation-schedule-tab-odd"
+        role="tab"
+        type="button"
+      >
+        Odd Days
+      </button>
+    </div>
+    <p
+      class="text-xs text-grouse"
+      data-testid="irrigation-schedule-help"
+    >
+      Each day can have a different schedule.
+    </p>
+    <ul
+      data-testid="irrigation-schedule-events"
+    >
+      <li
+        class="flex items-center gap-3 py-3 border-b border-heron last:border-b-0"
+        data-testid="irrigation-event-early"
+      >
+        <div
+          class="flex-1 min-w-0"
+        >
+          <p
+            class="text-sm font-medium text-swift"
+            data-testid="irrigation-event-time-early"
+          >
+            5:00 AM
+          </p>
+          <p
+            class="text-xs text-coot"
+            data-testid="irrigation-event-days-early"
+          >
+            Mon
+          </p>
+          <p
+            class="text-xs text-grouse truncate"
+            data-testid="irrigation-event-zones-early"
+          >
+            1 Zone: Front Lawn · 10 min
+          </p>
+        </div>
+        <button
+          class="text-xs text-peacock hover:underline"
+          data-testid="irrigation-event-edit-early"
+          type="button"
+        >
+          Edit
+        </button>
+      </li>
+      <li
+        class="flex items-center gap-3 py-3 border-b border-heron last:border-b-0"
+        data-testid="irrigation-event-late"
+      >
+        <div
+          class="flex-1 min-w-0"
+        >
+          <p
+            class="text-sm font-medium text-swift"
+            data-testid="irrigation-event-time-late"
+          >
+            7:00 PM
+          </p>
+          <p
+            class="text-xs text-coot"
+            data-testid="irrigation-event-days-late"
+          >
+            Sat
+          </p>
+          <p
+            class="text-xs text-grouse truncate"
+            data-testid="irrigation-event-zones-late"
+          >
+            1 Zone: Front Lawn · 10 min
+          </p>
+        </div>
+        <button
+          class="text-xs text-peacock hover:underline"
+          data-testid="irrigation-event-edit-late"
+          type="button"
+        >
+          Edit
+        </button>
+      </li>
+    </ul>
+    <button
+      class="px-4 py-2 text-sm font-medium bg-peacock text-crane rounded-[var(--border-radius-base)] disabled:opacity-50"
+      data-testid="irrigation-schedule-add"
+      type="button"
+    >
+      + Add Weekly Event
+    </button>
+  </div>
+</DocumentFragment>
+`;

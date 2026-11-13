@@ -1,0 +1,40 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`IrrigationEventRow matches snapshot 1`] = `
+<DocumentFragment>
+  <li
+    class="flex items-center gap-3 py-3 border-b border-heron last:border-b-0"
+    data-testid="irrigation-event-w1"
+  >
+    <div
+      class="flex-1 min-w-0"
+    >
+      <p
+        class="text-sm font-medium text-swift"
+        data-testid="irrigation-event-time-w1"
+      >
+        6:30 AM
+      </p>
+      <p
+        class="text-xs text-coot"
+        data-testid="irrigation-event-days-w1"
+      >
+        Mon, Fri
+      </p>
+      <p
+        class="text-xs text-grouse truncate"
+        data-testid="irrigation-event-zones-w1"
+      >
+        3 Zones: Front, Back & 1 more · 30 min
+      </p>
+    </div>
+    <button
+      class="text-xs text-peacock hover:underline"
+      data-testid="irrigation-event-edit-w1"
+      type="button"
+    >
+      Edit
+    </button>
+  </li>
+</DocumentFragment>
+`;

@@ -1,0 +1,46 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`WaterSaverConfigurator matches snapshot 1`] = `
+<DocumentFragment>
+  <div
+    data-testid="water-saver"
+  >
+    <p
+      class="text-sm font-medium text-swift"
+    >
+      Water Saver
+    </p>
+    <p
+      class="text-xs text-grouse mt-1 mb-3"
+    >
+      Save water by scaling the watering time of the entire schedule. Use it as a seasonal adjustment: if every event waters for 10 minutes in summer, setting 50% in the fall waters for 5 minutes instead.
+    </p>
+    <div
+      class="flex items-center gap-3"
+    >
+      <button
+        aria-label="Decrease water saver"
+        class="w-8 h-8 flex items-center justify-center text-lg bg-pigeon text-coot hover:bg-heron rounded-[var(--border-radius-base)] disabled:opacity-50"
+        data-testid="water-saver-decrease"
+        type="button"
+      >
+        −
+      </button>
+      <span
+        class="w-14 text-center text-lg text-swift"
+        data-testid="water-saver-value"
+      >
+        70%
+      </span>
+      <button
+        aria-label="Increase water saver"
+        class="w-8 h-8 flex items-center justify-center text-lg bg-pigeon text-coot hover:bg-heron rounded-[var(--border-radius-base)] disabled:opacity-50"
+        data-testid="water-saver-increase"
+        type="button"
+      >
+        +
+      </button>
+    </div>
+  </div>
+</DocumentFragment>
+`;

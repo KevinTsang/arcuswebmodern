@@ -1,0 +1,41 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`IrrigationActions snapshots matches snapshot when idle in manual mode 1`] = `
+<DocumentFragment>
+  <div
+    class="flex items-center gap-2"
+  >
+    <button
+      class="px-3 py-1.5 rounded-[var(--border-radius-base)] text-sm font-medium disabled:opacity-50 bg-peacock text-crane"
+      data-testid="irrigation-water-now-DRIV:dev:sprinkler"
+      type="button"
+    >
+      Water Now
+    </button>
+  </div>
+</DocumentFragment>
+`;
+
+exports[`IrrigationActions snapshots matches snapshot when watering on a schedule 1`] = `
+<DocumentFragment>
+  <div
+    class="flex items-center gap-2"
+  >
+    <button
+      class="px-3 py-1.5 rounded-[var(--border-radius-base)] text-sm font-medium disabled:opacity-50 bg-peacock text-crane"
+      data-testid="irrigation-stop-DRIV:dev:sprinkler"
+      type="button"
+    >
+      Stop
+    </button>
+    <button
+      class="px-3 py-1.5 rounded-[var(--border-radius-base)] text-sm font-medium disabled:opacity-50 bg-pigeon text-coot hover:bg-heron"
+      data-testid="irrigation-skip-DRIV:dev:sprinkler"
+      disabled=""
+      type="button"
+    >
+      Skip
+    </button>
+  </div>
+</DocumentFragment>
+`;

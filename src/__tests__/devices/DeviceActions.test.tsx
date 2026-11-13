@@ -34,6 +34,10 @@ jest.mock('@/hooks/useDeviceConfig', () => ({
   isDeviceOn: () => false,
 }));
 
+jest.mock('@/components/irrigation/IrrigationActions', () => ({
+  IrrigationActions: ({ address }: { address: string }) => <div data-testid={`irrigation-actions-stub-${address}`} />,
+}));
+
 beforeEach(() => {
   mockDevice = { id: 'DRIV:dev:test', [Base.ATTR_ADDRESS]: 'DRIV:dev:test' };
 });
@@ -67,5 +71,10 @@ describe('DeviceActions', () => {
     render(<DeviceActions address="DRIV:dev:test" action="thermostat-slider" />);
     // Off mode renders "Off" text
     expect(screen.getByText('Off')).toBeInTheDocument();
+  });
+
+  it('renders IrrigationActions for irrigation-nowStopSkip action', () => {
+    render(<DeviceActions address="DRIV:dev:test" action="irrigation-nowStopSkip" />);
+    expect(screen.getByTestId('irrigation-actions-stub-DRIV:dev:test')).toBeInTheDocument();
   });
 });

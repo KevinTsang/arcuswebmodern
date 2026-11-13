@@ -48,3 +48,6 @@ export {
 
 // Capabilities (Phase 3) — auto-generated from XML definitions
 export * from './capabilities/capabilities';
+
+// Hand-maintained constants the generator does not emit (struct enum values)
+export * from './capabilities/irrigation';

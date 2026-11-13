@@ -8,7 +8,7 @@
 
 import { Base } from '@arcus/core';
 import { useLawnGardenSubsystem } from '@/hooks/useLawnGardenSubsystem';
-import { DevicePanel } from '@/components/devices';
+import { IrrigationControllerSection } from '@/components/irrigation/IrrigationControllerSection';
 
 export function LawnGardenView() {
   const { controllers, zonesWatering, nextEvent } = useLawnGardenSubsystem();
@@ -47,7 +47,7 @@ export function LawnGardenView() {
       <div data-testid="lawn-controllers">
         <h3 className="text-sm font-medium text-swift mb-3">Controllers</h3>
         {controllers.map((device) => (
-          <DevicePanel key={device.id} address={device[Base.ATTR_ADDRESS]} />
+          <IrrigationControllerSection key={device.id} address={device[Base.ATTR_ADDRESS]} />
         ))}
       </div>
     </div>

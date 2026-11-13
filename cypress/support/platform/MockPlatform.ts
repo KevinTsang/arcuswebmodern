@@ -14,10 +14,11 @@
  */
 
 import {
-  Account, AlarmIncident, AlarmSubsystem, Base, Device, Hub, HubZwave, PairingDevice,
-  PairingSubsystem, Person, Place, Rule, RuleTemplate, Scene, SceneTemplate, Scheduler,
-  SecuritySubsystem,
+  Account, AlarmIncident, AlarmSubsystem, Base, Device, Hub, HubZwave, IrrigationController,
+  IrrigationZone, LawnNGardenSubsystem, PairingDevice, PairingSubsystem, Person, Place, Rule,
+  RuleTemplate, Scene, SceneTemplate, Scheduler, SecuritySubsystem,
 } from '../../../packages/arcus-core/src/capabilities/capabilities';
+import { IrrigationScheduleMode } from '../../../packages/arcus-core/src/capabilities/irrigation';
 import { createFixture, PLACE_ID } from './fixtures';
 import {
   PlatformFailure,
@@ -33,6 +34,17 @@ const WS_CLOSED = 3;
 
 /** The platform socket path; every other WebSocket (Next.js HMR) is passed through. */
 const PLATFORM_SOCKET_PATH = '/websocket';
+
+/** `created` key marker for an irrigation schedule event: `<subsystem>#irrevent|<mode>|<controller>|<eventId>`. */
+const IRRIGATION_EVENT_KEY = 'irrevent|';
+
+/** Subsystem attribute holding each irrigation mode's per-controller schedules. */
+const IRRIGATION_SCHEDULE_ATTR: { [mode: string]: string } = {
+  [IrrigationScheduleMode.WEEKLY]: LawnNGardenSubsystem.ATTR_WEEKLYSCHEDULES,
+  [IrrigationScheduleMode.INTERVAL]: LawnNGardenSubsystem.ATTR_INTERVALSCHEDULES,
+  [IrrigationScheduleMode.EVEN]: LawnNGardenSubsystem.ATTR_EVENSCHEDULES,
+  [IrrigationScheduleMode.ODD]: LawnNGardenSubsystem.ATTR_ODDSCHEDULES,
+};
 
 interface InjectedFailure {
   failure: PlatformFailure;
@@ -354,7 +366,11 @@ export class MockPlatform {
     for (const key of [...this.created]) {
       // `<scheduler address>#<command id>` marks a command added to an existing scheduler.
       const [address, commandId] = key.split('#');
-      if (commandId && this.data.entities[address]) {
+      if (commandId?.startsWith(IRRIGATION_EVENT_KEY) && this.data.entities[address]) {
+        const [, mode, controller, eventId] = commandId.split('|');
+        this.removeIrrigationEvent(address, mode, controller, eventId);
+        removed.push(key);
+      } else if (commandId && this.data.entities[address]) {
         const commands = { ...(this.data.entities[address][Scheduler.ATTR_COMMANDS] as Attrs) };
         delete commands[commandId];
         this.updateEntity(address, { [Scheduler.ATTR_COMMANDS]: commands });
@@ -1031,6 +1047,9 @@ export class MockPlatform {
       return {};
     },
 
+    // Lawn & garden / irrigation
+    ...this.irrigationHandlers(),
+
     // API keys
     'apikey:ListKeys': () => ({ keys: this.data.apiKeys as unknown as Json }),
     'apikey:Create': ({ attrs }) => {
@@ -1065,5 +1084,159 @@ export class MockPlatform {
       .find((e) => e[Base.ATTR_TYPE] === 'scheduler' && e[Scheduler.ATTR_TARGET] === target);
     if (!scheduler) throw new PlatformFailure('error.notfound', `No scheduler for ${target}`);
     return scheduler;
+  }
+
+  // ── Irrigation ──────────────────────────────────────────────────────
+
+  /** Set a zone's watering state and roll it up into the controller state. */
+  private setZoneWatering(controller: string, zone: string, duration: number): void {
+    const device = this.mustGet(controller);
+    const changes: Attrs = {
+      [`${IrrigationZone.ATTR_ZONESTATE}:${zone}`]: duration > 0
+        ? IrrigationZone.ZONESTATE_WATERING
+        : IrrigationZone.ZONESTATE_NOT_WATERING,
+      [`${IrrigationZone.ATTR_WATERINGDURATION}:${zone}`]: duration,
+    };
+    const after: Attrs = { ...device, ...changes };
+    const watering = Object.keys(after).some((k) =>
+      k.startsWith(`${IrrigationZone.ATTR_ZONESTATE}:`) && after[k] === IrrigationZone.ZONESTATE_WATERING);
+    changes[IrrigationController.ATTR_CONTROLLERSTATE] = watering
+      ? IrrigationController.CONTROLLERSTATE_WATERING
+      : IrrigationController.CONTROLLERSTATE_NOT_WATERING;
+    this.updateEntity(controller, changes);
+  }
+
+  private stopAllZones(controller: string): void {
+    const device = this.mustGet(controller);
+    for (const key of Object.keys(device)) {
+      if (key.startsWith(`${IrrigationZone.ATTR_ZONESTATE}:`) && device[key] === IrrigationZone.ZONESTATE_WATERING) {
+        this.setZoneWatering(controller, key.split(':')[2], 0);
+      }
+    }
+  }
+
+  /** Merge `changes` into a controller's `scheduleStatus` entry. */
+  private updateScheduleStatus(subsystem: string, controller: string, changes: Attrs): void {
+    const statusMap = { ...(this.mustGet(subsystem)[LawnNGardenSubsystem.ATTR_SCHEDULESTATUS] as Attrs) };
+    statusMap[controller] = { controller, ...(statusMap[controller] as Attrs), ...changes };
+    this.updateEntity(subsystem, { [LawnNGardenSubsystem.ATTR_SCHEDULESTATUS]: statusMap });
+  }
+
+  /** Replace a controller's schedule for one mode with `update(schedule)`. */
+  private updateIrrigationSchedule(
+    subsystem: string,
+    mode: string,
+    controller: string,
+    update: (schedule: Attrs) => Attrs,
+  ): void {
+    const attr = IRRIGATION_SCHEDULE_ATTR[mode];
+    if (!attr) throw new PlatformFailure('error.invalid', `Unknown mode ${mode}`);
+    const schedules = { ...(this.mustGet(subsystem)[attr] as Attrs) };
+    const current: Attrs = { controller, type: mode, events: [], ...(schedules[controller] as Attrs) };
+    schedules[controller] = update(current);
+    this.updateEntity(subsystem, { [attr]: schedules });
+  }
+
+  private irrigationEventBody(mode: string, controller: string, attrs: Attrs): Attrs {
+    const zoneDurations = (attrs.zoneDurations as Attrs[]) ?? [];
+    return {
+      type: mode,
+      status: 'APPLIED',
+      timeOfDay: attrs.timeOfDay,
+      ...(attrs.days !== undefined && { days: attrs.days }),
+      events: zoneDurations.map((z) => ({ controller, zone: z.zone, duration: z.duration, status: 'APPLIED' })),
+    };
+  }
+
+  private createIrrigationEvent(subsystem: string, mode: string, attrs: Attrs): Attrs {
+    const controller = attrs.controller as string;
+    const eventId = this.nextId('irrevent');
+    this.updateIrrigationSchedule(subsystem, mode, controller, (schedule) => ({
+      ...schedule,
+      events: [...(schedule.events as Attrs[]), { eventId, ...this.irrigationEventBody(mode, controller, attrs) }],
+    }));
+    this.created.add(`${subsystem}#${IRRIGATION_EVENT_KEY}${mode}|${controller}|${eventId}`);
+    return {};
+  }
+
+  private updateIrrigationEvent(subsystem: string, mode: string, attrs: Attrs): Attrs {
+    const controller = attrs.controller as string;
+    this.updateIrrigationSchedule(subsystem, mode, controller, (schedule) => ({
+      ...schedule,
+      events: (schedule.events as Attrs[]).map((e) => (e.eventId === attrs.eventId
+        ? { eventId: e.eventId, ...this.irrigationEventBody(mode, controller, attrs) }
+        : e)),
+    }));
+    return {};
+  }
+
+  private removeIrrigationEvent(subsystem: string, mode: string, controller: string, eventId: string): void {
+    this.updateIrrigationSchedule(subsystem, mode, controller, (schedule) => ({
+      ...schedule,
+      events: (schedule.events as Attrs[]).filter((e) => e.eventId !== eventId),
+    }));
+    this.created.delete(`${subsystem}#${IRRIGATION_EVENT_KEY}${mode}|${controller}|${eventId}`);
+  }
+
+  private irrigationHandlers(): { [type: string]: Handler } {
+    return {
+      [IrrigationController.CMD_WATERNOWV2]: ({ destination, attrs }) => {
+        this.setZoneWatering(destination, attrs.zone as string, attrs.duration as number);
+        return { successful: true };
+      },
+      [IrrigationController.CMD_CANCELV2]: ({ destination, attrs }) => {
+        this.setZoneWatering(destination, attrs.zone as string, 0);
+        return { successful: true };
+      },
+      [LawnNGardenSubsystem.CMD_STOPWATERING]: ({ attrs }) => {
+        this.stopAllZones(attrs.controller as string);
+        return {};
+      },
+      [LawnNGardenSubsystem.CMD_SWITCHSCHEDULEMODE]: ({ destination, attrs }) => {
+        this.updateScheduleStatus(destination, attrs.controller as string, { mode: attrs.mode });
+        return {};
+      },
+      [LawnNGardenSubsystem.CMD_ENABLESCHEDULING]: ({ destination, attrs }) => {
+        this.updateScheduleStatus(destination, attrs.controller as string, { enabled: true });
+        return {};
+      },
+      [LawnNGardenSubsystem.CMD_DISABLESCHEDULING]: ({ destination, attrs }) => {
+        this.updateScheduleStatus(destination, attrs.controller as string, { enabled: false });
+        return {};
+      },
+      [LawnNGardenSubsystem.CMD_SKIP]: ({ destination, attrs }) => {
+        const skippedUntil = Date.now() + (attrs.hours as number) * 60 * 60 * 1000;
+        this.updateScheduleStatus(destination, attrs.controller as string, { skippedUntil });
+        return {};
+      },
+      [LawnNGardenSubsystem.CMD_CANCELSKIP]: ({ destination, attrs }) => {
+        this.updateScheduleStatus(destination, attrs.controller as string, { skippedUntil: null });
+        return {};
+      },
+      [LawnNGardenSubsystem.CMD_CONFIGUREINTERVALSCHEDULE]: ({ destination, attrs }) => {
+        this.updateIrrigationSchedule(destination, IrrigationScheduleMode.INTERVAL, attrs.controller as string, (s) => ({
+          ...s, days: attrs.days, startDate: attrs.startTime,
+        }));
+        return {};
+      },
+      [LawnNGardenSubsystem.CMD_CREATEWEEKLYEVENT]: ({ destination, attrs }) =>
+        this.createIrrigationEvent(destination, IrrigationScheduleMode.WEEKLY, attrs),
+      [LawnNGardenSubsystem.CMD_UPDATEWEEKLYEVENT]: ({ destination, attrs }) =>
+        this.updateIrrigationEvent(destination, IrrigationScheduleMode.WEEKLY, attrs),
+      [LawnNGardenSubsystem.CMD_REMOVEWEEKLYEVENT]: ({ destination, attrs }) => {
+        this.removeIrrigationEvent(
+          destination, IrrigationScheduleMode.WEEKLY, attrs.controller as string, attrs.eventId as string,
+        );
+        return {};
+      },
+      [LawnNGardenSubsystem.CMD_CREATESCHEDULEEVENT]: ({ destination, attrs }) =>
+        this.createIrrigationEvent(destination, attrs.mode as string, attrs),
+      [LawnNGardenSubsystem.CMD_UPDATESCHEDULEEVENT]: ({ destination, attrs }) =>
+        this.updateIrrigationEvent(destination, attrs.mode as string, attrs),
+      [LawnNGardenSubsystem.CMD_REMOVESCHEDULEEVENT]: ({ destination, attrs }) => {
+        this.removeIrrigationEvent(destination, attrs.mode as string, attrs.controller as string, attrs.eventId as string);
+        return {};
+      },
+    };
   }
 }
