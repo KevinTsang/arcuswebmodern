@@ -1,18 +1,17 @@
 'use client';
 
 import { useAppSelector } from '@/store/hooks';
-import { Person, Place } from '@arcus/core';
+import { Person } from '@arcus/core';
 import { useSidePanel } from '@/components/SidePanel';
 import InfoCard from './InfoCard';
 import InfoRow from './InfoRow';
-import { formatServiceLevel } from './settingsHelper';
 import { useOpenContactInfoPanel } from './useOpenContactInfoPanel';
 import ChangePasswordPanel from './ChangePasswordPanel';
 import ChangePinPanel from './ChangePinPanel';
+import { ServicePlanCard } from './ServicePlanCard';
 
 export default function ProfileSection() {
   const person = useAppSelector((s) => s.auth.person);
-  const place = useAppSelector((s) => s.place.place);
   const { openRight } = useSidePanel();
   const openContactInfo = useOpenContactInfoPanel();
 
@@ -24,7 +23,6 @@ export default function ProfileSection() {
   const lastName = person[Person.ATTR_LASTNAME] ?? '';
   const email = person[Person.ATTR_EMAIL] ?? '';
   const phone = person[Person.ATTR_MOBILENUMBER] ?? '';
-  const serviceLevel = place ? formatServiceLevel(place[Place.ATTR_SERVICELEVEL]) : '—';
 
   return (
     <div className="space-y-6">
@@ -72,9 +70,7 @@ export default function ProfileSection() {
         <InfoRow label="PIN Code" value="••••" />
       </InfoCard>
 
-      <InfoCard title="Service Plan">
-        <InfoRow label="Current Plan" value={serviceLevel} />
-      </InfoCard>
+      <ServicePlanCard />
     </div>
   );
 }

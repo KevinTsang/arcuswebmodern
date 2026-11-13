@@ -93,6 +93,35 @@ describe('Profile settings', () => {
     tid('pin-error').should('have.text', 'PIN must be 4-8 digits.');
     cy.platform().then((p) => expect(p.requestsOf(Person.CMD_CHANGEPINV2)).to.be.empty);
   });
+
+  it('changes the service plan', () => {
+    cardAction('service-plan').click();
+    tid('side-panel-right-title').should('have.text', 'Change Service Plan');
+    tid('service-plan-save').should('be.disabled');
+    tid('service-plan-option-premium').click();
+    tid('service-plan-save').click();
+
+    cy.expectRequest(Account.CMD_UPDATESERVICEPLAN, (r) =>
+      r.destination === addr.account && r.attributes.placeID === PLACE_ID
+      && r.attributes.serviceLevel === Place.SERVICELEVEL_PREMIUM);
+    cy.toast('Your service plan is now Premium.');
+    profileValue('service-plan', 'current-plan').should('have.text', 'Premium');
+    cy.platform().invoke('entity', addr.place).its(Place.ATTR_SERVICELEVEL).should('eq', Place.SERVICELEVEL_PREMIUM);
+  });
+
+  it('warns before downgrading and keeps the plan when the platform refuses', () => {
+    cy.platform().invoke('updateEntity', addr.place, { [Place.ATTR_SERVICELEVEL]: Place.SERVICELEVEL_PREMIUM });
+    profileValue('service-plan', 'current-plan').should('have.text', 'Premium');
+    cy.platform().invoke('failRequest', Account.CMD_UPDATESERVICEPLAN);
+    cardAction('service-plan').click();
+    tid('service-plan-option-basic').click();
+    tid('service-plan-downgrade-warning').should('contain', 'Alarm Tracker');
+    tid('service-plan-save').click();
+
+    cy.toast('Unable to change your service plan. Please try again.');
+    tid('service-plan-save').should('be.enabled');
+    profileValue('service-plan', 'current-plan').should('have.text', 'Premium');
+  });
 });
 
 describe('People & Places', () => {

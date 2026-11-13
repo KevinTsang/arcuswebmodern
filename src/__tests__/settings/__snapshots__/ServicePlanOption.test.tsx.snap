@@ -1,0 +1,43 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`ServicePlanOption matches snapshot 1`] = `
+<DocumentFragment>
+  <label
+    class="flex gap-3 p-3 border rounded-[var(--border-radius-base)] border-peacock bg-peacock/5 cursor-pointer"
+    data-testid="service-plan-option-premium"
+  >
+    <input
+      aria-label="Premium"
+      checked=""
+      class="mt-1 accent-peacock"
+      name="service-plan"
+      type="radio"
+      value="PREMIUM"
+    />
+    <span
+      class="space-y-1"
+    >
+      <span
+        class="flex items-center gap-2"
+      >
+        <span
+          class="text-sm font-medium text-swift"
+        >
+          Premium
+        </span>
+        <span
+          class="text-xs px-1.5 py-0.5 rounded bg-lovebird/15 text-lovebird"
+          data-testid="service-plan-current-premium"
+        >
+          Current
+        </span>
+      </span>
+      <span
+        class="block text-xs text-grouse"
+      >
+        Everything in Basic, and more.
+      </span>
+    </span>
+  </label>
+</DocumentFragment>
+`;
