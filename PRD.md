@@ -557,14 +557,14 @@ None.
 |---------|--------|--------|--------|
 | Chronological activity feed | Yes | Yes | **Done** |
 | Infinite scroll / load more | Yes | Yes (Load More button) | **Done** |
-| Filter by device | Yes | Yes (not functional) | **Broken** |
+| Filter by device | Yes | Yes (`dev:ListHistoryEntries` on the device) | **Done** |
 | Date-based grouping | Yes | Yes | **Done** |
 | Refresh button | Yes | Yes | **Done** |
 | Premium history (14+ days) | Yes | Yes (tier-based limits) | **Done** |
 
 ### Gaps
 
-- **Bug:** The device filter on the History page does not actually filter activity by the selected device.
+- None. (Fixed: the device filter sent `place:ListHistoryEntries` to the device address, which the platform rejects; it now sends `dev:ListHistoryEntries` like the legacy client.)
 
 ---
 
@@ -837,6 +837,8 @@ Bugs found and fixed while writing the suite:
   invalid Hub ID (`request.param.invalid`) left the wizard spinning.
 - `useFormValidation.formValidates` did not mark fields as visited, so a bare
   submit of the create-account form showed no validation errors.
+- The History device filter (§20) sent `place:ListHistoryEntries` to a device
+  address; it now sends `dev:ListHistoryEntries`, and its E2E test is no longer
+  skipped.
 
-Still open (documented by a skipped E2E test): the History device filter
-(§20) sends `place:ListHistoryEntries` to a device address.
+Still open: none of the bugs found by the E2E suite.

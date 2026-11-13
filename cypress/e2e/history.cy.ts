@@ -62,11 +62,9 @@ describe('History page', () => {
     tid('history-device-select').find('option').should('have.length', Object.keys(DEVICE).length + 1);
   });
 
-  // PRD §20 marks the device filter as Broken: the page sends the place
-  // capability `place:ListHistoryEntries` to the device address instead of
-  // `dev:ListHistoryEntries`, which the platform rejects. The fake platform
-  // mirrors that, so this documents the expected behaviour until it is fixed.
-  it.skip('filters activity by device', () => {
+  // Device history is listed with `dev:ListHistoryEntries` on the device; the
+  // platform (and the fake) rejects `place:ListHistoryEntries` there.
+  it('filters activity by device', () => {
     cy.signIn({ path: '/history' });
     tid('history-device-select').select(DEVICE_NAME.lamp);
     cy.expectRequest(Device.CMD_LISTHISTORYENTRIES, (r) => r.destination === DEVICE.lamp);
