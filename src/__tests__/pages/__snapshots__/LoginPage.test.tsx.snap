@@ -110,14 +110,14 @@ exports[`LoginPage matches snapshot 1`] = `
             for="email"
           >
             Email
-            <input
-              autocomplete="email"
-              class="w-full px-3 py-2 border border-grouse rounded-[var(--border-radius-base)] focus:outline-none focus:border-peacock"
-              id="email"
-              type="email"
-              value=""
-            />
           </label>
+          <input
+            autocomplete="email"
+            class="w-full px-3 py-2 border border-grouse rounded-[var(--border-radius-base)] text-sm focus:outline-none focus:border-peacock"
+            id="email"
+            type="email"
+            value=""
+          />
         </div>
         <div
           class="mb-4"
@@ -127,14 +127,14 @@ exports[`LoginPage matches snapshot 1`] = `
             for="password"
           >
             Password
-            <input
-              autocomplete="current-password"
-              class="w-full px-3 py-2 border border-grouse rounded-[var(--border-radius-base)] focus:outline-none focus:border-peacock"
-              id="password"
-              type="password"
-              value=""
-            />
           </label>
+          <input
+            autocomplete="current-password"
+            class="w-full px-3 py-2 border border-grouse rounded-[var(--border-radius-base)] text-sm focus:outline-none focus:border-peacock"
+            id="password"
+            type="password"
+            value=""
+          />
         </div>
         <div
           class="mb-6 flex items-center gap-2"

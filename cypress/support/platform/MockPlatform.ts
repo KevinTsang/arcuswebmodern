@@ -621,7 +621,7 @@ export class MockPlatform {
     },
     'person:SendPasswordReset': () => ({}),
     'person:ResetPassword': ({ attrs }) => {
-      if (attrs.token !== 'RESET-99') throw new PlatformFailure('error.token.invalid', 'Invalid reset code');
+      if (attrs.token !== 'RESET-99') throw new PlatformFailure('person.reset.token_failed', 'Unable to reset password because reset token doesn\'t match, perhaps try again.');
       this.data.login.password = attrs.password as string;
       return {};
     },

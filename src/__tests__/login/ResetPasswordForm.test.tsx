@@ -121,15 +121,34 @@ describe('ResetPasswordForm', () => {
       expect(screen.getByTestId('reset-submit')).toHaveTextContent('Saving Password...');
     });
 
-    it("shows the platform's error message when the reset fails", async () => {
-      mockResetPassword.mockRejectedValueOnce(new Error('Invalid token'));
+    it('shows a readable message for a wrong or expired code', async () => {
+      mockResetPassword.mockRejectedValueOnce({
+        code: 'person.reset.token_failed',
+        message: "Unable to reset password because reset token doesn't match, perhaps try again.",
+      });
       render(<ResetPasswordForm />);
       fillForm();
       fireEvent.click(screen.getByTestId('reset-submit'));
 
-      await waitFor(() => expect(screen.getByTestId('reset-error')).toHaveTextContent('Invalid token'));
+      await waitFor(() =>
+        expect(screen.getByTestId('reset-error')).toHaveTextContent(
+          'That code is invalid or has expired. Check the code, or request a new one.',
+        ),
+      );
       expect(screen.getByTestId('reset-submit')).not.toBeDisabled();
       expect(mockPush).not.toHaveBeenCalled();
+    });
+
+    it('never shows raw platform text for an unknown error', async () => {
+      mockResetPassword.mockRejectedValueOnce(new Error('Request failed: 500 Internal Server Error'));
+      render(<ResetPasswordForm />);
+      fillForm();
+      fireEvent.click(screen.getByTestId('reset-submit'));
+
+      await waitFor(() =>
+        expect(screen.getByTestId('reset-error')).toHaveTextContent('An error occurred. Please try again.'),
+      );
+      expect(screen.queryByText(/Request failed/)).not.toBeInTheDocument();
     });
 
     it('shows a generic error when the failure has no message', async () => {
@@ -143,14 +162,51 @@ describe('ResetPasswordForm', () => {
       );
     });
 
-    it('goes back when Back is clicked', () => {
+    it('returns to the send-code step when Back is clicked, even without browser history', () => {
       render(<ResetPasswordForm />);
       fireEvent.click(screen.getByRole('button', { name: 'Back' }));
-      expect(mockBack).toHaveBeenCalled();
+      expect(mockPush).toHaveBeenCalledWith('/login?view=send-code');
+      expect(mockBack).not.toHaveBeenCalled();
     });
   });
 
   describe('validation', () => {
+    it('rejects the email address as the new password in any letter case', () => {
+      render(<ResetPasswordForm />);
+      fillForm({ email: 'Alex1@Example.com', newPassword: 'alex1@example.com' });
+      fireEvent.click(screen.getByTestId('reset-submit'));
+
+      expect(screen.getByText('cannot be your email address')).toBeInTheDocument();
+      expect(mockResetPassword).not.toHaveBeenCalled();
+    });
+
+    it('shows the email field after sending a code when the link has no email', () => {
+      mockSearchParams = new URLSearchParams('fromSendCode=1');
+      render(<ResetPasswordForm />);
+
+      expect(screen.getByLabelText('Email Address')).toBeInTheDocument();
+      expect(screen.queryByTestId('reset-check-inbox')).not.toBeInTheDocument();
+      expect(screen.getByText('Enter Your Reset Code')).toBeInTheDocument();
+    });
+
+    it('shows the email field and its error after sending a code when the link email is invalid', () => {
+      mockSearchParams = new URLSearchParams('fromSendCode=1&email=not-an-email');
+      render(<ResetPasswordForm />);
+      const emailField = screen.getByLabelText('Email Address');
+      fireEvent.blur(emailField);
+
+      expect(emailField).toHaveValue('not-an-email');
+      expect(screen.getByText('is invalid')).toBeInTheDocument();
+    });
+
+    it('keeps the email field hidden after sending a code when the link email is valid', () => {
+      mockSearchParams = new URLSearchParams('fromSendCode=1&email=alex%40example.com');
+      render(<ResetPasswordForm />);
+
+      expect(screen.queryByLabelText('Email Address')).not.toBeInTheDocument();
+      expect(screen.getByTestId('reset-check-inbox')).toBeInTheDocument();
+    });
+
     it('does not submit an empty form', () => {
       render(<ResetPasswordForm />);
       fireEvent.click(screen.getByTestId('reset-submit'));

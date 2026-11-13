@@ -81,17 +81,18 @@ describe('SendCodeForm', () => {
       enterEmail('alex@example.com');
       fireEvent.click(screen.getByTestId('reset-send'));
 
-      expect(
-        await screen.findByText('An error occurred sending the reset code. Please try again later.'),
-      ).toBeInTheDocument();
+      expect(await screen.findByTestId('send-code-error')).toHaveTextContent(
+        'An error occurred sending the reset code. Please try again later.',
+      );
       expect(screen.getByTestId('reset-send')).not.toBeDisabled();
       expect(mockPush).not.toHaveBeenCalled();
     });
 
-    it('goes back when Back is clicked', () => {
+    it('returns to the login form when Back is clicked, even without browser history', () => {
       render(<SendCodeForm />);
       fireEvent.click(screen.getByRole('button', { name: 'Back' }));
-      expect(mockBack).toHaveBeenCalled();
+      expect(mockPush).toHaveBeenCalledWith('/login');
+      expect(mockBack).not.toHaveBeenCalled();
     });
   });
 

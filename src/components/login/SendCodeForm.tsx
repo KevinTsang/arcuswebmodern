@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { useFormValidation, type ValidationConstraints } from '@/hooks/useFormValidation';
 import { EMAIL_RULE } from '@/lib/validationRules';
 import { PersonService } from '@arcus/core/services';
+import FormField from '@/components/create-account/FormField';
 
 const SEND_CODE_CONSTRAINTS: ValidationConstraints = {
   emailAddress: EMAIL_RULE,
@@ -51,31 +52,18 @@ export function SendCodeForm() {
       </p>
 
       <form onSubmit={handleSubmit}>
-        <div className="mb-4">
-          <label htmlFor="resetEmail" className="block text-sm font-medium text-swift mb-1">
-            Email Address
-          </label>
-          <input
-            id="resetEmail"
-            type="email"
-            autoComplete="email"
-            value={emailAddress}
-            onChange={(e) => {
-              setEmailAddress(e.target.value);
-              form.markChanged('emailAddress');
-            }}
-            onBlur={() => {
-              form.markVisited('emailAddress');
-              form.validateSingle('emailAddress', emailAddress, { emailAddress });
-            }}
-            className="w-full px-3 py-2 border border-grouse rounded-[var(--border-radius-base)] focus:outline-none focus:border-peacock"
-          />
-          {form.visited.emailAddress && form.getFieldErrors('emailAddress').length > 0 && (
-            <p className="mt-1 text-sm text-cardinal">
-              {form.getFieldErrors('emailAddress')[0]}
-            </p>
-          )}
-        </div>
+        <FormField
+          className="mb-4"
+          label="Email Address"
+          id="resetEmail"
+          name="emailAddress"
+          type="email"
+          autoComplete="email"
+          value={emailAddress}
+          onChange={setEmailAddress}
+          form={form}
+          allValues={{ emailAddress }}
+        />
 
         <p className="text-sm mb-4">
           <Link href="/login?view=reset-password" className="text-peacock hover:underline">
@@ -84,7 +72,7 @@ export function SendCodeForm() {
         </p>
 
         {form.formError && (
-          <div className="mb-4 text-cardinal text-sm">{form.formError}</div>
+          <div data-testid="send-code-error" className="mb-4 text-cardinal text-sm">{form.formError}</div>
         )}
 
         <div className="flex gap-4">
@@ -98,7 +86,7 @@ export function SendCodeForm() {
           </button>
           <button
             type="button"
-            onClick={() => router.back()}
+            onClick={() => router.push('/login')}
             className="bg-heron text-swift px-6 py-2.5 rounded-[var(--border-radius-base)] border border-grouse hover:bg-crane transition-colors"
           >
             Back

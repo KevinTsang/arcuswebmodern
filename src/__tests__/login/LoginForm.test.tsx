@@ -1,6 +1,7 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { LoginForm } from '@/components/login/LoginForm';
 import { saveNextPage } from '@/lib/nextPage';
+import { addNotification } from '@/store/slices/uiSlice';
 
 // ── Mocks ─────────────────────────────────────────────────────────────
 
@@ -140,8 +141,27 @@ describe('LoginForm', () => {
       expect(mockReplace).not.toHaveBeenCalled();
     });
 
-    it('shows the same error when loading the place fails', async () => {
+    it('continues into the app and shows a notification when loading the place fails', async () => {
       mockLoadPlaceUnwrap.mockRejectedValueOnce(new Error('load failed'));
+      render(<LoginForm />);
+      fillForm();
+      fireEvent.click(screen.getByTestId('login-submit'));
+
+      await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/'));
+      expect(mockDispatch).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: addNotification.type,
+          payload: expect.objectContaining({
+            type: 'error',
+            message: 'Signed in, but your place could not be loaded. Try refreshing the page.',
+          }),
+        }),
+      );
+      expect(screen.queryByTestId('login-error')).not.toBeInTheDocument();
+    });
+
+    it('does not load the place or show a notification when login fails', async () => {
+      mockLoginUnwrap.mockRejectedValueOnce(new Error('bad credentials'));
       render(<LoginForm />);
       fillForm();
       fireEvent.click(screen.getByTestId('login-submit'));
@@ -149,7 +169,8 @@ describe('LoginForm', () => {
       await waitFor(() =>
         expect(screen.getByTestId('login-error')).toHaveTextContent('Invalid username or password'),
       );
-      expect(mockReplace).not.toHaveBeenCalled();
+      expect(mockLoadPlaceUnwrap).not.toHaveBeenCalled();
+      expect(mockDispatch).not.toHaveBeenCalledWith(expect.objectContaining({ type: addNotification.type }));
     });
   });
 

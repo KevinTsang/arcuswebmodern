@@ -2,15 +2,17 @@
 
 /** The default `/login` view: email/password sign-in. */
 
-import { useState, useCallback, FormEvent } from 'react';
+import { useState, useCallback, useMemo, FormEvent } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAppDispatch } from '@/store/hooks';
+import { addNotification } from '@/store/slices/uiSlice';
 import { loginThunk } from '@/store/thunks/loginThunk';
 import { loadPlaceDataThunk } from '@/store/thunks/loadPlaceDataThunk';
 import { useFormValidation, type ValidationConstraints } from '@/hooks/useFormValidation';
 import { EMAIL_RULE } from '@/lib/validationRules';
 import { takeNextPage } from '@/lib/nextPage';
+import FormField from '@/components/create-account/FormField';
 
 const LOGIN_CONSTRAINTS: ValidationConstraints = {
   emailAddress: EMAIL_RULE,
@@ -30,16 +32,17 @@ export function LoginForm() {
   const [saving, setSaving] = useState(false);
 
   const form = useFormValidation(LOGIN_CONSTRAINTS);
+  const allValues = useMemo(() => ({ emailAddress, password }), [emailAddress, password]);
 
   const handleSubmit = useCallback(
     async (ev: FormEvent) => {
       ev.preventDefault();
-      const values = { emailAddress, password };
-      if (!form.formValidates(['emailAddress', 'password'], values)) return;
+      if (!form.formValidates(['emailAddress', 'password'], allValues)) return;
 
       setSaving(true);
       form.setFormError(null);
 
+      let placeId: string | undefined;
       try {
         const result = await dispatch(
           loginThunk({
@@ -48,19 +51,29 @@ export function LoginForm() {
             isPublic,
           }),
         ).unwrap();
-
-        // SetActivePlace + cookie already handled inside loginThunk
-        if (result.placeId) {
-          await dispatch(loadPlaceDataThunk(result.placeId)).unwrap();
-        }
-
-        router.replace(takeNextPage());
+        placeId = result.placeId;
       } catch {
         setSaving(false);
         form.setFormError('Invalid username or password');
+        return;
       }
+
+      // The session and active place are already set by loginThunk, so a failure here is not a
+      // credentials problem: carry on into the app and say the place data didn't load.
+      if (placeId) {
+        try {
+          await dispatch(loadPlaceDataThunk(placeId)).unwrap();
+        } catch {
+          dispatch(addNotification({
+            type: 'error',
+            message: 'Signed in, but your place could not be loaded. Try refreshing the page.',
+          }));
+        }
+      }
+
+      router.replace(takeNextPage());
     },
-    [emailAddress, password, isPublic, dispatch, router, form],
+    [emailAddress, password, isPublic, dispatch, router, form, allValues],
   );
 
   return (
@@ -74,57 +87,30 @@ export function LoginForm() {
         <div data-testid="login-error" className="mb-4 text-cardinal text-sm">{form.formError}</div>
       )}
 
-      <div className="mb-4">
-        <label htmlFor="email" className="block text-sm font-medium text-swift mb-1">
-          Email
-          <input
-            id="email"
-            type="email"
-            autoComplete="email"
-            value={emailAddress}
-            onChange={(e) => {
-              setEmailAddress(e.target.value);
-              form.markChanged('emailAddress');
-            }}
-            onBlur={() => {
-              form.markVisited('emailAddress');
-              form.validateSingle('emailAddress', emailAddress, { emailAddress, password });
-            }}
-            className="w-full px-3 py-2 border border-grouse rounded-[var(--border-radius-base)] focus:outline-none focus:border-peacock"
-          />
-        </label>
-        {form.visited.emailAddress && form.getFieldErrors('emailAddress').length > 0 && (
-          <p className="mt-1 text-sm text-cardinal">
-            {form.getFieldErrors('emailAddress')[0]}
-          </p>
-        )}
-      </div>
+      <FormField
+        className="mb-4"
+        label="Email"
+        id="email"
+        name="emailAddress"
+        type="email"
+        autoComplete="email"
+        value={emailAddress}
+        onChange={setEmailAddress}
+        form={form}
+        allValues={allValues}
+      />
 
-      <div className="mb-4">
-        <label htmlFor="password" className="block text-sm font-medium text-swift mb-1">
-          Password
-          <input
-            id="password"
-            type="password"
-            autoComplete="current-password"
-            value={password}
-            onChange={(e) => {
-              setPassword(e.target.value);
-              form.markChanged('password');
-            }}
-            onBlur={() => {
-              form.markVisited('password');
-              form.validateSingle('password', password, { emailAddress, password });
-            }}
-            className="w-full px-3 py-2 border border-grouse rounded-[var(--border-radius-base)] focus:outline-none focus:border-peacock"
-          />
-        </label>
-        {form.visited.password && form.getFieldErrors('password').length > 0 && (
-          <p className="mt-1 text-sm text-cardinal">
-            {form.getFieldErrors('password')[0]}
-          </p>
-        )}
-      </div>
+      <FormField
+        className="mb-4"
+        label="Password"
+        id="password"
+        type="password"
+        autoComplete="current-password"
+        value={password}
+        onChange={setPassword}
+        form={form}
+        allValues={allValues}
+      />
 
       <div className="mb-6 flex items-center gap-2">
         <input

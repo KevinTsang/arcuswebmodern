@@ -4,14 +4,13 @@
 
 import { useState, useCallback, useMemo, FormEvent } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useFormValidation, type ValidationConstraints } from '@/hooks/useFormValidation';
+import { useFormValidation, validateFields, type ValidationConstraints } from '@/hooks/useFormValidation';
 import { EMAIL_RULE, NEW_PASSWORD_RULE, confirmPasswordRule } from '@/lib/validationRules';
 import { PersonService } from '@arcus/core/services';
+import FormField from '@/components/create-account/FormField';
+import { resetErrorMessage } from '@/components/login/resetErrors';
 
-/** The shape of a rejected platform request: an `Error` or a platform error with a message. */
-interface PlatformError {
-  message?: string;
-}
+const FIELDS = ['emailAddress', 'code', 'newPassword', 'confirmPassword'];
 
 function getResetPasswordConstraints(emailAddress: string): ValidationConstraints {
   return {
@@ -21,7 +20,7 @@ function getResetPasswordConstraints(emailAddress: string): ValidationConstraint
     },
     newPassword: {
       ...NEW_PASSWORD_RULE,
-      exclusion: { within: [emailAddress], message: 'cannot be your email address' },
+      exclusion: { within: [emailAddress], message: 'cannot be your email address', ignoreCase: true },
     },
     confirmPassword: confirmPasswordRule('newPassword'),
   };
@@ -39,8 +38,16 @@ export function ResetPasswordForm() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [saving, setSaving] = useState(false);
 
-  const constraints = getResetPasswordConstraints(emailAddress);
+  const constraints = useMemo(() => getResetPasswordConstraints(emailAddress), [emailAddress]);
   const form = useFormValidation(constraints);
+
+  // Coming from the send-code step the email is already known, so the field is hidden. A link
+  // without a usable email still shows it, or the user would have no way to fix the address.
+  const prefillValid = useMemo(
+    () => !validateFields({ emailAddress: EMAIL_RULE }, ['emailAddress'], { emailAddress: prefillEmail }).emailAddress,
+    [prefillEmail],
+  );
+  const showEmailField = !fromSendCode || !prefillValid;
 
   const allValues = useMemo(
     () => ({ emailAddress, code, newPassword, confirmPassword }),
@@ -50,9 +57,7 @@ export function ResetPasswordForm() {
   const handleSubmit = useCallback(
     async (ev: FormEvent) => {
       ev.preventDefault();
-      if (!form.formValidates(['emailAddress', 'code', 'newPassword', 'confirmPassword'], allValues)) {
-        return;
-      }
+      if (!form.formValidates(FIELDS, allValues)) return;
 
       setSaving(true);
       form.setFormError(null);
@@ -63,8 +68,7 @@ export function ResetPasswordForm() {
         router.push('/login?view=reset-confirmation');
       } catch (e) {
         setSaving(false);
-        const message = (e as PlatformError | null | undefined)?.message;
-        form.setFormError(message ?? 'An error occurred. Please try again.');
+        form.setFormError(resetErrorMessage(e));
       }
     },
     [emailAddress, code, newPassword, form, router, allValues],
@@ -72,7 +76,7 @@ export function ResetPasswordForm() {
 
   return (
     <div className="w-full max-w-sm">
-      {fromSendCode ? (
+      {fromSendCode && prefillValid ? (
         <>
           <h3 data-testid="reset-check-inbox" className="text-xl font-semibold text-swift mb-2">Check Your Inbox</h3>
           <p className="text-coot mb-1">
@@ -84,110 +88,60 @@ export function ResetPasswordForm() {
         </>
       ) : (
         <h3 className="text-xl font-semibold text-swift mb-6">
-          Already have a code from Support?
+          {fromSendCode ? 'Enter Your Reset Code' : 'Already have a code from Support?'}
         </h3>
       )}
 
       <form onSubmit={handleSubmit}>
-        {!fromSendCode && (
-          <div className="mb-4">
-            <label htmlFor="rpEmail" className="block text-sm font-medium text-swift mb-1">
-              Email Address
-            </label>
-            <input
-              id="rpEmail"
-              type="email"
-              autoComplete="email"
-              value={emailAddress}
-              onChange={(e) => {
-                setEmailAddress(e.target.value);
-                form.markChanged('emailAddress');
-              }}
-              onBlur={() => {
-                form.markVisited('emailAddress');
-                form.validateSingle('emailAddress', emailAddress, allValues);
-              }}
-              className="w-full px-3 py-2 border border-grouse rounded-[var(--border-radius-base)] focus:outline-none focus:border-peacock"
-            />
-            {form.visited.emailAddress && form.getFieldErrors('emailAddress').length > 0 && (
-              <p className="mt-1 text-sm text-cardinal">{form.getFieldErrors('emailAddress')[0]}</p>
-            )}
-          </div>
+        {showEmailField && (
+          <FormField
+            className="mb-4"
+            label="Email Address"
+            id="rpEmail"
+            name="emailAddress"
+            type="email"
+            autoComplete="email"
+            value={emailAddress}
+            onChange={setEmailAddress}
+            form={form}
+            allValues={allValues}
+          />
         )}
 
-        <div className="mb-4">
-          <label htmlFor="code" className="block text-sm font-medium text-swift mb-1">
-            Enter Code
-          </label>
-          <input
-            id="code"
-            type="text"
-            autoComplete="one-time-code"
-            value={code}
-            onChange={(e) => {
-              setCode(e.target.value);
-              form.markChanged('code');
-            }}
-            onBlur={() => {
-              form.markVisited('code');
-              form.validateSingle('code', code, allValues);
-            }}
-            className="w-full px-3 py-2 border border-grouse rounded-[var(--border-radius-base)] focus:outline-none focus:border-peacock"
-          />
-          {form.visited.code && form.getFieldErrors('code').length > 0 && (
-            <p className="mt-1 text-sm text-cardinal">{form.getFieldErrors('code')[0]}</p>
-          )}
-        </div>
+        <FormField
+          className="mb-4"
+          label="Enter Code"
+          id="code"
+          autoComplete="one-time-code"
+          value={code}
+          onChange={setCode}
+          form={form}
+          allValues={allValues}
+        />
 
-        <div className="mb-4">
-          <label htmlFor="newPassword" className="block text-sm font-medium text-swift mb-1">
-            New Password
-          </label>
-          <input
-            id="newPassword"
-            type="password"
-            autoComplete="new-password"
-            value={newPassword}
-            onChange={(e) => {
-              setNewPassword(e.target.value);
-              form.markChanged('newPassword');
-            }}
-            onBlur={() => {
-              form.markVisited('newPassword');
-              form.validateSingle('newPassword', newPassword, allValues);
-            }}
-            className="w-full px-3 py-2 border border-grouse rounded-[var(--border-radius-base)] focus:outline-none focus:border-peacock"
-          />
-          {form.visited.newPassword && form.getFieldErrors('newPassword').length > 0 && (
-            <p className="mt-1 text-sm text-cardinal">{form.getFieldErrors('newPassword')[0]}</p>
-          )}
-        </div>
+        <FormField
+          className="mb-4"
+          label="New Password"
+          id="newPassword"
+          type="password"
+          autoComplete="new-password"
+          value={newPassword}
+          onChange={setNewPassword}
+          form={form}
+          allValues={allValues}
+        />
 
-        <div className="mb-4">
-          <label htmlFor="confirmPassword" className="block text-sm font-medium text-swift mb-1">
-            Confirm New Password
-          </label>
-          <input
-            id="confirmPassword"
-            type="password"
-            autoComplete="new-password"
-            value={confirmPassword}
-            onChange={(e) => {
-              setConfirmPassword(e.target.value);
-              form.markChanged('confirmPassword');
-            }}
-            onBlur={() => {
-              form.markVisited('confirmPassword');
-              form.validateSingle('confirmPassword', confirmPassword, allValues);
-            }}
-            className="w-full px-3 py-2 border border-grouse rounded-[var(--border-radius-base)] focus:outline-none focus:border-peacock"
-          />
-          {form.visited.confirmPassword && form.getFieldErrors('confirmPassword').length > 0 && (
-            <p className="mt-1 text-sm text-cardinal">
-              {form.getFieldErrors('confirmPassword')[0]}
-            </p>
-          )}
-        </div>
+        <FormField
+          className="mb-4"
+          label="Confirm New Password"
+          id="confirmPassword"
+          type="password"
+          autoComplete="new-password"
+          value={confirmPassword}
+          onChange={setConfirmPassword}
+          form={form}
+          allValues={allValues}
+        />
 
         <ul className="text-sm text-grouse mb-4 pl-4 list-disc">
           <li>Password is case-sensitive</li>
@@ -212,7 +166,7 @@ export function ResetPasswordForm() {
           </button>
           <button
             type="button"
-            onClick={() => router.back()}
+            onClick={() => router.push('/login?view=send-code')}
             className="bg-heron text-swift px-6 py-2.5 rounded-[var(--border-radius-base)] border border-grouse hover:bg-crane transition-colors"
           >
             Back
