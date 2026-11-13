@@ -26,6 +26,10 @@ import {
 } from '../lib/deviceConfig';
 import type { DeviceEntity } from '../store/entityTypes';
 import { getGarageDoorStatus } from '../lib/garageDoorStatus';
+import {
+  getHotWaterLevelLabel, getSaltLevelPercent, getWaterHeaterModeLabel,
+  getWaterHeaterStatus, getWaterSoftenerStatus,
+} from '../lib/waterDevices';
 
 type DeviceObj = DeviceEntity;
 
@@ -268,8 +272,7 @@ function getBadgeInfo(key: string, device: DeviceObj): BadgeInfo | null {
       return { key, label: 'Heating', value: heating ? 'On' : 'Off' };
     }
     case 'hotWaterLevel': {
-      const level = (device[WaterHeater.ATTR_HOTWATERLEVEL] as string) ?? '';
-      return { key, label: 'Hot Water', value: level === WaterHeater.HOTWATERLEVEL_HIGH ? 'High' : level === WaterHeater.HOTWATERLEVEL_MEDIUM ? 'Medium' : 'Low' };
+      return { key, label: 'Hot Water', value: getHotWaterLevelLabel(device[WaterHeater.ATTR_HOTWATERLEVEL] as string | undefined) };
     }
     case 'lowHeatTarget': {
       const sp = device[WaterHeater.ATTR_SETPOINT] as number | undefined;
@@ -305,12 +308,13 @@ function getBadgeInfo(key: string, device: DeviceObj): BadgeInfo | null {
     case 'camera-preview':
       return { key, label: 'Camera', value: 'Active' };
     case 'salt-level': {
-      const salt = device[WaterSoftener.ATTR_CURRENTSALTLEVEL] as string | undefined;
-      return salt != null ? { key, label: 'Salt', value: salt } : null;
+      if (device[WaterSoftener.ATTR_SALTLEVELENABLED] === false) return null;
+      const salt = getSaltLevelPercent(device);
+      return salt != null ? { key, label: 'Salt', value: `${salt}%` } : null;
     }
     case 'gpm': {
       const flow = device[Flow.ATTR_FLOW] as number | undefined;
-      return flow != null ? { key, label: 'Flow', value: `${flow.toFixed(1)} GPM` } : null;
+      return typeof flow === 'number' ? { key, label: 'Flow', value: `${flow.toFixed(1)} GPM` } : null;
     }
     case 'temperatureLocked':
       return device['nesttherm:locked'] ? { key, label: 'Locked', value: 'Yes' } : null;
@@ -319,7 +323,7 @@ function getBadgeInfo(key: string, device: DeviceObj): BadgeInfo | null {
       return uv != null ? { key, label: 'UV', value: `${uv}` } : null;
     }
     case 'waterHeaterEnergySmart': {
-      const mode = device[AOSmithWaterHeaterController.ATTR_CONTROLMODE] as string | undefined;
+      const mode = getWaterHeaterModeLabel(device[AOSmithWaterHeaterController.ATTR_CONTROLMODE] as string | undefined);
       return mode ? { key, label: 'Mode', value: mode } : null;
     }
     case 'somfy-type': {
@@ -391,6 +395,10 @@ export function getDeviceStatusText(device: DeviceObj, config: DeviceWebConfig):
       return 'Ok';
     case 'watervalve':
       return getValveStatus(device).label;
+    case 'waterheater':
+      return getWaterHeaterStatus(device);
+    case 'watersoftener':
+      return getWaterSoftenerStatus(device);
     default:
       return on ? 'On' : 'Off';
   }

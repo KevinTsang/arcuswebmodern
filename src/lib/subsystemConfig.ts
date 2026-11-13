@@ -136,7 +136,7 @@ export const subsystemConfigs: SubsystemConfigEntry[] = [
     icon: 'icon-platform-irrigation-2',
     namespace: WaterSubsystem.NAMESPACE,
     visible: true,
-    hasCustomView: false,
+    hasCustomView: true,
     deviceAttributes: [WaterSubsystem.ATTR_WATERDEVICES],
   },
 ];

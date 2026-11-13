@@ -1,0 +1,12 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`RechargeNowButton matches snapshot 1`] = `
+<DocumentFragment>
+  <button
+    class="px-4 py-1.5 rounded-[var(--border-radius-base)] text-sm font-medium bg-peacock text-crane disabled:opacity-50"
+    data-testid="water-softener-recharge-DRIV:dev:softener"
+  >
+    Recharge Now
+  </button>
+</DocumentFragment>
+`;
