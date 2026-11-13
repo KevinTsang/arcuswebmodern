@@ -108,6 +108,16 @@ export interface KitDeviceFixture {
 }
 
 /** Everything the fake platform serves for one signed-in person. */
+/** A Z-Wave S2 PIN request held by the fake pairing subsystem. */
+export interface S2PinRequestFixture {
+  requestId: string;
+  /** As the hub reports it: the first group is 00000. */
+  dsk: string;
+  /** The PIN printed on the device. */
+  pin: string;
+  expires: number;
+}
+
 export interface PlatformData {
   /** Credentials accepted by `POST /login`. */
   login: { email: string; password: string };

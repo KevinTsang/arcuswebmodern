@@ -1,0 +1,97 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`DeviceDetailPanel – Z-Wave security class matches snapshot for a device that got less than it asked for 1`] = `
+<DocumentFragment>
+  <div>
+    <div
+      class="flex items-center justify-between mb-4"
+    >
+      <h4
+        class="text-base font-medium text-swift"
+      >
+        Front Door Lock
+      </h4>
+    </div>
+    <dl
+      class="space-y-3 mb-8"
+    >
+      <div
+        class="flex justify-between"
+      >
+        <dt
+          class="text-sm text-grouse"
+        >
+          Protocol
+        </dt>
+        <dd
+          class="text-sm text-swift text-right"
+          data-testid="device-detail-protocol"
+        >
+          Z-Wave
+        </dd>
+      </div>
+      <div
+        class="flex justify-between"
+      >
+        <dt
+          class="text-sm text-grouse"
+        >
+          Security
+        </dt>
+        <dd
+          class="text-sm text-swift text-right"
+          data-testid="device-detail-security"
+        >
+          S2 Unauthenticated
+        </dd>
+      </div>
+      <div
+        class="flex justify-between"
+      >
+        <dt
+          class="text-sm text-grouse"
+        >
+          Requested Security
+        </dt>
+        <dd
+          class="text-sm text-swift text-right"
+          data-testid="device-detail-requested-security"
+        >
+          S2 Access Control
+        </dd>
+      </div>
+      <div
+        class="flex justify-between"
+      >
+        <dt
+          class="text-sm text-grouse"
+        >
+          Connection
+        </dt>
+        <dd
+          class="text-sm text-swift text-right"
+          data-testid="device-detail-connection"
+        >
+          Online
+        </dd>
+      </div>
+    </dl>
+    <p
+      class="text-sm text-swift bg-pigeon border border-heron rounded-[var(--border-radius-base)] p-3 -mt-4 mb-8"
+      data-testid="device-security-downgraded"
+      role="alert"
+    >
+      This device joined with less security than it asked for, usually because its S2 PIN wasn't entered while pairing. Remove it and pair it again, entering the PIN when asked, to give it full security.
+    </p>
+    <hr
+      class="border-heron mb-4"
+    />
+    <button
+      class="text-sm text-cardinal hover:underline"
+      data-testid="device-remove"
+    >
+      Remove Device
+    </button>
+  </div>
+</DocumentFragment>
+`;

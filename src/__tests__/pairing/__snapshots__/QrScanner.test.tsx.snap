@@ -1,0 +1,30 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`QrScanner matches snapshot while starting 1`] = `
+<DocumentFragment>
+  <div
+    data-testid="qr-scanner"
+  >
+    <div
+      class="relative bg-swift rounded-[var(--border-radius-base)] overflow-hidden aspect-square max-h-72 mx-auto"
+    >
+      <video
+        aria-label="Camera view"
+        class="w-full h-full object-cover"
+        data-testid="qr-scanner-video"
+        playsinline=""
+      />
+      <div
+        class="absolute inset-8 border-2 border-crane/80 rounded-[var(--border-radius-base)] pointer-events-none"
+      />
+    </div>
+    <p
+      aria-live="polite"
+      class="text-sm text-grouse mt-2 text-center"
+      data-testid="qr-scanner-status"
+    >
+      Starting camera…
+    </p>
+  </div>
+</DocumentFragment>
+`;

@@ -1,5 +1,5 @@
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
-import { Base, Device, DeviceAdvanced, DeviceConnection, Hub, PairingDevice } from '@arcus/core';
+import { Base, Device, DeviceAdvanced, DeviceConnection, Hub, PairingDevice, ZWaveProtocol } from '@arcus/core';
 import { DeviceDetailPanel } from '@/components/devices/DeviceDetailPanel';
 import { UnpairingAction } from '@/lib/hubUnpairing';
 import type { DeviceEntity } from '@/store/entityTypes';
@@ -207,6 +207,70 @@ describe('DeviceDetailPanel – info rows', () => {
   it('shows Offline for a disconnected device', () => {
     renderWith({ [DeviceConnection.ATTR_STATE]: 'OFFLINE' });
     expect(screen.getByTestId('device-detail-connection')).toHaveTextContent('Offline');
+  });
+});
+
+describe('DeviceDetailPanel – Z-Wave security class', () => {
+  function renderZWave(protocolAttrs: Record<string, string> | undefined, protocol = 'ZWAV') {
+    mockDevice = {
+      id: 'DRIV:dev:test',
+      [Base.ATTR_ADDRESS]: 'DRIV:dev:test',
+      [Device.ATTR_NAME]: 'Front Door Lock',
+      [DeviceConnection.ATTR_STATE]: 'ONLINE',
+      [DeviceAdvanced.ATTR_PROTOCOL]: protocol,
+      ...(protocolAttrs ? { [DeviceAdvanced.ATTR_PROTOCOLATTRS]: protocolAttrs } : {}),
+    };
+    return render(<DeviceDetailPanel address="DRIV:dev:test" />);
+  }
+
+  it('matches snapshot for a device that got less than it asked for', () => {
+    const { asFragment } = renderZWave({
+      [ZWaveProtocol.ATTR_SECURITY]: ZWaveProtocol.SECURITY_S2_UNAUTHENTICATED,
+      [ZWaveProtocol.ATTR_SECURITYREQUESTED]: ZWaveProtocol.SECURITY_S2_ACCESS_CONTROL,
+    });
+    expect(asFragment()).toMatchSnapshot();
+  });
+
+  it('shows granted and requested classes and flags the shortfall', () => {
+    renderZWave({
+      [ZWaveProtocol.ATTR_SECURITY]: ZWaveProtocol.SECURITY_S0,
+      [ZWaveProtocol.ATTR_SECURITYREQUESTED]: ZWaveProtocol.SECURITY_S2_AUTHENTICATED,
+    });
+    expect(screen.getByTestId('device-detail-security')).toHaveTextContent('S0 (legacy)');
+    expect(screen.getByTestId('device-detail-requested-security')).toHaveTextContent('S2 Authenticated');
+    expect(screen.getByTestId('device-security-downgraded')).toHaveTextContent('less security than it asked for');
+  });
+
+  it('does not flag a device that got what it asked for', () => {
+    renderZWave({
+      [ZWaveProtocol.ATTR_SECURITY]: ZWaveProtocol.SECURITY_S2_ACCESS_CONTROL,
+      [ZWaveProtocol.ATTR_SECURITYREQUESTED]: ZWaveProtocol.SECURITY_S2_ACCESS_CONTROL,
+    });
+    expect(screen.getByTestId('device-detail-security')).toHaveTextContent('S2 Access Control');
+    expect(screen.queryByTestId('device-security-downgraded')).not.toBeInTheDocument();
+  });
+
+  it('shows the granted class alone when the request is unknown', () => {
+    renderZWave({ [ZWaveProtocol.ATTR_SECURITY]: ZWaveProtocol.SECURITY_NONE });
+    expect(screen.getByTestId('device-detail-security')).toHaveTextContent('None');
+    expect(screen.queryByTestId('device-detail-requested-security')).not.toBeInTheDocument();
+  });
+
+  it('shows Unknown when only the requested class is reported', () => {
+    renderZWave({ [ZWaveProtocol.ATTR_SECURITYREQUESTED]: ZWaveProtocol.SECURITY_S0 });
+    expect(screen.getByTestId('device-detail-security')).toHaveTextContent('Unknown');
+  });
+
+  it('omits security for devices that report neither attribute', () => {
+    renderZWave({ 'ZWAV:Manufacturer': '0086' });
+    expect(screen.queryByTestId('device-detail-security')).not.toBeInTheDocument();
+    renderZWave(undefined);
+    expect(screen.queryByTestId('device-detail-security')).not.toBeInTheDocument();
+  });
+
+  it('omits security for other protocols', () => {
+    renderZWave({ [ZWaveProtocol.ATTR_SECURITY]: ZWaveProtocol.SECURITY_S0 }, 'ZIGB');
+    expect(screen.queryByTestId('device-detail-security')).not.toBeInTheDocument();
   });
 });
 

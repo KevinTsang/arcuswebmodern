@@ -48,6 +48,8 @@ import {
   SearchingStage,
   CustomizeStage,
   CompletedStage,
+  S2PinPrompt,
+  S2PairingFailure,
 } from '@/components/pairing';
 import type { PairingFlow } from '@/components/pairing';
 import {
@@ -208,6 +210,8 @@ export default function PairingPage() {
       const scope: SearchScope = { productAddress, carriedOver: carriedOverRef.current ?? {} };
       await Bridge.request(PairingSubsystem.CMD_SEARCH, subAddr, {
         productAddress: productAddress ?? '',
+        // This page can show the DSK and take a Z-Wave S2 PIN (S2PinPrompt).
+        s2PinEntry: true,
       });
       if (liveSubsystemRef.current !== subAddr) return;
 
@@ -270,6 +274,7 @@ export default function PairingPage() {
       if (liveSubsystemRef.current !== subAddr) return;
       const resp = await Bridge.request<StartPairingResponse>(PairingSubsystem.CMD_STARTPAIRING, subAddr, {
         productAddress,
+        s2PinEntry: true,
       });
       if (liveSubsystemRef.current !== subAddr) return;
 
@@ -483,6 +488,8 @@ export default function PairingPage() {
       <div className="max-w-lg mx-auto">
         <StageIndicator stage={pairing.stage} />
 
+        {pairingSubAddr && !pairing.isHubPairing && <S2PairingFailure pairingSubsystem={pairingSubAddr} />}
+
         <div className="bg-crane border border-heron rounded-[var(--border-radius-lg)] p-6">
           {pairing.stage === 'steps' && (
             <StepsStage
@@ -538,6 +545,8 @@ export default function PairingPage() {
           )}
         </div>
       </div>
+
+      {pairingSubAddr && !pairing.isHubPairing && <S2PinPrompt pairingSubsystem={pairingSubAddr} />}
     </div>
   );
 }
