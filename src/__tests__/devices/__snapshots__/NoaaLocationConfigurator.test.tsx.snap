@@ -1,0 +1,80 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`NoaaLocationConfigurator matches snapshot 1`] = `
+<DocumentFragment>
+  <div
+    data-testid="noaa-location-configurator"
+  >
+    <p
+      class="text-sm font-medium text-swift mb-1"
+    >
+      National Weather Service Location
+    </p>
+    <p
+      class="text-xs text-grouse mb-2"
+    >
+      Select the state and county where the device is located. It uses this to scan for the strongest weather radio signal in your area.
+    </p>
+    <div
+      class="space-y-2"
+    >
+      <label
+        class="block text-xs text-coot"
+      >
+        State
+        <select
+          class="mt-1 block w-full bg-crane border border-heron rounded-[var(--border-radius-base)] px-2 py-1.5 text-sm text-swift"
+          data-testid="noaa-location-state"
+        >
+          <option
+            value=""
+          >
+            -State-
+          </option>
+          <option
+            value="TX"
+          >
+            Texas
+          </option>
+          <option
+            value="CA"
+          >
+            California
+          </option>
+        </select>
+      </label>
+      <label
+        class="block text-xs text-coot"
+      >
+        County
+        <select
+          class="mt-1 block w-full bg-crane border border-heron rounded-[var(--border-radius-base)] px-2 py-1.5 text-sm text-swift disabled:opacity-50"
+          data-testid="noaa-location-county"
+        >
+          <option
+            value=""
+          >
+            -County-
+          </option>
+          <option
+            value="Travis"
+          >
+            Travis
+          </option>
+          <option
+            value="Bexar"
+          >
+            Bexar
+          </option>
+        </select>
+      </label>
+    </div>
+    <p
+      class="text-xs text-grouse mt-2"
+      data-testid="noaa-location-code"
+    >
+      S.A.M.E. code: 048453
+    </p>
+  </div>
+</DocumentFragment>
+`;

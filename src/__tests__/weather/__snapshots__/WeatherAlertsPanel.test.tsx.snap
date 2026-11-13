@@ -1,0 +1,50 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`WeatherAlertsPanel matches snapshot 1`] = `
+<DocumentFragment>
+  <div
+    class="space-y-4"
+    data-testid="weather-alerts-panel"
+  >
+    <h3
+      class="flex items-center gap-2 text-base font-semibold text-swift"
+    >
+      <span
+        class="icon-platform-weather-alert text-cardinal"
+      />
+      Weather Radio Alert
+    </h3>
+    <div
+      data-testid="alert-list"
+    >
+      Radio DRIV:dev:r1
+    </div>
+    <div
+      class="space-y-3 border-t border-heron pt-4"
+    >
+      <p
+        class="text-sm text-coot"
+      >
+        Snooze to stop the audible notifications.
+      </p>
+      <p
+        class="text-xs text-grouse italic"
+      >
+        If anything changes about this alert (such as its end time or type), the device's speaker will let you know.
+      </p>
+      <button
+        class="px-4 py-2 text-sm bg-peacock text-crane rounded-[var(--border-radius-base)] hover:opacity-90 transition-opacity disabled:opacity-50"
+        data-testid="weather-alerts-snooze"
+        type="button"
+      >
+        Snooze
+      </button>
+      <p
+        class="text-xs text-grouse"
+      >
+        To unsubscribe from an alert type, open the radio's configuration under Devices.
+      </p>
+    </div>
+  </div>
+</DocumentFragment>
+`;

@@ -34,6 +34,7 @@ import {
   LawnGardenCard,
   LightsSwitchesCard,
   WaterCard,
+  WeatherCard,
 } from '@/components/home';
 
 interface DashboardCard {
@@ -238,6 +239,8 @@ export default function HomePage() {
                 <DashboardCardRenderer key={card.serviceName} serviceName={card.serviceName} />
               );
             })}
+            {/* Weather has no dashboard preference; the card hides itself without radios. */}
+            <WeatherCard />
           </div>
         </div>
       </div>
