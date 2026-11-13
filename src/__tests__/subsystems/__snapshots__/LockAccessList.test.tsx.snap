@@ -1,0 +1,49 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`LockAccessList matches snapshot 1`] = `
+<DocumentFragment>
+  <div
+    class="space-y-4"
+  >
+    <div>
+      <h3
+        class="text-base font-medium text-swift"
+      >
+        Lock Access List
+      </h3>
+      <p
+        class="text-sm text-grouse mt-1"
+      >
+        When you add someone to your access list, they can use their unique PIN to open your keypad lock.
+      </p>
+    </div>
+    <div
+      data-entries="0"
+      data-sub="SERV:subdoorsnlocks:place-1"
+      data-testid="lock-card"
+    >
+      Back Door
+    </div>
+    <div
+      data-entries="2"
+      data-sub="SERV:subdoorsnlocks:place-1"
+      data-testid="lock-card"
+    >
+      Front Door
+    </div>
+    <p
+      class="text-xs text-grouse"
+      data-testid="lock-access-add-person"
+    >
+      Don't see the person you are looking for? People need a PIN for this place to be added. Invite people and manage PINs in 
+      <a
+        class="text-peacock hover:underline"
+        href="/settings"
+      >
+        Settings
+      </a>
+      .
+    </p>
+  </div>
+</DocumentFragment>
+`;

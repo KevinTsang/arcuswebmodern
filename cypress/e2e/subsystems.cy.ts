@@ -4,7 +4,7 @@
  */
 
 import {
-  Base, CareSubsystem, Contact, DoorLock, DoorsNLocksSubsystem, MotorizedDoor, PresenceSubsystem, Valve,
+  Base, CareSubsystem, Contact, Device, DoorLock, DoorsNLocksSubsystem, MotorizedDoor, PresenceSubsystem, Valve,
 } from '../../packages/arcus-core/src/capabilities/capabilities';
 import { DEVICE, addr } from '../support/platform/fixtures';
 import { tid } from '../support/selectors';
@@ -140,6 +140,64 @@ describe('Doors & Locks', () => {
       },
     });
     tid('doors-empty').should('be.visible');
+  });
+});
+
+describe('Doors & Locks access and chime', () => {
+  const personRow = (person: string) => tid(`lock-person-${DEVICE.lock}-${person}`);
+  const personToggle = (person: string) => tid(`lock-person-toggle-${DEVICE.lock}-${person}`);
+
+  it('switches between the status, access list and more tabs', () => {
+    cy.signIn({ path: '/services/doors-locks/status' });
+    tid('doors-tab-access-list').click();
+    cy.location('pathname').should('eq', '/services/doors-locks/access-list');
+    tid(`lock-access-${DEVICE.lock}`).should('contain.text', 'Front Door Lock');
+    tid('doors-tab-more').click();
+    cy.location('pathname').should('eq', '/services/doors-locks/more');
+    tid('door-chime-settings').should('be.visible');
+    tid('doors-tab-status').click();
+    tid('doors-section-locks').should('exist');
+  });
+
+  it('adds and removes people from a lock', () => {
+    cy.signIn({ path: '/services/doors-locks/access-list' });
+    personToggle(addr.person).should('be.checked');
+    personToggle(addr.guest).should('not.be.checked').click();
+    cy.expectRequest(DoorsNLocksSubsystem.CMD_AUTHORIZEPEOPLE, (r) =>
+      r.attributes.device === DEVICE.lock
+      && JSON.stringify(r.attributes.operations) === JSON.stringify([{ person: addr.guest, operation: 'AUTHORIZE' }]));
+    personRow(addr.guest).should('have.attr', 'data-state', 'AUTHORIZED');
+    personToggle(addr.guest).should('be.checked');
+
+    personToggle(addr.person).click();
+    cy.expectRequest(DoorsNLocksSubsystem.CMD_AUTHORIZEPEOPLE, (r) =>
+      JSON.stringify(r.attributes.operations) === JSON.stringify([{ person: addr.person, operation: 'DEAUTHORIZE' }]));
+    personRow(addr.person).should('have.attr', 'data-state', 'UNAUTHORIZED');
+  });
+
+  it('shows an error when changing access fails', () => {
+    cy.signIn({ path: '/services/doors-locks/access-list' });
+    cy.platform().invoke('failRequest', DoorsNLocksSubsystem.CMD_AUTHORIZEPEOPLE);
+    personToggle(addr.guest).click();
+    cy.toast("Couldn't add Sam Rivera to Front Door Lock");
+    personRow(addr.guest).should('have.attr', 'data-state', 'UNAUTHORIZED');
+  });
+
+  it('shows the PIN history for a lock', () => {
+    cy.signIn({ path: '/services/doors-locks/access-list' });
+    tid(`lock-history-toggle-${DEVICE.lock}`).click();
+    tid(`lock-history-${DEVICE.lock}`).should('contain.text', 'Front Door Lock was locked.');
+    cy.expectRequest(Device.CMD_LISTHISTORYENTRIES, (r) => r.destination === DEVICE.lock);
+  });
+
+  it('turns the door chime off for a sensor', () => {
+    cy.signIn({ path: '/services/doors-locks/more' });
+    tid(`door-chime-toggle-${DEVICE.contact}`).should('have.attr', 'aria-checked', 'true').click();
+    cy.expectRequest(Base.CMD_SETATTRIBUTES, (r) =>
+      r.destination === addr.subsystem('subdoorsnlocks')
+      && JSON.stringify(r.attributes[DoorsNLocksSubsystem.ATTR_CHIMECONFIG])
+        === JSON.stringify([{ device: DEVICE.contact, enabled: false }]));
+    tid(`door-chime-toggle-${DEVICE.contact}`).should('have.attr', 'aria-checked', 'false');
   });
 });
 

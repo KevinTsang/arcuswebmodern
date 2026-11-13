@@ -48,3 +48,6 @@ export {
 
 // Capabilities (Phase 3) — auto-generated from XML definitions
 export * from './capabilities/capabilities';
+
+// Doors & Locks struct constants (hand-written; not generated)
+export { LockAuthorizationState, LockAuthorizationOperation, DoorChimeConfig } from './capabilities/doorsNLocksTypes';

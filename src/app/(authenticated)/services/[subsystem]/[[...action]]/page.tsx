@@ -26,6 +26,7 @@ const DEFAULT_ACTION = 'status';
 /** Sub-tabs a view routes to beyond the default (see AlarmsView's tabs). */
 const EXTRA_ACTIONS: Partial<Record<string, string[]>> = {
   alarms: ['settings'],
+  'doors-locks': ['access-list', 'more'],
 };
 
 /**
