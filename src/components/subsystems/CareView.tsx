@@ -14,8 +14,9 @@ import { useCareSubsystem } from '@/hooks/useCareSubsystem';
 import { useAppDispatch } from '@/store/hooks';
 import { addNotification } from '@/store/slices/uiSlice';
 import { testIdSlug } from '@/lib/testId';
+import { CareNotificationList } from './CareNotificationList';
 
-type CareViewTab = 'status' | 'behaviors';
+type CareViewTab = 'status' | 'behaviors' | 'notifications';
 
 export function CareView() {
   const [tab, setTab] = useState<CareViewTab>('status');
@@ -41,9 +42,20 @@ export function CareView() {
         >
           Behaviors
         </button>
+        <button
+          onClick={() => setTab('notifications')}
+          data-testid="care-tab-notifications"
+          className={`px-4 py-1.5 rounded text-sm font-medium transition-colors ${
+            tab === 'notifications' ? 'bg-crane text-swift shadow-sm' : 'text-grouse hover:text-coot'
+          }`}
+        >
+          Notifications
+        </button>
       </div>
 
-      {tab === 'status' ? <CareStatus /> : <CareBehaviors />}
+      {tab === 'status' && <CareStatus />}
+      {tab === 'behaviors' && <CareBehaviors />}
+      {tab === 'notifications' && <CareNotificationList />}
     </div>
   );
 }

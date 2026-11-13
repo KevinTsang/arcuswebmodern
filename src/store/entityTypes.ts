@@ -168,17 +168,19 @@ export interface CareBehavior {
   type?: string;
 }
 
-/** Alarm call tree entry from AlarmSubsystem / SecuritySubsystem. */
-export interface AlarmCallEntry {
+/** Call tree entry shared by the alarm, security, safety and care subsystems. */
+export interface CallTreeEntry {
+  /** Person address (`SERV:person:<id>`). */
   person?: string;
+  /** Whether the person is notified. */
   enabled?: boolean;
 }
 
+/** Alarm call tree entry from AlarmSubsystem / SecuritySubsystem. */
+export type AlarmCallEntry = CallTreeEntry;
+
 /** Care call tree entry from CareSubsystem. */
-export interface CareCallEntry {
-  person?: string;
-  enabled?: boolean;
-}
+export type CareCallEntry = CallTreeEntry;
 
 /** Chime configuration from DoorsNLocksSubsystem. */
 export type ChimeConfig = Record<string, boolean>;

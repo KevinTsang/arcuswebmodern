@@ -238,6 +238,30 @@ describe('Care', () => {
     tid('care-clear').should('not.exist');
   });
 
+  it('reorders and toggles the care notification call tree', () => {
+    const CARE = addr.subsystem('subcare');
+    type Tree = Array<{ person: string; enabled: boolean }>;
+    cy.signIn({ path: '/services/care/status' });
+    tid('care-tab-notifications').click();
+    tid('care-notification-list').should('contain', 'when a care alarm is triggered');
+    tid(`calltree-entry-${addr.person}`).should('have.attr', 'data-position', '1').and('have.attr', 'data-enabled', 'true');
+    tid(`calltree-entry-${addr.guest}`).should('have.attr', 'data-position', '2').and('have.attr', 'data-enabled', 'false');
+
+    tid(`calltree-move-up-${addr.guest}`).click();
+    cy.expectRequest(Base.CMD_SETATTRIBUTES, (r) => {
+      const tree = r.attributes[CareSubsystem.ATTR_CALLTREE] as Tree | undefined;
+      return r.destination === CARE && !!tree && tree[0].person === addr.guest && tree[1].person === addr.person;
+    });
+    tid(`calltree-entry-${addr.guest}`).should('have.attr', 'data-position', '1');
+
+    tid(`calltree-toggle-${addr.guest}`).click();
+    cy.expectRequest(Base.CMD_SETATTRIBUTES, (r) => {
+      const tree = r.attributes[CareSubsystem.ATTR_CALLTREE] as Tree | undefined;
+      return r.destination === CARE && !!tree && tree.every((entry) => entry.enabled);
+    });
+    tid(`calltree-entry-${addr.guest}`).should('have.attr', 'data-enabled', 'true');
+  });
+
   it('reflects the alert on the dashboard card', () => {
     cy.signIn({
       customize: (p) => {
