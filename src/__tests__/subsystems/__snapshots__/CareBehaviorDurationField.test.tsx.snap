@@ -1,0 +1,27 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`CareBehaviorDurationField matches snapshot 1`] = `
+<DocumentFragment>
+  <select
+    aria-label="No Activity For..."
+    class="text-sm border border-heron rounded px-2 py-1 bg-crane text-swift"
+    data-testid="care-field-duration"
+  >
+    <option
+      value="1800"
+    >
+      30 Minutes
+    </option>
+    <option
+      value="3600"
+    >
+      60 Minutes
+    </option>
+    <option
+      value="7200"
+    >
+      120 Minutes
+    </option>
+  </select>
+</DocumentFragment>
+`;

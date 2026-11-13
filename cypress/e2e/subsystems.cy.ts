@@ -6,7 +6,8 @@
 import {
   Base, CareSubsystem, Contact, DoorLock, DoorsNLocksSubsystem, MotorizedDoor, PresenceSubsystem, Valve,
 } from '../../packages/arcus-core/src/capabilities/capabilities';
-import { DEVICE, addr } from '../support/platform/fixtures';
+import { CARE_BEHAVIOR, DEVICE, addr } from '../support/platform/fixtures';
+import type { LoggedRequest } from '../support/platform/types';
 import { tid } from '../support/selectors';
 
 /** Subsystem views render device panels directly (no list row wrapper). */
@@ -211,9 +212,8 @@ describe('Care', () => {
     tid('care-silent').should('not.exist');
 
     tid('care-tab-behaviors').click();
-    tid('care-behavior-detail-morning-activity')
-      .should('contain', 'Expect motion in the hallway by 9 AM')
-      .and('contain', 'Type: INACTIVITY');
+    tid(`care-behavior-name-${CARE_BEHAVIOR.morning}`).should('have.text', 'Morning activity');
+    tid(`care-behavior-summary-${CARE_BEHAVIOR.morning}`).should('have.text', '1 Device · 60 Minutes · 24/7');
   });
 
   it('shows the last alert cause and clears a care alert', () => {
@@ -245,6 +245,105 @@ describe('Care', () => {
       },
     });
     tid('status-value-care-status').should('have.text', 'Alert');
+  });
+});
+
+/** The care behavior a subcare:AddBehavior / UpdateBehavior request sent. */
+interface SentBehavior {
+  id?: string;
+  name?: string;
+  templateId?: string;
+  enabled?: boolean;
+  durationSecs?: number;
+  devices?: string[];
+  timeWindows?: { day: string; startTime: string; durationSecs: number }[];
+}
+
+const sentBehavior = (r: LoggedRequest) => r.attributes.behavior as SentBehavior;
+
+describe('Care behaviors', () => {
+  const care = addr.subsystem('subcare');
+
+  beforeEach(() => {
+    cy.signIn({ path: '/services/care/status' });
+    tid('care-tab-behaviors').click();
+  });
+
+  it('enables and disables a behavior', () => {
+    tid(`care-behavior-row-${CARE_BEHAVIOR.night}`).should('have.attr', 'data-enabled', 'false');
+    tid(`care-behavior-toggle-${CARE_BEHAVIOR.night}`).click();
+    cy.expectRequest(CareSubsystem.CMD_UPDATEBEHAVIOR, (r) =>
+      r.destination === care && sentBehavior(r).id === CARE_BEHAVIOR.night && sentBehavior(r).enabled === true);
+    tid(`care-behavior-row-${CARE_BEHAVIOR.night}`).should('have.attr', 'data-enabled', 'true');
+  });
+
+  it('reverts a toggle the platform rejects', () => {
+    cy.platform().invoke('failRequest', CareSubsystem.CMD_UPDATEBEHAVIOR);
+    tid(`care-behavior-toggle-${CARE_BEHAVIOR.morning}`).click();
+    cy.toast("Failed to disable 'Morning activity'");
+    tid(`care-behavior-row-${CARE_BEHAVIOR.morning}`).should('have.attr', 'data-enabled', 'true');
+  });
+
+  it('creates a behavior from a template', () => {
+    tid('care-behavior-add').click();
+    tid('care-library-title').should('have.text', 'Care Behaviors Library');
+    tid('care-library-unavailable').should('contain', 'Curfew');
+    tid('care-template-1').click();
+
+    tid('care-editor-name').should('have.value', 'No Activity Detected');
+    tid('care-section-status-devices').should('have.text', 'Required');
+    tid('care-editor-save').should('be.disabled');
+    tid(`care-field-device-${DEVICE.motion}`).check();
+    tid('care-field-duration').select('120 Minutes');
+    tid('care-window-add').click();
+    tid('care-window-start-day').select('Tuesday');
+    tid('care-window-start-time').type('07:00');
+    tid('care-window-end-day').select('Tuesday');
+    tid('care-window-end-time').type('11:00');
+    tid('care-window-save').click();
+    tid('care-window-0').should('have.text', 'Tue 7:00 AM – Tue 11:00 AMRemove');
+    tid('care-editor-name').clear().type('Breakfast check');
+    tid('care-editor-save').click();
+
+    cy.expectRequest(CareSubsystem.CMD_ADDBEHAVIOR, (r) => {
+      const b = sentBehavior(r);
+      return r.destination === care && b.name === 'Breakfast check' && b.templateId === '1'
+        && b.durationSecs === 7200 && b.devices?.[0] === DEVICE.motion
+        && b.timeWindows?.[0]?.day === 'Tuesday' && b.timeWindows?.[0]?.durationSecs === 4 * 3600;
+    });
+    cy.toast("'Breakfast check' has been added.");
+    cy.contains('[data-testid^="care-behavior-name-"]', 'Breakfast check').should('be.visible');
+  });
+
+  it('shows the platform error for a duplicate name', () => {
+    tid('care-behavior-add').click();
+    tid('care-template-1').click();
+    tid(`care-field-device-${DEVICE.motion}`).check();
+    tid('care-editor-name').clear().type('Morning activity');
+    tid('care-editor-save').click();
+    tid('care-editor-error').should('have.text', 'Care Behavior name must be unique.');
+  });
+
+  it('edits a behavior', () => {
+    tid(`care-behavior-edit-${CARE_BEHAVIOR.morning}`).click();
+    tid('care-editor-name').should('have.value', 'Morning activity');
+    tid(`care-field-device-${DEVICE.contact}`).check();
+    tid('care-editor-save').click();
+
+    cy.expectRequest(CareSubsystem.CMD_UPDATEBEHAVIOR, (r) =>
+      sentBehavior(r).id === CARE_BEHAVIOR.morning && sentBehavior(r).devices?.length === 2);
+    cy.toast("'Morning activity' has been saved.");
+    tid(`care-behavior-summary-${CARE_BEHAVIOR.morning}`).should('have.text', '2 Devices · 60 Minutes · 24/7');
+  });
+
+  it('removes a behavior', () => {
+    tid(`care-behavior-edit-${CARE_BEHAVIOR.night}`).click();
+    tid('care-editor-remove').click();
+    cy.contains('button', 'Yes, Remove Behavior').click();
+
+    cy.expectRequestAttrs(CareSubsystem.CMD_REMOVEBEHAVIOR, { id: CARE_BEHAVIOR.night });
+    cy.toast("'Night wandering' was removed.");
+    tid(`care-behavior-row-${CARE_BEHAVIOR.night}`).should('not.exist');
   });
 });
 

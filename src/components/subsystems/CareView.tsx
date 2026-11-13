@@ -14,6 +14,7 @@ import { useCareSubsystem } from '@/hooks/useCareSubsystem';
 import { useAppDispatch } from '@/store/hooks';
 import { addNotification } from '@/store/slices/uiSlice';
 import { testIdSlug } from '@/lib/testId';
+import { CareBehaviors } from './CareBehaviors';
 
 type CareViewTab = 'status' | 'behaviors';
 
@@ -116,54 +117,6 @@ function CareStatus() {
         <p data-testid="care-device-count">{care.careDevices.length} care device{care.careDevices.length !== 1 ? 's' : ''} monitored</p>
         {care.silent && <p data-testid="care-silent" className="mt-1">Silent mode is on</p>}
       </div>
-    </div>
-  );
-}
-
-function CareBehaviors() {
-  const care = useCareSubsystem();
-
-  if (care.behaviors.length === 0) {
-    return (
-      <div className="text-center py-8">
-        <p className="text-grouse mb-2">No behaviors configured.</p>
-        <p className="text-sm text-grouse">
-          Care behaviors monitor activity patterns and alert you when something unusual happens.
-        </p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-3">
-      <p className="text-sm text-grouse mb-4">
-        Manage your care behaviors. Full behavior editing will be available in a future update.
-      </p>
-      {care.behaviors.map((behavior, i) => {
-        const name = (behavior['name'] as string) ?? `Behavior ${i + 1}`;
-        const description = (behavior['description'] as string) ?? '';
-        const enabled = behavior['enabled'] !== false;
-        const type = (behavior['type'] as string) ?? '';
-
-        return (
-          <div key={i} data-testid={`care-behavior-detail-${testIdSlug(name)}`} className={`border rounded-[var(--border-radius-base)] p-4 ${
-            enabled ? 'border-heron' : 'border-heron opacity-60'
-          }`}>
-            <div className="flex items-start justify-between">
-              <div>
-                <h4 className="text-sm font-medium text-swift">{name}</h4>
-                {description && <p className="text-xs text-grouse mt-1">{description}</p>}
-                {type && <p className="text-xs text-grouse mt-0.5">Type: {type}</p>}
-              </div>
-              <span className={`text-xs px-2 py-0.5 rounded ${
-                enabled ? 'bg-honeycreeper/10 text-honeycreeper' : 'bg-pigeon text-grouse'
-              }`}>
-                {enabled ? 'Active' : 'Disabled'}
-              </span>
-            </div>
-          </div>
-        );
-      })}
     </div>
   );
 }

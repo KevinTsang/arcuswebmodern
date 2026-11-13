@@ -63,6 +63,62 @@ export const DEVICE = {
   relay: addr.device('relay'),
 };
 
+/** Care behavior ids in the fixture's care subsystem. */
+export const CARE_BEHAVIOR = {
+  morning: 'care-behavior-morning',
+  night: 'care-behavior-night',
+};
+
+/** Raw `subcare:ListBehaviorTemplates` templates the fake platform offers. */
+export const CARE_BEHAVIOR_TEMPLATES = [
+  {
+    id: '1',
+    name: 'No Activity Detected',
+    description: 'Use contact and motion sensors to trigger an alarm if no activity occurs at times when you normally expect movement.',
+    type: 'INACTIVITY',
+    timeWindowSupport: 'REQUIRED',
+    availableDevices: [DEVICE.motion, DEVICE.contact],
+    fieldLabels: { duration: 'No Activity For...', timeWindows: 'Days & Times To Monitor', devices: 'Participating Devices' },
+    fieldDescriptions: {
+      duration: 'Trigger the alarm when no activity is detected for a period of time.',
+      timeWindows: 'Choose when you want to monitor for lack of activity.',
+      devices: 'Choose the devices that will trigger a Care Alarm when no activity is detected.',
+    },
+    fieldValues: { duration: '30,60,120,180,240,300', timeWindows: null, devices: null },
+    fieldUnits: { duration: 'MINUTES', timeWindows: null, devices: null },
+  },
+  {
+    id: '2',
+    name: 'Door Opened Unexpectedly',
+    description: 'Place contact sensors on entry doors to trigger an alarm if loved ones open a door unexpectedly.',
+    type: 'OPEN',
+    timeWindowSupport: 'REQUIRED',
+    availableDevices: [DEVICE.contact],
+    fieldLabels: { timeWindows: 'Days & Times To Monitor', devices: 'Participating Doors' },
+    fieldDescriptions: {
+      timeWindows: 'Choose when you want to monitor for opened doors.',
+      devices: 'Choose the devices that will trigger a Care Alarm when they are opened.',
+    },
+    fieldValues: { timeWindows: null, devices: null },
+    fieldUnits: { timeWindows: null, devices: null },
+  },
+  {
+    id: '6',
+    name: 'Curfew',
+    description: 'Trigger a Care Alarm when a loved one is not home by a certain time.',
+    type: 'PRESENCE',
+    timeWindowSupport: 'REQUIRED',
+    availableDevices: [],
+    fieldLabels: { timeWindows: 'Curfew Time', devices: 'Participating Devices' },
+    fieldDescriptions: {
+      timeWindows: 'Choose what time you want to check to see if a loved one is home.',
+      devices: 'Choose the devices that will trigger a Care Alarm when they are not home.',
+    },
+    fieldValues: { timeWindows: null, devices: null },
+    fieldUnits: { timeWindows: 'NODURATION', devices: null },
+  },
+];
+
 export const DEVICE_NAME = {
   lamp: 'Living Room Lamp',
   coffee: 'Coffee Maker',
@@ -301,8 +357,15 @@ export function createFixture(): PlatformData {
     subsystem('subcare', {
       [CareSubsystem.ATTR_CAREDEVICES]: [DEVICE.motion],
       [CareSubsystem.ATTR_BEHAVIORS]: [
-        { name: 'Morning activity', description: 'Expect motion in the hallway by 9 AM', enabled: true, type: 'INACTIVITY' },
-        { name: 'Night wandering', description: 'Alert on door activity overnight', enabled: false, type: 'OPEN' },
+        {
+          id: CARE_BEHAVIOR.morning, templateId: '1', name: 'Morning activity', description: 'Expect motion in the hallway by 9 AM',
+          enabled: true, type: 'INACTIVITY', devices: [DEVICE.motion], durationSecs: 3600, timeWindows: [],
+        },
+        {
+          id: CARE_BEHAVIOR.night, templateId: '2', name: 'Night wandering', description: 'Alert on door activity overnight',
+          enabled: false, type: 'OPEN', devices: [DEVICE.contact],
+          timeWindows: [{ day: 'Monday', startTime: '22:00:00', durationSecs: 8 * 3600 }],
+        },
       ],
       [CareSubsystem.ATTR_ALARMSTATE]: CareSubsystem.ALARMSTATE_READY,
       [CareSubsystem.ATTR_ALARMMODE]: CareSubsystem.ALARMMODE_ON,

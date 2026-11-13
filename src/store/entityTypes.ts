@@ -160,12 +160,35 @@ export type SchedulerData = ArcusPayload;
 /** Hub payload from API responses. */
 export type HubData = ArcusPayload;
 
-/** Care behavior from CareSubsystem. */
+/**
+ * Care behavior time window (platform `TimeWindow` struct): monitoring starts
+ * on `day` (e.g. "Monday") at `startTime` ("HH:mm:ss", place time) and lasts
+ * `durationSecs` seconds.
+ */
+export interface CareTimeWindow {
+  day: string;
+  startTime: string;
+  durationSecs: number;
+}
+
+/** Care behavior from CareSubsystem (platform `CareBehavior` struct). */
 export interface CareBehavior {
+  id?: string;
+  templateId?: string;
   name?: string;
   description?: string;
   enabled?: boolean;
+  active?: boolean;
   type?: string;
+  devices?: string[];
+  timeWindows?: CareTimeWindow[];
+  durationSecs?: number;
+  presenceRequiredTime?: string;
+  /** OPEN_COUNT behaviors: device address → maximum opens per day. */
+  openCount?: { [address: string]: number };
+  /** TEMPERATURE behaviors: range in degrees Celsius. */
+  lowTemp?: number;
+  highTemp?: number;
 }
 
 /** Alarm call tree entry from AlarmSubsystem / SecuritySubsystem. */

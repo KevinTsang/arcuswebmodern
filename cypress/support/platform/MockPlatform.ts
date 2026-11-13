@@ -16,9 +16,9 @@
 import {
   Account, AlarmIncident, AlarmSubsystem, Base, Device, Hub, HubZwave, PairingDevice,
   PairingSubsystem, Person, Place, Rule, RuleTemplate, Scene, SceneTemplate, Scheduler,
-  SecuritySubsystem,
+  SecuritySubsystem, CareSubsystem,
 } from '../../../packages/arcus-core/src/capabilities/capabilities';
-import { createFixture, PLACE_ID } from './fixtures';
+import { CARE_BEHAVIOR_TEMPLATES, createFixture, PLACE_ID } from './fixtures';
 import {
   PlatformFailure,
   type ApiKeyFixture, type Attrs, type Handler, type HandlerContext, type InvitationFixture,
@@ -925,6 +925,39 @@ export class MockPlatform {
     'subcare:Clear': ({ destination }) => {
       this.updateEntity(destination, { 'subcare:alarmState': 'READY' });
       return {};
+    },
+    [CareSubsystem.CMD_LISTBEHAVIORS]: ({ destination }) => ({
+      behaviors: (this.mustGet(destination)[CareSubsystem.ATTR_BEHAVIORS] as Attrs[] | undefined) ?? [],
+    }),
+    [CareSubsystem.CMD_LISTBEHAVIORTEMPLATES]: ({ destination }) => {
+      this.mustGet(destination);
+      return { behaviorTemplates: CARE_BEHAVIOR_TEMPLATES };
+    },
+    // Behaviors live in the subsystem's behaviors attribute, so the reset
+    // between tests discards anything a test adds.
+    [CareSubsystem.CMD_ADDBEHAVIOR]: ({ destination, attrs }) => {
+      const behaviors = (this.mustGet(destination)[CareSubsystem.ATTR_BEHAVIORS] as Attrs[] | undefined) ?? [];
+      const behavior = attrs.behavior as Attrs;
+      if (behaviors.some((b) => b.name === behavior.name)) {
+        throw new PlatformFailure('care.name_in_use', 'Behavior name is already in use');
+      }
+      const id = this.nextId('care-behavior');
+      this.updateEntity(destination, { [CareSubsystem.ATTR_BEHAVIORS]: [...behaviors, { ...behavior, id }] });
+      return { id };
+    },
+    [CareSubsystem.CMD_UPDATEBEHAVIOR]: ({ destination, attrs }) => {
+      const behaviors = (this.mustGet(destination)[CareSubsystem.ATTR_BEHAVIORS] as Attrs[] | undefined) ?? [];
+      const behavior = attrs.behavior as Attrs;
+      if (!behaviors.some((b) => b.id === behavior.id)) throw new PlatformFailure('error.notfound', 'Unknown behavior');
+      this.updateEntity(destination, {
+        [CareSubsystem.ATTR_BEHAVIORS]: behaviors.map((b) => (b.id === behavior.id ? { ...b, ...behavior } : b)),
+      });
+      return {};
+    },
+    [CareSubsystem.CMD_REMOVEBEHAVIOR]: ({ destination, attrs }) => {
+      const behaviors = (this.mustGet(destination)[CareSubsystem.ATTR_BEHAVIORS] as Attrs[] | undefined) ?? [];
+      this.updateEntity(destination, { [CareSubsystem.ATTR_BEHAVIORS]: behaviors.filter((b) => b.id !== attrs.id) });
+      return { removed: behaviors.some((b) => b.id === attrs.id) };
     },
 
     // Pairing

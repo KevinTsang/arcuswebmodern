@@ -1,0 +1,13 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`CareBehaviorCurfewField matches snapshot 1`] = `
+<DocumentFragment>
+  <input
+    aria-label="Curfew Time"
+    class="text-sm border border-heron rounded px-2 py-1 bg-crane text-swift"
+    data-testid="care-field-time"
+    type="time"
+    value="21:00"
+  />
+</DocumentFragment>
+`;
