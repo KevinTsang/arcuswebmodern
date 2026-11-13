@@ -474,11 +474,11 @@ None.
 
 | Feature | Legacy | Modern | Status |
 |---------|--------|--------|--------|
-| Service plan display | Yes | No | **Missing** |
-| Plan upgrade / downgrade | Yes | No | **Missing** |
-| Payment method management (Recurly) | Yes | No | **Missing** |
-| Billing address management | Yes | No | **Missing** |
-| Invoice history | Yes | No | **Missing** |
+| Service plan display | Yes | Yes (plan name, add-ons) | **Done** |
+| Plan upgrade / downgrade | Yes | Yes (Basic ↔ Premium, leaving Pro Monitoring; owner only) | **Done** |
+| Payment method management (Recurly) | Yes (UI disabled) | No (no platform API) | **Missing** |
+| Billing address management | Yes (UI disabled) | No (no platform API) | **Missing** |
+| Invoice history | Yes (UI disabled) | No (no platform API) | **Missing** |
 
 ### 17.3 Notification Preferences
 
@@ -493,7 +493,8 @@ None.
 ### Gaps
 
 - ~~**Bug:** Saving Profile → Edit Contact Info could blank the user's first and last name.~~ **DONE.** The form was seeded from `auth.person` (often just the session payload, with no names) and always wrote all three fields. `ContactInfoPanel` now loads the person with `base:GetAttributes` and stays disabled until that succeeds (error toast + retry on failure; a sign-in-again message with no session). It sends only the fields that changed, trimmed, and checks only those: names can't be blanked, and a changed phone must be a US number (phone characters only, 10 digits or 11 starting with 1, via `useFormValidation`'s new `phoneNumber` rule). Phones are sent as `(555) 123-4567`, the format the platform stores. Errors show after Save and follow typing, not blur. The Profile card refreshes after a save once #13 (`auth.person` follows the person's `base:ValueChange`) is merged.
-- Billing and subscription management is entirely absent.
+- ~~Service plan display and plan changes.~~ **DONE.** The Profile tab's Service Plan card names the active place's plan (all seven platform levels, from the legacy `plans.json` names) and lists its add-ons (Cellular Backup). The account owner of the active place (`account:owner` is the signed-in person and `auth.account` is the place's account) gets a Change action that opens `ServicePlanPanel`: pick Basic or Premium and confirm with `account:UpdateServicePlan` (`placeID`, `serviceLevel`, and the place's current add-ons so they're kept). A move to Basic from a premium plan, or off Pro Monitoring, first lists what the place loses. The new level is applied to the store right away, a toast confirms it, and a failure shows an error toast and leaves the panel open to retry. Pro Monitoring isn't offered there because the platform only moves a place onto it through enrollment (`UpdateServicePlan` refuses it), so the panel links to `/promonitoring`. Others see a note that only the account owner can change the plan. Prices aren't shown: the platform has no billing backend.
+- **Payment method, billing address and invoice history — blocked (no platform API).** The open-source platform registers no handlers for `account:UpdateBillingInfoCC`, `account:CreateBillingAccount`, `account:ListInvoices` or `account:ListAdjustments` (Recurly was removed), and the `account:billing*` attributes are read-only. Legacy had the same gap: its billing form, invoice list and plan prices are commented out ("would need to be addressed if billing was supported") and the form never called Recurly. Revisit if a billing service is added to the platform; it would also need a Recurly public key passed in at runtime (`run-nginx`, `ServerConfig` and `ArcusCoreConfig`, see §26).
 - Notification preferences and call tree management.
 - Account-level features (email management, phone verification, security questions, account deletion).
 
@@ -691,7 +692,7 @@ These are commonly used features that users will expect:
 2. ~~**Alarm device participation & settings**~~ — **DONE.** Device participation (ON/PARTIAL/both/none), notification call tree (ordered, enable/disable, reorder), delay settings (exit/entrance per mode), silent alarm, arming sounds.
 3. **Thermostat scheduling** — Temperature programs by time-of-day and day-of-week.
 4. **Notification call tree (Care)** — Ordered contact escalation for care events (alarm call tree is done).
-5. **Billing & subscription management** — Service plan display, payment methods, invoicing.
+5. **Billing & subscription management** — **Partial.** Service plan display and Basic/Premium plan changes are done. Payment methods, billing address and invoices are blocked: the platform has no billing API.
 
 ### Tier 2 — Important Gaps (Full Feature Parity)
 

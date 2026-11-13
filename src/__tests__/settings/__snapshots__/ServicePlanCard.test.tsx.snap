@@ -1,0 +1,64 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`ServicePlanCard matches snapshot 1`] = `
+<DocumentFragment>
+  <div
+    class="border border-heron rounded-[var(--border-radius-base)] overflow-hidden"
+    data-testid="info-card-service-plan"
+  >
+    <div
+      class="flex items-center justify-between px-4 py-3 bg-pigeon/30"
+    >
+      <h3
+        class="text-sm font-medium text-swift"
+      >
+        Service Plan
+      </h3>
+      <span
+        data-testid="info-card-service-plan-action"
+      >
+        <button
+          class="text-sm text-peacock hover:underline"
+          data-testid="service-plan-change"
+        >
+          Change
+        </button>
+      </span>
+    </div>
+    <div
+      class="px-4 py-3 space-y-2"
+    >
+      <div
+        class="flex justify-between text-sm"
+      >
+        <span
+          class="text-grouse"
+        >
+          Current Plan
+        </span>
+        <span
+          class="text-swift"
+          data-testid="info-card-service-plan-value-current-plan"
+        >
+          Premium
+        </span>
+      </div>
+      <div
+        class="flex justify-between text-sm"
+      >
+        <span
+          class="text-grouse"
+        >
+          Add-ons
+        </span>
+        <span
+          class="text-swift"
+          data-testid="info-card-service-plan-value-add-ons"
+        >
+          Cellular Backup
+        </span>
+      </div>
+    </div>
+  </div>
+</DocumentFragment>
+`;
