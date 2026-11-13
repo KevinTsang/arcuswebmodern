@@ -1,0 +1,20 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`HaloControl matches snapshot 1`] = `
+<DocumentFragment>
+  <div
+    class="flex items-center gap-2"
+  >
+    <button
+      aria-pressed="false"
+      class="px-3 py-1.5 text-sm font-medium rounded-[var(--border-radius-base)] bg-pigeon text-coot hover:bg-heron disabled:opacity-50"
+      data-testid="halo-radio-DRIV:dev:halo"
+    >
+      Play Radio
+    </button>
+    <span
+      data-testid="device-toggle-DRIV:dev:halo"
+    />
+  </div>
+</DocumentFragment>
+`;

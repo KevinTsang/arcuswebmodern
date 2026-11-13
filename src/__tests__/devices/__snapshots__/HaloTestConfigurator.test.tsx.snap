@@ -1,0 +1,30 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`HaloTestConfigurator matches snapshot 1`] = `
+<DocumentFragment>
+  <div>
+    <p
+      class="text-sm font-medium text-swift mb-2"
+    >
+      Testing
+    </p>
+    <p
+      class="text-xs text-grouse"
+    >
+      Last Tested
+    </p>
+    <p
+      class="text-sm mb-3 text-coot"
+      data-testid="halo-test-last"
+    >
+      Never tested
+    </p>
+    <button
+      class="px-4 py-1.5 text-sm font-medium rounded-[var(--border-radius-base)] bg-peacock text-crane disabled:opacity-50"
+      data-testid="halo-test-now"
+    >
+      Test Now
+    </button>
+  </div>
+</DocumentFragment>
+`;

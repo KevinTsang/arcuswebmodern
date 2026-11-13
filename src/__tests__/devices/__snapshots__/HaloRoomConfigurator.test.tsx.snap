@@ -1,0 +1,35 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`HaloRoomConfigurator matches snapshot 1`] = `
+<DocumentFragment>
+  <div>
+    <label
+      class="block text-sm font-medium text-swift mb-2"
+      for="halo-room-DRIV:dev:halo"
+    >
+      Room
+    </label>
+    <select
+      class="w-full px-3 py-2 text-sm text-swift bg-crane border border-heron rounded-[var(--border-radius-base)] focus:outline-none focus:border-peacock disabled:opacity-50"
+      data-testid="halo-room-select"
+      id="halo-room-DRIV:dev:halo"
+    >
+      <option
+        value="NONE"
+      >
+        None
+      </option>
+      <option
+        value="LIVING_ROOM"
+      >
+        Living Room
+      </option>
+      <option
+        value="BASEMENT"
+      >
+        Basement
+      </option>
+    </select>
+  </div>
+</DocumentFragment>
+`;

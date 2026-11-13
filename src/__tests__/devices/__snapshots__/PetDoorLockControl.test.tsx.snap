@@ -1,0 +1,43 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`PetDoorLockControl matches snapshot 1`] = `
+<DocumentFragment>
+  <div
+    aria-label="Pet door mode"
+    class="flex gap-1"
+    role="group"
+  >
+    <button
+      aria-pressed="true"
+      class="
+              px-3 py-1.5 text-sm font-medium rounded-[var(--border-radius-base)] transition-colors
+              bg-peacock text-crane
+            "
+      data-testid="petdoor-mode-locked-DRIV:dev:petdoor"
+      disabled=""
+    >
+      Lock
+    </button>
+    <button
+      aria-pressed="false"
+      class="
+              px-3 py-1.5 text-sm font-medium rounded-[var(--border-radius-base)] transition-colors
+              bg-pigeon text-coot hover:bg-heron disabled:opacity-50
+            "
+      data-testid="petdoor-mode-unlocked-DRIV:dev:petdoor"
+    >
+      Unlock
+    </button>
+    <button
+      aria-pressed="false"
+      class="
+              px-3 py-1.5 text-sm font-medium rounded-[var(--border-radius-base)] transition-colors
+              bg-pigeon text-coot hover:bg-heron disabled:opacity-50
+            "
+      data-testid="petdoor-mode-auto-DRIV:dev:petdoor"
+    >
+      Auto
+    </button>
+  </div>
+</DocumentFragment>
+`;

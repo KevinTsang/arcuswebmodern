@@ -7,6 +7,8 @@ import OpenCloseDoor from './OpenCloseDoor';
 import OpenCloseValve from './OpenCloseValve';
 import ThermostatControl from './ThermostatControl';
 import MultiToggle from './MultiToggle';
+import PetDoorLockControl from './PetDoorLockControl';
+import HaloControl from './HaloControl';
 
 interface DeviceActionsProps {
   address: string;
@@ -28,6 +30,10 @@ function DeviceActionsInner({ address, action }: DeviceActionsProps) {
       return <ThermostatControl address={address} />;
     case 'multi-toggle':
       return <MultiToggle address={address} />;
+    case 'lock-unlock-auto-petdoor':
+      return <PetDoorLockControl address={address} />;
+    case 'halo-toggle-light-play-stop':
+      return <HaloControl address={address} />;
     default:
       return null;
   }

@@ -1,4 +1,4 @@
-import { Device, DeviceConnection } from '@arcus/core';
+import { Device, DeviceConnection, Halo, PetDoor } from '@arcus/core';
 import {
   cToF,
   formatTemp,
@@ -191,6 +191,16 @@ describe('getDeviceStatusText', () => {
 
   it('returns Ok for motion sensor', () => {
     expect(getDeviceStatusText({ [Device.ATTR_DEVTYPEHINT]: 'Motion' }, BASE_CONFIG)).toBe('Ok');
+  });
+
+  it('returns the Halo device state', () => {
+    expect(getDeviceStatusText({ [Device.ATTR_DEVTYPEHINT]: 'Halo', [Halo.ATTR_DEVICESTATE]: Halo.DEVICESTATE_SAFE }, BASE_CONFIG)).toBe('Ok');
+    expect(getDeviceStatusText({ [Device.ATTR_DEVTYPEHINT]: 'Halo', [Halo.ATTR_DEVICESTATE]: Halo.DEVICESTATE_CO }, BASE_CONFIG)).toBe('CO Detected');
+  });
+
+  it('returns the pet door mode', () => {
+    expect(getDeviceStatusText({ [Device.ATTR_DEVTYPEHINT]: 'Pet Door', [PetDoor.ATTR_LOCKSTATE]: PetDoor.LOCKSTATE_AUTO }, BASE_CONFIG)).toBe('Auto');
+    expect(getDeviceStatusText({ [Device.ATTR_DEVTYPEHINT]: 'Pet Door', [PetDoor.ATTR_LOCKSTATE]: PetDoor.LOCKSTATE_LOCKED }, BASE_CONFIG)).toBe('Locked');
   });
 });
 
