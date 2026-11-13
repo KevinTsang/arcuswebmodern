@@ -122,7 +122,7 @@ Under arcus-k8s it also runs with a read-only root filesystem, given writable mo
 `/tmp`, `/var/cache/nginx`, `/var/run` and `/usr/share/nginx/html/build/dist/config`
 (for `server.json`; without it the container exits at start).
 
-The ui-server reads its platform URLs when the container starts, from the same
+The ui-server reads its platform URLs and feature flags when the container starts, from the same
 environment variables as legacy. `run-nginx` writes them to
 `/usr/share/nginx/html/build/dist/config/server.json` (that directory must be
 writable), and the app fetches that file before it talks to the platform:
@@ -131,10 +131,12 @@ writable), and the app fetches that file before it talks to the platform:
 |----------|---------|
 | `ARCUS_HTTP_URI` | Platform HTTP base, e.g. `https://client.arcussmarthome.com` |
 | `ARCUS_WS_URI` | Platform WebSocket base, e.g. `wss://client.arcussmarthome.com` |
+| `ARCUS_ENABLE_HUB_WIFI_SCAN` | Optional. `1` offers hub Wi-Fi setup (scan and connect) on Wi-Fi-capable hubs; unset or `0` hides it, as in legacy |
 
-Both are required: the container exits at start if either is unset, or if it can't write
-`server.json`. Legacy's other `ARCUS_*` variables (`ARCUS_REDIRECT_URI`, the feature flags
-and the app download URIs) are ignored: nothing in this client uses them.
+Both URLs are required: the container exits at start if either is unset, or if it can't write
+`server.json`. Legacy's other `ARCUS_*` variables (`ARCUS_REDIRECT_URI`, the other feature
+flags and the app download URIs) are ignored: nothing in this client uses them. Outside the
+image (`npm run dev`), set `NEXT_PUBLIC_ENABLE_HUB_WIFI_SCAN=1` to turn hub Wi-Fi setup on.
 
 ```bash
 docker/bin/build.sh                    # build arcus/ui-server:<version>-<sha> and :latest

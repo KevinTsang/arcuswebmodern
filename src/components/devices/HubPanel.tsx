@@ -4,15 +4,23 @@
  * HubPanel — displays hub status at the top of the device list.
  *
  * Replaces src/components/hub/panel/. Shows hub connection state,
- * model name, battery status, and firmware version.
+ * model name, battery status, and firmware version, and opens the hub
+ * settings panel (name and Wi-Fi).
  */
 
-import { memo } from 'react';
+import { memo, useCallback } from 'react';
 import { Hub, HubAdvanced, HubPower } from '@arcus/core';
 import { useAppSelector } from '@/store/hooks';
+import { useSidePanel } from '@/components/SidePanel';
+import { HubSettingsPanel } from '@/components/hub/HubSettingsPanel';
 
 function HubPanelInner() {
   const hub = useAppSelector((s) => s.hub.hub);
+  const { openRight } = useSidePanel();
+
+  const handleOpenSettings = useCallback(() => {
+    openRight(<HubSettingsPanel />, { title: 'Hub Settings', key: 'hub-settings' });
+  }, [openRight]);
 
   if (!hub) return null;
 
@@ -55,6 +63,16 @@ function HubPanelInner() {
             {batteryPowered && battery != null && ` \u00B7 Battery: ${Math.round(battery)}%`}
           </p>
         </div>
+
+        <button
+          type="button"
+          onClick={handleOpenSettings}
+          data-testid="hub-settings-open"
+          className="flex-shrink-0 text-sm text-peacock hover:underline"
+          aria-label={`Settings for ${name}`}
+        >
+          Settings
+        </button>
 
         {/* Status indicator */}
         <div

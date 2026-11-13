@@ -9,6 +9,8 @@ export interface ArcusCoreConfig {
   apiUrl: string;
   wsUrl: string;
   version: string;
+  /** Hub Wi-Fi setup (scan and connect) is offered: legacy's ARCUS_ENABLE_HUB_WIFI_SCAN. */
+  enableHubWifiScan: boolean;
 }
 
 let _config: ArcusCoreConfig | null = null;

@@ -509,8 +509,8 @@ None.
 | Z-Wave device removal | Yes | Yes | **Done** |
 | Zigbee network scan | Yes | Yes (via MCP) | **Done** |
 | Hub firmware update workflow | Yes | No | **Missing** |
-| Hub WiFi configuration (SSID, password, scan) | Yes | No | **Missing** |
-| Hub name configuration | Yes | No | **Missing** |
+| Hub WiFi configuration (SSID, password, scan) | Yes | Yes (Hub Settings panel; behind `ARCUS_ENABLE_HUB_WIFI_SCAN`) | **Done** |
+| Hub name configuration | Yes | Yes (Hub Settings panel) | **Done** |
 | Cellular backup activation & status | Yes | No | **Missing** |
 | Z-Wave network topology / neighbor info | Yes | No | **Missing** |
 | Z-Wave node metrics (signal strength, routing) | Yes | No | **Missing** |
@@ -521,7 +521,7 @@ None.
 ### Gaps
 
 - Hub firmware update workflow.
-- Hub WiFi and network configuration.
+- ~~Hub WiFi and network configuration.~~ **DONE.** The hub panel on Devices has a Settings button that opens a Hub Settings side panel: rename the hub (`hub:name`, 254 characters, as legacy), see its connection (Ethernet / Wi-Fi / Cellular Backup / No Connection) and configured network, and, for a hub with the `hubwifi` capability when `ARCUS_ENABLE_HUB_WIFI_SCAN` is on, set up Wi-Fi. Scan sends `hubwifi:WiFiStartScan` (30 s, only while the hub is on Ethernet, as legacy) and lists the `hubwifi:WiFiScanResults` networks strongest first, one row per SSID, with signal bars and a lock for secured ones, plus Join Other Network. Connect sends `hubwifi:WiFiConnect` (SSID, BSSID, security, password); a reply other than CONNECTING, or a `hubwifi:WiFiConnectResult` other than OK, shows why (wrong password, no address, no internet, refused…) with Try Again. Done reminds the user to unplug Ethernet when a network is set but the hub is still wired. Leaving the panel ends the scan with `hubwifi:WiFiEndScan`.
 - Cellular backup management.
 - Advanced Z-Wave diagnostics (topology, per-node metrics).
 - Hub audio/sound settings.
@@ -538,14 +538,14 @@ None.
 | Device customization (name, favorite) | Yes | Yes | **Done** |
 | Completion with success/failure | Yes | Yes | **Done** |
 | Kit activation flow | Yes | Yes | **Done** |
-| Hub WiFi configuration during setup | Yes | No | **Missing** |
+| Hub WiFi configuration during setup | Yes | Yes (behind `ARCUS_ENABLE_HUB_WIFI_SCAN`) | **Done** |
 | Cloud device pairing (Nest, Hue, Lutron) | Yes | No | **Missing** |
 | Care alarm interrupt (cancel pairing on alert) | Yes | No | **Missing** |
 | Incident interrupt (cancel pairing on alarm) | Yes | Yes (the incident redirect to the alarms page stops searching and keeps the pairing flow) | **Done** |
 
 ### Gaps
 
-- Hub WiFi configuration during pairing.
+- ~~Hub WiFi configuration during pairing.~~ **DONE.** After a Wi-Fi-capable hub pairs, the completion screen offers "connecting the Hub to your Wi-Fi network", which opens Hub Settings and starts a scan straight away (legacy's autoScan). Once a network is configured it shows the current connection and network, and asks to unplug Ethernet until the hub is on Wi-Fi. Hub naming during pairing now writes `hub:name` (it wrote `dev:name`, which a hub doesn't have).
 - Cloud device / third-party bridge pairing flows.
 - Pairing interruption on care alarm events.
 
@@ -675,7 +675,7 @@ This is a new feature in the modern client with no legacy equivalent.
 
 ### Gaps
 
-- `server.json` holds only the two platform URLs. `run-nginx` ignores legacy's `ARCUS_REDIRECT_URI`, `ARCUS_ENABLE_HUB_WIFI_SCAN`, `ARCUS_ENABLE_BATTERY_PERCENTAGE`, `ARCUS_ENABLE_YEARLY_SUBSCRIPTION`, `ARCUS_IOS_DOWNLOAD_URI` and `ARCUS_ANDROID_DOWNLOAD_URI`. Nothing in this client reads them, and battery percentages are always shown (legacy showed them only with the flag on, which arcus-k8s sets). When a feature needs one (hub WiFi scan, billing, app download links), add its key to `run-nginx`, `ServerConfig` and `ArcusCoreConfig` together. A `NEXT_PUBLIC_*` value won't do, because the image bakes none in.
+- `server.json` holds the two platform URLs and `enableHubWifiScan` (from `ARCUS_ENABLE_HUB_WIFI_SCAN`, a non-zero number turns it on as in legacy; `NEXT_PUBLIC_ENABLE_HUB_WIFI_SCAN` outside the image). `run-nginx` ignores legacy's `ARCUS_REDIRECT_URI`, `ARCUS_ENABLE_BATTERY_PERCENTAGE`, `ARCUS_ENABLE_YEARLY_SUBSCRIPTION`, `ARCUS_IOS_DOWNLOAD_URI` and `ARCUS_ANDROID_DOWNLOAD_URI`. Nothing in this client reads them, and battery percentages are always shown (legacy showed them only with the flag on, which arcus-k8s sets). When a feature needs one (billing, app download links), add its key to `run-nginx`, `ServerConfig` and `ArcusCoreConfig` together. A `NEXT_PUBLIC_*` value won't do, because the image bakes none in.
 - No workflow builds and pushes the image. For now it is published by hand with `docker/bin/build.sh --push`.
 - **TODO — static-server:** arcus-k8s points `staticResourceBaseUrl`, `secureStaticResourceBaseUrl` and the notification service's resource URL at `static-server`, which still runs the legacy arcusweb image (Iris brand logo and 22 device-type icons). The mobile apps, legacy web and platform emails also request catalog product and pairing-step images, customization and action images, more brand logos and device types, and the email/invoice assets (`o/res_templates`). Those exist in the old Iris resource root (about 120 MB once unused parts are dropped) but aren't in any repo. Decide where they live (licensing, and whether a 120 MB set belongs in this repo, a separate repo or a private bucket), then build a replacement image.
 
@@ -698,7 +698,7 @@ These are commonly used features that users will expect:
 6. **Care behavior CRUD** — Create, edit, delete care behaviors with device/time/threshold configuration.
 7. **Lock access management** — PIN assignment per person, temporary PINs with expiry.
 8. **Hub firmware updates** — Firmware version display and update workflow.
-9. **Hub WiFi configuration** — WiFi SSID/password setup, network scanning.
+9. ~~**Hub WiFi configuration**~~ — **DONE.** WiFi scan, SSID/password/security setup and hub naming in a Hub Settings panel and after hub pairing, behind `ARCUS_ENABLE_HUB_WIFI_SCAN` (`run-nginx` → `server.json` → `ArcusCoreConfig.enableHubWifiScan`).
 10. **Irrigation scheduling & zone control** — Per-zone start/stop, schedule modes (even/odd/interval).
 11. **Rule scheduling** — Enable/disable rules on time-based schedules. (Scene scheduling is done.)
 12. **Account management** — Account deletion, email management, security questions.

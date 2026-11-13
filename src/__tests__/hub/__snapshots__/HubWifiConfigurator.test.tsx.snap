@@ -1,0 +1,30 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`HubWifiConfigurator – rendering matches snapshot 1`] = `
+<DocumentFragment>
+  <section
+    class="space-y-3"
+    data-testid="hub-wifi-configurator"
+  >
+    <h4
+      class="text-sm font-semibold text-swift"
+      data-testid="hub-wifi-title"
+    >
+      Connect Hub to Wi-Fi
+    </h4>
+    <p
+      class="text-sm text-grouse"
+      data-testid="hub-wifi-summary"
+    >
+      To get started, scan for available Wi-Fi networks and then select the one you want to use. Ensure the Ethernet cable stays inserted into your Hub until the Wi-Fi setup is finished.
+    </p>
+    <button
+      class="px-4 py-2 text-sm bg-peacock text-crane rounded-[var(--border-radius-base)] hover:opacity-90 disabled:opacity-50"
+      data-testid="hub-wifi-scan"
+      type="button"
+    >
+      Scan
+    </button>
+  </section>
+</DocumentFragment>
+`;

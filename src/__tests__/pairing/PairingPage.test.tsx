@@ -1,5 +1,5 @@
 import { act, render, screen, waitFor } from '@testing-library/react';
-import { Base, Device, Product, PairingDevice, PairingSubsystem } from '@arcus/core';
+import { Base, Device, Hub, Product, PairingDevice, PairingSubsystem } from '@arcus/core';
 import PairingPage from '@/app/(authenticated)/pairing/page';
 import type { PairingFlow } from '@/components/pairing/types';
 import { KIT_TAG, newPairingFlow } from '@/lib/pairingFlow';
@@ -513,6 +513,27 @@ describe('PairingPage – error handling', () => {
     await nextPoll();
     expect(listCalls).toBe(3);
     expect(screen.getByTestId('stage-indicator')).toBeInTheDocument();
+  });
+
+  it('names the hub with hub:name when hub customization is saved', async () => {
+    mockHub = { id: 'SERV:hub-1:hub', [Base.ATTR_ADDRESS]: 'SERV:hub-1:hub' };
+    mockPairingState = {
+      ...mockPairingState,
+      stage: 'customize',
+      isHubPairing: true,
+      deviceName: '  My Hub  ',
+    };
+    mockBridgeRequest.mockResolvedValueOnce({});
+
+    render(<PairingPage />);
+    await act(() => capturedCustomizeProps.onCustomize());
+
+    expect(mockBridgeRequest).toHaveBeenCalledWith(
+      Base.CMD_SETATTRIBUTES,
+      'SERV:hub-1:hub',
+      { [Hub.ATTR_NAME]: 'My Hub' },
+    );
+    expect(mockDispatch).toHaveBeenCalledWith({ type: 'pairing/customizationComplete' });
   });
 
   it('dispatches error notification when hub name customization fails', async () => {

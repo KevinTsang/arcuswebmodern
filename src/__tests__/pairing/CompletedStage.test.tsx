@@ -2,6 +2,12 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { Base, PairingDevice } from '@arcus/core';
 import CompletedStage from '@/components/pairing/CompletedStage';
 
+// The Wi-Fi prompt reads the store and side panel; it has its own tests.
+jest.mock('@/components/pairing/HubWifiSetupPrompt', () => ({
+  __esModule: true,
+  default: () => <div data-testid="hub-wifi-setup-prompt-mock" />,
+}));
+
 const mockFinish = jest.fn();
 const mockPairAnother = jest.fn();
 
@@ -74,6 +80,16 @@ describe('CompletedStage – successful hub pairing', () => {
   it('shows hub success message', () => {
     render(<CompletedStage {...defaultProps} isHubPairing />);
     expect(screen.getByText('Your hub is connected and ready to use.')).toBeInTheDocument();
+  });
+
+  it('offers hub Wi-Fi setup', () => {
+    render(<CompletedStage {...defaultProps} isHubPairing />);
+    expect(screen.getByTestId('hub-wifi-setup-prompt-mock')).toBeInTheDocument();
+  });
+
+  it('does not offer hub Wi-Fi setup after pairing a device', () => {
+    render(<CompletedStage {...defaultProps} />);
+    expect(screen.queryByTestId('hub-wifi-setup-prompt-mock')).not.toBeInTheDocument();
   });
 });
 

@@ -1,0 +1,51 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`HubSettingsPanel matches snapshot 1`] = `
+<DocumentFragment>
+  <div
+    class="p-4 space-y-6"
+    data-testid="hub-settings-panel"
+  >
+    <div
+      data-testid="name-field-mock"
+    >
+      SERV:ABC-1234:hub|Home Hub
+    </div>
+    <section
+      class="space-y-1"
+    >
+      <h4
+        class="text-sm font-semibold text-swift"
+      >
+        Connectivity
+      </h4>
+      <p
+        class="text-sm text-coot"
+      >
+        Connection: 
+        <span
+          data-testid="hub-settings-connection"
+        >
+          Ethernet
+        </span>
+      </p>
+    </section>
+    <div
+      class="border-t border-heron pt-4"
+    >
+      <div
+        data-testid="wifi-configurator-mock"
+      >
+        manual
+      </div>
+    </div>
+    <button
+      class="px-6 py-2 text-sm bg-peacock text-crane rounded-[var(--border-radius-base)] hover:opacity-90"
+      data-testid="hub-settings-done"
+      type="button"
+    >
+      Done
+    </button>
+  </div>
+</DocumentFragment>
+`;

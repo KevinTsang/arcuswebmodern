@@ -1,5 +1,6 @@
 import { PairingDevice as PairingDeviceCap } from '@arcus/core';
 import type { PairingDevice } from '@/store/entityTypes';
+import HubWifiSetupPrompt from './HubWifiSetupPrompt';
 
 interface CompletedStageProps {
   isHubPairing: boolean;
@@ -48,6 +49,7 @@ export default function CompletedStage({
               ? 'Your hub is connected and ready to use.'
               : `${productName} has been successfully paired.`}
           </p>
+          {isHubPairing && <HubWifiSetupPrompt />}
         </>
       )}
       <div className="flex gap-2 justify-center">

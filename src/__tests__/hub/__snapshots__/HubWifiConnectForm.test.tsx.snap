@@ -1,0 +1,56 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`HubWifiConnectForm – rendering matches snapshot 1`] = `
+<DocumentFragment>
+  <form
+    class="space-y-3"
+    data-testid="hub-wifi-connect-form"
+    novalidate=""
+  >
+    <p
+      class="text-sm font-medium text-swift"
+    >
+      Chosen Wi-Fi Network: 
+      <em
+        data-testid="hub-wifi-chosen-network"
+      >
+        HomeNet
+      </em>
+    </p>
+    <div>
+      <label
+        class="block text-xs text-coot mb-1"
+        for="hub-wifi-password"
+      >
+        Wi-Fi Network Password
+      </label>
+      <input
+        autocomplete="new-password"
+        class="w-full px-3 py-2 text-sm text-swift bg-crane border border-heron rounded-[var(--border-radius-base)] focus:outline-none focus:border-peacock"
+        data-testid="hub-wifi-password"
+        id="hub-wifi-password"
+        type="password"
+        value=""
+      />
+    </div>
+    <div
+      class="flex gap-2"
+    >
+      <button
+        class="px-4 py-2 text-sm bg-peacock text-crane rounded-[var(--border-radius-base)] hover:opacity-90 disabled:opacity-50"
+        data-testid="hub-wifi-connect"
+        type="submit"
+      >
+        Connect
+      </button>
+      <button
+        class="px-4 py-2 text-sm border border-heron text-coot rounded-[var(--border-radius-base)] hover:bg-pigeon"
+        data-testid="hub-wifi-cancel"
+        type="button"
+      >
+        Cancel
+      </button>
+    </div>
+  </form>
+</DocumentFragment>
+`;

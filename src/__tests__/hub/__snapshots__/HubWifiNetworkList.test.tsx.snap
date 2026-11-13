@@ -1,0 +1,73 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`HubWifiNetworkList matches snapshot 1`] = `
+<DocumentFragment>
+  <div
+    class="space-y-2"
+  >
+    <p
+      class="text-sm font-medium text-swift"
+    >
+      Choose Wi-Fi Network
+    </p>
+    <ul
+      class="border border-heron rounded-[var(--border-radius-base)] divide-y divide-heron"
+    >
+      <li>
+        <button
+          class="w-full flex items-center gap-2 px-3 py-2 text-left text-sm text-swift hover:bg-pigeon"
+          data-testid="hub-wifi-network-HomeNet"
+          type="button"
+        >
+          <span
+            class="flex-1 truncate"
+          >
+            HomeNet
+            <span
+              class="ml-2 text-xs text-lovebird"
+            >
+              Current
+            </span>
+          </span>
+          <span
+            aria-label="Secured"
+            class="icon-platform-lock-1 text-grouse"
+          />
+          <span
+            aria-label="Signal 4 of 4"
+            class="icon-app-wi-fi-4 text-grouse"
+            data-testid="hub-wifi-signal-HomeNet"
+          />
+        </button>
+      </li>
+      <li>
+        <button
+          class="w-full flex items-center gap-2 px-3 py-2 text-left text-sm text-swift hover:bg-pigeon"
+          data-testid="hub-wifi-network-CoffeeShop"
+          type="button"
+        >
+          <span
+            class="flex-1 truncate"
+          >
+            CoffeeShop
+          </span>
+          <span
+            aria-label="Signal 1 of 4"
+            class="icon-app-wi-fi-1 text-grouse"
+            data-testid="hub-wifi-signal-CoffeeShop"
+          />
+        </button>
+      </li>
+      <li>
+        <button
+          class="w-full px-3 py-2 text-left text-sm text-peacock hover:bg-pigeon"
+          data-testid="hub-wifi-network-other"
+          type="button"
+        >
+          Join Other Network
+        </button>
+      </li>
+    </ul>
+  </div>
+</DocumentFragment>
+`;

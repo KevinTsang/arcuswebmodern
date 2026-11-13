@@ -64,6 +64,7 @@ describe('initializeCoreConfig – outside production', () => {
       apiUrl: 'https://build.example.com',
       wsUrl: 'wss://build.example.com',
       version: '2026.11.0',
+      enableHubWifiScan: false,
     });
     expect(mockBridgeConfigure).toHaveBeenCalledWith({ apiUrl: 'https://build.example.com', version: '2026.11.0' });
   });
@@ -76,6 +77,56 @@ describe('initializeCoreConfig – outside production', () => {
 
     expect(mockSetConfig).not.toHaveBeenCalled();
     expect(mockBridgeConfigure).not.toHaveBeenCalled();
+  });
+});
+
+describe('initializeCoreConfig – hub Wi-Fi scan flag', () => {
+  it('uses NEXT_PUBLIC_ENABLE_HUB_WIFI_SCAN outside production', async () => {
+    setEnv({ NODE_ENV: 'test', NEXT_PUBLIC_ENABLE_HUB_WIFI_SCAN: '1' });
+    const initializeCoreConfig = await loadInit();
+
+    await initializeCoreConfig();
+
+    expect(mockSetConfig).toHaveBeenCalledWith(expect.objectContaining({ enableHubWifiScan: true }));
+  });
+
+  it.each([
+    [true, true],
+    [false, false],
+    [1, true],
+    [0, false],
+    ['1', true],
+    ['0', false],
+    ['true', true],
+    ['abc', false],
+  ])('reads %p from server.json as %p', async (value, expected) => {
+    setEnv({ NODE_ENV: 'production', NEXT_PUBLIC_ENABLE_HUB_WIFI_SCAN: expected ? '0' : '1' });
+    mockFetch.mockResolvedValue(jsonResponse({ enableHubWifiScan: value }));
+    const initializeCoreConfig = await loadInit();
+
+    await initializeCoreConfig();
+
+    expect(mockSetConfig).toHaveBeenCalledWith(expect.objectContaining({ enableHubWifiScan: expected }));
+  });
+
+  it('falls back to the build-time flag when server.json leaves it out', async () => {
+    setEnv({ NODE_ENV: 'production', NEXT_PUBLIC_ENABLE_HUB_WIFI_SCAN: '1' });
+    mockFetch.mockResolvedValue(jsonResponse({ apiUrl: 'https://client.example.com', enableHubWifiScan: '' }));
+    const initializeCoreConfig = await loadInit();
+
+    await initializeCoreConfig();
+
+    expect(mockSetConfig).toHaveBeenCalledWith(expect.objectContaining({ enableHubWifiScan: true }));
+  });
+
+  it('is off when neither sets it', async () => {
+    setEnv({ NODE_ENV: 'production', NEXT_PUBLIC_ENABLE_HUB_WIFI_SCAN: undefined });
+    mockFetch.mockResolvedValue(jsonResponse({}));
+    const initializeCoreConfig = await loadInit();
+
+    await initializeCoreConfig();
+
+    expect(mockSetConfig).toHaveBeenCalledWith(expect.objectContaining({ enableHubWifiScan: false }));
   });
 });
 
@@ -98,6 +149,7 @@ describe('initializeCoreConfig – production', () => {
       apiUrl: 'https://client.example.com',
       wsUrl: 'wss://client.example.com',
       version: '2026.11.0',
+      enableHubWifiScan: false,
     });
     expect(mockBridgeConfigure).toHaveBeenCalledWith({ apiUrl: 'https://client.example.com', version: '2026.11.0' });
   });

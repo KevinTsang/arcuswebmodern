@@ -5,9 +5,12 @@
  */
 
 import {
-  Base, Contact, Device, DeviceConnection, Dimmer, DoorLock, Hub, HubAdvanced, HubZwave, Switch, Thermostat, Valve,
+  Base, Contact, Device, DeviceConnection, Dimmer, DoorLock, Hub, HubAdvanced, HubNetwork, HubWiFi, HubZwave, Switch,
+  Thermostat, Valve,
 } from '../../packages/arcus-core/src/capabilities/capabilities';
 import { DEVICE, DEVICE_NAME, addr } from '../support/platform/fixtures';
+import { HUB_WIFI_BAD_PASSWORD } from '../support/platform/MockPlatform';
+import type { MockPlatform } from '../support/platform/MockPlatform';
 import { tid } from '../support/selectors';
 
 /** The list row for a device. */
@@ -325,5 +328,72 @@ describe('Z-Wave tools', () => {
     cy.get('[data-testid="zwave-remove-cancel"]').click();
     cy.expectRequestAttrs(Hub.CMD_UNPAIRINGREQUEST, { actionType: 'STOP_UNPAIRING' });
     cy.get('[data-testid="zwave-remove-modal"]').should('not.exist');
+  });
+});
+
+describe('Hub settings (PRD §18)', () => {
+  /** A Wi-Fi-capable hub on Ethernet. dev:e2e turns NEXT_PUBLIC_ENABLE_HUB_WIFI_SCAN on. */
+  function wifiHub(p: MockPlatform) {
+    Object.assign(p.data.entities[addr.hub], {
+      [Base.ATTR_CAPS]: [Base.NAMESPACE, Hub.NAMESPACE, HubNetwork.NAMESPACE, HubWiFi.NAMESPACE],
+      [HubNetwork.ATTR_TYPE]: HubNetwork.TYPE_ETH,
+      [HubWiFi.ATTR_WIFISSID]: '',
+    });
+  }
+
+  beforeEach(() => {
+    cy.signIn({ path: '/devices', customize: wifiHub });
+    tid('hub-settings-open').click();
+    tid('hub-settings-panel').should('be.visible');
+  });
+
+  it('renames the hub', () => {
+    tid('hub-name-input').should('have.value', 'Home Hub').clear().type('Cabin Hub');
+    tid('hub-name-save').click();
+    cy.expectRequestAttrs(Base.CMD_SETATTRIBUTES, { [Hub.ATTR_NAME]: 'Cabin Hub' });
+    cy.toast('Hub name saved.');
+    tid('hub-name').should('have.text', 'Cabin Hub');
+  });
+
+  it('scans for networks and connects the hub to one', () => {
+    tid('hub-settings-connection').should('have.text', 'Ethernet');
+    tid('hub-wifi-scan').click();
+    cy.expectRequestAttrs(HubWiFi.CMD_WIFISTARTSCAN, { timeout: 30 });
+
+    // Strongest first
+    cy.get('[data-testid^="hub-wifi-network-"]').first().should('have.attr', 'data-testid', 'hub-wifi-network-HomeNet');
+    tid('hub-wifi-network-HomeNet').click();
+    tid('hub-wifi-security').should('have.value', HubWiFi.WIFISECURITY_WPA2_PSK);
+    tid('hub-wifi-password').type(HUB_WIFI_BAD_PASSWORD);
+    tid('hub-wifi-connect').click();
+    tid('hub-wifi-connect-error').should('contain', 'The Wi-Fi password is incorrect.');
+
+    tid('hub-wifi-password').clear().type('correct horse');
+    tid('hub-wifi-connect').should('have.text', 'Try Again').click();
+    cy.expectRequestAttrs(HubWiFi.CMD_WIFICONNECT, {
+      ssid: 'HomeNet',
+      bssid: '00:11:22:33:44:02',
+      security: HubWiFi.WIFISECURITY_WPA2_PSK,
+      key: 'correct horse',
+    });
+    cy.toast('Hub connected to HomeNet.');
+    tid('hub-settings-ssid').should('have.text', 'HomeNet');
+    tid('hub-wifi-title').should('have.text', 'Update Wi-Fi');
+
+    tid('hub-settings-done').click();
+    cy.toast('Please unplug the Ethernet cable to complete Wi-Fi setup.');
+  });
+
+  it('joins a network the scan did not list', () => {
+    tid('hub-wifi-scan').click();
+    tid('hub-wifi-network-other').click();
+    tid('hub-wifi-ssid').type('HiddenNet');
+    tid('hub-wifi-security').select('WPA PSK');
+    tid('hub-wifi-password').type('hunter22');
+    tid('hub-wifi-connect').click();
+    cy.expectRequestAttrs(HubWiFi.CMD_WIFICONNECT, {
+      ssid: 'HiddenNet', security: HubWiFi.WIFISECURITY_WPA_PSK, key: 'hunter22',
+    });
+    cy.toast('Hub connected to HiddenNet.');
   });
 });
