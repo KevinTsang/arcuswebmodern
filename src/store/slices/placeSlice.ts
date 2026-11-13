@@ -1,6 +1,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { Base } from '@arcus/core';
 import type { PlaceData } from '@/components/settings/types';
+import type { Preferences } from '@arcus/core/services/types';
 
 /**
  * A place `base:ValueChange`: the place's address plus only the attributes
@@ -11,7 +12,7 @@ export type PlaceChange = Pick<PlaceData, typeof Base.ATTR_ADDRESS> & Partial<Pl
 export interface PlaceState {
   placeId: string | null;
   place: PlaceData | null;
-  preferences: Record<string, unknown> | null;
+  preferences: Preferences | null;
   products: Record<string, unknown>[];
   ready: boolean;
 }
@@ -30,11 +31,13 @@ const placeSlice = createSlice({
   reducers: {
     /**
      * Start loading a place. `place` only ever holds the record of `placeId`,
-     * so switching to a different place drops the previous place's record.
+     * so switching to a different place drops the previous place's record and
+     * the (per-place) preferences.
      */
     setPlaceId(state, action: PayloadAction<string>) {
       if (action.payload !== state.placeId) {
         state.place = null;
+        state.preferences = null;
       }
       state.placeId = action.payload;
       state.ready = false;
@@ -58,7 +61,7 @@ const placeSlice = createSlice({
       if (state.place?.[Base.ATTR_ADDRESS] !== action.payload[Base.ATTR_ADDRESS]) return;
       Object.assign(state.place, action.payload);
     },
-    setPreferences(state, action: PayloadAction<Record<string, unknown>>) {
+    setPreferences(state, action: PayloadAction<Preferences>) {
       state.preferences = action.payload;
     },
     setProducts(state, action: PayloadAction<Record<string, unknown>[]>) {

@@ -138,31 +138,71 @@ describe('Dashboard preferences', () => {
     cy.signIn({ path: '/preferences' });
     tid('preferences-cards-title').should('have.text', 'Dashboard Cards');
     tid('preferences-save').should('not.exist');
-    tid('preference-card-climate').should('have.attr', 'data-position', '3');
+    tid('preference-card-CLIMATE').should('have.attr', 'data-position', '5');
 
-    tid('preference-move-up-climate').click();
-    tid('preference-card-climate').should('have.attr', 'data-position', '2');
-    tid('preference-visible-cameras')
+    tid('preference-move-up-CLIMATE').click();
+    tid('preference-card-CLIMATE').should('have.attr', 'data-position', '4');
+    tid('preference-visible-CAMERAS')
       .should('have.attr', 'aria-checked', 'true').click();
     tid('preferences-save').click();
 
     cy.toast('Preferences saved');
     cy.expectRequest('sess:SetPreferences').then((request) => {
-      const prefs = request.attributes.prefs as { 'dashboard:cards': string[]; 'dashboard:hidden': string[] };
-      expect(prefs['dashboard:cards'].slice(0, 3)).to.deep.eq(['favorites', 'climate', 'history']);
-      expect(prefs['dashboard:hidden']).to.deep.eq(['cameras']);
+      const prefs = request.attributes.prefs as { dashboardCards: { serviceName: string; hideCard: boolean }[] };
+      expect(prefs.dashboardCards.slice(0, 5).map((c) => c.serviceName))
+        .to.deep.eq(['FAVORITES', 'HISTORY', 'LIGHTS_N_SWITCHES', 'CLIMATE', 'ALARMS']);
+      expect(prefs.dashboardCards.filter((c) => c.hideCard).map((c) => c.serviceName)).to.deep.eq(['CAMERAS']);
     });
 
     // The saved order is reloaded from the platform.
     cy.reload();
-    cy.get('[data-testid="preference-card-climate"]', { timeout: 20000 }).should('have.attr', 'data-position', '2');
-    tid('preference-visible-cameras').should('have.attr', 'aria-checked', 'false');
+    cy.get('[data-testid="preference-card-CLIMATE"]', { timeout: 20000 }).should('have.attr', 'data-position', '4');
+    tid('preference-visible-CAMERAS').should('have.attr', 'aria-checked', 'false');
+  });
+
+  it('applies saved preferences to the dashboard', () => {
+    cy.signIn({ path: '/preferences' });
+    tid('preference-move-up-CLIMATE').click();
+    tid('preference-visible-CAMERAS').click();
+    tid('preference-visible-HISTORY').click();
+    tid('preferences-save').click();
+    cy.toast('Preferences saved');
+
+    // In-app navigation: the dashboard reads the updated preferences from the store.
+    tid('header-home-link').click();
+    cy.location('pathname').should('eq', '/home');
+    card('climate').should('exist');
+    card('cameras').should('not.exist');
+    tid('dashboard-sidebar').should('not.exist');
+    cy.get('[data-testid^="card-"]:not([data-testid^="card-view-link-"])').then(($cards) => {
+      const order = [...$cards].map((el) => el.getAttribute('data-testid'));
+      expect(order.slice(0, 4)).to.deep.eq(['card-favorites', 'card-lights-switches', 'card-climate', 'card-alarms']);
+    });
+  });
+
+  it('loads saved preferences into the dashboard on sign-in', () => {
+    cy.signIn({
+      customize: (p) => {
+        p.data.preferences = {
+          dashboardCards: [
+            { serviceName: 'WATER', hideCard: false },
+            { serviceName: 'ALARMS', hideCard: true },
+            { serviceName: 'HISTORY', hideCard: true },
+          ],
+        };
+      },
+    });
+    card('water').should('exist');
+    card('alarms').should('not.exist');
+    tid('dashboard-sidebar').should('not.exist');
+    cy.get('[data-testid^="card-"]:not([data-testid^="card-view-link-"])').first()
+      .should('have.attr', 'data-testid', 'card-water');
   });
 
   it('reports a failure to save', () => {
     cy.signIn({ path: '/preferences' });
     cy.platform().invoke('failRequest', 'sess:SetPreferences');
-    tid('preference-visible-water').click();
+    tid('preference-visible-WATER').click();
     tid('preferences-save').click();
     cy.toast('Failed to save preferences');
   });

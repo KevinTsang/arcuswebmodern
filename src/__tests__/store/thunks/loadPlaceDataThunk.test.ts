@@ -21,6 +21,7 @@ import type { PlaceData } from '@/store/entityTypes';
 // ── Mocks ─────────────────────────────────────────────────────────────
 
 const mockListRuleTemplates = jest.fn();
+const mockGetPreferences = jest.fn();
 jest.mock('@arcus/core/services', () => ({
   ProductCatalogService: {
     GetProducts: () => Promise.resolve({ products: [] }),
@@ -33,6 +34,7 @@ jest.mock('@arcus/core/services', () => ({
     ListRules: () => Promise.resolve({ rules: [] }),
     ListRuleTemplates: (...args: any[]) => mockListRuleTemplates(...args),
   },
+  SessionService: { GetPreferences: (...args: any[]) => mockGetPreferences(...args) },
 }));
 
 /** base:GetAttributes responses for each place address. */
@@ -78,6 +80,8 @@ const HOME = makePlace('p1', 'Home');
 const LAKE = makePlace('p2', 'Lake House');
 const CABIN = makePlace('p3', 'Cabin');
 
+const PREFS = { dashboardCards: [{ serviceName: 'CLIMATE', hideCard: true }] };
+
 const flushPromises = () => new Promise((r) => setTimeout(r, 0));
 
 function createTestStore() {
@@ -106,6 +110,7 @@ beforeEach(() => {
     placeLoads.set(place[Base.ATTR_ADDRESS], jest.fn().mockResolvedValue(place));
   }
   mockListRuleTemplates.mockResolvedValue({ ruleTemplates: [] });
+  mockGetPreferences.mockResolvedValue({ prefs: PREFS });
 });
 
 // ── Tests ─────────────────────────────────────────────────────────────
@@ -165,5 +170,64 @@ describe('loadPlaceDataThunk', () => {
 
     expect(store.getState().place.placeId).toBe('p3');
     expect(store.getState().place.place).toEqual(CABIN);
+  });
+});
+
+describe('loadPlaceDataThunk – preferences', () => {
+  it('stores the session preferences of the place', async () => {
+    const store = createTestStore();
+
+    await store.dispatch(loadPlaceDataThunk('p1'));
+
+    expect(mockGetPreferences).toHaveBeenCalledTimes(1);
+    expect(store.getState().place.preferences).toEqual(PREFS);
+  });
+
+  it('stores empty preferences when the platform returns none', async () => {
+    mockGetPreferences.mockResolvedValueOnce({});
+    const store = createTestStore();
+
+    await store.dispatch(loadPlaceDataThunk('p1'));
+
+    expect(store.getState().place.preferences).toEqual({});
+  });
+
+  it('still finishes loading when preferences fail to load', async () => {
+    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+    mockGetPreferences.mockRejectedValueOnce(new Error('timeout'));
+    const store = createTestStore();
+
+    await store.dispatch(loadPlaceDataThunk('p1'));
+
+    expect(store.getState().place).toMatchObject({ placeId: 'p1', preferences: null, ready: true });
+    expect(consoleError).toHaveBeenCalledWith('Failed to load preferences:', expect.any(Error));
+    consoleError.mockRestore();
+  });
+
+  it("drops the previous place's preferences when switching places", async () => {
+    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+    const store = createTestStore();
+    await store.dispatch(loadPlaceDataThunk('p1'));
+    mockGetPreferences.mockRejectedValueOnce(new Error('timeout'));
+
+    await store.dispatch(loadPlaceDataThunk('p2'));
+
+    expect(store.getState().place.preferences).toBeNull();
+    consoleError.mockRestore();
+  });
+
+  it('ignores preferences that arrive after the user switched to another place', async () => {
+    const store = createTestStore();
+    const lakePrefs = { dashboardCards: [{ serviceName: 'WATER', hideCard: true }] };
+    // p2's preferences arrive only after the user has switched on to p3
+    mockGetPreferences.mockImplementationOnce(async () => {
+      await store.dispatch(loadPlaceDataThunk('p3'));
+      return { prefs: lakePrefs };
+    });
+
+    await store.dispatch(loadPlaceDataThunk('p2'));
+
+    expect(store.getState().place.placeId).toBe('p3');
+    expect(store.getState().place.preferences).toEqual(PREFS);
   });
 });

@@ -7,21 +7,22 @@
  * Shows favorites, alarm status, climate, doors/locks, cameras,
  * care, home/family, lawn/garden, lights, and water.
  * Card ordering follows user preferences (dashboardCards).
- * Sidebar shows recent history events.
+ * Sidebar shows recent history events; the HISTORY card preference sets
+ * whether it starts open.
  */
 
 import { useMemo, useCallback, useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import Bridge from '@arcus/core/bridge';
-import {
-  AlarmSubsystem, Base, CamerasSubsystem, CareSubsystem, ClimateSubsystem, DoorsNLocksSubsystem,
-  LawnNGardenSubsystem, LightsNSwitchesSubsystem, Place, PresenceSubsystem, Subsystem, WaterSubsystem,
-} from '@arcus/core';
+import { Base, Place, Subsystem } from '@arcus/core';
 import type { ListHistoryEntriesResponse } from '@/arcus/types';
 import type { HistoryEntry } from '@/components/history/HistoryList';
 import { useAppSelector } from '@/store/hooks';
-import type { SubsystemNamespace } from '@/lib/subsystemConfig';
+import { getSubsystemConfigByPreferenceName } from '@/lib/subsystemConfig';
+import {
+  FAVORITES_CARD, HISTORY_CARD, resolveDashboardCards, type DashboardCardName,
+} from '@/lib/dashboardCards';
 import { selectAllSubsystems } from '@/store/slices/subsystemsSlice';
 import {
   FavoritesCard,
@@ -35,37 +36,6 @@ import {
   LightsSwitchesCard,
   WaterCard,
 } from '@/components/home';
-
-interface DashboardCard {
-  serviceName: string;
-  hideCard: boolean;
-}
-
-const DEFAULT_CARDS: DashboardCard[] = [
-  { serviceName: 'FAVORITES', hideCard: false },
-  { serviceName: 'ALARMS', hideCard: false },
-  { serviceName: 'CLIMATE', hideCard: false },
-  { serviceName: 'DOORS_N_LOCKS', hideCard: false },
-  { serviceName: 'CAMERAS', hideCard: false },
-  { serviceName: 'CARE', hideCard: false },
-  { serviceName: 'HOME_N_FAMILY', hideCard: false },
-  { serviceName: 'LAWN_N_GARDEN', hideCard: false },
-  { serviceName: 'LIGHTS_N_SWITCHES', hideCard: false },
-  { serviceName: 'WATER', hideCard: false },
-];
-
-const SERVICE_TO_NAMESPACE: Record<string, SubsystemNamespace> = {
-  ALARMS: AlarmSubsystem.NAMESPACE,
-  CLIMATE: ClimateSubsystem.NAMESPACE,
-  DOORS_N_LOCKS: DoorsNLocksSubsystem.NAMESPACE,
-  CAMERAS: CamerasSubsystem.NAMESPACE,
-  CARE: CareSubsystem.NAMESPACE,
-  HOME_N_FAMILY: PresenceSubsystem.NAMESPACE,
-  LAWN_N_GARDEN: LawnNGardenSubsystem.NAMESPACE,
-  LIGHTS_N_SWITCHES: LightsNSwitchesSubsystem.NAMESPACE,
-  WATER: WaterSubsystem.NAMESPACE,
-};
-
 
 function formatDate(ts: number): string {
   return new Date(ts).toLocaleDateString(undefined, {
@@ -90,7 +60,12 @@ export default function HomePage() {
 
   const placeName = place?.[Place.ATTR_NAME] ?? 'Your Home';
 
-  const [showSidebar, setShowSidebar] = useState(true);
+  const allCards = useMemo(() => resolveDashboardCards(preferences), [preferences]);
+  const historyHidden = allCards.some((c) => c.serviceName === HISTORY_CARD && c.hideCard);
+  // The toggle overrides the saved HISTORY preference for this visit only, as in the legacy client.
+  const [sidebarOverride, setSidebarOverride] = useState<boolean | null>(null);
+  const showSidebar = sidebarOverride ?? !historyHidden;
+  const toggleSidebar = useCallback(() => setSidebarOverride(!showSidebar), [showSidebar]);
   const [events, setEvents] = useState<HistoryEntry[]>([]);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -116,16 +91,17 @@ export default function HomePage() {
   }, [fetchHistory]);
 
   // Card ordering from preferences
-  const cards = useMemo(() => {
-    const prefCards = (preferences?.['dashboardCards'] as DashboardCard[]) ?? DEFAULT_CARDS;
-    return prefCards.filter((c) => !c.hideCard);
-  }, [preferences]);
+  const cards = useMemo(
+    () => allCards.filter((c) => !c.hideCard && c.serviceName !== HISTORY_CARD),
+    [allCards],
+  );
 
   // Check subsystem availability
   const isAvailable = useCallback(
-    (serviceName: string) => {
-      const ns = SERVICE_TO_NAMESPACE[serviceName];
-      if (!ns) return serviceName === 'FAVORITES';
+    (serviceName: DashboardCardName) => {
+      if (serviceName === FAVORITES_CARD) return true;
+      const ns = getSubsystemConfigByPreferenceName(serviceName)?.namespace;
+      if (!ns) return false;
       return subsystems.some((s) => {
         const addr = s[Base.ATTR_ADDRESS] as string;
         return addr?.startsWith(`SERV:${ns}:`) && s[Subsystem.ATTR_AVAILABLE] !== false;
@@ -218,7 +194,7 @@ export default function HomePage() {
         {/* Context bar with sidebar toggle */}
         <div className="hidden md:flex items-center px-[var(--gutter)] pt-4 pb-2">
           <button
-            onClick={() => setShowSidebar(!showSidebar)}
+            onClick={toggleSidebar}
             data-testid="dashboard-sidebar-toggle"
             className="text-peacock hover:opacity-75 transition-opacity"
             title={showSidebar ? 'Hide sidebar' : 'Show sidebar'}
@@ -231,7 +207,7 @@ export default function HomePage() {
           {/* Dashboard cards */}
           <div className="space-y-4">
             {cards.map((card) => {
-              if (!isAvailable(card.serviceName) && card.serviceName !== 'FAVORITES') {
+              if (!isAvailable(card.serviceName)) {
                 return null;
               }
               return (
@@ -245,9 +221,9 @@ export default function HomePage() {
   );
 }
 
-function DashboardCardRenderer({ serviceName }: { serviceName: string }) {
+function DashboardCardRenderer({ serviceName }: { serviceName: DashboardCardName }) {
   switch (serviceName) {
-    case 'FAVORITES':
+    case FAVORITES_CARD:
       return <FavoritesCard />;
     case 'ALARMS':
       return <AlarmsCard />;

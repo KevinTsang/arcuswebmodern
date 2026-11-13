@@ -34,7 +34,7 @@ Status legend: **Done** = fully implemented, **Partial** = core flow works but m
 | Subsystem cards (12 types) | Yes | Yes | **Done** |
 | Favorites card | Yes | Yes | **Done** |
 | History sidebar | Yes | Yes (5 recent entries, refresh, link to full) | **Done** |
-| Card reordering & visibility | Yes (preferences page) | Yes (preferences page with up/down + toggle) | **Done** |
+| Card reordering & visibility | Yes (preferences page) | Yes (preferences page with up/down + toggle; saved to the shared `dashboardCards` preference, loaded with the place, and applied to the dashboard; the `HISTORY` entry collapses the sidebar) | **Done** |
 | Unavailable subsystem warnings | Yes | Yes (cards hidden when subsystem absent) | **Done** |
 
 ### Gaps
@@ -716,16 +716,17 @@ These are commonly used features that users will expect:
 21. **Mobile device presence tracking** — Phone location for home/away detection.
 22. **Ownership transfer, place deletion, cancel invitations** — Account and place lifecycle.
 23. **Pro monitoring trial & plan selection** — Trial activation, monthly vs annual.
-24. **Consolidate the dashboard card ↔ subsystem mappings** — The home page keeps
-    its own `SERVICE_TO_NAMESPACE` table (`src/app/(authenticated)/home/page.tsx`)
-    alongside `subsystemConfigs` (`src/lib/subsystemConfig.ts`), which already
-    maps each subsystem to its namespace, slug and device attributes. Fold the
-    card's preference key (`serviceName`, e.g. `DOORS_N_LOCKS`) into
-    `SubsystemConfigEntry` so there is one source of truth, and use it from the
-    Preferences page too — it currently has a third list of card keys
-    (`favorites`, `doorsLocks`, …) and writes `dashboard:cards` / `dashboard:hidden`
-    while the home page reads `dashboardCards`, so saved preferences never
-    affect the dashboard.
+24. ~~**Consolidate the dashboard card ↔ subsystem mappings**~~ — **DONE.** Each
+    `SubsystemConfigEntry` (`src/lib/subsystemConfig.ts`) now carries its card's
+    `preferenceName` (`DOORS_N_LOCKS`, …, as in legacy `config/subsystem.json`), and
+    `src/lib/dashboardCards.ts` holds the Favorites/History keys, the legacy default
+    order and `resolveDashboardCards()`. The home page's `SERVICE_TO_NAMESPACE` table
+    and the Preferences page's own card list are gone. Preferences reads and writes
+    the `dashboardCards` preference (`{ serviceName, hideCard }[]`, shared with the
+    mobile apps) instead of `dashboard:cards` / `dashboard:hidden`, and updates the
+    store on save; `loadPlaceDataThunk` now loads the preferences with the place
+    (they were never loaded before), so saved preferences take effect on the
+    dashboard.
 25. **Split `login/page.tsx` into per-view components** — The login route
     (`src/app/login/page.tsx`, ~570 lines) defines four views in one file:
     `LoginForm`, `SendCodeForm`, `ResetPasswordForm` and `ResetConfirmation`,

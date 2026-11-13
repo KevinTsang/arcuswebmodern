@@ -324,6 +324,72 @@ describe('HomePage – card ordering from preferences', () => {
     expect(screen.queryByText('Favorites')).not.toBeInTheDocument();
     expect(screen.getByText('Climate')).toBeInTheDocument();
   });
+
+  const cardOrder = () =>
+    screen.getAllByTestId(/^card-(?!view-link-)/).map((el) => el.getAttribute('data-testid'));
+
+  const available = (ns: string) => ({
+    id: `SERV:${ns}:place-1`, [Base.ATTR_ADDRESS]: `SERV:${ns}:place-1`, 'subs:available': true,
+  });
+
+  it('shows the cards in the default order without saved preferences', () => {
+    mockSubsystems = [available('subwater'), available('subclimate'), available('sublightsnswitches')];
+    render(<HomePage />);
+    expect(cardOrder()).toEqual(['card-favorites', 'card-lights-switches', 'card-climate', 'card-water']);
+  });
+
+  it('orders cards by the saved dashboardCards preference', () => {
+    mockSubsystems = [available('subwater'), available('subclimate')];
+    mockPreferences = {
+      dashboardCards: [
+        { serviceName: 'WATER', hideCard: false },
+        { serviceName: 'CLIMATE', hideCard: false },
+        { serviceName: 'FAVORITES', hideCard: false },
+      ],
+    };
+    render(<HomePage />);
+    expect(cardOrder()).toEqual(['card-water', 'card-climate', 'card-favorites']);
+  });
+
+  it('shows cards missing from the saved list after the saved ones, and skips unknown entries', () => {
+    mockSubsystems = [available('subwater'), available('subclimate')];
+    mockPreferences = {
+      dashboardCards: [
+        { serviceName: 'ENERGY', hideCard: false },
+        { serviceName: 'WATER', hideCard: false },
+      ],
+    };
+    render(<HomePage />);
+    expect(cardOrder()).toEqual(['card-water', 'card-favorites', 'card-climate']);
+  });
+
+  it('does not show a card for an unavailable subsystem', () => {
+    mockSubsystems = [{ ...available('subclimate'), 'subs:available': false }];
+    render(<HomePage />);
+    expect(cardOrder()).toEqual(['card-favorites']);
+  });
+
+  it('starts with the history sidebar collapsed when the HISTORY card is hidden', () => {
+    mockPreferences = { dashboardCards: [{ serviceName: 'HISTORY', hideCard: true }] };
+    render(<HomePage />);
+    expect(screen.queryByTestId('dashboard-sidebar')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByTitle('Show sidebar'));
+    expect(screen.getByTestId('dashboard-sidebar')).toBeInTheDocument();
+  });
+
+  it('shows the history sidebar when the HISTORY card is visible', () => {
+    mockPreferences = { dashboardCards: [{ serviceName: 'HISTORY', hideCard: false }] };
+    render(<HomePage />);
+    expect(screen.getByTestId('dashboard-sidebar')).toBeInTheDocument();
+  });
+});
+
+describe('HomePage – snapshot', () => {
+  it('matches snapshot', () => {
+    const { asFragment } = render(<HomePage />);
+    expect(asFragment()).toMatchSnapshot();
+  });
 });
 
 describe('HomePage – Pro Monitoring badge', () => {

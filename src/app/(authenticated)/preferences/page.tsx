@@ -4,36 +4,23 @@
  * Preferences page — ported from src/pages/preferences/.
  *
  * Manages dashboard card ordering and visibility preferences.
- * Preferences are stored server-side via SessionService.
+ * Preferences are stored server-side via SessionService under the
+ * `dashboardCards` key that the dashboard (and the mobile apps) read.
  */
 
 import { useState, useEffect, useCallback } from 'react';
 import { SessionService } from '@arcus/core/services';
-import { useAppDispatch } from '@/store/hooks';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { addNotification } from '@/store/slices/uiSlice';
-
-interface DashboardCard {
-  key: string;
-  label: string;
-  visible: boolean;
-}
-
-const DEFAULT_CARDS: DashboardCard[] = [
-  { key: 'favorites', label: 'Favorites', visible: true },
-  { key: 'history', label: 'History', visible: true },
-  { key: 'climate', label: 'Climate', visible: true },
-  { key: 'doorsLocks', label: 'Doors & Locks', visible: true },
-  { key: 'cameras', label: 'Cameras', visible: true },
-  { key: 'care', label: 'Care', visible: true },
-  { key: 'homeFamily', label: 'Home & Family', visible: true },
-  { key: 'lawnGarden', label: 'Lawn & Garden', visible: true },
-  { key: 'lights', label: 'Lights & Switches', visible: true },
-  { key: 'water', label: 'Water', visible: true },
-];
+import { setPreferences } from '@/store/slices/placeSlice';
+import {
+  dashboardCardLabel, resolveDashboardCards, type DashboardCardName, type DashboardCardPreference,
+} from '@/lib/dashboardCards';
 
 export default function PreferencesPage() {
   const dispatch = useAppDispatch();
-  const [cards, setCards] = useState<DashboardCard[]>(DEFAULT_CARDS);
+  const storedPreferences = useAppSelector((s) => s.place.preferences);
+  const [cards, setCards] = useState<DashboardCardPreference[]>(() => resolveDashboardCards(null));
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
@@ -42,27 +29,7 @@ export default function PreferencesPage() {
   useEffect(() => {
     SessionService.GetPreferences()
       .then((res) => {
-        const prefs = res.prefs ?? {};
-        const dashOrder = prefs['dashboard:cards'];
-        const dashHidden = prefs['dashboard:hidden'];
-
-        if (dashOrder) {
-          const ordered: DashboardCard[] = dashOrder.map((key: string) => {
-            const def = DEFAULT_CARDS.find((c) => c.key === key);
-            return {
-              key,
-              label: def?.label ?? key,
-              visible: !(dashHidden ?? []).includes(key),
-            };
-          });
-          // Add any missing cards
-          for (const def of DEFAULT_CARDS) {
-            if (!ordered.find((c) => c.key === def.key)) {
-              ordered.push({ ...def, visible: !(dashHidden ?? []).includes(def.key) });
-            }
-          }
-          setCards(ordered);
-        }
+        setCards(resolveDashboardCards(res.prefs));
         setLoading(false);
       })
       .catch(() => {
@@ -70,9 +37,9 @@ export default function PreferencesPage() {
       });
   }, []);
 
-  const handleToggleVisibility = useCallback((key: string) => {
+  const handleToggleVisibility = useCallback((name: DashboardCardName) => {
     setCards((prev) =>
-      prev.map((c) => (c.key === key ? { ...c, visible: !c.visible } : c)),
+      prev.map((c) => (c.serviceName === name ? { ...c, hideCard: !c.hideCard } : c)),
     );
     setHasChanges(true);
   }, []);
@@ -100,13 +67,9 @@ export default function PreferencesPage() {
   const handleSave = useCallback(async () => {
     setSaving(true);
     try {
-      const dashOrder = cards.map((c) => c.key);
-      const dashHidden = cards.filter((c) => !c.visible).map((c) => c.key);
-
-      await SessionService.SetPreferences({
-        'dashboard:cards': dashOrder,
-        'dashboard:hidden': dashHidden,
-      });
+      await SessionService.SetPreferences({ dashboardCards: cards });
+      // Update the copy the dashboard reads; SetPreferences merges keys, so do the same.
+      dispatch(setPreferences({ ...storedPreferences, dashboardCards: cards }));
 
       dispatch(addNotification({ type: 'success', message: 'Preferences saved' }));
       setHasChanges(false);
@@ -114,7 +77,7 @@ export default function PreferencesPage() {
       dispatch(addNotification({ type: 'error', message: 'Failed to save preferences' }));
     }
     setSaving(false);
-  }, [cards, dispatch]);
+  }, [cards, dispatch, storedPreferences]);
 
   if (loading) {
     return (
@@ -154,19 +117,19 @@ export default function PreferencesPage() {
         <div className="space-y-1">
           {cards.map((card, index) => (
             <div
-              key={card.key}
-              data-testid={`preference-card-${card.key}`}
+              key={card.serviceName}
+              data-testid={`preference-card-${card.serviceName}`}
               data-position={index + 1}
               className={`
                 flex items-center gap-3 px-4 py-3 border rounded-[var(--border-radius-base)]
-                ${card.visible ? 'border-heron bg-crane' : 'border-heron bg-pigeon opacity-60'}
+                ${card.hideCard ? 'border-heron bg-pigeon opacity-60' : 'border-heron bg-crane'}
               `}
             >
               {/* Reorder buttons */}
               <div className="flex flex-col gap-0.5">
                 <button
                   onClick={() => handleMoveUp(index)}
-                  data-testid={`preference-move-up-${card.key}`}
+                  data-testid={`preference-move-up-${card.serviceName}`}
                   disabled={index === 0}
                   className="text-xs text-grouse hover:text-swift disabled:opacity-30"
                   aria-label="Move up"
@@ -175,7 +138,7 @@ export default function PreferencesPage() {
                 </button>
                 <button
                   onClick={() => handleMoveDown(index)}
-                  data-testid={`preference-move-down-${card.key}`}
+                  data-testid={`preference-move-down-${card.serviceName}`}
                   disabled={index === cards.length - 1}
                   className="text-xs text-grouse hover:text-swift disabled:opacity-30"
                   aria-label="Move down"
@@ -185,23 +148,23 @@ export default function PreferencesPage() {
               </div>
 
               {/* Card name */}
-              <span className="flex-1 text-sm text-swift">{card.label}</span>
+              <span className="flex-1 text-sm text-swift">{dashboardCardLabel(card.serviceName)}</span>
 
               {/* Visibility toggle */}
               <button
-                onClick={() => handleToggleVisibility(card.key)}
-                data-testid={`preference-visible-${card.key}`}
+                onClick={() => handleToggleVisibility(card.serviceName)}
+                data-testid={`preference-visible-${card.serviceName}`}
                 className={`
                   relative inline-flex h-6 w-11 items-center rounded-full transition-colors
-                  ${card.visible ? 'bg-peacock' : 'bg-heron'}
+                  ${!card.hideCard ? 'bg-peacock' : 'bg-heron'}
                 `}
                 role="switch"
-                aria-checked={card.visible}
+                aria-checked={!card.hideCard}
               >
                 <span
                   className={`
                     inline-block h-4 w-4 rounded-full bg-crane shadow transition-transform
-                    ${card.visible ? 'translate-x-6' : 'translate-x-1'}
+                    ${!card.hideCard ? 'translate-x-6' : 'translate-x-1'}
                   `}
                 />
               </button>

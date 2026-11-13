@@ -1,0 +1,569 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`PreferencesPage – snapshot matches snapshot 1`] = `
+<DocumentFragment>
+  <div
+    class="p-[var(--gutter)]"
+  >
+    <div
+      class="flex items-center justify-between mb-6"
+    >
+      <h2
+        class="text-[length:var(--font-size-h2)] font-[var(--heading-font-weight)] text-swift"
+        data-testid="preferences-title"
+      >
+        Preferences
+      </h2>
+    </div>
+    <div
+      class="max-w-lg"
+    >
+      <h3
+        class="text-base font-medium text-swift mb-3"
+        data-testid="preferences-cards-title"
+      >
+        Dashboard Cards
+      </h3>
+      <p
+        class="text-sm text-grouse mb-4"
+      >
+        Reorder and show/hide cards on your dashboard.
+      </p>
+      <div
+        class="space-y-1"
+      >
+        <div
+          class="
+                flex items-center gap-3 px-4 py-3 border rounded-[var(--border-radius-base)]
+                border-heron bg-crane
+              "
+          data-position="1"
+          data-testid="preference-card-FAVORITES"
+        >
+          <div
+            class="flex flex-col gap-0.5"
+          >
+            <button
+              aria-label="Move up"
+              class="text-xs text-grouse hover:text-swift disabled:opacity-30"
+              data-testid="preference-move-up-FAVORITES"
+              disabled=""
+            >
+              ▲
+            </button>
+            <button
+              aria-label="Move down"
+              class="text-xs text-grouse hover:text-swift disabled:opacity-30"
+              data-testid="preference-move-down-FAVORITES"
+            >
+              ▼
+            </button>
+          </div>
+          <span
+            class="flex-1 text-sm text-swift"
+          >
+            Favorites
+          </span>
+          <button
+            aria-checked="true"
+            class="
+                  relative inline-flex h-6 w-11 items-center rounded-full transition-colors
+                  bg-peacock
+                "
+            data-testid="preference-visible-FAVORITES"
+            role="switch"
+          >
+            <span
+              class="
+                    inline-block h-4 w-4 rounded-full bg-crane shadow transition-transform
+                    translate-x-6
+                  "
+            />
+          </button>
+        </div>
+        <div
+          class="
+                flex items-center gap-3 px-4 py-3 border rounded-[var(--border-radius-base)]
+                border-heron bg-crane
+              "
+          data-position="2"
+          data-testid="preference-card-HISTORY"
+        >
+          <div
+            class="flex flex-col gap-0.5"
+          >
+            <button
+              aria-label="Move up"
+              class="text-xs text-grouse hover:text-swift disabled:opacity-30"
+              data-testid="preference-move-up-HISTORY"
+            >
+              ▲
+            </button>
+            <button
+              aria-label="Move down"
+              class="text-xs text-grouse hover:text-swift disabled:opacity-30"
+              data-testid="preference-move-down-HISTORY"
+            >
+              ▼
+            </button>
+          </div>
+          <span
+            class="flex-1 text-sm text-swift"
+          >
+            History
+          </span>
+          <button
+            aria-checked="true"
+            class="
+                  relative inline-flex h-6 w-11 items-center rounded-full transition-colors
+                  bg-peacock
+                "
+            data-testid="preference-visible-HISTORY"
+            role="switch"
+          >
+            <span
+              class="
+                    inline-block h-4 w-4 rounded-full bg-crane shadow transition-transform
+                    translate-x-6
+                  "
+            />
+          </button>
+        </div>
+        <div
+          class="
+                flex items-center gap-3 px-4 py-3 border rounded-[var(--border-radius-base)]
+                border-heron bg-crane
+              "
+          data-position="3"
+          data-testid="preference-card-LIGHTS_N_SWITCHES"
+        >
+          <div
+            class="flex flex-col gap-0.5"
+          >
+            <button
+              aria-label="Move up"
+              class="text-xs text-grouse hover:text-swift disabled:opacity-30"
+              data-testid="preference-move-up-LIGHTS_N_SWITCHES"
+            >
+              ▲
+            </button>
+            <button
+              aria-label="Move down"
+              class="text-xs text-grouse hover:text-swift disabled:opacity-30"
+              data-testid="preference-move-down-LIGHTS_N_SWITCHES"
+            >
+              ▼
+            </button>
+          </div>
+          <span
+            class="flex-1 text-sm text-swift"
+          >
+            Lights & Switches
+          </span>
+          <button
+            aria-checked="true"
+            class="
+                  relative inline-flex h-6 w-11 items-center rounded-full transition-colors
+                  bg-peacock
+                "
+            data-testid="preference-visible-LIGHTS_N_SWITCHES"
+            role="switch"
+          >
+            <span
+              class="
+                    inline-block h-4 w-4 rounded-full bg-crane shadow transition-transform
+                    translate-x-6
+                  "
+            />
+          </button>
+        </div>
+        <div
+          class="
+                flex items-center gap-3 px-4 py-3 border rounded-[var(--border-radius-base)]
+                border-heron bg-crane
+              "
+          data-position="4"
+          data-testid="preference-card-ALARMS"
+        >
+          <div
+            class="flex flex-col gap-0.5"
+          >
+            <button
+              aria-label="Move up"
+              class="text-xs text-grouse hover:text-swift disabled:opacity-30"
+              data-testid="preference-move-up-ALARMS"
+            >
+              ▲
+            </button>
+            <button
+              aria-label="Move down"
+              class="text-xs text-grouse hover:text-swift disabled:opacity-30"
+              data-testid="preference-move-down-ALARMS"
+            >
+              ▼
+            </button>
+          </div>
+          <span
+            class="flex-1 text-sm text-swift"
+          >
+            Alarms
+          </span>
+          <button
+            aria-checked="true"
+            class="
+                  relative inline-flex h-6 w-11 items-center rounded-full transition-colors
+                  bg-peacock
+                "
+            data-testid="preference-visible-ALARMS"
+            role="switch"
+          >
+            <span
+              class="
+                    inline-block h-4 w-4 rounded-full bg-crane shadow transition-transform
+                    translate-x-6
+                  "
+            />
+          </button>
+        </div>
+        <div
+          class="
+                flex items-center gap-3 px-4 py-3 border rounded-[var(--border-radius-base)]
+                border-heron bg-crane
+              "
+          data-position="5"
+          data-testid="preference-card-CLIMATE"
+        >
+          <div
+            class="flex flex-col gap-0.5"
+          >
+            <button
+              aria-label="Move up"
+              class="text-xs text-grouse hover:text-swift disabled:opacity-30"
+              data-testid="preference-move-up-CLIMATE"
+            >
+              ▲
+            </button>
+            <button
+              aria-label="Move down"
+              class="text-xs text-grouse hover:text-swift disabled:opacity-30"
+              data-testid="preference-move-down-CLIMATE"
+            >
+              ▼
+            </button>
+          </div>
+          <span
+            class="flex-1 text-sm text-swift"
+          >
+            Climate
+          </span>
+          <button
+            aria-checked="true"
+            class="
+                  relative inline-flex h-6 w-11 items-center rounded-full transition-colors
+                  bg-peacock
+                "
+            data-testid="preference-visible-CLIMATE"
+            role="switch"
+          >
+            <span
+              class="
+                    inline-block h-4 w-4 rounded-full bg-crane shadow transition-transform
+                    translate-x-6
+                  "
+            />
+          </button>
+        </div>
+        <div
+          class="
+                flex items-center gap-3 px-4 py-3 border rounded-[var(--border-radius-base)]
+                border-heron bg-crane
+              "
+          data-position="6"
+          data-testid="preference-card-DOORS_N_LOCKS"
+        >
+          <div
+            class="flex flex-col gap-0.5"
+          >
+            <button
+              aria-label="Move up"
+              class="text-xs text-grouse hover:text-swift disabled:opacity-30"
+              data-testid="preference-move-up-DOORS_N_LOCKS"
+            >
+              ▲
+            </button>
+            <button
+              aria-label="Move down"
+              class="text-xs text-grouse hover:text-swift disabled:opacity-30"
+              data-testid="preference-move-down-DOORS_N_LOCKS"
+            >
+              ▼
+            </button>
+          </div>
+          <span
+            class="flex-1 text-sm text-swift"
+          >
+            Doors & Locks
+          </span>
+          <button
+            aria-checked="true"
+            class="
+                  relative inline-flex h-6 w-11 items-center rounded-full transition-colors
+                  bg-peacock
+                "
+            data-testid="preference-visible-DOORS_N_LOCKS"
+            role="switch"
+          >
+            <span
+              class="
+                    inline-block h-4 w-4 rounded-full bg-crane shadow transition-transform
+                    translate-x-6
+                  "
+            />
+          </button>
+        </div>
+        <div
+          class="
+                flex items-center gap-3 px-4 py-3 border rounded-[var(--border-radius-base)]
+                border-heron bg-crane
+              "
+          data-position="7"
+          data-testid="preference-card-CAMERAS"
+        >
+          <div
+            class="flex flex-col gap-0.5"
+          >
+            <button
+              aria-label="Move up"
+              class="text-xs text-grouse hover:text-swift disabled:opacity-30"
+              data-testid="preference-move-up-CAMERAS"
+            >
+              ▲
+            </button>
+            <button
+              aria-label="Move down"
+              class="text-xs text-grouse hover:text-swift disabled:opacity-30"
+              data-testid="preference-move-down-CAMERAS"
+            >
+              ▼
+            </button>
+          </div>
+          <span
+            class="flex-1 text-sm text-swift"
+          >
+            Cameras
+          </span>
+          <button
+            aria-checked="true"
+            class="
+                  relative inline-flex h-6 w-11 items-center rounded-full transition-colors
+                  bg-peacock
+                "
+            data-testid="preference-visible-CAMERAS"
+            role="switch"
+          >
+            <span
+              class="
+                    inline-block h-4 w-4 rounded-full bg-crane shadow transition-transform
+                    translate-x-6
+                  "
+            />
+          </button>
+        </div>
+        <div
+          class="
+                flex items-center gap-3 px-4 py-3 border rounded-[var(--border-radius-base)]
+                border-heron bg-crane
+              "
+          data-position="8"
+          data-testid="preference-card-CARE"
+        >
+          <div
+            class="flex flex-col gap-0.5"
+          >
+            <button
+              aria-label="Move up"
+              class="text-xs text-grouse hover:text-swift disabled:opacity-30"
+              data-testid="preference-move-up-CARE"
+            >
+              ▲
+            </button>
+            <button
+              aria-label="Move down"
+              class="text-xs text-grouse hover:text-swift disabled:opacity-30"
+              data-testid="preference-move-down-CARE"
+            >
+              ▼
+            </button>
+          </div>
+          <span
+            class="flex-1 text-sm text-swift"
+          >
+            Care
+          </span>
+          <button
+            aria-checked="true"
+            class="
+                  relative inline-flex h-6 w-11 items-center rounded-full transition-colors
+                  bg-peacock
+                "
+            data-testid="preference-visible-CARE"
+            role="switch"
+          >
+            <span
+              class="
+                    inline-block h-4 w-4 rounded-full bg-crane shadow transition-transform
+                    translate-x-6
+                  "
+            />
+          </button>
+        </div>
+        <div
+          class="
+                flex items-center gap-3 px-4 py-3 border rounded-[var(--border-radius-base)]
+                border-heron bg-crane
+              "
+          data-position="9"
+          data-testid="preference-card-HOME_N_FAMILY"
+        >
+          <div
+            class="flex flex-col gap-0.5"
+          >
+            <button
+              aria-label="Move up"
+              class="text-xs text-grouse hover:text-swift disabled:opacity-30"
+              data-testid="preference-move-up-HOME_N_FAMILY"
+            >
+              ▲
+            </button>
+            <button
+              aria-label="Move down"
+              class="text-xs text-grouse hover:text-swift disabled:opacity-30"
+              data-testid="preference-move-down-HOME_N_FAMILY"
+            >
+              ▼
+            </button>
+          </div>
+          <span
+            class="flex-1 text-sm text-swift"
+          >
+            Home & Family
+          </span>
+          <button
+            aria-checked="true"
+            class="
+                  relative inline-flex h-6 w-11 items-center rounded-full transition-colors
+                  bg-peacock
+                "
+            data-testid="preference-visible-HOME_N_FAMILY"
+            role="switch"
+          >
+            <span
+              class="
+                    inline-block h-4 w-4 rounded-full bg-crane shadow transition-transform
+                    translate-x-6
+                  "
+            />
+          </button>
+        </div>
+        <div
+          class="
+                flex items-center gap-3 px-4 py-3 border rounded-[var(--border-radius-base)]
+                border-heron bg-crane
+              "
+          data-position="10"
+          data-testid="preference-card-LAWN_N_GARDEN"
+        >
+          <div
+            class="flex flex-col gap-0.5"
+          >
+            <button
+              aria-label="Move up"
+              class="text-xs text-grouse hover:text-swift disabled:opacity-30"
+              data-testid="preference-move-up-LAWN_N_GARDEN"
+            >
+              ▲
+            </button>
+            <button
+              aria-label="Move down"
+              class="text-xs text-grouse hover:text-swift disabled:opacity-30"
+              data-testid="preference-move-down-LAWN_N_GARDEN"
+            >
+              ▼
+            </button>
+          </div>
+          <span
+            class="flex-1 text-sm text-swift"
+          >
+            Lawn & Garden
+          </span>
+          <button
+            aria-checked="true"
+            class="
+                  relative inline-flex h-6 w-11 items-center rounded-full transition-colors
+                  bg-peacock
+                "
+            data-testid="preference-visible-LAWN_N_GARDEN"
+            role="switch"
+          >
+            <span
+              class="
+                    inline-block h-4 w-4 rounded-full bg-crane shadow transition-transform
+                    translate-x-6
+                  "
+            />
+          </button>
+        </div>
+        <div
+          class="
+                flex items-center gap-3 px-4 py-3 border rounded-[var(--border-radius-base)]
+                border-heron bg-crane
+              "
+          data-position="11"
+          data-testid="preference-card-WATER"
+        >
+          <div
+            class="flex flex-col gap-0.5"
+          >
+            <button
+              aria-label="Move up"
+              class="text-xs text-grouse hover:text-swift disabled:opacity-30"
+              data-testid="preference-move-up-WATER"
+            >
+              ▲
+            </button>
+            <button
+              aria-label="Move down"
+              class="text-xs text-grouse hover:text-swift disabled:opacity-30"
+              data-testid="preference-move-down-WATER"
+              disabled=""
+            >
+              ▼
+            </button>
+          </div>
+          <span
+            class="flex-1 text-sm text-swift"
+          >
+            Water
+          </span>
+          <button
+            aria-checked="true"
+            class="
+                  relative inline-flex h-6 w-11 items-center rounded-full transition-colors
+                  bg-peacock
+                "
+            data-testid="preference-visible-WATER"
+            role="switch"
+          >
+            <span
+              class="
+                    inline-block h-4 w-4 rounded-full bg-crane shadow transition-transform
+                    translate-x-6
+                  "
+            />
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</DocumentFragment>
+`;

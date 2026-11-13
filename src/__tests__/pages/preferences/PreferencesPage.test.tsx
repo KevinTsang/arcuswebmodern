@@ -1,14 +1,19 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import PreferencesPage from '@/app/(authenticated)/preferences/page';
+import type { Preferences } from '@arcus/core/services/types';
+import { DEFAULT_DASHBOARD_CARDS } from '@/lib/dashboardCards';
 
 // ── Mocks ─────────────────────────────────────────────────────────────
 
 const mockDispatch = jest.fn();
 const mockGetPreferences = jest.fn();
 const mockSetPreferences = jest.fn();
+let mockStoredPreferences: Preferences | null = null;
 
 jest.mock('@/store/hooks', () => ({
   useAppDispatch: () => mockDispatch,
+  useAppSelector: (sel: (s: { place: { preferences: Preferences | null } }) => unknown) =>
+    sel({ place: { preferences: mockStoredPreferences } }),
 }));
 
 jest.mock('@arcus/core/services', () => ({
@@ -22,153 +27,195 @@ jest.mock('@/store/slices/uiSlice', () => ({
   addNotification: (payload: unknown) => ({ type: 'ui/addNotification', payload }),
 }));
 
+jest.mock('@/store/slices/placeSlice', () => ({
+  setPreferences: (payload: unknown) => ({ type: 'place/setPreferences', payload }),
+}));
+
+// ── Helpers ───────────────────────────────────────────────────────────
+
+const SAVE_SUCCESS = { type: 'ui/addNotification', payload: { type: 'success', message: 'Preferences saved' } };
+const SAVE_ERROR = { type: 'ui/addNotification', payload: { type: 'error', message: 'Failed to save preferences' } };
+
+async function renderLoaded() {
+  const view = render(<PreferencesPage />);
+  await screen.findByTestId('preferences-cards-title');
+  return view;
+}
+
+function positionOf(serviceName: string) {
+  return screen.getByTestId(`preference-card-${serviceName}`).getAttribute('data-position');
+}
+
 beforeEach(() => {
   jest.clearAllMocks();
+  mockStoredPreferences = null;
   mockGetPreferences.mockResolvedValue({ prefs: {} });
   mockSetPreferences.mockResolvedValue({});
 });
 
 // ── Tests ─────────────────────────────────────────────────────────────
 
+describe('PreferencesPage – snapshot', () => {
+  it('matches snapshot', async () => {
+    const { asFragment } = await renderLoaded();
+    expect(asFragment()).toMatchSnapshot();
+  });
+});
+
 describe('PreferencesPage – loading state', () => {
   it('shows loading message initially', () => {
     mockGetPreferences.mockReturnValue(new Promise(() => {})); // never resolves
     render(<PreferencesPage />);
     expect(screen.getByText('Loading preferences...')).toBeInTheDocument();
-  });
-
-  it('shows heading while loading', () => {
-    mockGetPreferences.mockReturnValue(new Promise(() => {}));
-    render(<PreferencesPage />);
     expect(screen.getByText('Preferences')).toBeInTheDocument();
   });
 });
 
 describe('PreferencesPage – rendering', () => {
-  it('shows Preferences heading after load', async () => {
-    render(<PreferencesPage />);
-    await waitFor(() => expect(screen.queryByText('Loading preferences...')).not.toBeInTheDocument());
-    expect(screen.getByText('Preferences')).toBeInTheDocument();
+  it('shows the Dashboard Cards section', async () => {
+    await renderLoaded();
+    expect(screen.getByText('Dashboard Cards')).toBeInTheDocument();
   });
 
-  it('shows Dashboard Cards section', async () => {
-    render(<PreferencesPage />);
-    await waitFor(() => expect(screen.getByText('Dashboard Cards')).toBeInTheDocument());
+  it('lists every dashboard card in the default order when nothing is saved', async () => {
+    await renderLoaded();
+    DEFAULT_DASHBOARD_CARDS.forEach((card, i) => {
+      expect(positionOf(card.serviceName)).toBe(String(i + 1));
+    });
+    for (const label of [
+      'Favorites', 'History', 'Lights & Switches', 'Alarms', 'Climate', 'Doors & Locks',
+      'Cameras', 'Care', 'Home & Family', 'Lawn & Garden', 'Water',
+    ]) {
+      expect(screen.getByText(label)).toBeInTheDocument();
+    }
   });
 
-  it('renders all default card labels', async () => {
-    render(<PreferencesPage />);
-    await waitFor(() => expect(screen.getByText('Favorites')).toBeInTheDocument());
-    expect(screen.getByText('History')).toBeInTheDocument();
-    expect(screen.getByText('Climate')).toBeInTheDocument();
-    expect(screen.getByText('Doors & Locks')).toBeInTheDocument();
-    expect(screen.getByText('Cameras')).toBeInTheDocument();
-    expect(screen.getByText('Care')).toBeInTheDocument();
-    expect(screen.getByText('Lawn & Garden')).toBeInTheDocument();
-    expect(screen.getByText('Lights & Switches')).toBeInTheDocument();
-    expect(screen.getByText('Water')).toBeInTheDocument();
+  it('renders a visibility switch and reorder buttons for each card', async () => {
+    await renderLoaded();
+    expect(screen.getAllByRole('switch')).toHaveLength(DEFAULT_DASHBOARD_CARDS.length);
+    expect(screen.getAllByLabelText('Move up')).toHaveLength(DEFAULT_DASHBOARD_CARDS.length);
+    expect(screen.getAllByLabelText('Move down')).toHaveLength(DEFAULT_DASHBOARD_CARDS.length);
   });
 
-  it('renders visibility toggle switches for each card', async () => {
-    render(<PreferencesPage />);
-    await waitFor(() => expect(screen.getByText('Favorites')).toBeInTheDocument());
-    const switches = screen.getAllByRole('switch');
-    expect(switches.length).toBe(10);
-  });
-
-  it('renders move up/down buttons', async () => {
-    render(<PreferencesPage />);
-    await waitFor(() => expect(screen.getByText('Favorites')).toBeInTheDocument());
-    const upButtons = screen.getAllByLabelText('Move up');
-    const downButtons = screen.getAllByLabelText('Move down');
-    expect(upButtons.length).toBe(10);
-    expect(downButtons.length).toBe(10);
+  it('disables moving the first card up and the last card down', async () => {
+    await renderLoaded();
+    expect(screen.getByTestId('preference-move-up-FAVORITES')).toBeDisabled();
+    expect(screen.getByTestId('preference-move-down-WATER')).toBeDisabled();
   });
 });
 
 describe('PreferencesPage – loading saved preferences', () => {
-  it('applies saved card order from server', async () => {
+  it('applies the saved dashboardCards order and visibility', async () => {
     mockGetPreferences.mockResolvedValue({
       prefs: {
-        'dashboard:cards': ['water', 'cameras', 'favorites'],
-        'dashboard:hidden': ['cameras'],
+        dashboardCards: [
+          { serviceName: 'WATER', hideCard: false },
+          { serviceName: 'CAMERAS', hideCard: true },
+          { serviceName: 'FAVORITES', hideCard: false },
+        ],
       },
     });
-    render(<PreferencesPage />);
-    await waitFor(() => expect(screen.getByText('Water')).toBeInTheDocument());
-    // The switches should reflect visibility
-    const switches = screen.getAllByRole('switch');
-    // Water is first, should be visible (aria-checked=true)
-    expect(switches[0]).toHaveAttribute('aria-checked', 'true');
-    // Cameras is second, should be hidden
-    expect(switches[1]).toHaveAttribute('aria-checked', 'false');
+    await renderLoaded();
+    expect(positionOf('WATER')).toBe('1');
+    expect(positionOf('CAMERAS')).toBe('2');
+    expect(positionOf('FAVORITES')).toBe('3');
+    expect(screen.getByTestId('preference-visible-WATER')).toHaveAttribute('aria-checked', 'true');
+    expect(screen.getByTestId('preference-visible-CAMERAS')).toHaveAttribute('aria-checked', 'false');
   });
 
-  it('handles load failure gracefully', async () => {
+  it('appends cards missing from the saved list and drops unknown ones', async () => {
+    mockGetPreferences.mockResolvedValue({
+      prefs: {
+        dashboardCards: [
+          { serviceName: 'CLIMATE', hideCard: true },
+          { serviceName: 'ENERGY', hideCard: false },
+        ],
+      },
+    });
+    await renderLoaded();
+    expect(positionOf('CLIMATE')).toBe('1');
+    expect(positionOf('FAVORITES')).toBe('2');
+    expect(screen.queryByTestId('preference-card-ENERGY')).not.toBeInTheDocument();
+    expect(screen.getAllByRole('switch')).toHaveLength(DEFAULT_DASHBOARD_CARDS.length);
+  });
+
+  it('ignores the old dashboard:cards keys', async () => {
+    mockGetPreferences.mockResolvedValue({
+      prefs: { 'dashboard:cards': ['water'], 'dashboard:hidden': ['favorites'] },
+    });
+    await renderLoaded();
+    expect(positionOf('FAVORITES')).toBe('1');
+    expect(screen.getByTestId('preference-visible-FAVORITES')).toHaveAttribute('aria-checked', 'true');
+  });
+
+  it('falls back to the defaults when loading fails', async () => {
     mockGetPreferences.mockRejectedValue(new Error('fail'));
-    render(<PreferencesPage />);
-    await waitFor(() => expect(screen.queryByText('Loading preferences...')).not.toBeInTheDocument());
-    // Should still render with defaults
-    expect(screen.getByText('Favorites')).toBeInTheDocument();
+    await renderLoaded();
+    expect(positionOf('FAVORITES')).toBe('1');
+    expect(screen.queryByText('Loading preferences...')).not.toBeInTheDocument();
   });
 });
 
 describe('PreferencesPage – interactions', () => {
   it('does not show Save button initially', async () => {
-    render(<PreferencesPage />);
-    await waitFor(() => expect(screen.getByText('Favorites')).toBeInTheDocument());
-    expect(screen.queryByText('Save Changes')).not.toBeInTheDocument();
+    await renderLoaded();
+    expect(screen.queryByTestId('preferences-save')).not.toBeInTheDocument();
   });
 
-  it('shows Save button after toggling visibility', async () => {
-    render(<PreferencesPage />);
-    await waitFor(() => expect(screen.getByText('Favorites')).toBeInTheDocument());
-    const switches = screen.getAllByRole('switch');
-    fireEvent.click(switches[0]);
-    expect(screen.getByText('Save Changes')).toBeInTheDocument();
+  it('toggles a card hidden', async () => {
+    await renderLoaded();
+    fireEvent.click(screen.getByTestId('preference-visible-CAMERAS'));
+    expect(screen.getByTestId('preference-visible-CAMERAS')).toHaveAttribute('aria-checked', 'false');
+    expect(screen.getByTestId('preferences-save')).toBeInTheDocument();
   });
 
-  it('shows Save button after reordering', async () => {
-    render(<PreferencesPage />);
-    await waitFor(() => expect(screen.getByText('Favorites')).toBeInTheDocument());
-    const downButtons = screen.getAllByLabelText('Move down');
-    fireEvent.click(downButtons[0]);
-    expect(screen.getByText('Save Changes')).toBeInTheDocument();
+  it('moves a card up and down', async () => {
+    await renderLoaded();
+    fireEvent.click(screen.getByTestId('preference-move-up-CLIMATE'));
+    expect(positionOf('CLIMATE')).toBe('4');
+    expect(positionOf('ALARMS')).toBe('5');
+    fireEvent.click(screen.getByTestId('preference-move-down-FAVORITES'));
+    expect(positionOf('FAVORITES')).toBe('2');
+    expect(positionOf('HISTORY')).toBe('1');
   });
 
-  it('calls SetPreferences on save', async () => {
-    render(<PreferencesPage />);
-    await waitFor(() => expect(screen.getByText('Favorites')).toBeInTheDocument());
-    const switches = screen.getAllByRole('switch');
-    fireEvent.click(switches[0]); // toggle Favorites visibility
-    fireEvent.click(screen.getByText('Save Changes'));
-    await waitFor(() => expect(mockSetPreferences).toHaveBeenCalled());
+  it('saves the cards as dashboardCards and updates the stored preferences', async () => {
+    mockStoredPreferences = { hideTutorials: true };
+    await renderLoaded();
+    fireEvent.click(screen.getByTestId('preference-move-up-CLIMATE'));
+    fireEvent.click(screen.getByTestId('preference-visible-CAMERAS'));
+    fireEvent.click(screen.getByTestId('preferences-save'));
+
+    await waitFor(() => expect(mockDispatch).toHaveBeenCalledWith(SAVE_SUCCESS));
+    const expected = resolveExpected();
+    expect(mockSetPreferences).toHaveBeenCalledWith({ dashboardCards: expected });
+    expect(mockDispatch).toHaveBeenCalledWith({
+      type: 'place/setPreferences',
+      payload: { hideTutorials: true, dashboardCards: expected },
+    });
+    expect(screen.queryByTestId('preferences-save')).not.toBeInTheDocument();
   });
 
-  it('dispatches success notification on save', async () => {
-    render(<PreferencesPage />);
-    await waitFor(() => expect(screen.getByText('Favorites')).toBeInTheDocument());
-    const switches = screen.getAllByRole('switch');
-    fireEvent.click(switches[0]);
-    fireEvent.click(screen.getByText('Save Changes'));
-    await waitFor(() =>
-      expect(mockDispatch).toHaveBeenCalledWith(
-        expect.objectContaining({ payload: expect.objectContaining({ type: 'success' }) }),
-      ),
-    );
-  });
+  it('reports a failure to save and keeps the changes', async () => {
+    mockSetPreferences.mockRejectedValueOnce(new Error('fail'));
+    await renderLoaded();
+    fireEvent.click(screen.getByTestId('preference-visible-WATER'));
+    fireEvent.click(screen.getByTestId('preferences-save'));
 
-  it('dispatches error notification on save failure', async () => {
-    mockSetPreferences.mockRejectedValue(new Error('fail'));
-    render(<PreferencesPage />);
-    await waitFor(() => expect(screen.getByText('Favorites')).toBeInTheDocument());
-    const switches = screen.getAllByRole('switch');
-    fireEvent.click(switches[0]);
-    fireEvent.click(screen.getByText('Save Changes'));
-    await waitFor(() =>
-      expect(mockDispatch).toHaveBeenCalledWith(
-        expect.objectContaining({ payload: expect.objectContaining({ type: 'error' }) }),
-      ),
-    );
+    await waitFor(() => expect(mockDispatch).toHaveBeenCalledWith(SAVE_ERROR));
+    expect(mockDispatch).not.toHaveBeenCalledWith(expect.objectContaining({ type: 'place/setPreferences' }));
+    expect(screen.getByTestId('preferences-save')).toBeEnabled();
+    expect(screen.getByTestId('preference-visible-WATER')).toHaveAttribute('aria-checked', 'false');
   });
 });
+
+/** The default cards with Climate moved above Alarms and Cameras hidden. */
+function resolveExpected() {
+  const cards = DEFAULT_DASHBOARD_CARDS.map((c) => ({
+    ...c,
+    hideCard: c.serviceName === 'CAMERAS',
+  }));
+  const climate = cards.findIndex((c) => c.serviceName === 'CLIMATE');
+  [cards[climate - 1], cards[climate]] = [cards[climate], cards[climate - 1]];
+  return cards;
+}

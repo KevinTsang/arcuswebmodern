@@ -54,6 +54,13 @@ describe('placeSlice', () => {
     expect(state.place).toEqual(homePlace);
   });
 
+  it("setPlaceId drops the previous place's preferences when switching places", () => {
+    const prefs = { dashboardCards: [{ serviceName: 'ALARMS', hideCard: true }] };
+    const withPrefs: PlaceState = { ...loaded, preferences: prefs };
+    expect(reducer(withPrefs, setPlaceId('p2')).preferences).toBeNull();
+    expect(reducer(withPrefs, setPlaceId('p1')).preferences).toEqual(prefs);
+  });
+
   describe('setPlace', () => {
     it("stores the active place's record", () => {
       const state = reducer({ ...initial, placeId: 'p1' }, setPlace(homePlace));
@@ -124,7 +131,7 @@ describe('placeSlice', () => {
   });
 
   it('setPreferences stores preferences', () => {
-    const prefs = { dashboardCards: [{ serviceName: 'ALARM' }] };
+    const prefs = { dashboardCards: [{ serviceName: 'ALARMS', hideCard: false }] };
     const state = reducer(initial, setPreferences(prefs));
     expect(state.preferences).toEqual(prefs);
   });

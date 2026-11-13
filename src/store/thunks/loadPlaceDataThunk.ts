@@ -17,8 +17,9 @@ import {
   SchedulerService,
   SceneService,
   RuleService,
+  SessionService,
 } from '@arcus/core/services';
-import { setPlaceId, setPlace, setProducts, setReady } from '../slices/placeSlice';
+import { setPlaceId, setPlace, setPreferences, setProducts, setReady } from '../slices/placeSlice';
 import { devicesReceived, devicesClear } from '../slices/devicesSlice';
 import { subsystemsReceived, subsystemsClear } from '../slices/subsystemsSlice';
 import { rulesReceived, rulesClear, setRuleTemplates } from '../slices/rulesSlice';
@@ -111,6 +112,18 @@ export const loadPlaceDataThunk = createAsyncThunk<string, string, { state: Root
         .catch((e) => {
           console.error('Failed to load place:', e);
           return null;
+        }),
+
+      // Session preferences of the person at this place (dashboard card
+      // order etc.). On failure the dashboard falls back to its defaults.
+      SessionService.GetPreferences()
+        .then(({ prefs }) => {
+          if (getState().place.placeId === placeId) {
+            dispatch(setPreferences(prefs ?? {}));
+          }
+        })
+        .catch((e) => {
+          console.error('Failed to load preferences:', e);
         }),
     ]);
 

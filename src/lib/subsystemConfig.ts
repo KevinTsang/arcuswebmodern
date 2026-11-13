@@ -25,11 +25,22 @@ const SUBSYSTEM_CAPABILITIES = [
 
 export type SubsystemNamespace = (typeof SUBSYSTEM_CAPABILITIES)[number]['NAMESPACE'];
 
+/**
+ * Dashboard card keys (`CardPreference.serviceName`) of the subsystem cards, as
+ * stored in the `dashboardCards` preference shared with the legacy web and the
+ * mobile clients (legacy config/subsystem.json `preferenceName`).
+ */
+export type SubsystemPreferenceName =
+  | 'ALARMS' | 'CAMERAS' | 'CARE' | 'CLIMATE' | 'DOORS_N_LOCKS' | 'HOME_N_FAMILY'
+  | 'LAWN_N_GARDEN' | 'LIGHTS_N_SWITCHES' | 'WATER';
+
 export interface SubsystemConfigEntry {
   name: string;
   slug: string;
   icon: string;
   namespace: SubsystemNamespace;
+  /** Key of this subsystem's dashboard card in the `dashboardCards` preference */
+  preferenceName: SubsystemPreferenceName;
   visible: boolean;
   hasCustomView: boolean;
   /** Subsystem attribute keys that contain device address lists */
@@ -56,6 +67,7 @@ export const subsystemConfigs: SubsystemConfigEntry[] = [
     slug: 'alarms',
     icon: 'icon-app-alarm-2',
     namespace: AlarmSubsystem.NAMESPACE,
+    preferenceName: 'ALARMS',
     visible: true,
     hasCustomView: true,
     // The alarm subsystem carries one `Alarm` capability instance per alert type;
@@ -67,6 +79,7 @@ export const subsystemConfigs: SubsystemConfigEntry[] = [
     slug: 'cameras',
     icon: 'icon-platform-camera-2',
     namespace: CamerasSubsystem.NAMESPACE,
+    preferenceName: 'CAMERAS',
     visible: true,
     hasCustomView: true,
     deviceAttributes: [CamerasSubsystem.ATTR_CAMERAS],
@@ -76,6 +89,7 @@ export const subsystemConfigs: SubsystemConfigEntry[] = [
     slug: 'care',
     icon: 'icon-app-care-heart-2',
     namespace: CareSubsystem.NAMESPACE,
+    preferenceName: 'CARE',
     visible: true,
     hasCustomView: true,
     deviceAttributes: [CareSubsystem.ATTR_CAREDEVICES],
@@ -85,6 +99,7 @@ export const subsystemConfigs: SubsystemConfigEntry[] = [
     slug: 'climate',
     icon: 'icon-app-climate-1',
     namespace: ClimateSubsystem.NAMESPACE,
+    preferenceName: 'CLIMATE',
     visible: true,
     hasCustomView: true,
     deviceAttributes: [ClimateSubsystem.ATTR_CONTROLDEVICES, ClimateSubsystem.ATTR_TEMPERATUREDEVICES],
@@ -94,6 +109,7 @@ export const subsystemConfigs: SubsystemConfigEntry[] = [
     slug: 'doors-locks',
     icon: 'icon-platform-lock-2',
     namespace: DoorsNLocksSubsystem.NAMESPACE,
+    preferenceName: 'DOORS_N_LOCKS',
     visible: true,
     hasCustomView: true,
     deviceAttributes: [
@@ -108,6 +124,7 @@ export const subsystemConfigs: SubsystemConfigEntry[] = [
     slug: 'home-family',
     icon: 'icon-app-family-2',
     namespace: PresenceSubsystem.NAMESPACE,
+    preferenceName: 'HOME_N_FAMILY',
     visible: true,
     hasCustomView: true,
     deviceAttributes: [PresenceSubsystem.ATTR_ALLDEVICES],
@@ -117,6 +134,7 @@ export const subsystemConfigs: SubsystemConfigEntry[] = [
     slug: 'lawn-garden',
     icon: 'icon-app-lawn-1',
     namespace: LawnNGardenSubsystem.NAMESPACE,
+    preferenceName: 'LAWN_N_GARDEN',
     visible: true,
     hasCustomView: true,
     deviceAttributes: [LawnNGardenSubsystem.ATTR_CONTROLLERS],
@@ -126,6 +144,7 @@ export const subsystemConfigs: SubsystemConfigEntry[] = [
     slug: 'lights-switches',
     icon: 'icon-platform-light-2',
     namespace: LightsNSwitchesSubsystem.NAMESPACE,
+    preferenceName: 'LIGHTS_N_SWITCHES',
     visible: true,
     hasCustomView: false,
     deviceAttributes: [LightsNSwitchesSubsystem.ATTR_SWITCHDEVICES],
@@ -135,6 +154,7 @@ export const subsystemConfigs: SubsystemConfigEntry[] = [
     slug: 'water',
     icon: 'icon-platform-irrigation-2',
     namespace: WaterSubsystem.NAMESPACE,
+    preferenceName: 'WATER',
     visible: true,
     hasCustomView: false,
     deviceAttributes: [WaterSubsystem.ATTR_WATERDEVICES],
@@ -153,4 +173,11 @@ export function getSubsystemConfigBySlug(slug: string): SubsystemConfigEntry | u
  */
 export function getSubsystemConfigByNamespace(ns: SubsystemNamespace): SubsystemConfigEntry | undefined {
   return subsystemConfigs.find((c) => c.namespace === ns);
+}
+
+/**
+ * Look up config by dashboard card key (e.g., 'DOORS_N_LOCKS').
+ */
+export function getSubsystemConfigByPreferenceName(name: string): SubsystemConfigEntry | undefined {
+  return subsystemConfigs.find((c) => c.preferenceName === name);
 }
