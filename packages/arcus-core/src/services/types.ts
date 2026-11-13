@@ -33,10 +33,6 @@ export interface CardPreference {
 export interface Preferences {
   hideTutorials?: boolean;
   dashboardCards?: CardPreference[];
-  /** Web client: ordered card keys for the dashboard. */
-  'dashboard:cards'?: string[];
-  /** Web client: card keys hidden from the dashboard. */
-  'dashboard:hidden'?: string[];
   [key: string]: unknown;
 }
 

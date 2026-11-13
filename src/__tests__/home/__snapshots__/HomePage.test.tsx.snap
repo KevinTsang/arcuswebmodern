@@ -1,0 +1,131 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`HomePage – snapshot matches snapshot 1`] = `
+<DocumentFragment>
+  <div
+    class="flex flex-col-reverse md:flex-row"
+  >
+    <div
+      class="bg-pigeon md:border-r border-heron w-full md:max-w-[350px] flex-shrink-0 overflow-hidden"
+      data-testid="dashboard-sidebar"
+    >
+      <img
+        alt="Test Home"
+        height="240"
+        src="/default-home.jpg"
+        width="350"
+      />
+      <div
+        class="flex justify-center items-center py-4 mx-[var(--gutter)] border-b border-heron"
+      >
+        <h2
+          class="text-[length:var(--font-size-h3)] font-[var(--heading-font-weight)] text-swift text-center"
+          data-testid="dashboard-place-name"
+        >
+          <span
+            class="icon-app-location-2 mr-2"
+          />
+          Test Home
+        </h2>
+      </div>
+      <div
+        class="flex justify-center items-center gap-2 pt-4 pb-2"
+      >
+        <h2
+          class="text-[length:var(--font-size-h4)] font-[var(--heading-font-weight)] text-swift"
+          data-testid="dashboard-history-title"
+        >
+          History
+        </h2>
+        <button
+          class="text-peacock hover:opacity-75 transition-opacity"
+          data-testid="dashboard-history-refresh"
+          title="Refresh history"
+        >
+          <span
+            class="icon-app-refresh text-sm animate-spin"
+          />
+        </button>
+      </div>
+      <div
+        class="px-[var(--gutter)] pb-2"
+        data-testid="dashboard-history"
+      >
+        <p
+          class="text-sm text-grouse py-4 text-center"
+          data-testid="dashboard-history-empty"
+        >
+          No recent activity.
+        </p>
+      </div>
+      <div
+        class="flex justify-center py-4"
+      >
+        <a
+          class="bg-peacock text-crane px-6 py-2 rounded-[var(--border-radius-base)] hover:opacity-90 transition-opacity text-sm"
+          data-testid="history-more-link"
+          href="/history"
+        >
+          More
+        </a>
+      </div>
+    </div>
+    <div
+      class="flex-1 min-w-0"
+    >
+      <div
+        class="hidden md:flex items-center px-[var(--gutter)] pt-4 pb-2"
+      >
+        <button
+          class="text-peacock hover:opacity-75 transition-opacity"
+          data-testid="dashboard-sidebar-toggle"
+          title="Hide sidebar"
+        >
+          <span
+            class="icon-app-sidebar-2 text-lg"
+          />
+        </button>
+      </div>
+      <div
+        class="p-[var(--gutter)]"
+      >
+        <div
+          class="space-y-4"
+        >
+          <div
+            class="border border-heron rounded-[var(--border-radius-base)] overflow-hidden"
+            data-testid="card-favorites"
+          >
+            <div
+              class="flex items-center justify-between px-4 py-3 bg-pigeon/20"
+            >
+              <div
+                class="flex items-center gap-2"
+              >
+                <span
+                  class="icon-app-heart-2 text-base text-peacock"
+                />
+                <span
+                  class="text-sm font-semibold text-swift"
+                >
+                  Favorites
+                </span>
+              </div>
+            </div>
+            <div
+              class="px-4 py-3"
+            >
+              <p
+                class="text-sm text-grouse"
+                data-testid="favorites-empty"
+              >
+                Mark devices and scenes as favorites to see them here.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</DocumentFragment>
+`;
