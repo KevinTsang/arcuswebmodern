@@ -220,7 +220,9 @@ describe('Devices page', () => {
       cy.signIn({
         path: '/devices',
         customize: (p) => {
-          Object.assign(p.data.entities[DEVICE.motion], {
+          const motion = p.data.entities[DEVICE.motion];
+          Object.assign(motion, {
+            [Base.ATTR_CAPS]: [...(motion[Base.ATTR_CAPS] as string[]), Presence.NAMESPACE],
             [Presence.ATTR_PRESENCE]: Presence.PRESENCE_PRESENT,
             [Presence.ATTR_PERSON]: 'UNSET',
             [Presence.ATTR_USEHINT]: Presence.USEHINT_UNKNOWN,
