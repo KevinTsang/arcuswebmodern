@@ -1,0 +1,72 @@
+name: Publish image
+
+# Builds the ui-server image with docker/bin/build.sh and pushes it, tagged
+# <package.json version>-<short sha> and latest, once CI has passed on main.
+# It can also be run by hand from the Actions tab for any branch or tag.
+#
+# Configure in the repository's Settings > Secrets and variables > Actions:
+#   vars.REGISTRY_NAME        registry path images are pushed under, e.g.
+#                             us-west1-docker.pkg.dev/<project>/<repo>
+#                             (the job is skipped while this is unset)
+#   secrets.REGISTRY_USERNAME registry login user (_json_key for a Google
+#                             Artifact Registry service account key)
+#   secrets.REGISTRY_PASSWORD registry password or token (the key's JSON)
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Runs one at a time so latest ends up on the newest commit; a run queued
+# behind another is superseded by a newer one.
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Build and push ui-server
+    # Only commits pushed to this repository's main (not a fork's PR branch
+    # that happens to be called main) whose CI run passed.
+    if: >-
+      vars.REGISTRY_NAME != '' && (
+        github.event_name == 'workflow_dispatch' || (
+          github.event.workflow_run.conclusion == 'success' &&
+          github.event.workflow_run.event == 'push' &&
+          github.event.workflow_run.head_repository.full_name == github.repository
+        )
+      )
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # workflow_run runs on main's latest commit; build the one CI tested.
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+      # build.sh reads package.json's version with node.
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+      - name: Log in to the registry
+        env:
+          REGISTRY_NAME: ${{ vars.REGISTRY_NAME }}
+          REGISTRY_USERNAME: ${{ secrets.REGISTRY_USERNAME }}
+          REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
+        run: |
+          printf '%s' "$REGISTRY_PASSWORD" |
+            docker login "${REGISTRY_NAME%%/*}" -u "$REGISTRY_USERNAME" --password-stdin
+      - name: Build and push
+        env:
+          REGISTRY_NAME: ${{ vars.REGISTRY_NAME }}
+          DOCKER_DEFAULT_PLATFORM: linux/amd64
+        run: docker/bin/build.sh --push
+      - name: Log out of the registry
+        if: always()
+        env:
+          REGISTRY_NAME: ${{ vars.REGISTRY_NAME }}
+        run: docker logout "${REGISTRY_NAME%%/*}"
