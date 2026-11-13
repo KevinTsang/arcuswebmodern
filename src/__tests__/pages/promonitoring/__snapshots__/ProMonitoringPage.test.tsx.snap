@@ -1,0 +1,150 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`ProMonitoringPage – snapshot matches snapshot 1`] = `
+<DocumentFragment>
+  <div
+    class="p-[var(--gutter)]"
+  >
+    <div
+      class="max-w-lg mx-auto"
+    >
+      <div
+        class="text-center mb-6"
+      >
+        <h2
+          class="text-[length:var(--font-size-h2)] font-[var(--heading-font-weight)] text-swift"
+          data-testid="promon-title"
+        >
+          Professional Monitoring
+        </h2>
+        <p
+          class="text-sm text-grouse mt-1"
+        >
+          My Home
+        </p>
+      </div>
+      <div
+        class="flex items-center justify-center gap-1 mb-8"
+      >
+        <div
+          class="flex items-center gap-1"
+        >
+          <div
+            class="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-medium bg-peacock text-crane"
+          >
+            1
+          </div>
+          <div
+            class="w-4 h-0.5 bg-pigeon"
+          />
+        </div>
+        <div
+          class="flex items-center gap-1"
+        >
+          <div
+            class="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-medium bg-pigeon text-grouse"
+          >
+            2
+          </div>
+          <div
+            class="w-4 h-0.5 bg-pigeon"
+          />
+        </div>
+        <div
+          class="flex items-center gap-1"
+        >
+          <div
+            class="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-medium bg-pigeon text-grouse"
+          >
+            3
+          </div>
+          <div
+            class="w-4 h-0.5 bg-pigeon"
+          />
+        </div>
+        <div
+          class="flex items-center gap-1"
+        >
+          <div
+            class="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-medium bg-pigeon text-grouse"
+          >
+            4
+          </div>
+          <div
+            class="w-4 h-0.5 bg-pigeon"
+          />
+        </div>
+        <div
+          class="flex items-center gap-1"
+        >
+          <div
+            class="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-medium bg-pigeon text-grouse"
+          >
+            5
+          </div>
+          <div
+            class="w-4 h-0.5 bg-pigeon"
+          />
+        </div>
+        <div
+          class="flex items-center gap-1"
+        >
+          <div
+            class="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-medium bg-pigeon text-grouse"
+          >
+            6
+          </div>
+          <div
+            class="w-4 h-0.5 bg-pigeon"
+          />
+        </div>
+        <div
+          class="flex items-center gap-1"
+        >
+          <div
+            class="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-medium bg-pigeon text-grouse"
+          >
+            7
+          </div>
+        </div>
+      </div>
+      <div
+        class="bg-crane border border-heron rounded-[var(--border-radius-lg)] p-6"
+      >
+        <h3
+          class="text-lg font-semibold text-swift mb-1"
+          data-step="address"
+          data-testid="promon-step"
+        >
+          Address
+        </h3>
+        <div
+          class="space-y-4 mt-4"
+        >
+          <p
+            class="text-sm text-grouse"
+          >
+            Verify your home address for emergency dispatch.
+          </p>
+          <div
+            class="bg-pigeon/30 rounded-[var(--border-radius-base)] p-4"
+          >
+            <p
+              class="text-sm text-swift"
+              data-testid="promon-address"
+            >
+              123 Main St, Springfield, IL, 62701
+            </p>
+          </div>
+          <button
+            class="w-full py-2.5 bg-peacock text-crane rounded-[var(--border-radius-base)] text-sm font-medium hover:bg-peacock/90"
+            data-testid="promon-next"
+          >
+            Address is Correct
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</DocumentFragment>
+`;

@@ -532,13 +532,13 @@ None.
 | PIN verification for activation | Yes | Yes | **Done** |
 | Connection test call | Yes | Yes | **Done** |
 | Post-activation settings management | Yes | Yes | **Done** |
-| Trial activation | Yes | No | **Missing** |
-| Monthly vs annual plan selection | Yes | No | **Missing** |
+| Trial activation | Yes | Yes (availability check + trial code entry) | **Done** |
+| Monthly vs annual plan selection | Yes | Yes (behind `ARCUS_ENABLE_YEARLY_SUBSCRIPTION`) | **Done** |
 
 ### Gaps
 
-- Trial activation flow.
-- Plan duration selection (monthly vs annual).
+- ~~Trial activation flow.~~ **DONE.** Like legacy, places that aren't monitored and aren't in the trial group are checked with `promon:CheckAvailability` before the wizard. `FULL` opens the wizard, `TRIAL` asks for a trial code first (`ProMonTrialForm`, `promon:JoinTrial`, legacy's retry messages), and `NONE` explains that monitoring isn't available at the address (legacy redirected to the service plans page instead). A failed check shows an error toast and opens the wizard, so the platform's activation check decides. `promon:GetSettings` results are now read from the platform's `settings` wrapper (the fake platform returns it too).
+- ~~Plan duration selection (monthly vs annual).~~ **DONE.** When yearly subscriptions are enabled (`ARCUS_ENABLE_YEARLY_SUBSCRIPTION=1`, carried through `run-nginx` → `server.json` → `ServerConfig` → `ArcusCoreConfig.enableYearlySubscription`), the review step offers Monthly/Annual billing (`ProMonPlanSelector`), preselecting Annual for places already on an annual plan. Activation sends `PREMIUM_PROMON_ANNUAL` or `PREMIUM_PROMON`; it used to send the place's current level (e.g. `BASIC`). Prices aren't shown: legacy read them from its bundled `plans.json`, and there's no platform API for them.
 
 ---
 
@@ -668,7 +668,7 @@ These are commonly used features that users will expect:
 20. **Hub advanced features** — Sounds/volume, cellular backup, Z-Wave topology, 4G usage.
 21. **Mobile device presence tracking** — Phone location for home/away detection.
 22. **Ownership transfer, place deletion, cancel invitations** — Account and place lifecycle.
-23. **Pro monitoring trial & plan selection** — Trial activation, monthly vs annual.
+23. ~~**Pro monitoring trial & plan selection** — Trial activation, monthly vs annual.~~ **DONE.**
 24. **Consolidate the dashboard card ↔ subsystem mappings** — The home page keeps
     its own `SERVICE_TO_NAMESPACE` table (`src/app/(authenticated)/home/page.tsx`)
     alongside `subsystemConfigs` (`src/lib/subsystemConfig.ts`), which already

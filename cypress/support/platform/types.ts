@@ -130,4 +130,8 @@ export interface PlatformData {
   invitationCodes: { [code: string]: InvitationFixture };
   apiKeys: ApiKeyFixture[];
   kitInfo: KitDeviceFixture[];
+  /** `available` returned by `promon:CheckAvailability`: NONE, TRIAL or FULL. */
+  promonAvailability: string;
+  /** Trial code accepted by `promon:JoinTrial`. */
+  promonTrialCode: string;
 }

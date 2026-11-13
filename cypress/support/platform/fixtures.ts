@@ -669,6 +669,8 @@ export function createFixture(): PlatformData {
       },
     ],
     invitations: [],
+    promonAvailability: 'FULL',
+    promonTrialCode: 'PROMON-7',
     invitationCodes: {
       'INVITE-42': {
         code: 'INVITE-42',

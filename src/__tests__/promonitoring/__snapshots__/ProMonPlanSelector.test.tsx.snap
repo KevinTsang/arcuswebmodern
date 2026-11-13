@@ -1,0 +1,66 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`ProMonPlanSelector matches snapshot 1`] = `
+<DocumentFragment>
+  <fieldset
+    data-testid="promon-plan"
+  >
+    <legend
+      class="block text-sm font-medium text-swift mb-1"
+    >
+      Billing
+    </legend>
+    <div
+      class="grid grid-cols-2 gap-2"
+    >
+      <label
+        class="flex items-start gap-2 p-3 border rounded-[var(--border-radius-base)] cursor-pointer border-peacock bg-peacock/5"
+      >
+        <input
+          checked=""
+          class="mt-0.5"
+          data-testid="promon-plan-monthly"
+          name="promon-plan"
+          type="radio"
+          value="monthly"
+        />
+        <span>
+          <span
+            class="block text-sm font-medium text-swift"
+          >
+            Monthly
+          </span>
+          <span
+            class="block text-xs text-grouse"
+          >
+            Billed every month
+          </span>
+        </span>
+      </label>
+      <label
+        class="flex items-start gap-2 p-3 border rounded-[var(--border-radius-base)] cursor-pointer border-heron"
+      >
+        <input
+          class="mt-0.5"
+          data-testid="promon-plan-annual"
+          name="promon-plan"
+          type="radio"
+          value="annual"
+        />
+        <span>
+          <span
+            class="block text-sm font-medium text-swift"
+          >
+            Annual
+          </span>
+          <span
+            class="block text-xs text-grouse"
+          >
+            Billed once a year
+          </span>
+        </span>
+      </label>
+    </div>
+  </fieldset>
+</DocumentFragment>
+`;

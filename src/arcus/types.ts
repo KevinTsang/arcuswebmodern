@@ -248,3 +248,26 @@ export interface PromonSettingsResponse {
   'promon:testCallStatus'?: string;
   'promon:testCallTime'?: number;
 }
+
+/** The place's ProMonitoringSettings object, as returned by promon:GetSettings. */
+export interface PromonSettings extends PromonSettingsResponse {
+  'base:address'?: string;
+  'promon:trial'?: boolean;
+  'promon:adults'?: number;
+  'promon:children'?: number;
+  'promon:pets'?: number;
+  'promon:directions'?: string;
+  'promon:gateCode'?: string;
+  'promon:instructions'?: string;
+  'promon:permitNumber'?: string;
+}
+
+/** promon:GetSettings response: the platform wraps the object in `settings`. */
+export interface PromonGetSettingsResponse extends PromonSettings {
+  settings?: PromonSettings;
+}
+
+/** promon:CheckAvailability response: NONE, TRIAL or FULL. */
+export interface PromonAvailabilityResponse {
+  available?: string;
+}

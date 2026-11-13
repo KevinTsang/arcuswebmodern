@@ -1,0 +1,54 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`ProMonTrialForm matches snapshot 1`] = `
+<DocumentFragment>
+  <form
+    class="space-y-4 mt-4"
+    data-testid="promon-trial-form"
+  >
+    <p
+      class="text-sm text-grouse"
+    >
+      Professional Monitoring is available in limited areas and is invite only.
+    </p>
+    <p
+      class="text-sm text-grouse"
+    >
+      <a
+        class="text-peacock hover:underline"
+        data-testid="promon-trial-request-link"
+        href="https://www.arcus.com/monitoring/"
+        rel="noopener noreferrer"
+        target="_blank"
+      >
+        Request a Professional Monitoring Code
+      </a>
+       or enter one below.
+    </p>
+    <div>
+      <label
+        class="block text-sm font-medium text-swift mb-1"
+        for="promon-trial-code"
+      >
+        Code
+      </label>
+      <input
+        autocomplete="off"
+        class="w-full border border-heron rounded-[var(--border-radius-base)] px-3 py-2 text-sm text-swift focus:outline-none focus:border-peacock"
+        data-testid="promon-trial-code"
+        id="promon-trial-code"
+        type="password"
+        value=""
+      />
+    </div>
+    <button
+      class="w-full py-2.5 bg-peacock text-crane rounded-[var(--border-radius-base)] text-sm font-medium hover:bg-peacock/90 disabled:opacity-50"
+      data-testid="promon-trial-submit"
+      disabled=""
+      type="submit"
+    >
+      Submit
+    </button>
+  </form>
+</DocumentFragment>
+`;

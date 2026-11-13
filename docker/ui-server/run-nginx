@@ -1,8 +1,8 @@
 #!/bin/bash
 # Writes the runtime config the app reads on start (see src/store/thunks/initConfig.ts)
-# to the same path as the legacy ui-server. Only the platform URLs are written,
-# from legacy's ARCUS_HTTP_URI and ARCUS_WS_URI; its other ARCUS_* variables are
-# ignored because nothing in this client uses them. Deployments mount a
+# to the same path as the legacy ui-server: the platform URLs, from legacy's
+# ARCUS_HTTP_URI and ARCUS_WS_URI, and the ARCUS_ENABLE_YEARLY_SUBSCRIPTION flag.
+# Its other ARCUS_* variables are ignored because nothing in this client uses them. Deployments mount a
 # writable volume at CONF_DIR because the rest of the filesystem is read-only.
 
 set -euo pipefail
@@ -29,12 +29,25 @@ require_url() {
 require_url ARCUS_HTTP_URI 'https?' https://client.example.com
 require_url ARCUS_WS_URI 'wss?' wss://client.example.com
 
+# Feature flags are 0 or 1, written as JSON numbers like legacy; unset means 0.
+require_flag() {
+  local name=$1
+  local value=${!name:-0}
+  if [[ ! $value =~ ^[01]$ ]]; then
+    echo "run-nginx: $name must be 0 or 1, not '$value'" >&2
+    exit 1
+  fi
+  printf -v "$name" '%s' "$value"
+}
+require_flag ARCUS_ENABLE_YEARLY_SUBSCRIPTION
+
 mkdir -p "$CONF_DIR"
 # Overwrite (not append) so container restarts don't produce duplicate entries
 cat > "$SERVER_CONF.tmp" <<EOF
 {
    "apiUrl" : "$ARCUS_HTTP_URI",
-   "wsUrl"  : "$ARCUS_WS_URI"
+   "wsUrl"  : "$ARCUS_WS_URI",
+   "enableYearlySubscription" : $ARCUS_ENABLE_YEARLY_SUBSCRIPTION
 }
 EOF
 mv "$SERVER_CONF.tmp" "$SERVER_CONF"

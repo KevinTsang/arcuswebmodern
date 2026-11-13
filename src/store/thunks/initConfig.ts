@@ -15,10 +15,12 @@
 import { setConfig } from '@arcus/core/config';
 import Bridge from '@arcus/core/bridge';
 
-/** server.json as written by run-nginx: the same file, and legacy's keys for the platform URLs. */
+/** server.json as written by run-nginx: the same file, and legacy's keys. */
 export interface ServerConfig {
   apiUrl?: string;
   wsUrl?: string;
+  /** 1 to offer annual service plans; legacy wrote it as a number (0/1). */
+  enableYearlySubscription?: number | string;
 }
 
 const SERVER_CONFIG_URL = '/build/dist/config/server.json';
@@ -38,6 +40,11 @@ async function loadServerConfig(): Promise<ServerConfig> {
   return serverConfig ?? {};
 }
 
+/** Legacy flags are 0/1 numbers (or strings, in hand-written files), read with parseInt. */
+function isFlagOn(value: number | string | undefined): boolean {
+  return parseInt(String(value ?? ''), 10) === 1;
+}
+
 /** Legacy deployments often set ARCUS_*_URI with a trailing "/"; the client appends its own paths. */
 function trimSlash(url: string): string {
   return url.replace(/\/+$/, '');
@@ -54,6 +61,10 @@ export async function initializeCoreConfig(): Promise<void> {
   // Always set by next.config.ts (the image tag, or the package.json version).
   const version = process.env.NEXT_PUBLIC_APP_VERSION ?? '';
 
-  setConfig({ apiUrl, wsUrl, version });
+  const enableYearlySubscription = isFlagOn(
+    server.enableYearlySubscription ?? process.env.NEXT_PUBLIC_ENABLE_YEARLY_SUBSCRIPTION,
+  );
+
+  setConfig({ apiUrl, wsUrl, version, enableYearlySubscription });
   Bridge.configure({ apiUrl, version });
 }

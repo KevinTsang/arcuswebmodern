@@ -15,8 +15,8 @@
 
 import {
   Account, AlarmIncident, AlarmSubsystem, Base, Device, Hub, HubZwave, PairingDevice,
-  PairingSubsystem, Person, Place, Rule, RuleTemplate, Scene, SceneTemplate, Scheduler,
-  SecuritySubsystem,
+  PairingSubsystem, Person, Place, ProMonitoringSettings, Rule, RuleTemplate, Scene, SceneTemplate,
+  Scheduler, SecuritySubsystem,
 } from '../../../packages/arcus-core/src/capabilities/capabilities';
 import { createFixture, PLACE_ID } from './fixtures';
 import {
@@ -1003,7 +1003,20 @@ export class MockPlatform {
     },
 
     // Professional monitoring
-    'promon:GetSettings': () => ({ ...this.mustGet(`SERV:promon:${PLACE_ID}`) }),
+    // The platform wraps the settings object in `settings`.
+    'promon:GetSettings': () => ({ settings: { ...this.mustGet(`SERV:promon:${PLACE_ID}`) } }),
+    [ProMonitoringSettings.CMD_CHECKAVAILABILITY]: ({ destination }) => {
+      this.mustGet(destination);
+      return { available: this.data.promonAvailability };
+    },
+    [ProMonitoringSettings.CMD_JOINTRIAL]: ({ destination, attrs }) => {
+      this.mustGet(destination);
+      if (attrs.code !== this.data.promonTrialCode) {
+        throw new PlatformFailure('error.code.invalid', 'Invalid trial code');
+      }
+      this.updateEntity(destination, { [ProMonitoringSettings.ATTR_TRIAL]: true });
+      return {};
+    },
     'promon:Activate': ({ destination }) => {
       this.mustGet(destination);
       return {};

@@ -9,6 +9,8 @@ export interface ArcusCoreConfig {
   apiUrl: string;
   wsUrl: string;
   version: string;
+  /** Offer annual service plans (legacy's ARCUS_ENABLE_YEARLY_SUBSCRIPTION). */
+  enableYearlySubscription?: boolean;
 }
 
 let _config: ArcusCoreConfig | null = null;

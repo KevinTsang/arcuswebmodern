@@ -64,6 +64,7 @@ describe('initializeCoreConfig – outside production', () => {
       apiUrl: 'https://build.example.com',
       wsUrl: 'wss://build.example.com',
       version: '2026.11.0',
+      enableYearlySubscription: false,
     });
     expect(mockBridgeConfigure).toHaveBeenCalledWith({ apiUrl: 'https://build.example.com', version: '2026.11.0' });
   });
@@ -76,6 +77,15 @@ describe('initializeCoreConfig – outside production', () => {
 
     expect(mockSetConfig).not.toHaveBeenCalled();
     expect(mockBridgeConfigure).not.toHaveBeenCalled();
+  });
+
+  it('enables yearly subscriptions from the build-time flag', async () => {
+    setEnv({ NODE_ENV: 'test', NEXT_PUBLIC_ENABLE_YEARLY_SUBSCRIPTION: '1' });
+    const initializeCoreConfig = await loadInit();
+
+    await initializeCoreConfig();
+
+    expect(mockSetConfig).toHaveBeenCalledWith(expect.objectContaining({ enableYearlySubscription: true }));
   });
 });
 
@@ -98,6 +108,7 @@ describe('initializeCoreConfig – production', () => {
       apiUrl: 'https://client.example.com',
       wsUrl: 'wss://client.example.com',
       version: '2026.11.0',
+      enableYearlySubscription: false,
     });
     expect(mockBridgeConfigure).toHaveBeenCalledWith({ apiUrl: 'https://client.example.com', version: '2026.11.0' });
   });
@@ -189,5 +200,30 @@ describe('initializeCoreConfig – production', () => {
     await initializeCoreConfig();
 
     expect(mockSetConfig).toHaveBeenCalledWith(expect.objectContaining({ wsUrl: 'wss://build.example.com' }));
+  });
+
+  it.each([
+    [1, true],
+    ['1', true],
+    [0, false],
+    ['0', false],
+    ['yes', false],
+  ])('reads enableYearlySubscription %p from server.json as %p', async (value, expected) => {
+    mockFetch.mockResolvedValue(jsonResponse({ apiUrl: 'https://client.example.com', enableYearlySubscription: value }));
+    const initializeCoreConfig = await loadInit();
+
+    await initializeCoreConfig();
+
+    expect(mockSetConfig).toHaveBeenCalledWith(expect.objectContaining({ enableYearlySubscription: expected }));
+  });
+
+  it('prefers the server.json flag over the build-time one', async () => {
+    setEnv({ NODE_ENV: 'production', NEXT_PUBLIC_ENABLE_YEARLY_SUBSCRIPTION: '1' });
+    mockFetch.mockResolvedValue(jsonResponse({ enableYearlySubscription: 0 }));
+    const initializeCoreConfig = await loadInit();
+
+    await initializeCoreConfig();
+
+    expect(mockSetConfig).toHaveBeenCalledWith(expect.objectContaining({ enableYearlySubscription: false }));
   });
 });
