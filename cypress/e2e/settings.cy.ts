@@ -4,7 +4,7 @@
  * invitations, and multi-place switching.
  */
 
-import { Account, Base, Person, Place } from '../../packages/arcus-core/src/capabilities/capabilities';
+import { Account, Base, MobileDevice, Person, Place } from '../../packages/arcus-core/src/capabilities/capabilities';
 import { GUEST_PERSON_ID, LAKE_PLACE_ID, LOGIN, PLACE_ID, addr } from '../support/platform/fixtures';
 import { tid } from '../support/selectors';
 
@@ -92,6 +92,40 @@ describe('Profile settings', () => {
     tid('pin-save').click();
     tid('pin-error').should('have.text', 'PIN must be 4-8 digits.');
     cy.platform().then((p) => expect(p.requestsOf(Person.CMD_CHANGEPINV2)).to.be.empty);
+  });
+});
+
+describe('Mobile devices (presence)', () => {
+  it('lists the person\'s mobile devices and removes one', () => {
+    cy.signIn({
+      path: '/settings',
+      customize: (p) => {
+        p.data.mobileDevices = [
+          {
+            [MobileDevice.ATTR_DEVICEINDEX]: 1,
+            [MobileDevice.ATTR_DEVICEVENDOR]: 'Apple',
+            [MobileDevice.ATTR_DEVICEMODEL]: 'iPhone 15',
+            [MobileDevice.ATTR_OSTYPE]: 'iOS',
+            [MobileDevice.ATTR_OSVERSION]: '17.2',
+          },
+          { [MobileDevice.ATTR_DEVICEINDEX]: 2, [MobileDevice.ATTR_NAME]: 'Kitchen Tablet' },
+        ];
+      },
+    });
+    cy.expectRequest(Person.CMD_LISTMOBILEDEVICES, (r) => r.destination === addr.person);
+    tid('mobile-device-1').should('contain', 'Apple iPhone 15').and('contain', 'iOS 17.2');
+    tid('mobile-device-2').should('contain', 'Kitchen Tablet');
+
+    tid('mobile-device-remove-1').click();
+    cy.expectRequestAttrs(Person.CMD_REMOVEMOBILEDEVICE, { deviceIndex: 1 });
+    cy.toast('Mobile device removed.');
+    tid('mobile-device-1').should('not.exist');
+    tid('mobile-device-2').should('exist');
+  });
+
+  it('explains when there are no mobile devices', () => {
+    cy.signIn({ path: '/settings' });
+    tid('mobile-devices-empty').should('be.visible');
   });
 });
 

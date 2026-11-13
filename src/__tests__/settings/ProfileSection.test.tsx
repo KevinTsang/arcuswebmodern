@@ -14,6 +14,13 @@ jest.mock('@/components/settings/useOpenContactInfoPanel', () => ({
   useOpenContactInfoPanel: () => mockOpenContactInfo,
 }));
 
+jest.mock('@/components/settings/MobileDevicesCard', () => ({
+  __esModule: true,
+  default: ({ personAddress }: { personAddress: string }) => (
+    <div data-testid="mobile-devices-card">{personAddress}</div>
+  ),
+}));
+
 let mockPerson: PersonEntity | null = null;
 let mockAccount: AccountData | null = null;
 let mockPlace: PlaceData | null = null;
@@ -66,6 +73,11 @@ describe('ProfileSection', () => {
     render(<ProfileSection />);
     expect(screen.getByText('Service Plan')).toBeInTheDocument();
     expect(screen.getByText('Premium')).toBeInTheDocument();
+  });
+
+  it('shows the person\'s mobile devices', () => {
+    render(<ProfileSection />);
+    expect(screen.getByTestId('mobile-devices-card')).toHaveTextContent('SERV:person:p1');
   });
 
   it('does not show the account sign-up state', () => {

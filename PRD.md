@@ -85,7 +85,7 @@ None.
 | Buttons / pendants | Configuration | None | **Missing** |
 | NOAA weather radios | Alert display, hush/snooze | None | **Missing** |
 | Halo devices | Multi-function (smoke, CO, weather, nightlight) | None | **Missing** |
-| Presence sensors / pet tokens | Assignment to person | None | **Missing** |
+| Presence sensors / pet tokens | Assignment to person | "Assign To" configurator (person / No One) in the device configuration panel | **Done** |
 | Somfy motorized shades | Position control | None | **Missing** |
 
 ### 3.3 Thermostat Sub-Features
@@ -591,13 +591,25 @@ None.
 |---------|--------|--------|--------|
 | Presence status display | Yes | Yes | **Done** |
 | Home/away detection | Yes | Yes | **Done** |
-| Mobile device tracking | Yes | No | **Missing** |
-| Assign presence sensor to person | Yes | No | **Missing** |
+| Mobile device tracking | Yes | Yes (Settings → Profile → Mobile Devices: list + remove) | **Done** |
+| Assign presence sensor to person | Yes | Yes (device configuration panel) | **Done** |
 
 ### Gaps
 
-- Mobile device presence tracking.
-- Presence sensor assignment to people.
+- ~~Mobile device presence tracking.~~ **DONE.** Settings → Profile has a
+  "Mobile Devices" card (`MobileDevicesCard`) that lists the phones/tablets
+  signed in as the person (`person:ListMobileDevices`) and removes one
+  (`person:RemoveMobileDevice` by `deviceIndex`). Location reporting itself is
+  done by the mobile app; the web client, like legacy, only shows and manages
+  the devices.
+- ~~Presence sensor assignment to people.~~ **DONE.** The `assign-device`
+  configurator (`AssignDeviceConfigurator`) lists the place's people plus
+  "No One" for any device with `pres:person` (key fobs, pendants, pet tokens).
+  Assigning sets `pres:person` to the person's address with `pres:usehint`
+  `PERSON`; "No One" clears it and resets the hint to `UNKNOWN`, matching legacy.
+  Not built: the presence-assignment step during pairing customization (the
+  modern pairing flow has no per-device customization steps yet; assign from
+  the device configuration panel after pairing).
 
 ---
 
@@ -666,7 +678,7 @@ These are commonly used features that users will expect:
 18. **Keypad, pet door, button/pendant, Halo device controls** — Niche device type support.
 19. **Cloud device pairing** — Nest, Hue, Lutron bridge pairing flows.
 20. **Hub advanced features** — Sounds/volume, cellular backup, Z-Wave topology, 4G usage.
-21. **Mobile device presence tracking** — Phone location for home/away detection.
+21. ~~**Mobile device presence tracking**~~ — **DONE.** Mobile devices card on the Profile (list/remove) and presence-device "Assign To" configurator (key fobs, pet tokens). Pairing-time assignment step not built.
 22. **Ownership transfer, place deletion, cancel invitations** — Account and place lifecycle.
 23. **Pro monitoring trial & plan selection** — Trial activation, monthly vs annual.
 24. **Consolidate the dashboard card ↔ subsystem mappings** — The home page keeps

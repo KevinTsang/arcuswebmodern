@@ -14,7 +14,7 @@
  */
 
 import {
-  Account, AlarmIncident, AlarmSubsystem, Base, Device, Hub, HubZwave, PairingDevice,
+  Account, AlarmIncident, AlarmSubsystem, Base, Device, Hub, HubZwave, MobileDevice, PairingDevice,
   PairingSubsystem, Person, Place, Rule, RuleTemplate, Scene, SceneTemplate, Scheduler,
   SecuritySubsystem,
 } from '../../../packages/arcus-core/src/capabilities/capabilities';
@@ -600,6 +600,13 @@ export class MockPlatform {
     [Person.CMD_REMOVEFROMPLACE]: ({ destination }) => {
       this.mustGet(destination);
       this.removeEntity(destination);
+      return {};
+    },
+    [Person.CMD_LISTMOBILEDEVICES]: () => ({ mobileDevices: this.data.mobileDevices }),
+    [Person.CMD_REMOVEMOBILEDEVICE]: ({ attrs }) => {
+      this.data.mobileDevices = this.data.mobileDevices.filter(
+        (d) => d[MobileDevice.ATTR_DEVICEINDEX] !== attrs.deviceIndex,
+      );
       return {};
     },
     [Person.CMD_VERIFYPIN]: ({ attrs }) => {

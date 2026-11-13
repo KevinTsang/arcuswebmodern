@@ -1,0 +1,77 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`AssignDeviceConfigurator matches snapshot 1`] = `
+<DocumentFragment>
+  <fieldset>
+    <legend
+      class="text-sm font-medium text-swift mb-2"
+    >
+      Assign To
+    </legend>
+    <div
+      class="space-y-1"
+    >
+      <label
+        class="flex items-center gap-3 px-3 py-2 rounded-[var(--border-radius-base)] cursor-pointer hover:bg-pigeon"
+        data-testid="assign-device-SERV:person:alice"
+        for="assign-device-SERV:person:alice"
+      >
+        <input
+          checked=""
+          class="accent-peacock"
+          id="assign-device-SERV:person:alice"
+          name="assign-device-DRIV:dev:fob"
+          type="radio"
+          value="SERV:person:alice"
+        />
+        <span
+          class="text-sm text-swift"
+        >
+          Alice Smith
+        </span>
+      </label>
+      <label
+        class="flex items-center gap-3 px-3 py-2 rounded-[var(--border-radius-base)] cursor-pointer hover:bg-pigeon"
+        data-testid="assign-device-SERV:person:bob"
+        for="assign-device-SERV:person:bob"
+      >
+        <input
+          class="accent-peacock"
+          id="assign-device-SERV:person:bob"
+          name="assign-device-DRIV:dev:fob"
+          type="radio"
+          value="SERV:person:bob"
+        />
+        <span
+          class="text-sm text-swift"
+        >
+          Bob Jones
+        </span>
+      </label>
+      <label
+        class="flex items-center gap-3 px-3 py-2 rounded-[var(--border-radius-base)] cursor-pointer hover:bg-pigeon"
+        data-testid="assign-device-none"
+        for="assign-device-none"
+      >
+        <input
+          class="accent-peacock"
+          id="assign-device-none"
+          name="assign-device-DRIV:dev:fob"
+          type="radio"
+          value=""
+        />
+        <span
+          class="text-sm text-swift"
+        >
+          No One
+          <span
+            class="block text-xs text-grouse"
+          >
+            Unassigned
+          </span>
+        </span>
+      </label>
+    </div>
+  </fieldset>
+</DocumentFragment>
+`;
