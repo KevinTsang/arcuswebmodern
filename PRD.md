@@ -71,7 +71,7 @@ None.
 | Multi-switch (dual relay/outlet) | Per-instance toggle | Per-instance toggle + status | **Done** |
 | Smart locks | Lock/unlock | Lock/unlock | **Done** |
 | Door/window contacts | Open/close status | Open/close status | **Done** |
-| Motorized doors / garage doors | Open/close/stop | Open/close | **Partial** |
+| Motorized doors / garage doors | Open/close | Open/close (Stop: no platform API — `motdoor` has no stop command and the drivers don't accept one; the legacy web client never had it) | **Done** |
 | Thermostats | Mode, heat/cool setpoints, min/max enforcement, fan mode | Mode, heat/cool setpoints | **Partial** |
 | Fans | Multi-speed control | 4-level speed selector | **Done** |
 | Water valves | Open/close | Open/close | **Done** |
@@ -80,11 +80,11 @@ None.
 | Shades / blinds | Position, tilt | Config references action but no component | **Missing** |
 | Irrigation controllers | Zone-by-zone control, schedules, modes | Zone list display only | **Partial** |
 | Cameras (live) | HLS streaming, PTZ, recording, clips | Device panel with status only | **Partial** |
-| Keypads | Button function assignment | None | **Missing** |
-| Pet doors | Open/close control, access settings | None | **Missing** |
-| Buttons / pendants | Configuration | None | **Missing** |
+| Keypads | None (keypad buttons are fixed: arm/disarm/panic events) | None (no platform API to reassign keypad buttons) | **N/A** |
+| Pet doors | Lock/unlock/auto, smart key access list | Lock/Unlock/Auto mode control + status; Smart Keys configurator (rename, remove with confirmation, pairing steps) | **Done** |
+| Buttons / pendants | Button rule assignment, pendant coverage test | Button Assignment(s) configurator for buttons and key fobs (rule-template rules, replace/clear); pendant Test Your Coverage guidance (pendant person assignment is under presence) | **Done** |
 | NOAA weather radios | Alert display, hush/snooze | None | **Missing** |
-| Halo devices | Multi-function (smoke, CO, weather, nightlight) | None | **Missing** |
+| Halo devices | Multi-function (smoke, CO, weather, nightlight) | Status from `halo:devicestate` (smoke, CO, weather, battery, EOL); nightlight toggle + Play/Stop Radio (Halo Plus), "Light Disabled" on battery; room assignment; remote self-test. NOAA station/alert settings are under weather radios | **Done** |
 | Presence sensors / pet tokens | Assignment to person | None | **Missing** |
 | Somfy motorized shades | Position control | None | **Missing** |
 
@@ -323,13 +323,12 @@ None.
 | Temporary PINs with expiry | Yes | No | **Missing** |
 | PIN history | Yes | No | **Missing** |
 | Door chime configuration | Yes | No | **Missing** |
-| Pet door controls | Yes | No | **Missing** |
+| Pet door controls | Yes | Yes (Lock/Unlock/Auto, smart keys) | **Done** |
 
 ### Gaps
 
 - Access management (assign PINs to people for locks, temporary PINs).
 - Door chime configuration.
-- Pet door controls.
 
 ---
 
@@ -710,7 +709,7 @@ These are commonly used features that users will expect:
 15. **Weather subsystem** — NOAA alerts, current conditions, weather radio integration.
 16. **Thermostat fan mode & min/max enforcement** — Fan control, setpoint limits, separation enforcement.
 17. **Advanced device info** — Power usage, signal strength, OTA firmware status.
-18. **Keypad, pet door, button/pendant, Halo device controls** — Niche device type support.
+18. ~~**Keypad, pet door, button/pendant, Halo device controls**~~ — **DONE.** Pet door mode + smart keys, button/key fob assignment, pendant coverage guidance, Halo status/light/radio/room/self-test. Keypad button assignment and garage door Stop have no platform API (N/A).
 19. **Cloud device pairing** — Nest, Hue, Lutron bridge pairing flows.
 20. **Hub advanced features** — Sounds/volume, cellular backup, Z-Wave topology, 4G usage.
 21. **Mobile device presence tracking** — Phone location for home/away detection.

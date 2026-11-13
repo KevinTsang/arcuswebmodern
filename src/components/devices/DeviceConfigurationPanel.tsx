@@ -17,6 +17,11 @@ import ThermostatModeConfigurator from './ThermostatModeConfigurator';
 import ColorConfigurator from './ColorConfigurator';
 import ContactSettingConfigurator from './ContactSettingConfigurator';
 import DeviceSettingsConfigurator from './DeviceSettingsConfigurator';
+import PetDoorSmartKeysConfigurator from './PetDoorSmartKeysConfigurator';
+import HaloRoomConfigurator from './HaloRoomConfigurator';
+import HaloTestConfigurator from './HaloTestConfigurator';
+import ButtonAssignmentConfigurator from './ButtonAssignmentConfigurator';
+import PendantCoverageConfigurator from './PendantCoverageConfigurator';
 
 interface DeviceConfigurationPanelProps {
   address: string;
@@ -62,6 +67,16 @@ function Configurator({ type, address }: { type: string; address: string }) {
       return <ContactSettingConfigurator address={address} />;
     case 'device-settings':
       return <DeviceSettingsConfigurator address={address} />;
+    case 'petdoor-smartkeys':
+      return <PetDoorSmartKeysConfigurator address={address} />;
+    case 'assign-halo-room':
+      return <HaloRoomConfigurator address={address} />;
+    case 'test-halo':
+      return <HaloTestConfigurator address={address} />;
+    case 'assign-buttons':
+      return <ButtonAssignmentConfigurator address={address} />;
+    case 'test-coverage':
+      return <PendantCoverageConfigurator />;
     default:
       return (
         <div className="text-xs text-grouse italic">

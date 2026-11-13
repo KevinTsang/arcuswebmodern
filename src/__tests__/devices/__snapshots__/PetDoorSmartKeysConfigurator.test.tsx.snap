@@ -1,0 +1,89 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`PetDoorSmartKeysConfigurator matches snapshot 1`] = `
+<DocumentFragment>
+  <div>
+    <p
+      class="text-sm font-medium text-swift mb-2"
+    >
+      Smart Keys
+    </p>
+    <div
+      class="flex items-start gap-3"
+    >
+      <p
+        class="flex-1 text-xs text-grouse"
+      >
+        The Smart Keys listed below have access to this door while in Auto Mode.
+      </p>
+      <button
+        aria-expanded="false"
+        class="px-3 py-1.5 text-sm rounded-[var(--border-radius-base)] bg-pigeon text-coot hover:bg-heron disabled:opacity-50"
+        data-testid="petdoor-add-key"
+      >
+        + Add Smart Key
+      </button>
+    </div>
+    <div
+      class="mt-2"
+    >
+      <div
+        class="flex items-end gap-3 py-2 border-b border-heron"
+        data-testid="petdoor-key-pt1"
+      >
+        <div
+          class="flex-1 min-w-0"
+        >
+          <label
+            class="block text-xs text-grouse mb-1"
+            for="petdoor-key-name-pt1"
+          >
+            Name
+          </label>
+          <input
+            class="w-full text-sm text-swift bg-transparent border-b border-heron focus:border-peacock focus:outline-none"
+            id="petdoor-key-name-pt1"
+            maxlength="64"
+            type="text"
+            value="Rex"
+          />
+        </div>
+        <button
+          class="px-3 py-1.5 text-sm rounded-[var(--border-radius-base)] bg-pigeon text-coot hover:bg-heron disabled:opacity-50"
+          data-testid="petdoor-key-remove-pt1"
+        >
+          Remove
+        </button>
+      </div>
+      <div
+        class="flex items-end gap-3 py-2 border-b border-heron"
+        data-testid="petdoor-key-pt2"
+      >
+        <div
+          class="flex-1 min-w-0"
+        >
+          <label
+            class="block text-xs text-grouse mb-1"
+            for="petdoor-key-name-pt2"
+          >
+            Name
+          </label>
+          <input
+            class="w-full text-sm text-swift bg-transparent border-b border-heron focus:border-peacock focus:outline-none"
+            id="petdoor-key-name-pt2"
+            maxlength="64"
+            type="text"
+            value="Smart Key 2"
+          />
+        </div>
+        <button
+          class="px-3 py-1.5 text-sm rounded-[var(--border-radius-base)] bg-pigeon text-coot hover:bg-heron disabled:opacity-50"
+          data-testid="petdoor-key-remove-pt2"
+        >
+          Remove
+        </button>
+      </div>
+    </div>
+  </div>
+</DocumentFragment>
+`;

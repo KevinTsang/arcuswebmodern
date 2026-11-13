@@ -26,6 +26,8 @@ import {
 } from '../lib/deviceConfig';
 import type { DeviceEntity } from '../store/entityTypes';
 import { getGarageDoorStatus } from '../lib/garageDoorStatus';
+import { getHaloStatus } from '../lib/haloStatus';
+import { getPetDoorLockLabel } from '../lib/petDoor';
 
 type DeviceObj = DeviceEntity;
 
@@ -391,6 +393,10 @@ export function getDeviceStatusText(device: DeviceObj, config: DeviceWebConfig):
       return 'Ok';
     case 'watervalve':
       return getValveStatus(device).label;
+    case 'halo':
+      return getHaloStatus(device).label;
+    case 'petdoor':
+      return getPetDoorLockLabel(device[PetDoor.ATTR_LOCKSTATE] as string | undefined);
     default:
       return on ? 'On' : 'Off';
   }

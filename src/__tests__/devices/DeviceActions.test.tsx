@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import { Base, DoorLock, Valve } from '@arcus/core';
+import { Base, DevicePower, DoorLock, PetDoor, Valve } from '@arcus/core';
 import { DeviceActions } from '@/components/devices/DeviceActions';
 import type { DeviceEntity } from '@/store/entityTypes';
 import { makeDevice } from '../helpers/factories';
@@ -61,6 +61,18 @@ describe('DeviceActions', () => {
     render(<DeviceActions address="DRIV:dev:test" action="open-close-valve" />);
     expect(screen.getByTestId('device-valve-toggle-DRIV:dev:test')).toHaveTextContent('Close');
     expect(screen.getByTestId('device-valve-toggle-DRIV:dev:test')).toBeEnabled();
+  });
+
+  it('renders PetDoorLockControl for lock-unlock-auto-petdoor action', () => {
+    mockDevice = makeDevice('DRIV:dev:test', { [PetDoor.ATTR_LOCKSTATE]: PetDoor.LOCKSTATE_AUTO });
+    render(<DeviceActions address="DRIV:dev:test" action="lock-unlock-auto-petdoor" />);
+    expect(screen.getByTestId('petdoor-mode-auto-DRIV:dev:test')).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  it('renders HaloControl for halo-toggle-light-play-stop action', () => {
+    mockDevice = makeDevice('DRIV:dev:test', { [DevicePower.ATTR_SOURCE]: DevicePower.SOURCE_LINE });
+    render(<DeviceActions address="DRIV:dev:test" action="halo-toggle-light-play-stop" />);
+    expect(screen.getByRole('switch')).toBeInTheDocument();
   });
 
   it('renders ThermostatControl for thermostat-slider action', () => {

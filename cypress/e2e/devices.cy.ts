@@ -5,7 +5,8 @@
  */
 
 import {
-  Base, Contact, Device, DeviceConnection, Dimmer, DoorLock, Hub, HubAdvanced, HubZwave, Switch, Thermostat, Valve,
+  Base, Contact, Device, DeviceConnection, Dimmer, DoorLock, Hub, HubAdvanced, HubZwave, PetDoor, PetToken, Switch,
+  Thermostat, Valve,
 } from '../../packages/arcus-core/src/capabilities/capabilities';
 import { DEVICE, DEVICE_NAME, addr } from '../support/platform/fixtures';
 import { tid } from '../support/selectors';
@@ -90,6 +91,41 @@ describe('Devices page', () => {
       r.destination === DEVICE.valve && r.attributes[Valve.ATTR_VALVESTATE] === Valve.VALVESTATE_CLOSED);
     status(DEVICE.valve).should('have.text', 'Closed');
     tid(`device-valve-toggle-${DEVICE.valve}`).should('have.text', 'Open');
+  });
+
+  it('sets the pet door mode and manages its smart keys', () => {
+    cy.signIn({ path: '/devices' });
+    const door = addr.device('petdoor');
+    cy.platform().invoke('addEntity', {
+      [Base.ATTR_ADDRESS]: door,
+      [Base.ATTR_ID]: 'petdoor',
+      [Base.ATTR_TYPE]: 'dev',
+      [Base.ATTR_CAPS]: ['base', 'dev', 'devconn', 'petdoor'],
+      [Device.ATTR_NAME]: 'Pet Door',
+      [Device.ATTR_DEVTYPEHINT]: 'Pet Door',
+      [DeviceConnection.ATTR_STATE]: DeviceConnection.STATE_ONLINE,
+      [PetDoor.ATTR_LOCKSTATE]: PetDoor.LOCKSTATE_LOCKED,
+      [PetDoor.ATTR_NUMPETTOKENSSUPPORTED]: 2,
+      [`${PetToken.ATTR_PAIRED}:pt1`]: true,
+      [`${PetToken.ATTR_TOKENID}:pt1`]: 7,
+      [`${PetToken.ATTR_PETNAME}:pt1`]: 'Rex',
+      [`${PetToken.ATTR_PAIRED}:pt2`]: false,
+    });
+    status(door).should('have.text', 'Locked');
+    tid(`petdoor-mode-auto-${door}`).click();
+    cy.expectRequest(Base.CMD_SETATTRIBUTES, (r) =>
+      r.destination === door && r.attributes[PetDoor.ATTR_LOCKSTATE] === PetDoor.LOCKSTATE_AUTO);
+    status(door).should('have.text', 'Auto');
+
+    tid(`device-config-${door}`).click();
+    cy.get('[data-testid="petdoor-key-pt1"]').should('be.visible');
+    cy.get('[data-testid="petdoor-key-pt2"]').should('not.exist');
+    cy.get('#petdoor-key-name-pt1').clear().type('Fido{enter}');
+    cy.expectRequest(Base.CMD_SETATTRIBUTES, (r) =>
+      r.destination === door && r.attributes[`${PetToken.ATTR_PETNAME}:pt1`] === 'Fido');
+    cy.get('[data-testid="petdoor-key-remove-pt1"]').click();
+    cy.get('[data-testid="petdoor-remove-yes"]').click();
+    cy.expectRequest(PetDoor.CMD_REMOVETOKEN, (r) => r.destination === door && r.attributes.tokenId === 7);
   });
 
   it('adjusts thermostat setpoints from the list', () => {
