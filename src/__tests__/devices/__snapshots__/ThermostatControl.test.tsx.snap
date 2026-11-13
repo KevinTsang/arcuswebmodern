@@ -1,0 +1,63 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`ThermostatControl rendering matches snapshot in AUTO mode 1`] = `
+<DocumentFragment>
+  <div
+    class="flex items-center gap-3"
+  >
+    <div
+      class="flex items-center gap-1"
+    >
+      <button
+        aria-label="Lower heat setpoint"
+        class="w-6 h-6 rounded bg-pigeon text-swift text-sm hover:bg-heron disabled:opacity-40 disabled:cursor-not-allowed"
+        data-testid="thermostat-heat-down-DRIV:dev:test"
+      >
+        -
+      </button>
+      <span
+        class="text-sm font-medium text-cardinal w-10 text-center"
+        data-testid="thermostat-heat-value-DRIV:dev:test"
+      >
+        70°
+      </span>
+      <button
+        aria-label="Raise heat setpoint"
+        class="w-6 h-6 rounded bg-pigeon text-swift text-sm hover:bg-heron disabled:opacity-40 disabled:cursor-not-allowed"
+        data-testid="thermostat-heat-up-DRIV:dev:test"
+      >
+        +
+      </button>
+    </div>
+    <span
+      class="text-grouse text-xs"
+    >
+      to
+    </span>
+    <div
+      class="flex items-center gap-1"
+    >
+      <button
+        aria-label="Lower cool setpoint"
+        class="w-6 h-6 rounded bg-pigeon text-swift text-sm hover:bg-heron disabled:opacity-40 disabled:cursor-not-allowed"
+        data-testid="thermostat-cool-down-DRIV:dev:test"
+      >
+        -
+      </button>
+      <span
+        class="text-sm font-medium text-peacock w-10 text-center"
+        data-testid="thermostat-cool-value-DRIV:dev:test"
+      >
+        75°
+      </span>
+      <button
+        aria-label="Raise cool setpoint"
+        class="w-6 h-6 rounded bg-pigeon text-swift text-sm hover:bg-heron disabled:opacity-40 disabled:cursor-not-allowed"
+        data-testid="thermostat-cool-up-DRIV:dev:test"
+      >
+        +
+      </button>
+    </div>
+  </div>
+</DocumentFragment>
+`;

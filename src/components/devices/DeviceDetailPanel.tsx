@@ -18,6 +18,7 @@ import { useDeviceActions } from '@/hooks/useDeviceActions';
 import { useDeviceRemoval } from '@/hooks/useDeviceRemoval';
 import { testIdSlug } from '@/lib/testId';
 import { DeviceRemovalSection } from './removal/DeviceRemovalSection';
+import { ThermostatIntegrationDetails } from './ThermostatIntegrationDetails';
 
 interface DeviceDetailPanelProps {
   address: string;
@@ -109,6 +110,8 @@ export function DeviceDetailPanel({ address }: DeviceDetailPanelProps) {
           />
         )}
       </dl>
+
+      <ThermostatIntegrationDetails address={address} />
 
       {/* Removal section */}
       <hr className="border-heron mb-4" />

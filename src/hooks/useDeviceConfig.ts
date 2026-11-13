@@ -12,7 +12,7 @@ import {
   Thermostat, DeviceConnection, DevicePower, Device, Temperature, Tilt, Vent,
   RelativeHumidity, PetDoor, WaterHeater, ColorTemperature, Illuminance,
   PowerUse, Atmos, SpaceHeater, IrrigationController, WaterSoftener, Flow,
-  UltravioletIndex, AOSmithWaterHeaterController, Somfyv1,
+  UltravioletIndex, AOSmithWaterHeaterController, Somfyv1, NestThermostat, TwinStar,
 } from '@arcus/core';
 import { useAppSelector } from '../store/hooks';
 import { selectDeviceByAddress } from '../store/slices/devicesSlice';
@@ -276,7 +276,7 @@ function getBadgeInfo(key: string, device: DeviceObj): BadgeInfo | null {
       return sp != null ? { key, label: 'Target', value: `${formatTemp(sp)}\u00B0` } : null;
     }
     case 'leaf': {
-      return device['nesttherm:hasleaf'] ? { key, label: 'Leaf', value: 'Active' } : null;
+      return device[NestThermostat.ATTR_HASLEAF] ? { key, label: 'Leaf', value: 'Active' } : null;
     }
     case 'colortemp': {
       const ct = device[ColorTemperature.ATTR_COLORTEMP] as number | undefined;
@@ -296,7 +296,9 @@ function getBadgeInfo(key: string, device: DeviceObj): BadgeInfo | null {
     }
     case 'spaceheater': {
       const heating = device[SpaceHeater.ATTR_HEATSTATE] as string;
-      return { key, label: 'Heater', value: heating === SpaceHeater.HEATSTATE_ON ? 'Heating' : 'Idle' };
+      if (heating !== SpaceHeater.HEATSTATE_ON) return { key, label: 'Heater', value: 'Off' };
+      const eco = device[TwinStar.ATTR_ECOMODE] === TwinStar.ECOMODE_ENABLED;
+      return { key, label: 'Heater', value: eco ? 'Eco Mode' : 'Heat' };
     }
     case 'scheduleType': {
       const state = (device[IrrigationController.ATTR_CONTROLLERSTATE] as string) ?? '';
@@ -312,8 +314,14 @@ function getBadgeInfo(key: string, device: DeviceObj): BadgeInfo | null {
       const flow = device[Flow.ATTR_FLOW] as number | undefined;
       return flow != null ? { key, label: 'Flow', value: `${flow.toFixed(1)} GPM` } : null;
     }
-    case 'temperatureLocked':
-      return device['nesttherm:locked'] ? { key, label: 'Locked', value: 'Yes' } : null;
+    case 'temperatureLocked': {
+      if (!device[NestThermostat.ATTR_LOCKED]) return null;
+      if (device[Thermostat.ATTR_HVACMODE] === Thermostat.HVACMODE_OFF) return null;
+      const lockMin = device[NestThermostat.ATTR_LOCKEDTEMPMIN] as number | undefined;
+      const lockMax = device[NestThermostat.ATTR_LOCKEDTEMPMAX] as number | undefined;
+      const range = lockMin != null && lockMax != null ? `${formatTemp(lockMin)}\u00B0 - ${formatTemp(lockMax)}\u00B0` : 'Yes';
+      return { key, label: 'Temp Locked', value: range };
+    }
     case 'ultraviolet-index': {
       const uv = device[UltravioletIndex.ATTR_INDEX] as number | undefined;
       return uv != null ? { key, label: 'UV', value: `${uv}` } : null;

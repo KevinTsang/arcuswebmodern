@@ -10,7 +10,7 @@ import {
   AOSmithWaterHeaterController, Atmos, Base, Button, Camera, ColorTemperature, Contact,
   Device, DevicePower, DeviceSettings, Dimmer, EcowaterWaterSoftener, Fan, Flow, Halo,
   Illuminance, IpInfo, IrrigationController, Light, Motion, MotorizedDoor, PetDoor,
-  PowerUse, Presence, RelativeHumidity, Somfyv1, SpaceHeater, Temperature, Thermostat,
+  NestThermostat, PowerUse, Presence, RelativeHumidity, Somfyv1, SpaceHeater, Temperature, Thermostat,
   Tilt, UltravioletIndex, Valve, WaterHardness, WaterHeater, WaterSoftener, WeatherRadio,
   WiFi,
 } from '@arcus/core';
@@ -136,7 +136,7 @@ export const capabilityPlugins: Record<string, CapabilityPlugin> = {
   [WaterHeater.ATTR_HOTWATERLEVEL]: { badges: ['hotWaterLevel'], configurators: ['water-heater-mode'] },
   [AOSmithWaterHeaterController.ATTR_CONTROLMODE]: { badges: ['waterHeaterEnergySmart'] },
   [WaterHeater.ATTR_SETPOINT]: { badges: ['lowHeatTarget'] },
-  'nesttherm:hasleaf': { badges: ['leaf'] },
+  [NestThermostat.ATTR_HASLEAF]: { badges: ['leaf'] },
   [Thermostat.ATTR_HVACMODE]: { badges: ['thermostat'], configurators: ['thermostat-mode'] },
   [Button.ATTR_STATE]: {
     configurators: (dev) => {
@@ -188,7 +188,7 @@ export const capabilityPlugins: Record<string, CapabilityPlugin> = {
   },
   [SpaceHeater.ATTR_HEATSTATE]: { badges: ['spaceheater'], configurators: ['space-heater-mode'] },
   [WeatherRadio.ATTR_ALERTSTATE]: { configurators: ['noaa-location', 'noaa-radio', 'noaa-weather-alerts'] },
-  'nesttherm:locked': { badges: ['temperatureLocked'] },
+  [NestThermostat.ATTR_LOCKED]: { badges: ['temperatureLocked'] },
   [EcowaterWaterSoftener.ATTR_CONTINUOUSRATE]: { configurators: ['water-flow'] },
   [WaterHardness.ATTR_HARDNESS]: { configurators: ['water-hardness'] },
   [WaterSoftener.ATTR_CURRENTSALTLEVEL]: { badges: ['salt-level'], configurators: ['water-salt-type'] },

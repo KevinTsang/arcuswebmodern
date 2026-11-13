@@ -1,0 +1,50 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`ThermostatIntegrationDetails matches snapshot for a Nest thermostat 1`] = `
+<DocumentFragment>
+  <div
+    class="mb-8 space-y-3"
+    data-testid="thermostat-nest-details"
+  >
+    <p
+      class="text-sm text-grouse"
+    >
+      Manage these settings on your Nest thermostat or in the Nest mobile app.
+    </p>
+    <dl
+      class="space-y-3"
+    >
+      <div
+        class="flex justify-between"
+      >
+        <dt
+          class="text-sm text-grouse"
+        >
+          Room
+        </dt>
+        <dd
+          class="text-sm text-swift text-right"
+          data-testid="thermostat-nest-room"
+        >
+          Hallway
+        </dd>
+      </div>
+      <div
+        class="flex justify-between"
+      >
+        <dt
+          class="text-sm text-grouse"
+        >
+          Temperature Lock
+        </dt>
+        <dd
+          class="text-sm text-swift text-right"
+          data-testid="thermostat-nest-lock"
+        >
+          On (62° - 78°)
+        </dd>
+      </div>
+    </dl>
+  </div>
+</DocumentFragment>
+`;

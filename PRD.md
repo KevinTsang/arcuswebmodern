@@ -72,7 +72,7 @@ None.
 | Smart locks | Lock/unlock | Lock/unlock | **Done** |
 | Door/window contacts | Open/close status | Open/close status | **Done** |
 | Motorized doors / garage doors | Open/close/stop | Open/close | **Partial** |
-| Thermostats | Mode, heat/cool setpoints, min/max enforcement, fan mode | Mode, heat/cool setpoints | **Partial** |
+| Thermostats | Mode, heat/cool setpoints, min/max enforcement, fan mode | Mode (incl. Eco when supported), heat/cool setpoints with min/max + AUTO separation enforcement, fan mode (Auto/On) | **Done** |
 | Fans | Multi-speed control | 4-level speed selector | **Done** |
 | Water valves | Open/close | Open/close | **Done** |
 | Water heaters | Mode control, temperature | None | **Missing** |
@@ -94,13 +94,13 @@ None.
 |---------|--------|--------|--------|
 | HVAC mode switching (heat, cool, auto, off) | Yes | Yes | **Done** |
 | Heat / cool setpoint adjustment | Yes | Yes | **Done** |
-| Min/max temperature enforcement (45-95 F) | Yes | No | **Missing** |
-| Minimum separation (3 F between heat/cool in auto) | Yes | No | **Missing** |
-| Fan mode control | Yes | No | **Missing** |
+| Min/max temperature enforcement (45-95 F) | Yes | Yes — device `therm:minsetpoint`/`maxsetpoint`, else 45–95 °F; buttons disable at the limit | **Done** |
+| Minimum separation (3 F between heat/cool in auto) | Yes | Yes — `therm:setpointseparation`, else 3 °F; moving one setpoint into the gap pushes the other (sent in one `SetAttributes`); entering AUTO with too little gap resets to 68/78 °F | **Done** |
+| Fan mode control | Yes | Yes — Auto/On in the thermostat configurator | **Done** |
 | Thermostat schedule management | Yes (full calendar) | No | **Missing** |
-| Space heater mode | Yes | No | **Missing** |
-| Nest integration specifics | Yes | No | **Missing** |
-| Honeywell TCC integration specifics | Yes | No | **Missing** |
+| Space heater mode | Yes | Yes — On/Off state, TwinStar Standard/EcoMode, setpoint stepper (device range, else 51–96 °F) on the device row | **Done** |
+| Nest integration specifics | Yes | Yes — "Heat • Cool" auto label, Eco mode, temperature-lock range enforced and shown (badge + details), room name, controls blocked with "Temp Timeout" on `ERR_RATELIMIT`. Nest re-authorization flow is part of cloud pairing (Tier 3 #19) | **Done** |
+| Honeywell TCC integration specifics | Yes | Yes — login-required / revoked account status in device details, "enable Auto on the device" guidance when Auto is unsupported, controls disabled while a setpoint save is pending. Honeywell re-login flow is part of cloud pairing (Tier 3 #19) | **Done** |
 
 ### 3.4 Camera Sub-Features
 
@@ -299,14 +299,12 @@ None.
 | Multiple thermostats | Yes | Yes | **Done** |
 | Temperature sensor list | Yes | Yes | **Done** |
 | Thermostat schedule management | Yes (full calendar) | No | **Missing** |
-| Fan mode control | Yes | No | **Missing** |
-| Space heater mode | Yes | No | **Missing** |
+| Fan mode control | Yes | Yes | **Done** |
+| Space heater mode | Yes | Yes | **Done** |
 
 ### Gaps
 
 - Thermostat scheduling (temperature programs by time/day).
-- Fan mode control.
-- Space heater mode support.
 
 ---
 
@@ -708,7 +706,7 @@ These are commonly used features that users will expect:
 13. **Water heater & softener controls** — Mode, temperature, salt level, recharge settings.
 14. **Shade / blind controls** — Position and tilt control.
 15. **Weather subsystem** — NOAA alerts, current conditions, weather radio integration.
-16. **Thermostat fan mode & min/max enforcement** — Fan control, setpoint limits, separation enforcement.
+16. ~~**Thermostat fan mode & min/max enforcement**~~ — **DONE.** Fan mode (Auto/On), 45–95 °F / device setpoint limits, 3 °F AUTO separation, Eco mode, space heater state/eco mode/setpoint, Nest (lock range, room, rate-limit block) and Honeywell TCC (account status, Auto guidance) specifics.
 17. **Advanced device info** — Power usage, signal strength, OTA firmware status.
 18. **Keypad, pet door, button/pendant, Halo device controls** — Niche device type support.
 19. **Cloud device pairing** — Nest, Hue, Lutron bridge pairing flows.

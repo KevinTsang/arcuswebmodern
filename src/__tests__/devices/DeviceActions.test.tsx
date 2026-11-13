@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import { Base, DoorLock, Valve } from '@arcus/core';
+import { Base, DoorLock, SpaceHeater, Valve } from '@arcus/core';
 import { DeviceActions } from '@/components/devices/DeviceActions';
 import type { DeviceEntity } from '@/store/entityTypes';
 import { makeDevice } from '../helpers/factories';
@@ -67,5 +67,14 @@ describe('DeviceActions', () => {
     render(<DeviceActions address="DRIV:dev:test" action="thermostat-slider" />);
     // Off mode renders "Off" text
     expect(screen.getByText('Off')).toBeInTheDocument();
+  });
+
+  it('renders SpaceHeaterControl for changeSpaceHeaterTemperature action', () => {
+    mockDevice = makeDevice('DRIV:dev:test', {
+      [SpaceHeater.ATTR_HEATSTATE]: SpaceHeater.HEATSTATE_ON,
+      [SpaceHeater.ATTR_SETPOINT]: (70 - 32) * 5 / 9,
+    });
+    render(<DeviceActions address="DRIV:dev:test" action="changeSpaceHeaterTemperature" />);
+    expect(screen.getByTestId('spaceheater-value-DRIV:dev:test')).toHaveTextContent('70°');
   });
 });

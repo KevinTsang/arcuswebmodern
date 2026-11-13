@@ -832,6 +832,15 @@ export const Halo = {
   CMD_STARTTEST: 'halo:StartTest',
 } as const;
 
+export const HoneywellTCC = {
+  NAME: 'HoneywellTCC',
+  NAMESPACE: 'honeywelltcc',
+  ATTR_REQUIRESLOGIN: 'honeywelltcc:requiresLogin',
+  ATTR_AUTHORIZATIONSTATE: 'honeywelltcc:authorizationState',
+  AUTHORIZATIONSTATE_AUTHORIZED: 'AUTHORIZED',
+  AUTHORIZATIONSTATE_DEAUTHORIZED: 'DEAUTHORIZED',
+} as const;
+
 export const Hub = {
   NAME: 'Hub',
   NAMESPACE: 'hub',
@@ -1649,6 +1658,16 @@ export const MotorizedDoor = {
   DOORSTATE_OPEN: 'OPEN',
 } as const;
 
+export const NestThermostat = {
+  NAME: 'NestThermostat',
+  NAMESPACE: 'nesttherm',
+  ATTR_HASLEAF: 'nesttherm:hasleaf',
+  ATTR_ROOMNAME: 'nesttherm:roomname',
+  ATTR_LOCKED: 'nesttherm:locked',
+  ATTR_LOCKEDTEMPMIN: 'nesttherm:lockedtempmin',
+  ATTR_LOCKEDTEMPMAX: 'nesttherm:lockedtempmax',
+} as const;
+
 export const PairingDevice = {
   NAME: 'PairingDevice',
   NAMESPACE: 'pairdev',
@@ -2448,6 +2467,8 @@ export const Thermostat = {
   CONTROLMODE_SCHEDULEADVANCED: 'SCHEDULEADVANCED',
   ACTIVE_RUNNING: 'RUNNING',
   ACTIVE_NOTRUNNING: 'NOTRUNNING',
+  FANMODE_AUTO: 0,
+  FANMODE_ON: 1,
   CMD_CHANGEFILTER: 'therm:changeFilter',
   CMD_SETIDEALTEMPERATURE: 'therm:SetIdealTemperature',
   CMD_INCREMENTIDEALTEMPERATURE: 'therm:IncrementIdealTemperature',
@@ -2668,6 +2689,7 @@ export const NAMESPACE_MAP: Record<string, string> = {
   'gas': 'LeakGas',
   'glass': 'Glass',
   'halo': 'Halo',
+  'honeywelltcc': 'HoneywellTCC',
   'hub': 'Hub',
   'hub4g': 'Hub4g',
   'hubadv': 'HubAdvanced',
@@ -2705,6 +2727,7 @@ export const NAMESPACE_MAP: Record<string, string> = {
   'mobiledevice': 'MobileDevice',
   'mot': 'Motion',
   'motdoor': 'MotorizedDoor',
+  'nesttherm': 'NestThermostat',
   'noaa': 'WeatherRadio',
   'pairdev': 'PairingDevice',
   'pairdevmock': 'PairingDeviceMock',
