@@ -1,0 +1,72 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`SpaceHeaterModeConfigurator rendering matches snapshot 1`] = `
+<DocumentFragment>
+  <div
+    class="space-y-4"
+  >
+    <div>
+      <p
+        class="text-sm font-medium text-swift mb-2"
+      >
+        Heater State
+      </p>
+      <div
+        class="flex gap-2"
+      >
+        <button
+          aria-pressed="true"
+          class="
+    px-3 py-1.5 text-sm rounded-[var(--border-radius-base)] transition-colors
+    bg-peacock text-crane
+  "
+          data-testid="spaceheater-state-off"
+        >
+          Off
+        </button>
+        <button
+          aria-pressed="false"
+          class="
+    px-3 py-1.5 text-sm rounded-[var(--border-radius-base)] transition-colors
+    bg-pigeon text-coot hover:bg-heron
+  "
+          data-testid="spaceheater-state-on"
+        >
+          On
+        </button>
+      </div>
+    </div>
+    <div>
+      <p
+        class="text-sm font-medium text-swift mb-2"
+      >
+        Heater Mode
+      </p>
+      <div
+        class="flex gap-2"
+      >
+        <button
+          aria-pressed="true"
+          class="
+    px-3 py-1.5 text-sm rounded-[var(--border-radius-base)] transition-colors
+    bg-peacock text-crane
+  "
+          data-testid="spaceheater-ecomode-disabled"
+        >
+          Standard
+        </button>
+        <button
+          aria-pressed="false"
+          class="
+    px-3 py-1.5 text-sm rounded-[var(--border-radius-base)] transition-colors
+    bg-pigeon text-coot hover:bg-heron
+  "
+          data-testid="spaceheater-ecomode-enabled"
+        >
+          EcoMode
+        </button>
+      </div>
+    </div>
+  </div>
+</DocumentFragment>
+`;

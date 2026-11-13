@@ -104,6 +104,14 @@ describe('Devices page', () => {
     status(DEVICE.thermostat).should('have.text', 'Heat to 69°');
   });
 
+  it('stops thermostat setpoints at the 95 °F limit', () => {
+    cy.signIn({ path: '/devices' });
+    cy.platform().invoke('updateEntity', DEVICE.thermostat, { [Thermostat.ATTR_HEATSETPOINT]: 35 });
+    tid(`thermostat-heat-value-${DEVICE.thermostat}`).should('have.text', '95°');
+    tid(`thermostat-heat-up-${DEVICE.thermostat}`).should('be.disabled');
+    tid(`thermostat-heat-down-${DEVICE.thermostat}`).should('not.be.disabled');
+  });
+
   it('renames a device inline', () => {
     cy.signIn({ path: '/devices' });
     tid(`device-name-${DEVICE.coffee}`).click();
@@ -206,6 +214,15 @@ describe('Devices page', () => {
         r.destination === DEVICE.thermostat && r.attributes[Thermostat.ATTR_HVACMODE] === Thermostat.HVACMODE_COOL);
       cy.get('[data-testid="side-panel-right-close"]').click();
       status(DEVICE.thermostat).should('have.text', 'Cool to 77°');
+    });
+
+    it('switches thermostat fan mode', () => {
+      cy.signIn({ path: '/devices' });
+      tid(`device-config-${DEVICE.thermostat}`).click();
+      cy.get('[data-testid="fan-mode-on"]').click();
+      cy.expectRequest(Base.CMD_SETATTRIBUTES, (r) =>
+        r.destination === DEVICE.thermostat && r.attributes[Thermostat.ATTR_FANMODE] === Thermostat.FANMODE_ON);
+      cy.get('[data-testid="fan-mode-on"]').should('have.attr', 'aria-pressed', 'true');
     });
 
     it('changes a contact sensor type', () => {

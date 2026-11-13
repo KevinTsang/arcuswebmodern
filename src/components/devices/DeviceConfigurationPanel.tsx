@@ -14,6 +14,7 @@ import { useDeviceConfigurators } from '@/hooks/useDeviceConfig';
 import BrightnessConfigurator from './BrightnessConfigurator';
 import FanSpeedConfigurator from './FanSpeedConfigurator';
 import ThermostatModeConfigurator from './ThermostatModeConfigurator';
+import SpaceHeaterModeConfigurator from './SpaceHeaterModeConfigurator';
 import ColorConfigurator from './ColorConfigurator';
 import ContactSettingConfigurator from './ContactSettingConfigurator';
 import DeviceSettingsConfigurator from './DeviceSettingsConfigurator';
@@ -55,6 +56,8 @@ function Configurator({ type, address }: { type: string; address: string }) {
       return <FanSpeedConfigurator address={address} />;
     case 'thermostat-mode':
       return <ThermostatModeConfigurator address={address} />;
+    case 'space-heater-mode':
+      return <SpaceHeaterModeConfigurator address={address} />;
     case 'color':
     case 'color-or-colortemp':
       return <ColorConfigurator address={address} />;

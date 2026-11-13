@@ -1,0 +1,92 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`ThermostatModeConfigurator rendering matches snapshot 1`] = `
+<DocumentFragment>
+  <div
+    class="space-y-4"
+  >
+    <div>
+      <p
+        class="text-sm font-medium text-swift mb-2"
+      >
+        HVAC Mode
+      </p>
+      <div
+        class="flex flex-wrap gap-2"
+      >
+        <button
+          aria-pressed="true"
+          class="
+    px-3 py-1.5 text-sm rounded-[var(--border-radius-base)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed
+    bg-peacock text-crane
+  "
+          data-testid="hvac-mode-off"
+        >
+          Off
+        </button>
+        <button
+          aria-pressed="false"
+          class="
+    px-3 py-1.5 text-sm rounded-[var(--border-radius-base)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed
+    bg-pigeon text-coot hover:bg-heron
+  "
+          data-testid="hvac-mode-heat"
+        >
+          Heat
+        </button>
+        <button
+          aria-pressed="false"
+          class="
+    px-3 py-1.5 text-sm rounded-[var(--border-radius-base)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed
+    bg-pigeon text-coot hover:bg-heron
+  "
+          data-testid="hvac-mode-cool"
+        >
+          Cool
+        </button>
+        <button
+          aria-pressed="false"
+          class="
+    px-3 py-1.5 text-sm rounded-[var(--border-radius-base)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed
+    bg-pigeon text-coot hover:bg-heron
+  "
+          data-testid="hvac-mode-auto"
+        >
+          Auto
+        </button>
+      </div>
+    </div>
+    <div>
+      <p
+        class="text-sm font-medium text-swift mb-2"
+      >
+        Fan Mode
+      </p>
+      <div
+        class="flex gap-2"
+      >
+        <button
+          aria-pressed="true"
+          class="
+    px-3 py-1.5 text-sm rounded-[var(--border-radius-base)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed
+    bg-peacock text-crane
+  "
+          data-testid="fan-mode-auto"
+        >
+          Auto
+        </button>
+        <button
+          aria-pressed="false"
+          class="
+    px-3 py-1.5 text-sm rounded-[var(--border-radius-base)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed
+    bg-pigeon text-coot hover:bg-heron
+  "
+          data-testid="fan-mode-on"
+        >
+          On
+        </button>
+      </div>
+    </div>
+  </div>
+</DocumentFragment>
+`;

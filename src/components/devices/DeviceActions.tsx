@@ -6,6 +6,7 @@ import LockUnlock from './LockUnlock';
 import OpenCloseDoor from './OpenCloseDoor';
 import OpenCloseValve from './OpenCloseValve';
 import ThermostatControl from './ThermostatControl';
+import SpaceHeaterControl from './SpaceHeaterControl';
 import MultiToggle from './MultiToggle';
 
 interface DeviceActionsProps {
@@ -26,6 +27,8 @@ function DeviceActionsInner({ address, action }: DeviceActionsProps) {
       return <OpenCloseValve address={address} />;
     case 'thermostat-slider':
       return <ThermostatControl address={address} />;
+    case 'changeSpaceHeaterTemperature':
+      return <SpaceHeaterControl address={address} />;
     case 'multi-toggle':
       return <MultiToggle address={address} />;
     default:

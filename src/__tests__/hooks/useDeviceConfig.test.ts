@@ -1,4 +1,4 @@
-import { Device, DeviceConnection } from '@arcus/core';
+import { Base, Device, DeviceConnection, NestThermostat, SpaceHeater, Thermostat, TwinStar } from '@arcus/core';
 import {
   cToF,
   formatTemp,
@@ -8,6 +8,7 @@ import {
   isDeviceAway,
   getDeviceStatusText,
   resolveDeviceIcon,
+  resolveDeviceBadgeData,
 } from '@/hooks/useDeviceConfig';
 import type { DeviceWebConfig } from '@/lib/deviceConfig';
 
@@ -229,5 +230,46 @@ describe('resolveDeviceIcon', () => {
     const result = resolveDeviceIcon({ 'swit:state': 'ON', 'dim:brightness': 50 }, BASE_CONFIG);
     expect(result.hasRadial).toBe(true);
     expect(result.brightness).toBe(50);
+  });
+});
+
+describe('resolveDeviceBadgeData — thermostat and space heater', () => {
+  const c = (f: number) => (f - 32) * 5 / 9;
+  const find = (badges: { key: string; label: string; value: string }[], key: string) => badges.find((b) => b.key === key);
+
+  it('shows the Nest temperature lock range', () => {
+    const badges = resolveDeviceBadgeData({
+      id: 'd1', 'base:address': 'd1',
+      [Base.ATTR_CAPS]: ['therm', NestThermostat.NAMESPACE],
+      [Thermostat.ATTR_HVACMODE]: Thermostat.HVACMODE_HEAT,
+      [NestThermostat.ATTR_LOCKED]: true,
+      [NestThermostat.ATTR_LOCKEDTEMPMIN]: c(62),
+      [NestThermostat.ATTR_LOCKEDTEMPMAX]: c(78),
+    });
+    expect(find(badges, 'temperatureLocked')).toEqual({ key: 'temperatureLocked', label: 'Temp Locked', value: '62\u00B0 - 78\u00B0' });
+  });
+
+  it('hides the Nest lock badge while the thermostat is off', () => {
+    const badges = resolveDeviceBadgeData({
+      id: 'd1', 'base:address': 'd1',
+      [Base.ATTR_CAPS]: ['therm', NestThermostat.NAMESPACE],
+      [Thermostat.ATTR_HVACMODE]: Thermostat.HVACMODE_OFF,
+      [NestThermostat.ATTR_LOCKED]: true,
+    });
+    expect(find(badges, 'temperatureLocked')).toBeUndefined();
+  });
+
+  it.each([
+    [SpaceHeater.HEATSTATE_OFF, TwinStar.ECOMODE_DISABLED, 'Off'],
+    [SpaceHeater.HEATSTATE_ON, TwinStar.ECOMODE_DISABLED, 'Heat'],
+    [SpaceHeater.HEATSTATE_ON, TwinStar.ECOMODE_ENABLED, 'Eco Mode'],
+  ])('describes a space heater that is %s with eco %s as %s', (state, eco, expected) => {
+    const badges = resolveDeviceBadgeData({
+      id: 'd1', 'base:address': 'd1',
+      [Base.ATTR_CAPS]: ['spaceheater', TwinStar.NAMESPACE],
+      [SpaceHeater.ATTR_HEATSTATE]: state,
+      [TwinStar.ATTR_ECOMODE]: eco,
+    });
+    expect(find(badges, 'spaceheater')?.value).toBe(expected);
   });
 });

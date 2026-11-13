@@ -1,0 +1,30 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`SpaceHeaterControl rendering matches snapshot 1`] = `
+<DocumentFragment>
+  <div
+    class="flex items-center gap-1"
+  >
+    <button
+      aria-label="Lower heater setpoint"
+      class="w-6 h-6 rounded bg-pigeon text-swift text-sm hover:bg-heron disabled:opacity-40 disabled:cursor-not-allowed"
+      data-testid="spaceheater-down-DRIV:dev:heater"
+    >
+      -
+    </button>
+    <span
+      class="text-sm font-medium text-cardinal w-10 text-center"
+      data-testid="spaceheater-value-DRIV:dev:heater"
+    >
+      70°
+    </span>
+    <button
+      aria-label="Raise heater setpoint"
+      class="w-6 h-6 rounded bg-pigeon text-swift text-sm hover:bg-heron disabled:opacity-40 disabled:cursor-not-allowed"
+      data-testid="spaceheater-up-DRIV:dev:heater"
+    >
+      +
+    </button>
+  </div>
+</DocumentFragment>
+`;
