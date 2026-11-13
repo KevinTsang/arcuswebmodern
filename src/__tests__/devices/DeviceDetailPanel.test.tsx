@@ -1,5 +1,5 @@
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
-import { Base, Device, DeviceAdvanced, DeviceConnection, Hub, PairingDevice } from '@arcus/core';
+import { Base, Device, DeviceAdvanced, DeviceConnection, DeviceOta, Hub, PairingDevice, PowerUse } from '@arcus/core';
 import { DeviceDetailPanel } from '@/components/devices/DeviceDetailPanel';
 import { UnpairingAction } from '@/lib/hubUnpairing';
 import type { DeviceEntity } from '@/store/entityTypes';
@@ -207,6 +207,23 @@ describe('DeviceDetailPanel – info rows', () => {
   it('shows Offline for a disconnected device', () => {
     renderWith({ [DeviceConnection.ATTR_STATE]: 'OFFLINE' });
     expect(screen.getByTestId('device-detail-connection')).toHaveTextContent('Offline');
+  });
+
+  it('shows power usage, signal strength and OTA firmware status', () => {
+    renderWith({
+      [PowerUse.ATTR_INSTANTANEOUS]: 12.4,
+      [DeviceConnection.ATTR_SIGNAL]: 40,
+      [DeviceOta.ATTR_STATUS]: DeviceOta.STATUS_INPROGRESS,
+      [DeviceOta.ATTR_PROGRESSPERCENT]: 10,
+    });
+    expect(screen.getByTestId('device-detail-power-usage')).toHaveTextContent('12 W');
+    expect(screen.getByTestId('device-detail-signal')).toHaveTextContent('Fair (40%)');
+    expect(screen.getByTestId('device-detail-firmware-update')).toHaveTextContent('Updating (10%)');
+  });
+
+  it('hides the signal row for an offline device', () => {
+    renderWith({ [DeviceConnection.ATTR_STATE]: 'OFFLINE', [DeviceConnection.ATTR_SIGNAL]: 90 });
+    expect(screen.queryByTestId('device-detail-signal')).not.toBeInTheDocument();
   });
 });
 

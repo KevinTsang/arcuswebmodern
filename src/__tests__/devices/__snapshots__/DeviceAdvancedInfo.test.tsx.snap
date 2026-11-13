@@ -1,0 +1,67 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`DeviceAdvancedInfo matches snapshot 1`] = `
+<DocumentFragment>
+  <dl>
+    <div
+      class="flex justify-between"
+    >
+      <dt
+        class="text-sm text-grouse"
+      >
+        Power Usage
+      </dt>
+      <dd
+        class="text-sm text-swift text-right"
+        data-testid="device-detail-power-usage"
+      >
+        62 W
+      </dd>
+    </div>
+    <div
+      class="flex justify-between"
+    >
+      <dt
+        class="text-sm text-grouse"
+      >
+        Signal
+      </dt>
+      <dd
+        class="text-sm text-swift text-right"
+        data-testid="device-detail-signal"
+      >
+        Excellent (81%)
+      </dd>
+    </div>
+    <div
+      class="flex justify-between"
+    >
+      <dt
+        class="text-sm text-grouse"
+      >
+        Firmware Update
+      </dt>
+      <dd
+        class="text-sm text-swift text-right"
+        data-testid="device-detail-firmware-update"
+      >
+        Updating to 2.0.1 (40%)
+      </dd>
+    </div>
+    <div
+      aria-label="Firmware update progress"
+      aria-valuemax="100"
+      aria-valuemin="0"
+      aria-valuenow="40"
+      class="h-1.5 w-full bg-pigeon rounded-[var(--border-radius-base)] overflow-hidden"
+      data-testid="device-detail-firmware-progress"
+      role="progressbar"
+    >
+      <div
+        class="h-full bg-peacock"
+        style="width: 40%;"
+      />
+    </div>
+  </dl>
+</DocumentFragment>
+`;

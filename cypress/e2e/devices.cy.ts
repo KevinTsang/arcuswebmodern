@@ -5,7 +5,8 @@
  */
 
 import {
-  Base, Contact, Device, DeviceConnection, Dimmer, DoorLock, Hub, HubAdvanced, HubZwave, Switch, Thermostat, Valve,
+  Base, Contact, Device, DeviceConnection, DeviceOta, Dimmer, DoorLock, Hub, HubAdvanced, HubZwave, PowerUse, Switch,
+  Thermostat, Valve,
 } from '../../packages/arcus-core/src/capabilities/capabilities';
 import { DEVICE, DEVICE_NAME, addr } from '../support/platform/fixtures';
 import { tid } from '../support/selectors';
@@ -150,11 +151,38 @@ describe('Devices page', () => {
       cy.get('[data-testid="device-detail-model"]').should('have.text', 'Dimmer-1');
       cy.get('[data-testid="device-detail-protocol"]').should('have.text', 'Zigbee');
       cy.get('[data-testid="device-detail-firmware"]').should('have.text', '1.2.3');
-      cy.get('[data-testid="device-detail-connection"]').should('have.text', 'ONLINE');
+      cy.get('[data-testid="device-detail-connection"]').should('have.text', 'Online');
       cy.get('[data-testid="device-detail-power"]').should('have.text', 'Plugged In');
 
       cy.get('[data-testid="device-identify"]').click();
       cy.expectRequest('ident:Identify', (r) => r.destination === DEVICE.lamp);
+    });
+
+    it('shows live power usage, signal strength and OTA firmware status', () => {
+      cy.signIn({ path: '/devices' });
+      tid(`device-details-${DEVICE.lamp}`).click();
+      cy.get('[data-testid="device-detail-power-usage"]').should('not.exist');
+      cy.get('[data-testid="device-detail-firmware-update"]').should('not.exist');
+
+      cy.platform().invoke('updateEntity', DEVICE.lamp, {
+        [PowerUse.ATTR_INSTANTANEOUS]: 42.6,
+        [DeviceConnection.ATTR_SIGNAL]: 64,
+        [DeviceOta.ATTR_STATUS]: DeviceOta.STATUS_INPROGRESS,
+        [DeviceOta.ATTR_TARGETVERSION]: '1.3.0',
+        [DeviceOta.ATTR_PROGRESSPERCENT]: 30,
+      });
+      cy.get('[data-testid="device-detail-power-usage"]').should('have.text', '43 W');
+      cy.get('[data-testid="device-detail-signal"]').should('have.text', 'Good (64%)');
+      cy.get('[data-testid="device-detail-firmware-update"]').should('have.text', 'Updating to 1.3.0 (30%)');
+      cy.get('[data-testid="device-detail-firmware-progress"]').should('have.attr', 'aria-valuenow', '30');
+
+      cy.platform().invoke('updateEntity', DEVICE.lamp, {
+        [DeviceOta.ATTR_STATUS]: DeviceOta.STATUS_FAILED,
+        [DeviceOta.ATTR_RETRYCOUNT]: 1,
+        [DeviceOta.ATTR_LASTFAILREASON]: 'Timeout',
+      });
+      cy.get('[data-testid="device-detail-firmware-update"]').should('have.text', 'Failed after 1 retry: Timeout');
+      cy.get('[data-testid="device-detail-firmware-progress"]').should('not.exist');
     });
 
     it('removes a device after confirmation', () => {
