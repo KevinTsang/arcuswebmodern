@@ -1,0 +1,163 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`RuleListItem matches snapshot 1`] = `
+<DocumentFragment>
+  <div
+    class="border-b border-heron py-4 "
+    data-enabled="true"
+    data-testid="rule-row-SERV:rule:place-1.1"
+  >
+    <div
+      class="flex items-start justify-between"
+    >
+      <div
+        class="flex-1 min-w-0 mr-4"
+      >
+        <h3
+          class="text-base font-medium text-swift"
+          data-testid="rule-name-SERV:rule:place-1.1"
+        >
+          My Rule
+        </h3>
+        <p
+          class="text-sm text-grouse mt-1"
+          data-testid="rule-description-SERV:rule:place-1.1"
+        >
+          A test rule description
+        </p>
+      </div>
+      <div
+        class="flex items-center gap-3 flex-shrink-0"
+      >
+        <button
+          aria-label="Schedule My Rule"
+          class="p-1.5 rounded transition-colors text-heron hover:text-grouse"
+          data-scheduled="false"
+          data-testid="rule-schedule-SERV:rule:place-1.1"
+          title="Schedule"
+        >
+          <svg
+            class="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+          >
+            <path
+              d="M12 6v6l4 2m6-2a9 9 0 11-18 0 9 9 0 0118 0z"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </button>
+        <button
+          aria-checked="true"
+          class="
+              relative inline-flex h-6 w-11 items-center rounded-full transition-colors
+              bg-peacock
+            "
+          data-testid="rule-toggle-SERV:rule:place-1.1"
+          role="switch"
+        >
+          <span
+            class="
+                inline-block h-4 w-4 rounded-full bg-crane shadow transition-transform
+                translate-x-6
+              "
+          />
+        </button>
+        <button
+          class="text-sm text-peacock hover:underline"
+          data-testid="rule-edit-SERV:rule:place-1.1"
+        >
+          Edit
+        </button>
+      </div>
+    </div>
+  </div>
+</DocumentFragment>
+`;
+
+exports[`RuleListItem matches snapshot when scheduled 1`] = `
+<DocumentFragment>
+  <div
+    class="border-b border-heron py-4 "
+    data-enabled="true"
+    data-testid="rule-row-SERV:rule:place-1.1"
+  >
+    <div
+      class="flex items-start justify-between"
+    >
+      <div
+        class="flex-1 min-w-0 mr-4"
+      >
+        <h3
+          class="text-base font-medium text-swift"
+          data-testid="rule-name-SERV:rule:place-1.1"
+        >
+          My Rule
+        </h3>
+        <p
+          class="text-xs text-peacock mt-0.5"
+          data-testid="rule-scheduled-SERV:rule:place-1.1"
+        >
+          Scheduled
+        </p>
+        <p
+          class="text-sm text-grouse mt-1"
+          data-testid="rule-description-SERV:rule:place-1.1"
+        >
+          A test rule description
+        </p>
+      </div>
+      <div
+        class="flex items-center gap-3 flex-shrink-0"
+      >
+        <button
+          aria-label="Schedule My Rule"
+          class="p-1.5 rounded transition-colors text-peacock"
+          data-scheduled="true"
+          data-testid="rule-schedule-SERV:rule:place-1.1"
+          title="Schedule"
+        >
+          <svg
+            class="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+          >
+            <path
+              d="M12 6v6l4 2m6-2a9 9 0 11-18 0 9 9 0 0118 0z"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </button>
+        <button
+          aria-checked="true"
+          class="
+              relative inline-flex h-6 w-11 items-center rounded-full transition-colors
+              bg-peacock
+            "
+          data-testid="rule-toggle-SERV:rule:place-1.1"
+          role="switch"
+        >
+          <span
+            class="
+                inline-block h-4 w-4 rounded-full bg-crane shadow transition-transform
+                translate-x-6
+              "
+          />
+        </button>
+        <button
+          class="text-sm text-peacock hover:underline"
+          data-testid="rule-edit-SERV:rule:place-1.1"
+        >
+          Edit
+        </button>
+      </div>
+    </div>
+  </div>
+</DocumentFragment>
+`;

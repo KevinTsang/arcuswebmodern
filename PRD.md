@@ -206,11 +206,20 @@ arcusplatform, under "What a client must do".
 | Rule deletion with confirmation | Yes | Yes | **Done** |
 | Template variable resolution with device names | Yes | Yes | **Done** |
 | Rules library browse by category | Yes | Yes | **Done** |
-| Rule scheduling (enable/disable on schedule) | Yes | No | **Missing** |
+| Rule scheduling (enable/disable on schedule) | Yes | Yes | **Done** |
 
 ### Gaps
 
-- Rule scheduling (enable/disable rules on a time-based schedule).
+- None.
+
+### Notes
+
+- **Rule scheduling** is wired via the Schedule button on each rule row: it
+  opens the shared `ScheduleEditPanel` targeting the rule on the platform
+  `RULES` schedule group, with an Active / Inactive selector per event that
+  sends `rule:Enable` / `rule:Disable` (legacy `config/schedulers.js`). Inactive
+  events are drawn muted on the calendar, and rows with scheduled events show a
+  "Scheduled" marker.
 
 ---
 
@@ -225,15 +234,24 @@ arcusplatform, under "What a client must do".
 | Thermostat schedule programs | Yes (full HVAC calendar) | No | **Missing** |
 | Irrigation scheduling (even/odd/interval modes) | Yes | No | **Missing** |
 | Scene scheduling | Yes | Yes | **Done** |
-| Rule enable/disable scheduling | Yes | No | **Missing** |
-| Timezone conversion (place vs device) | Yes | No | **Missing** |
+| Rule enable/disable scheduling | Yes | Yes | **Done** |
+| Timezone conversion (place vs device) | Yes | Yes | **Done** |
 
 ### Gaps
 
 - Thermostat schedule management (temperature programs).
 - Irrigation schedule management (zone durations, watering modes).
-- Rule scheduling (enable/disable rules on a time-based schedule).
-- Timezone-aware scheduling.
+
+### Notes
+
+- **Timezone conversion:** as in the legacy client, schedules are stored in the
+  place's timezone (`place:tzId`) but shown and edited in the viewer's browser
+  timezone. `ScheduleEditPanel` converts absolute-time events place → local
+  (rolling days across midnight) and `ScheduleEventEditor` converts local →
+  place on save (`src/lib/scheduleTimezone.ts`, `useScheduleTimezone`). When the
+  two clocks differ the panel says which zones are in use. Sunrise / sunset
+  events are not converted. Like legacy, today's offsets are used, so an event
+  viewed across a DST change in only one of the zones may show an hour off.
 
 ---
 
@@ -700,7 +718,7 @@ These are commonly used features that users will expect:
 8. **Hub firmware updates** — Firmware version display and update workflow.
 9. **Hub WiFi configuration** — WiFi SSID/password setup, network scanning.
 10. **Irrigation scheduling & zone control** — Per-zone start/stop, schedule modes (even/odd/interval).
-11. **Rule scheduling** — Enable/disable rules on time-based schedules. (Scene scheduling is done.)
+11. ~~**Rule scheduling**~~ — **DONE.** Enable/disable rules on time-based schedules, with place-timezone conversion for all schedules.
 12. **Account management** — Account deletion, email management, security questions.
 
 ### Tier 3 — Completeness Gaps (Niche Device Types & Polish)
