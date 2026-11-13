@@ -5,7 +5,7 @@
  */
 
 import {
-  Base, Contact, Device, DeviceConnection, Dimmer, DoorLock, Hub, HubAdvanced, HubZwave, Switch, Thermostat, Valve,
+  Base, Contact, Device, DeviceConnection, Dimmer, DoorLock, Hub, HubAdvanced, HubZwave, Presence, Switch, Thermostat, Valve,
 } from '../../packages/arcus-core/src/capabilities/capabilities';
 import { DEVICE, DEVICE_NAME, addr } from '../support/platform/fixtures';
 import { tid } from '../support/selectors';
@@ -214,6 +214,36 @@ describe('Devices page', () => {
       cy.get('[data-testid="contact-usehint-window"]').click();
       cy.expectRequest(Base.CMD_SETATTRIBUTES, (r) =>
         r.destination === DEVICE.contact && r.attributes[Contact.ATTR_USEHINT] === Contact.USEHINT_WINDOW);
+    });
+
+    it('assigns a presence device to a person and back to no one', () => {
+      cy.signIn({
+        path: '/devices',
+        customize: (p) => {
+          const motion = p.data.entities[DEVICE.motion];
+          Object.assign(motion, {
+            [Base.ATTR_CAPS]: [...(motion[Base.ATTR_CAPS] as string[]), Presence.NAMESPACE],
+            [Presence.ATTR_PRESENCE]: Presence.PRESENCE_PRESENT,
+            [Presence.ATTR_PERSON]: 'UNSET',
+            [Presence.ATTR_USEHINT]: Presence.USEHINT_UNKNOWN,
+          });
+        },
+      });
+      tid(`device-config-${DEVICE.motion}`).click();
+      cy.get('#assign-device-none').should('be.checked');
+      cy.get(`[id="assign-device-${addr.person}"]`).click();
+      cy.expectRequest(Base.CMD_SETATTRIBUTES, (r) =>
+        r.destination === DEVICE.motion
+        && r.attributes[Presence.ATTR_PERSON] === addr.person
+        && r.attributes[Presence.ATTR_USEHINT] === Presence.USEHINT_PERSON);
+      cy.get(`[id="assign-device-${addr.person}"]`).should('be.checked');
+
+      cy.get('#assign-device-none').click();
+      cy.expectRequest(Base.CMD_SETATTRIBUTES, (r) =>
+        r.destination === DEVICE.motion
+        && r.attributes[Presence.ATTR_PERSON] === ''
+        && r.attributes[Presence.ATTR_USEHINT] === Presence.USEHINT_UNKNOWN);
+      cy.get('#assign-device-none').should('be.checked');
     });
 
     it('explains when a device has nothing to configure', () => {

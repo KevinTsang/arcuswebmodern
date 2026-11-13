@@ -1,0 +1,86 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`MobileDevicesCard matches snapshot 1`] = `
+<DocumentFragment>
+  <div
+    class="border border-heron rounded-[var(--border-radius-base)] overflow-hidden"
+    data-testid="info-card-mobile-devices"
+  >
+    <div
+      class="flex items-center justify-between px-4 py-3 bg-pigeon/30"
+    >
+      <h3
+        class="text-sm font-medium text-swift"
+      >
+        Mobile Devices
+      </h3>
+      <span
+        data-testid="info-card-mobile-devices-action"
+      />
+    </div>
+    <div
+      class="px-4 py-3 space-y-2"
+    >
+      <p
+        class="text-xs text-grouse"
+      >
+        Phones and tablets signed in to the Arcus app as you. They receive push notifications and report when you arrive home or leave.
+      </p>
+      <ul
+        class="divide-y divide-heron"
+      >
+        <li
+          class="flex items-center justify-between gap-4 py-1"
+          data-testid="mobile-device-1"
+        >
+          <div
+            class="min-w-0"
+          >
+            <p
+              class="text-sm text-swift truncate"
+            >
+              Apple iPhone 15
+            </p>
+            <p
+              class="text-xs text-grouse truncate"
+            >
+              iOS 17.2 · phone · App 2.1.0
+            </p>
+          </div>
+          <button
+            class="text-sm text-cardinal hover:underline disabled:opacity-50 shrink-0"
+            data-testid="mobile-device-remove-1"
+          >
+            Remove
+          </button>
+        </li>
+        <li
+          class="flex items-center justify-between gap-4 py-1"
+          data-testid="mobile-device-2"
+        >
+          <div
+            class="min-w-0"
+          >
+            <p
+              class="text-sm text-swift truncate"
+            >
+              Kitchen Tablet
+            </p>
+            <p
+              class="text-xs text-grouse truncate"
+            >
+              Android · tablet
+            </p>
+          </div>
+          <button
+            class="text-sm text-cardinal hover:underline disabled:opacity-50 shrink-0"
+            data-testid="mobile-device-remove-2"
+          >
+            Remove
+          </button>
+        </li>
+      </ul>
+    </div>
+  </div>
+</DocumentFragment>
+`;

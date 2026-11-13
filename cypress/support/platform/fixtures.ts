@@ -698,5 +698,6 @@ export function createFixture(): PlatformData {
       },
     ],
     kitInfo: [],
+    mobileDevices: [],
   };
 }

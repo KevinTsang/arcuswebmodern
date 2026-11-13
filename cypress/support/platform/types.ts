@@ -130,4 +130,6 @@ export interface PlatformData {
   invitationCodes: { [code: string]: InvitationFixture };
   apiKeys: ApiKeyFixture[];
   kitInfo: KitDeviceFixture[];
+  /** The signed-in person's mobile devices (`person:ListMobileDevices`), as `mobiledevice:*` attributes. */
+  mobileDevices: Attrs[];
 }
