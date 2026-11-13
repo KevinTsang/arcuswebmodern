@@ -1,9 +1,11 @@
 /**
  * PRD §5 — Rules: My Rules list with enable/disable, template resolution
- * with device names, the rules library, and create / edit / delete.
+ * with device names, the rules library, create / edit / delete, and rule
+ * scheduling with place-timezone conversion (PRD §6).
  */
 
-import { Base, Rule, RuleTemplate } from '../../packages/arcus-core/src/capabilities/capabilities';
+import { Base, Place, Rule, RuleTemplate } from '../../packages/arcus-core/src/capabilities/capabilities';
+import { convertScheduleTime, timeZoneDelta } from '../../src/lib/scheduleTimezone';
 import { DEVICE, DEVICE_NAME, RULE, RULE_NAME, addr } from '../support/platform/fixtures';
 import { tid } from '../support/selectors';
 
@@ -140,5 +142,82 @@ describe('Rules', () => {
       for (const address of Object.values(RULE)) p.removeEntity(address);
     });
     cy.get('[data-testid="rules-empty"]').should('be.visible');
+  });
+
+  describe('scheduling', () => {
+    it('schedules a rule to go inactive, then switches the event to active', () => {
+      tid(`rule-scheduled-${LOCK_AT_NIGHT}`).should('not.exist');
+      tid(`rule-schedule-${LOCK_AT_NIGHT}`).click();
+      tid('side-panel-right-title').should('have.text', 'Schedule');
+      tid('schedule-instructions').should('contain.text', 'active or inactive');
+      tid('schedule-empty').should('be.visible');
+
+      tid('schedule-add-event').click();
+      tid('schedule-action-active').should('have.attr', 'aria-pressed', 'true');
+      tid('schedule-action-inactive').click();
+      tid('schedule-hour').select('6');
+      tid('schedule-save').click();
+
+      cy.expectRequest('scheduler:ScheduleWeeklyCommand').then((r) => {
+        expect(r.attributes).to.deep.include({
+          target: RULE.lockAtNight,
+          schedule: 'RULES',
+          mode: 'ABSOLUTE',
+          time: '18:00:00',
+          messageType: Rule.CMD_DISABLE,
+        });
+      });
+      cy.toast('Event created.');
+      tid(`rule-scheduled-${LOCK_AT_NIGHT}`).should('have.text', 'Scheduled');
+      cy.get('[data-testid^="schedule-event-"][data-day="MON"]').should('have.length', 1)
+        .should('have.attr', 'title', `${RULE_NAME.lockAtNight}: Inactive at 18:00:00`)
+        .click();
+
+      tid('schedule-action-inactive').should('have.attr', 'aria-pressed', 'true');
+      tid('schedule-action-active').click();
+      tid('schedule-save').click();
+      cy.expectRequest('scheduler:UpdateWeeklyCommand', (r) =>
+        r.attributes.target === RULE.lockAtNight && r.attributes.messageType === Rule.CMD_ENABLE);
+      cy.toast('Event updated.');
+      cy.get('[data-testid^="schedule-event-"][data-day="MON"]')
+        .should('have.attr', 'title', `${RULE_NAME.lockAtNight}: Active at 18:00:00`);
+    });
+
+    it('reports a schedule that fails to save', () => {
+      cy.platform().invoke('failRequest', 'scheduler:ScheduleWeeklyCommand');
+      tid(`rule-schedule-${LEAK_ALERT}`).click();
+      tid('schedule-add-event').click();
+      tid('schedule-save').click();
+      cy.toast('Failed to save event.');
+      tid('schedule-save').should('have.text', 'Create');
+      tid(`rule-scheduled-${LEAK_ALERT}`).should('not.exist');
+    });
+
+    it('converts event times between the viewer and place timezones', () => {
+      // A place timezone whose clock differs from the browser's, whatever it is.
+      const localTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      const placeTz = timeZoneDelta(localTz, 'Pacific/Kiritimati') !== 0 ? 'Pacific/Kiritimati' : 'Pacific/Pago_Pago';
+      cy.signIn({
+        path: '/rules',
+        customize: (p) => { p.data.entities[addr.place][Place.ATTR_TZID] = placeTz; },
+      });
+
+      tid(`rule-schedule-${LOCK_AT_NIGHT}`).click();
+      tid('schedule-timezone-note').should('contain.text', `your time zone (${localTz})`)
+        .and('contain.text', `This place is in ${placeTz}`);
+
+      tid('schedule-add-event').click();
+      tid('schedule-hour').select('7');
+      tid('schedule-ampm').click(); // 7 PM → 7 AM local
+      tid('schedule-save').click();
+
+      const expected = convertScheduleTime(localTz, placeTz, '07:00:00', ['MON', 'TUE', 'WED', 'THU', 'FRI']);
+      cy.expectRequest('scheduler:ScheduleWeeklyCommand').then((r) => {
+        expect(r.attributes.time).to.eq(expected.time);
+        expect(r.attributes.days).to.have.members(expected.days);
+      });
+      // The calendar shows the stored place time back in local time.
+      cy.get('[data-testid^="schedule-event-"][data-day="MON"]').should('have.attr', 'data-time', '07:00:00');
+    });
   });
 });

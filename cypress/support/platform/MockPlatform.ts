@@ -815,6 +815,7 @@ export class MockPlatform {
         mode: attrs.mode,
         time: attrs.time,
         offsetMinutes: attrs.offsetMinutes,
+        messageType: attrs.messageType ?? (commands[commandId] as Attrs).messageType,
         attributes: attrs.attributes ?? {},
       };
       this.updateEntity(scheduler[Base.ATTR_ADDRESS] as string, { [Scheduler.ATTR_COMMANDS]: commands });
