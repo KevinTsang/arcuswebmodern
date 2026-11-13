@@ -13,7 +13,7 @@
  * Hub pairing (RegisterHubV2) is handled separately from device pairing.
  */
 
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Base, Device, Product, PairingDevice, PairingSubsystem, Hub, Place } from '@arcus/core';
 import Bridge from '@arcus/core/bridge';
@@ -22,6 +22,7 @@ import { HUB_REGISTRATION_ERRORS } from '@/arcus/types';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import { addNotification } from '@/store/slices/uiSlice';
 import { setHub } from '@/store/slices/hubSlice';
+import { hubFirmwareProgressPercent, hubFirmwareTimedOut, isHubFirmwareState } from '@/lib/hubFirmware';
 import {
   loadProduct,
   startSearch as startSearchAction,
@@ -34,6 +35,7 @@ import {
   startHubRegistration as startHubRegistrationAction,
   hubRegistered,
   setHubRegistrationState,
+  setHubFirmwareProgress,
   hubRegistrationError,
   customizationComplete,
   resetPairing,
@@ -44,7 +46,22 @@ import {
   SearchingStage,
   CustomizeStage,
   CompletedStage,
+  HubFirmwareExitModal,
 } from '@/components/pairing';
+
+/** Registration errors that end hub polling. */
+const TERMINAL_HUB_REGISTRATION_ERRORS: readonly string[] = [
+  HUB_REGISTRATION_ERRORS.ALREADY_REGISTERED,
+  HUB_REGISTRATION_ERRORS.ORPHANED_HUB,
+  HUB_REGISTRATION_ERRORS.INVALID_PARAM,
+  HUB_REGISTRATION_ERRORS.FIRMWARE_UPDATE_FAILED,
+];
+
+/** The firmware phase the hub is in and when registration first saw it. */
+interface FirmwarePhase {
+  state: string;
+  since: number;
+}
 
 export default function PairingPage() {
   const router = useRouter();
@@ -55,6 +72,9 @@ export default function PairingPage() {
   const pairing = useAppSelector((s) => s.pairing);
 
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const firmwarePhaseRef = useRef<FirmwarePhase | null>(null);
+  const [showFirmwareExit, setShowFirmwareExit] = useState(false);
+  const firmwareInProgress = pairing.isHubPairing && isHubFirmwareState(pairing.hubRegistrationState);
 
   // Reset pairing state on mount/unmount
   useEffect(() => {
@@ -92,6 +112,16 @@ export default function PairingPage() {
       stopPairing();
     };
   }, [pairingSubAddr]);
+
+  // Ask the browser to confirm a reload or close while the hub updates firmware.
+  useEffect(() => {
+    if (!firmwareInProgress) return;
+    const warn = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+    };
+    window.addEventListener('beforeunload', warn);
+    return () => window.removeEventListener('beforeunload', warn);
+  }, [firmwareInProgress]);
 
   // ── Search for device ──────────────────────────────────────
 
@@ -210,6 +240,14 @@ export default function PairingPage() {
     if (!pairing.hubId.trim() || !placeId) return;
 
     dispatch(startHubRegistrationAction());
+    firmwarePhaseRef.current = null;
+
+    const failRegistration = (code: string) => {
+      if (pollRef.current) clearInterval(pollRef.current);
+      pollRef.current = null;
+      firmwarePhaseRef.current = null;
+      dispatch(hubRegistrationError(code));
+    };
 
     const pollHub = async () => {
       try {
@@ -217,6 +255,21 @@ export default function PairingPage() {
         const resp = await Bridge.request<RegisterHubV2Response>(Place.CMD_REGISTERHUBV2, placeAddr, {
           hubId: pairing.hubId.trim().toUpperCase(),
         });
+
+        if (isHubFirmwareState(resp.state)) {
+          const now = Date.now();
+          const phase = firmwarePhaseRef.current;
+          if (!phase || phase.state !== resp.state) {
+            firmwarePhaseRef.current = { state: resp.state, since: now };
+          } else if (hubFirmwareTimedOut(phase.state, phase.since, now)) {
+            // The hub has been stuck downloading or applying for too long.
+            failRegistration(HUB_REGISTRATION_ERRORS.FIRMWARE_UPDATE_FAILED);
+            return;
+          }
+          dispatch(setHubFirmwareProgress(hubFirmwareProgressPercent(resp.progress)));
+        } else {
+          firmwarePhaseRef.current = null;
+        }
 
         dispatch(setHubRegistrationState(resp.state));
 
@@ -227,15 +280,16 @@ export default function PairingPage() {
             dispatch(setHub(hubData));
           }
           dispatch(hubRegistered());
-        } else if (
-          resp.state === HUB_REGISTRATION_ERRORS.ALREADY_REGISTERED ||
-          resp.state === HUB_REGISTRATION_ERRORS.ORPHANED_HUB ||
-          resp.state === HUB_REGISTRATION_ERRORS.INVALID_PARAM
-        ) {
-          if (pollRef.current) clearInterval(pollRef.current);
-          dispatch(hubRegistrationError(resp.state));
+        } else if (TERMINAL_HUB_REGISTRATION_ERRORS.includes(resp.state)) {
+          failRegistration(resp.state);
         }
       } catch (e) {
+        // The platform reports a failed firmware upgrade as an error response.
+        const code = (e as { code?: string } | undefined)?.code;
+        if (code === HUB_REGISTRATION_ERRORS.FIRMWARE_UPDATE_FAILED) {
+          failRegistration(code);
+          return;
+        }
         console.warn('Hub registration poll failed:', e);
       }
     };
@@ -310,6 +364,17 @@ export default function PairingPage() {
     router.push('/product-catalog');
   }, [router]);
 
+  // Leaving mid-update would hide the outcome, so warn instead (legacy firmware-exit).
+  const handleBackToCatalog = useCallback(() => {
+    if (firmwareInProgress) {
+      setShowFirmwareExit(true);
+      return;
+    }
+    router.push('/product-catalog');
+  }, [firmwareInProgress, router]);
+
+  const handleDismissFirmwareExit = useCallback(() => setShowFirmwareExit(false), []);
+
   const productName = pairing.product
     ? `${pairing.product[Product.ATTR_VENDOR] ?? ''} ${pairing.product[Product.ATTR_NAME] ?? ''}`.trim()
     : '';
@@ -319,7 +384,8 @@ export default function PairingPage() {
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
         <button
-          onClick={() => router.push('/product-catalog')}
+          onClick={handleBackToCatalog}
+          data-testid="pairing-back"
           className="text-sm text-peacock hover:underline"
         >
           &larr; Product Catalog
@@ -355,6 +421,7 @@ export default function PairingPage() {
               devices={pairing.devices}
               searchTimedOut={pairing.searchTimedOut}
               hubRegistrationState={pairing.hubRegistrationState}
+              hubFirmwareProgress={pairing.hubFirmwareProgress}
               dispatch={dispatch}
               onStartSearch={startSearch}
               onCancel={() => router.push('/product-catalog')}
@@ -383,6 +450,8 @@ export default function PairingPage() {
           )}
         </div>
       </div>
+
+      <HubFirmwareExitModal open={showFirmwareExit} onAcknowledge={handleDismissFirmwareExit} />
     </div>
   );
 }

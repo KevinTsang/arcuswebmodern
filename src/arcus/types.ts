@@ -85,6 +85,7 @@ export const HUB_REGISTRATION_ERRORS = {
   ALREADY_REGISTERED: 'error.register.alreadyregistered',
   ORPHANED_HUB: 'error.register.orphanedhub',
   INVALID_PARAM: 'request.param.invalid',
+  FIRMWARE_UPDATE_FAILED: 'error.fwupgrade.failed',
 } as const;
 
 type HubRegistrationError = typeof HUB_REGISTRATION_ERRORS[keyof typeof HUB_REGISTRATION_ERRORS];

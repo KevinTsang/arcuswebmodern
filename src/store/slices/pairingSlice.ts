@@ -13,6 +13,8 @@ export interface PairingState {
   loading: boolean;
   hubId: string;
   hubRegistrationState: string | null;
+  /** Firmware download/apply percentage from place:RegisterHubV2. */
+  hubFirmwareProgress: number;
   deviceName: string;
   isFavorite: boolean;
   activeDevice: PairingDevice | null;
@@ -29,6 +31,7 @@ const initialState: PairingState = {
   loading: false,
   hubId: '',
   hubRegistrationState: null,
+  hubFirmwareProgress: 0,
   deviceName: '',
   isFavorite: false,
   activeDevice: null,
@@ -81,6 +84,7 @@ const pairingSlice = createSlice({
     startHubRegistration(state) {
       state.stage = 'searching';
       state.hubRegistrationState = 'OFFLINE';
+      state.hubFirmwareProgress = 0;
       state.loading = true;
     },
     hubRegistered(state) {
@@ -90,6 +94,9 @@ const pairingSlice = createSlice({
     setHubRegistrationState(state, action: PayloadAction<string>) {
       state.hubRegistrationState = action.payload;
     },
+    setHubFirmwareProgress(state, action: PayloadAction<number>) {
+      state.hubFirmwareProgress = action.payload;
+    },
     hubRegistrationError(state, action: PayloadAction<string>) {
       state.hubRegistrationState = action.payload;
       state.loading = false;
@@ -97,6 +104,7 @@ const pairingSlice = createSlice({
     hubRetry(state) {
       state.stage = 'steps';
       state.hubRegistrationState = null;
+      state.hubFirmwareProgress = 0;
       state.hubId = '';
     },
     setDeviceName(state, action: PayloadAction<string>) {
@@ -129,6 +137,7 @@ export const {
   startHubRegistration,
   hubRegistered,
   setHubRegistrationState,
+  setHubFirmwareProgress,
   hubRegistrationError,
   hubRetry,
   setDeviceName,

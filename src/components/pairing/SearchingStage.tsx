@@ -3,7 +3,9 @@ import type { PairingDevice, PairingProduct } from '@/store/entityTypes';
 import type { AppDispatch } from '@/store/store';
 import { HUB_REGISTRATION_ERRORS } from '@/arcus/types';
 import { hubRetry } from '@/store/slices/pairingSlice';
+import { isHubFirmwareState } from '@/lib/hubFirmware';
 import DeviceStateRow from './DeviceStateRow';
+import { HubFirmwareProgress } from './HubFirmwareProgress';
 
 interface SearchingStageProps {
   product: PairingProduct | null;
@@ -11,6 +13,8 @@ interface SearchingStageProps {
   devices: PairingDevice[];
   searchTimedOut: boolean;
   hubRegistrationState: string | null;
+  /** Firmware download/apply percentage while the hub updates during registration. */
+  hubFirmwareProgress?: number;
   dispatch: AppDispatch;
   onStartSearch: () => void;
   onCancel: () => void;
@@ -22,6 +26,7 @@ export default function SearchingStage({
   devices,
   searchTimedOut,
   hubRegistrationState,
+  hubFirmwareProgress = 0,
   dispatch,
   onStartSearch,
   onCancel,
@@ -40,7 +45,9 @@ export default function SearchingStage({
                 ? 'This hub is already registered to another account.'
                 : hubRegistrationState === HUB_REGISTRATION_ERRORS.ORPHANED_HUB
                   ? 'This hub needs to be reset. Please contact support.'
-                  : 'Invalid Hub ID. Please check and try again.'}
+                  : hubRegistrationState === HUB_REGISTRATION_ERRORS.FIRMWARE_UPDATE_FAILED
+                    ? "There was an issue updating the Hub's firmware. Please contact support."
+                    : 'Invalid Hub ID. Please check and try again.'}
             </p>
             <button
               onClick={() => dispatch(hubRetry())}
@@ -50,6 +57,8 @@ export default function SearchingStage({
               Try Again
             </button>
           </>
+        ) : isHubFirmwareState(hubRegistrationState) ? (
+          <HubFirmwareProgress state={hubRegistrationState} percent={hubFirmwareProgress} />
         ) : (
           <>
             <div className="animate-pulse mb-4">
@@ -57,13 +66,7 @@ export default function SearchingStage({
                 <span className="icon-platform-hub-1 text-2xl text-peacock" />
               </div>
             </div>
-            <p className="text-sm text-grouse">
-              {hubRegistrationState === 'DOWNLOADING'
-                ? 'Downloading firmware update…'
-                : hubRegistrationState === 'APPLYING'
-                  ? 'Applying firmware update…'
-                  : 'Waiting for hub to connect…'}
-            </p>
+            <p className="text-sm text-grouse">Waiting for hub to connect…</p>
             <p className="text-xs text-grouse mt-2">This may take a few minutes.</p>
           </>
         )}

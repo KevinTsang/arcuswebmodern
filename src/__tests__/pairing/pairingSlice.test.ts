@@ -14,6 +14,7 @@ import reducer, {
   startHubRegistration,
   hubRegistered,
   setHubRegistrationState,
+  setHubFirmwareProgress,
   hubRegistrationError,
   hubRetry,
   setDeviceName,
@@ -35,6 +36,7 @@ const initialState: PairingState = {
   loading: false,
   hubId: '',
   hubRegistrationState: null,
+  hubFirmwareProgress: 0,
   deviceName: '',
   isFavorite: false,
   activeDevice: null,
@@ -174,6 +176,21 @@ describe('pairingSlice', () => {
     it('setHubRegistrationState updates hubRegistrationState', () => {
       const state = reducer(initialState, setHubRegistrationState('DOWNLOADING'));
       expect(state.hubRegistrationState).toBe('DOWNLOADING');
+    });
+
+    it('setHubFirmwareProgress updates hubFirmwareProgress', () => {
+      const state = reducer(initialState, setHubFirmwareProgress(55));
+      expect(state.hubFirmwareProgress).toBe(55);
+    });
+
+    it('startHubRegistration clears firmware progress from an earlier attempt', () => {
+      const prev = { ...initialState, hubFirmwareProgress: 80 };
+      expect(reducer(prev, startHubRegistration()).hubFirmwareProgress).toBe(0);
+    });
+
+    it('hubRetry clears firmware progress', () => {
+      const prev = { ...initialState, hubRegistrationState: 'error.fwupgrade.failed', hubFirmwareProgress: 40 };
+      expect(reducer(prev, hubRetry()).hubFirmwareProgress).toBe(0);
     });
 
     it('hubRegistrationError sets hubRegistrationState and loading false', () => {

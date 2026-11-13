@@ -1,0 +1,107 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`HubFirmwareProgress matches snapshot while applying 1`] = `
+<DocumentFragment>
+  <div
+    class="text-left"
+    data-percent="90"
+    data-state="APPLYING"
+    data-testid="hub-firmware-progress"
+  >
+    <h4
+      class="text-sm font-semibold text-swift mb-2 text-center"
+      data-testid="hub-firmware-title"
+    >
+      Applying Update…
+    </h4>
+    <div
+      class="mb-3"
+    >
+      <div>
+        <div
+          class="progress-bar-label flex justify-between text-xs text-grouse mb-1"
+        >
+          <span>
+            Applying firmware update…
+          </span>
+          <span>
+            90%
+          </span>
+        </div>
+        <div
+          class="h-2 bg-pigeon rounded-full overflow-hidden"
+        >
+          <div
+            class="h-full rounded-full transition-all duration-300 bg-peacock"
+            style="width: 90%;"
+          />
+        </div>
+      </div>
+    </div>
+    <p
+      class="text-sm text-grouse mb-2"
+    >
+      Your Smart Hub is applying the latest firmware. This may take a few minutes and it will reboot. It is normal for the Hub to flash several lights during the reboot process.
+    </p>
+    <p
+      class="text-xs text-coot font-medium"
+      data-testid="hub-firmware-warning"
+    >
+      Please do not leave this page until the update is complete.
+    </p>
+  </div>
+</DocumentFragment>
+`;
+
+exports[`HubFirmwareProgress matches snapshot while downloading 1`] = `
+<DocumentFragment>
+  <div
+    class="text-left"
+    data-percent="40"
+    data-state="DOWNLOADING"
+    data-testid="hub-firmware-progress"
+  >
+    <h4
+      class="text-sm font-semibold text-swift mb-2 text-center"
+      data-testid="hub-firmware-title"
+    >
+      Update Available
+    </h4>
+    <div
+      class="mb-3"
+    >
+      <div>
+        <div
+          class="progress-bar-label flex justify-between text-xs text-grouse mb-1"
+        >
+          <span>
+            Downloading firmware update…
+          </span>
+          <span>
+            40%
+          </span>
+        </div>
+        <div
+          class="h-2 bg-pigeon rounded-full overflow-hidden"
+        >
+          <div
+            class="h-full rounded-full transition-all duration-300 bg-peacock"
+            style="width: 40%;"
+          />
+        </div>
+      </div>
+    </div>
+    <p
+      class="text-sm text-grouse mb-2"
+    >
+      Your Smart Hub is downloading the latest firmware. This may take 5-10 minutes depending on the speed of your internet connection. Once the update is installed, the Hub will reboot automatically.
+    </p>
+    <p
+      class="text-xs text-coot font-medium"
+      data-testid="hub-firmware-warning"
+    >
+      Please do not leave this page until the update is complete.
+    </p>
+  </div>
+</DocumentFragment>
+`;

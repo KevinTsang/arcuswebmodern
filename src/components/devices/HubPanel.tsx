@@ -4,12 +4,15 @@
  * HubPanel — displays hub status at the top of the device list.
  *
  * Replaces src/components/hub/panel/. Shows hub connection state,
- * model name, battery status, and firmware version.
+ * model name, battery status, and firmware version. An offline hub that
+ * restarted to apply a firmware update reads "Firmware Updating" instead of
+ * "Offline" (legacy context-bar hubOfflineText).
  */
 
 import { memo } from 'react';
-import { Hub, HubAdvanced, HubPower } from '@arcus/core';
+import { Hub, HubPower } from '@arcus/core';
 import { useAppSelector } from '@/store/hooks';
+import { hubFirmwareVersion, isHubFirmwareUpdating } from '@/lib/hubFirmware';
 
 function HubPanelInner() {
   const hub = useAppSelector((s) => s.hub.hub);
@@ -20,7 +23,8 @@ function HubPanelInner() {
   const online = state === Hub.STATE_NORMAL;
   const modelName = (hub[Hub.ATTR_MODEL] as string) ?? 'Smart Hub';
   const name = (hub[Hub.ATTR_NAME] as string) ?? modelName;
-  const firmwareVersion = (hub[HubAdvanced.ATTR_OSVER] as string) ?? '';
+  const firmwareVersion = hubFirmwareVersion(hub);
+  const firmwareUpdating = !online && isHubFirmwareUpdating(hub);
   const batteryPowered = hub[HubPower.ATTR_SOURCE] === HubPower.SOURCE_BATTERY;
   const battery = hub['hubpow:mainslevel'] as number | undefined;
 
@@ -28,6 +32,7 @@ function HubPanelInner() {
     <div
       data-testid="hub-panel"
       data-online={online}
+      data-firmware-updating={firmwareUpdating}
       className={`
         border rounded-[var(--border-radius-base)] p-4 mb-4
         ${online ? 'border-heron bg-crane' : 'border-cardinal/30 bg-cardinal/5'}
@@ -50,7 +55,7 @@ function HubPanelInner() {
         <div className="flex-1 min-w-0">
           <h3 data-testid="hub-name" className="text-sm font-medium text-swift">{name}</h3>
           <p data-testid="hub-status" className="text-xs text-grouse">
-            {online ? 'Online' : 'Offline'}
+            {online ? 'Online' : firmwareUpdating ? 'Firmware Updating' : 'Offline'}
             {firmwareVersion && ` \u00B7 v${firmwareVersion}`}
             {batteryPowered && battery != null && ` \u00B7 Battery: ${Math.round(battery)}%`}
           </p>

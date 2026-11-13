@@ -1,0 +1,72 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`PairingPage – leaving during a firmware update matches snapshot with the exit warning open 1`] = `
+<DocumentFragment>
+  <div
+    class="p-[var(--gutter)]"
+  >
+    <div
+      class="flex items-center gap-3 mb-6"
+    >
+      <button
+        class="text-sm text-peacock hover:underline"
+        data-testid="pairing-back"
+      >
+        ← Product Catalog
+      </button>
+      <h2
+        class="text-[length:var(--font-size-h2)] font-[var(--heading-font-weight)] text-swift"
+        data-testid="pairing-title"
+      >
+        Pair Smart Hub
+      </h2>
+    </div>
+    <div
+      class="max-w-lg mx-auto"
+    >
+      <div
+        class="bg-crane border border-heron rounded-[var(--border-radius-lg)] p-6"
+      >
+        <div
+          data-testid="searching-stage"
+        />
+      </div>
+    </div>
+    <div
+      aria-labelledby="hub-firmware-exit-title"
+      aria-modal="true"
+      class="fixed inset-0 bg-swift/30 flex items-center justify-center z-50 p-4"
+      data-testid="hub-firmware-exit-modal"
+      role="dialog"
+    >
+      <div
+        class="bg-crane rounded-[var(--border-radius-lg)] border border-heron p-6 w-full max-w-sm shadow-lg"
+      >
+        <h3
+          class="text-lg font-semibold text-swift mb-2"
+          id="hub-firmware-exit-title"
+        >
+          Firmware Update in Progress
+        </h3>
+        <p
+          class="text-sm font-medium text-swift mb-2"
+        >
+          Please do not exit the firmware update process until complete.
+        </p>
+        <p
+          class="text-sm text-grouse mb-6"
+        >
+          This may take 5-10 minutes depending on the speed of your internet connection. It is normal for the Smart Hub to reboot during this process.
+        </p>
+        <button
+          class="w-full py-2 bg-peacock text-crane rounded-[var(--border-radius-base)] text-sm font-medium hover:bg-peacock/90"
+          data-testid="hub-firmware-exit-ok"
+          type="button"
+        >
+          Okay
+        </button>
+      </div>
+    </div>
+  </div>
+</DocumentFragment>
+`;

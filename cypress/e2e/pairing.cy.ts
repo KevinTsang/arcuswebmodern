@@ -165,6 +165,37 @@ describe('Hub setup', () => {
     tid('hub-id-input').should('have.value', '');
   });
 
+  it('shows firmware update progress and warns before leaving mid-update', () => {
+    let response = { state: 'DOWNLOADING', progress: 40 };
+    cy.platform().then((p) => p.onRequest(Place.CMD_REGISTERHUBV2, () => response));
+
+    tid('hub-product-dee001').click();
+    tid('hub-id-input').type('fwu-1234');
+    tid('hub-register').click();
+
+    cy.get('[data-testid="hub-firmware-progress"]', { timeout: 15000 })
+      .should('have.attr', 'data-state', 'DOWNLOADING')
+      .and('have.attr', 'data-percent', '40');
+    tid('hub-firmware-title').should('have.text', 'Update Available');
+
+    tid('pairing-back').click();
+    tid('hub-firmware-exit-modal').should('contain', 'Firmware Update in Progress');
+    cy.location('pathname').should('eq', '/pairing');
+    tid('hub-firmware-exit-ok').click();
+    tid('hub-firmware-exit-modal').should('not.exist');
+
+    cy.then(() => { response = { state: 'APPLYING', progress: 85 }; });
+    cy.get('[data-testid="hub-firmware-progress"]', { timeout: 15000 })
+      .should('have.attr', 'data-state', 'APPLYING')
+      .and('have.attr', 'data-percent', '85');
+
+    cy.then(() => { response = { state: 'error.fwupgrade.failed', progress: 0 }; });
+    cy.get('[data-testid="hub-registration-error"]', { timeout: 15000 })
+      .should('contain', "There was an issue updating the Hub's firmware");
+    tid('hub-retry').click();
+    tid('hub-register-title').should('have.text', 'Register Your Hub');
+  });
+
   it('rejects an invalid hub id', () => {
     tid('hub-product-dee000').click();
     tid('hub-id-input').type('nope');

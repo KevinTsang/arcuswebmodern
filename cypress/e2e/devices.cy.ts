@@ -270,6 +270,18 @@ describe('Devices page', () => {
     cy.get('[data-testid="hub-panel"]').should('have.attr', 'data-online', 'false');
     cy.get('[data-testid="hub-status"]').should('contain', 'Offline');
   });
+
+  it('shows the hub as updating firmware while it restarts for an update', () => {
+    cy.signIn({
+      path: '/devices',
+      customize: (p) => {
+        p.data.entities[addr.hub][Hub.ATTR_STATE] = Hub.STATE_DOWN;
+        p.data.entities[addr.hub][HubAdvanced.ATTR_LASTRESTARTREASON] = HubAdvanced.LASTRESTARTREASON_FIRMWARE_UPDATE;
+      },
+    });
+    cy.get('[data-testid="hub-panel"]').should('have.attr', 'data-firmware-updating', 'true');
+    cy.get('[data-testid="hub-status"]').should('have.text', 'Firmware Updating · v3.1.0');
+  });
 });
 
 describe('Z-Wave tools', () => {

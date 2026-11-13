@@ -461,7 +461,7 @@ None.
 | Z-Wave network heal | Yes | Yes | **Done** |
 | Z-Wave device removal | Yes | Yes | **Done** |
 | Zigbee network scan | Yes | Yes (via MCP) | **Done** |
-| Hub firmware update workflow | Yes | No | **Missing** |
+| Hub firmware update workflow | Yes (version in hub details, "Hub Firmware Updating" when offline, download/apply progress, failure and exit warning during registration) | Yes (version and "Firmware Updating" status on the hub panel; registration shows RegisterHubV2 download/apply progress, fails after 11/5 min or on `error.fwupgrade.failed`, and warns before leaving mid-update). Neither client starts an update: `hubadv:FirmwareUpdate` takes an image URL and is a support command | **Done** |
 | Hub WiFi configuration (SSID, password, scan) | Yes | No | **Missing** |
 | Hub name configuration | Yes | No | **Missing** |
 | Cellular backup activation & status | Yes | No | **Missing** |
@@ -473,7 +473,6 @@ None.
 
 ### Gaps
 
-- Hub firmware update workflow.
 - Hub WiFi and network configuration.
 - Cellular backup management.
 - Advanced Z-Wave diagnostics (topology, per-node metrics).
@@ -650,7 +649,7 @@ These are commonly used features that users will expect:
 
 6. **Care behavior CRUD** — Create, edit, delete care behaviors with device/time/threshold configuration.
 7. **Lock access management** — PIN assignment per person, temporary PINs with expiry.
-8. **Hub firmware updates** — Firmware version display and update workflow.
+8. ~~**Hub firmware updates** — Firmware version display and update workflow.~~ **DONE**
 9. **Hub WiFi configuration** — WiFi SSID/password setup, network scanning.
 10. **Irrigation scheduling & zone control** — Per-zone start/stop, schedule modes (even/odd/interval).
 11. **Rule scheduling** — Enable/disable rules on time-based schedules. (Scene scheduling is done.)

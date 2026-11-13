@@ -63,6 +63,7 @@ jest.mock('@/components/pairing', () => ({
     capturedCompletedProps = props;
     return <div data-testid="completed-stage">CompletedStage</div>;
   },
+  HubFirmwareExitModal: () => null,
 }));
 
 let mockPairingState: PairingState;
@@ -100,6 +101,7 @@ beforeEach(() => {
     activeDevice: null,
     searchTimedOut: false,
     hubRegistrationState: null,
+    hubFirmwareProgress: 0,
     deviceName: '',
     isFavorite: false,
   };

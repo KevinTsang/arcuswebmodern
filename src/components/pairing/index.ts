@@ -5,4 +5,6 @@ export { default as SearchingStage } from './SearchingStage';
 export { default as CustomizeStage } from './CustomizeStage';
 export { default as CompletedStage } from './CompletedStage';
 export { default as DeviceStateRow } from './DeviceStateRow';
+export { HubFirmwareProgress } from './HubFirmwareProgress';
+export { HubFirmwareExitModal } from './HubFirmwareExitModal';
 export type { PairingStage, PairingStep } from './types';

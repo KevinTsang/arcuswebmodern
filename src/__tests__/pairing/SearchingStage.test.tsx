@@ -106,6 +106,31 @@ describe('SearchingStage – hub registration', () => {
     expect(screen.getByText('Applying firmware update…')).toBeInTheDocument();
   });
 
+  it('shows firmware download progress', () => {
+    render(<SearchingStage {...defaultProps} isHubPairing hubRegistrationState="DOWNLOADING" hubFirmwareProgress={35} />);
+    expect(screen.getByTestId('hub-firmware-progress')).toHaveAttribute('data-percent', '35');
+    expect(screen.getByText('35%')).toBeInTheDocument();
+    expect(screen.queryByText('Waiting for hub to connect…')).not.toBeInTheDocument();
+  });
+
+  it('defaults firmware progress to 0%', () => {
+    render(<SearchingStage {...defaultProps} isHubPairing hubRegistrationState="APPLYING" />);
+    expect(screen.getByText('0%')).toBeInTheDocument();
+  });
+
+  it('matches snapshot while the hub downloads firmware', () => {
+    const { asFragment } = render(
+      <SearchingStage {...defaultProps} isHubPairing hubRegistrationState="DOWNLOADING" hubFirmwareProgress={60} />,
+    );
+    expect(asFragment()).toMatchSnapshot();
+  });
+
+  it('shows firmware update failed error', () => {
+    render(<SearchingStage {...defaultProps} isHubPairing hubRegistrationState="error.fwupgrade.failed" />);
+    expect(screen.getByTestId('hub-registration-error')).toHaveTextContent("There was an issue updating the Hub's firmware.");
+    expect(screen.getByTestId('hub-retry')).toBeInTheDocument();
+  });
+
   it('shows success for REGISTERED state', () => {
     render(<SearchingStage {...defaultProps} isHubPairing hubRegistrationState="REGISTERED" />);
     expect(screen.getByText('Hub registered successfully!')).toBeInTheDocument();
