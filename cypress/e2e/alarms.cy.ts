@@ -159,6 +159,11 @@ describe('Alarm settings', () => {
     cy.expectRequest(Base.CMD_SETATTRIBUTES, (r) =>
       r.destination === ALARM && r.attributes[AlarmSubsystem.ATTR_FANSHUTOFFONSMOKE] === false);
     tid('setting-fan-shutoff-on-smoke').should('have.attr', 'aria-checked', 'false');
+
+    tid('setting-fan-shutoff-on-co').should('have.attr', 'aria-checked', 'false').click();
+    cy.expectRequest(Base.CMD_SETATTRIBUTES, (r) =>
+      r.destination === ALARM && r.attributes[AlarmSubsystem.ATTR_FANSHUTOFFONCO] === true);
+    tid('setting-fan-shutoff-on-co').should('have.attr', 'aria-checked', 'true');
   });
 
   it('reorders and toggles the notification call tree', () => {

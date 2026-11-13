@@ -82,7 +82,7 @@ describe('AlarmSettings', () => {
     expect(screen.getByText('Device Participation')).toBeInTheDocument();
   });
 
-  it('toggles fanShutoffOnSmoke', async () => {
+  it('toggles fanShutoffOnSmoke from off to on', async () => {
     mockBridgeRequest.mockResolvedValue({});
     render(<AlarmSettings />);
 
@@ -93,6 +93,22 @@ describe('AlarmSettings', () => {
         Base.CMD_SETATTRIBUTES,
         'SERV:subalarm:abc',
         { [AlarmSubsystem.ATTR_FANSHUTOFFONSMOKE]: true },
+      );
+    });
+  });
+
+  it('toggles fanShutoffOnSmoke from on to off', async () => {
+    mockAlarm = { ...defaultAlarm, fanShutoffOnSmoke: true };
+    mockBridgeRequest.mockResolvedValue({});
+    render(<AlarmSettings />);
+
+    fireEvent.click(screen.getByTestId('setting-fan-shutoff-on-smoke'));
+
+    await waitFor(() => {
+      expect(mockBridgeRequest).toHaveBeenCalledWith(
+        Base.CMD_SETATTRIBUTES,
+        'SERV:subalarm:abc',
+        { [AlarmSubsystem.ATTR_FANSHUTOFFONSMOKE]: false },
       );
     });
   });
@@ -139,9 +155,16 @@ describe('AlarmSettings', () => {
 
   it('reflects enabled state on toggle switches', () => {
     mockAlarm = { ...defaultAlarm, fanShutoffOnSmoke: true, fanShutoffOnCO: false };
-    render(<AlarmSettings />);
+    const { unmount } = render(<AlarmSettings />);
 
     expect(screen.getByTestId('setting-fan-shutoff-on-smoke')).toHaveAttribute('aria-checked', 'true');
     expect(screen.getByTestId('setting-fan-shutoff-on-co')).toHaveAttribute('aria-checked', 'false');
+
+    unmount();
+    mockAlarm = { ...defaultAlarm, fanShutoffOnSmoke: false, fanShutoffOnCO: true };
+    render(<AlarmSettings />);
+
+    expect(screen.getByTestId('setting-fan-shutoff-on-smoke')).toHaveAttribute('aria-checked', 'false');
+    expect(screen.getByTestId('setting-fan-shutoff-on-co')).toHaveAttribute('aria-checked', 'true');
   });
 });
