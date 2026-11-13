@@ -726,15 +726,25 @@ These are commonly used features that users will expect:
     (`favorites`, `doorsLocks`, …) and writes `dashboard:cards` / `dashboard:hidden`
     while the home page reads `dashboardCards`, so saved preferences never
     affect the dashboard.
-25. **Split `login/page.tsx` into per-view components** — The login route
-    (`src/app/login/page.tsx`, ~570 lines) defines four views in one file:
-    `LoginForm`, `SendCodeForm`, `ResetPasswordForm` and `ResetConfirmation`,
-    plus the branding shell, switched on `?view=`. That breaks the
-    one-component-per-file convention in CLAUDE.md and makes each form hard to
-    unit-test in isolation. Move each form into its own file under
-    `src/components/login/` (sharing the validation constraints from a
-    `constraints.ts`), keep `page.tsx` as the thin `?view=` router + layout, and
-    give each component its own test file.
+25. ~~**Split `login/page.tsx` into per-view components**~~ — **DONE.**
+    `LoginForm`, `SendCodeForm`, `ResetPasswordForm` and `ResetConfirmation`
+    now live in their own files under `src/components/login/`, each building
+    its constraints from `src/lib/validationRules.ts` (per item 27, no separate
+    `constraints.ts`). `src/app/login/page.tsx` is just the `?view=` router and
+    the branding layout. Each view has its own test file in
+    `src/__tests__/login/`, and `LoginPage.test.tsx` covers the view routing.
+    - **Fixed in review:**
+      - The forms use the shared `FormField`, which gained `name` and `className`
+        props.
+      - Back buttons navigate explicitly instead of calling `router.back()`.
+      - A failure to load the place after a successful login no longer shows
+        "Invalid username or password".
+      - The reset form shows the email field when the send-code link has no
+        valid email.
+      - The reset form maps platform error codes to readable messages
+        (`src/components/login/resetErrors.ts`). An unknown email reads the same
+        as a bad code, so the form doesn't reveal whether an account exists.
+      - "Cannot be your email address" ignores letter case.
 26. ~~**Fix the Alarms `deviceAttributes` in `subsystemConfig`**~~ — **DONE.**
     The Alarms entry listed `subsecurity:securityDevices` / `subsafety:totalDevices`
     under the `subalarm` namespace, so `useSubsystemDevices('subalarm')` found no
@@ -805,6 +815,22 @@ These are commonly used features that users will expect:
     pairing, camera QR-code scanning to fill the PIN and verify the DSK, and
     granted security class display. See §3.5. Platform support is in
     arcusplatform PR #502. SmartStart provisioning is blocked on a platform API.
+31. **Enforce the platform's 100-character password limit** — The platform rejects
+    passwords over 100 characters (`MAX_PASSWORD_LENGTH` in arcusplatform's
+    `ResetPasswordRESTHandler`). That check throws instead of returning an error
+    event, so the client gets a bare HTTP 500 and the reset form shows only the
+    generic "An error occurred" message.
+    - **Fix:** add `maximum: 100` to `NEW_PASSWORD_RULE`
+      (`src/lib/validationRules.ts`), with a field error such as "must be 100
+      characters or fewer", so it's caught before the request.
+    - **Affected forms:** sign-up (`CreateAccountContext`), accepting an
+      invitation (`src/app/invite/page.tsx`) and password reset
+      (`ResetPasswordForm`). `ChangePasswordPanel` has its own hand-written
+      8-character check and should get the same limit; ideally it would use
+      `NEW_PASSWORD_RULE` too.
+    - **Before changing it:** check that the platform's sign-up, invitation and
+      change-password paths use the same 100-character maximum, and list the
+      limit in the password rules each form shows.
 
 ---
 

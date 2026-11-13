@@ -28,7 +28,8 @@ interface EqualityRule {
 }
 
 interface ExclusionRule {
-  exclusion: { within: string[]; message?: string };
+  /** `ignoreCase` compares without regard to letter case, e.g. so a password can't be the email in other case. */
+  exclusion: { within: string[]; message?: string; ignoreCase?: boolean };
 }
 
 interface CustomRule {
@@ -87,7 +88,11 @@ function validateField(
   }
 
   if (rule.exclusion) {
-    if (rule.exclusion.within.includes(value)) {
+    const { within, ignoreCase } = rule.exclusion;
+    const excluded = ignoreCase
+      ? within.some((item) => item.toLowerCase() === value.toLowerCase())
+      : within.includes(value);
+    if (excluded) {
       errors.push(rule.exclusion.message ?? 'is not allowed');
     }
   }
