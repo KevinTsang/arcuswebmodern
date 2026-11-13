@@ -8,6 +8,7 @@
  */
 
 import { memo } from 'react';
+import Link from 'next/link';
 import { Hub, HubAdvanced, HubPower } from '@arcus/core';
 import { useAppSelector } from '@/store/hooks';
 
@@ -55,6 +56,14 @@ function HubPanelInner() {
             {batteryPowered && battery != null && ` \u00B7 Battery: ${Math.round(battery)}%`}
           </p>
         </div>
+
+        <Link
+          href="/devices/hub-advanced"
+          data-testid="hub-advanced-link"
+          className="text-xs text-peacock hover:underline flex-shrink-0"
+        >
+          Advanced
+        </Link>
 
         {/* Status indicator */}
         <div

@@ -1219,6 +1219,7 @@ export const HubSounds = {
   NAMESPACE: 'hubsounds',
   ATTR_PLAYING: 'hubsounds:playing',
   ATTR_SOURCE: 'hubsounds:source',
+  TONE_SUCCESS_SINGLE: 'SUCCESS_SINGLE',
   CMD_PLAYTONE: 'hubsounds:PlayTone',
   CMD_QUIET: 'hubsounds:Quiet',
 } as const;
@@ -1839,6 +1840,7 @@ export const Place = {
   SERVICELEVEL_PREMIUM_PROMON_FREE: 'PREMIUM_PROMON_FREE',
   SERVICELEVEL_PREMIUM_ANNUAL: 'PREMIUM_ANNUAL',
   SERVICELEVEL_PREMIUM_PROMON_ANNUAL: 'PREMIUM_PROMON_ANNUAL',
+  SERVICEADDON_CELLBACKUP: 'CELLBACKUP',
   CMD_LISTDEVICES: 'place:ListDevices',
   CMD_GETHUB: 'place:GetHub',
   CMD_STARTADDINGDEVICES: 'place:StartAddingDevices',

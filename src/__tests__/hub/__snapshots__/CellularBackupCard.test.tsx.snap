@@ -1,0 +1,132 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`CellularBackupCard matches snapshot 1`] = `
+<DocumentFragment>
+  <section
+    class="border border-heron rounded-[var(--border-radius-base)] p-4"
+    data-testid="hub-cellular"
+  >
+    <h3
+      class="text-sm font-medium text-swift mb-3"
+      data-testid="hub-cellular-title"
+    >
+      Cellular Backup
+    </h3>
+    <div
+      class="space-y-2 mb-3"
+    >
+      <div
+        class="flex justify-between text-sm"
+      >
+        <span
+          class="text-grouse"
+        >
+          Status
+        </span>
+        <span
+          class="text-swift"
+          data-testid="hub-cellular-value-status"
+        >
+          Needs the Cellular Backup add-on
+        </span>
+      </div>
+      <div
+        class="flex justify-between text-sm"
+      >
+        <span
+          class="text-grouse"
+        >
+          Plan
+        </span>
+        <span
+          class="text-swift"
+          data-testid="hub-cellular-value-plan"
+        >
+          Not added
+        </span>
+      </div>
+      <div
+        class="flex justify-between text-sm"
+      >
+        <span
+          class="text-grouse"
+        >
+          4G Modem
+        </span>
+        <span
+          class="text-swift"
+          data-testid="hub-cellular-value-4g-modem"
+        >
+          Sierra MC7354
+        </span>
+      </div>
+      <div
+        class="flex justify-between text-sm"
+      >
+        <span
+          class="text-grouse"
+        >
+          Modem Connection
+        </span>
+        <span
+          class="text-swift"
+          data-testid="hub-cellular-value-modem-connection"
+        >
+          Disconnected
+        </span>
+      </div>
+      <div
+        class="flex justify-between text-sm"
+      >
+        <span
+          class="text-grouse"
+        >
+          Signal
+        </span>
+        <span
+          class="text-swift"
+          data-testid="hub-cellular-value-signal"
+        >
+          4 of 5 bars
+        </span>
+      </div>
+      <div
+        class="flex justify-between text-sm"
+      >
+        <span
+          class="text-grouse"
+        >
+          IMEI
+        </span>
+        <span
+          class="text-swift"
+          data-testid="hub-cellular-value-imei"
+        >
+          359225050000000
+        </span>
+      </div>
+      <div
+        class="flex justify-between text-sm"
+      >
+        <span
+          class="text-grouse"
+        >
+          SIM
+        </span>
+        <span
+          class="text-swift"
+          data-testid="hub-cellular-value-sim"
+        >
+          8901260000000000000
+        </span>
+      </div>
+    </div>
+    <button
+      class="text-sm text-peacock hover:underline"
+      data-testid="hub-cellular-toggle"
+    >
+      Add Cellular Backup
+    </button>
+  </section>
+</DocumentFragment>
+`;

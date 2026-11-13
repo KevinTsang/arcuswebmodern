@@ -5,7 +5,8 @@
  */
 
 import {
-  Base, Contact, Device, DeviceConnection, Dimmer, DoorLock, Hub, HubAdvanced, HubZwave, Switch, Thermostat, Valve,
+  Base, Contact, Device, DeviceConnection, Dimmer, DoorLock, Hub, HubAdvanced, HubSounds, HubVolume, HubZigbee,
+  HubZwave, Switch, Thermostat, Valve,
 } from '../../packages/arcus-core/src/capabilities/capabilities';
 import { DEVICE, DEVICE_NAME, addr } from '../support/platform/fixtures';
 import { tid } from '../support/selectors';
@@ -325,5 +326,56 @@ describe('Z-Wave tools', () => {
     cy.get('[data-testid="zwave-remove-cancel"]').click();
     cy.expectRequestAttrs(Hub.CMD_UNPAIRINGREQUEST, { actionType: 'STOP_UNPAIRING' });
     cy.get('[data-testid="zwave-remove-modal"]').should('not.exist');
+  });
+});
+
+describe('Hub advanced settings', () => {
+  beforeEach(() => {
+    cy.signIn({
+      path: '/devices',
+      customize: (p) => {
+        p.data.entities[addr.hub][HubVolume.ATTR_VOLUME] = HubVolume.VOLUME_MID;
+        p.data.entities[addr.hub][HubZigbee.ATTR_CHANNEL] = 20;
+      },
+    });
+    tid('hub-advanced-link').click();
+    tid('hub-advanced-title').should('have.text', 'Hub Advanced Settings');
+  });
+
+  it('changes the hub volume and plays a test sound', () => {
+    tid('hub-volume-mid').should('have.attr', 'data-selected', 'true');
+    tid('hub-volume-low').click();
+    cy.expectRequest(Base.CMD_SETATTRIBUTES, (r) =>
+      r.destination === addr.hub && r.attributes[HubVolume.ATTR_VOLUME] === HubVolume.VOLUME_LOW);
+    // The hub's ValueChange is applied.
+    tid('hub-volume-low').should('have.attr', 'data-selected', 'true');
+
+    tid('hub-sounds-test').click();
+    cy.expectRequestAttrs(HubSounds.CMD_PLAYTONE, { tone: HubSounds.TONE_SUCCESS_SINGLE });
+  });
+
+  it('shows the Zigbee channel and radio statistics', () => {
+    tid('hub-zigbee-value-channel').should('have.text', '20');
+    cy.platform().invoke('onRequest', HubZigbee.CMD_GETSTATS, () => ({ stats: { macRxBcast: 12 } }));
+    tid('hub-zigbee-load').click();
+    tid('hub-zigbee-stat-macrxbcast').should('have.text', '12');
+  });
+
+  it('shows the Z-Wave network topology', () => {
+    cy.platform().invoke('onRequest', HubZwave.CMD_NETWORKINFORMATION, () => ({
+      neighbors: { 2: [1, 3] },
+      route: { 3: [2] },
+      zombies: [],
+    }));
+    tid('hub-zwave-load').click();
+    tid('zwave-node-2-neighbors').should('have.text', '1, 3');
+    tid('zwave-node-3-route').should('have.text', '2');
+  });
+
+  it('reports a failed volume change', () => {
+    cy.platform().invoke('failRequest', Base.CMD_SETATTRIBUTES);
+    tid('hub-volume-high').click();
+    cy.toast('Failed to change hub volume');
+    tid('hub-volume-mid').should('have.attr', 'data-selected', 'true');
   });
 });

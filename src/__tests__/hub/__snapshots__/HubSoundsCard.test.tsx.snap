@@ -1,0 +1,74 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`HubSoundsCard matches snapshot 1`] = `
+<DocumentFragment>
+  <section
+    class="border border-heron rounded-[var(--border-radius-base)] p-4"
+    data-testid="hub-sounds"
+  >
+    <h3
+      class="text-sm font-medium text-swift mb-1"
+      data-testid="hub-sounds-title"
+    >
+      Hub Sounds
+    </h3>
+    <p
+      class="text-xs text-grouse mb-3"
+    >
+      Volume of the hub's speaker for alarms, chimes and status sounds.
+    </p>
+    <div
+      aria-label="Hub volume"
+      class="flex gap-1 bg-pigeon rounded-[var(--border-radius-base)] p-1 mb-3 w-fit"
+      role="radiogroup"
+    >
+      <button
+        aria-checked="false"
+        class="px-4 py-1.5 rounded text-sm font-medium transition-colors disabled:opacity-50 text-grouse hover:text-coot"
+        data-selected="false"
+        data-testid="hub-volume-off"
+        role="radio"
+      >
+        Off
+      </button>
+      <button
+        aria-checked="false"
+        class="px-4 py-1.5 rounded text-sm font-medium transition-colors disabled:opacity-50 text-grouse hover:text-coot"
+        data-selected="false"
+        data-testid="hub-volume-low"
+        role="radio"
+      >
+        Low
+      </button>
+      <button
+        aria-checked="true"
+        class="px-4 py-1.5 rounded text-sm font-medium transition-colors disabled:opacity-50 bg-crane text-swift shadow-sm"
+        data-selected="true"
+        data-testid="hub-volume-mid"
+        role="radio"
+      >
+        Medium
+      </button>
+      <button
+        aria-checked="false"
+        class="px-4 py-1.5 rounded text-sm font-medium transition-colors disabled:opacity-50 text-grouse hover:text-coot"
+        data-selected="false"
+        data-testid="hub-volume-high"
+        role="radio"
+      >
+        High
+      </button>
+    </div>
+    <div
+      class="flex items-center gap-2"
+    >
+      <button
+        class="bg-peacock text-crane px-4 py-1.5 rounded-[var(--border-radius-base)] text-sm hover:opacity-90 disabled:opacity-50"
+        data-testid="hub-sounds-test"
+      >
+        Play Test Sound
+      </button>
+    </div>
+  </section>
+</DocumentFragment>
+`;
