@@ -11,3 +11,9 @@ export interface PairingStep {
   info?: string;
 }
 
+
+/**
+ * Why an in-progress pairing was interrupted: a care alarm went into ALERT, or
+ * an alarm incident became active (legacy pages/pairing careAlarmState / currentIncident).
+ */
+export type PairingInterruptReason = 'care' | 'incident';

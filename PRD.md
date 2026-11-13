@@ -493,14 +493,13 @@ None.
 | Kit activation flow | Yes | Yes | **Done** |
 | Hub WiFi configuration during setup | Yes | No | **Missing** |
 | Cloud device pairing (Nest, Hue, Lutron) | Yes | No | **Missing** |
-| Care alarm interrupt (cancel pairing on alert) | Yes | No | **Missing** |
-| Incident interrupt (cancel pairing on alarm) | Yes | No | **Missing** |
+| Care alarm interrupt (cancel pairing on alert) | Yes (`subpairing:StopSearching` when `subcare:alarmState` is ALERT) | Yes (`StopSearching` on ALERT, also when already in ALERT on entry; banner with care status link, Resume once cleared) | **Done** |
+| Incident interrupt (cancel pairing on alarm) | Yes (`StopSearching` when an incident becomes current; Security Alarm banner) | Yes (`StopSearching` when `currentIncident` is set, also on entry; banner, then the layout redirects to the alarm page) | **Done** |
 
 ### Gaps
 
 - Hub WiFi configuration during pairing.
 - Cloud device / third-party bridge pairing flows.
-- Pairing interruption on alarm/care events.
 
 ---
 

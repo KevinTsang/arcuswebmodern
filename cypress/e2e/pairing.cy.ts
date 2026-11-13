@@ -4,9 +4,9 @@
  */
 
 import {
-  Base, Device, PairingDevice, PairingSubsystem, Place,
+  AlarmIncident, Base, CareSubsystem, Device, PairingDevice, PairingSubsystem, Place, SecuritySubsystem,
 } from '../../packages/arcus-core/src/capabilities/capabilities';
-import { DEVICE, PRODUCT, addr } from '../support/platform/fixtures';
+import { DEVICE, PLACE_ID, PRODUCT, addr } from '../support/platform/fixtures';
 import { tid } from '../support/selectors';
 
 const PAIRING = addr.subsystem('subpairing');
@@ -234,5 +234,59 @@ describe('Kit activation', () => {
     cy.get('[data-testid="kit-empty"]', { timeout: 20000 }).should('be.visible');
     tid('kit-go-devices').click();
     cy.location('pathname').should('eq', '/devices');
+  });
+});
+
+describe('Pairing interruption', () => {
+  const CARE = addr.subsystem('subcare');
+  const SECURITY = addr.subsystem('subsecurity');
+  const INCIDENT = addr.incident('inc-pair');
+
+  function startPairing() {
+    cy.signIn({ path: '/product-catalog' });
+    product(PRODUCT.plug).click();
+    cy.location('pathname').should('eq', '/pairing');
+    cy.expectRequestAttrs(PairingSubsystem.CMD_STARTPAIRING, { productAddress: `SERV:product:${PRODUCT.plug}` });
+    tid('pairing-step').should('have.text', 'Step 1 of 2');
+  }
+
+  it('stops pairing on a care alarm and resumes once it clears', () => {
+    startPairing();
+
+    cy.platform().invoke('updateEntity', CARE, { [CareSubsystem.ATTR_ALARMSTATE]: CareSubsystem.ALARMSTATE_ALERT });
+    cy.expectRequest(PairingSubsystem.CMD_STOPSEARCHING, (r) => r.destination === PAIRING);
+    tid('pairing-interrupted').should('have.attr', 'data-reason', 'care');
+    tid('pairing-step').should('not.exist');
+    tid('pairing-interrupted-view').should('have.attr', 'href', '/services/care/status');
+    tid('pairing-interrupted-resume').should('be.disabled');
+
+    cy.platform().invoke('updateEntity', CARE, { [CareSubsystem.ATTR_ALARMSTATE]: CareSubsystem.ALARMSTATE_READY });
+    tid('pairing-interrupted-resume').should('be.enabled').click();
+    cy.expectRequest(PairingSubsystem.CMD_SEARCH, (r) => r.destination === PAIRING);
+    tid('pairing-interrupted').should('not.exist');
+    tid('pairing-searching').should('exist');
+  });
+
+  it('stops pairing and goes to the alarm page when an incident fires', () => {
+    startPairing();
+
+    cy.platform().then((p) => {
+      p.addEntity({
+        [Base.ATTR_ADDRESS]: INCIDENT,
+        [Base.ATTR_ID]: 'inc-pair',
+        [Base.ATTR_TYPE]: 'incident',
+        [AlarmIncident.ATTR_ALERTSTATE]: AlarmIncident.ALERTSTATE_ALERT,
+        [AlarmIncident.ATTR_ALERT]: AlarmIncident.ALERT_SECURITY,
+        [AlarmIncident.ATTR_PLACEID]: PLACE_ID,
+      });
+      p.updateEntity(SECURITY, {
+        [SecuritySubsystem.ATTR_ALARMSTATE]: SecuritySubsystem.ALARMSTATE_ALERT,
+        [SecuritySubsystem.ATTR_ALARMMODE]: SecuritySubsystem.ALARMMODE_ON,
+      });
+      p.emit(INCIDENT, AlarmIncident.EVENT_SECURITYALERT, { [Base.ATTR_ADDRESS]: INCIDENT });
+    });
+
+    cy.expectRequest(PairingSubsystem.CMD_STOPSEARCHING, (r) => r.destination === PAIRING);
+    cy.location('pathname', { timeout: 15000 }).should('eq', '/services/alarms/status');
   });
 });

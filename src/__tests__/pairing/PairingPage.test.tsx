@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { Base, Product, PairingDevice, PairingSubsystem } from '@arcus/core';
 import PairingPage from '@/app/(authenticated)/pairing/page';
 import type { ArcusEntity, SubsystemEntity } from '@/store/entityTypes';
@@ -45,6 +45,17 @@ jest.mock('@/store/slices/pairingSlice', () => ({
   hubRegistrationError: (payload: unknown) => ({ type: 'pairing/hubRegistrationError', payload }),
   customizationComplete: () => ({ type: 'pairing/customizationComplete' }),
   resetPairing: () => mockResetPairing(),
+  pairingInterrupted: (payload: unknown) => ({ type: 'pairing/pairingInterrupted', payload }),
+  pairingResumed: () => ({ type: 'pairing/pairingResumed' }),
+}));
+
+let mockAlarmReason: 'care' | 'incident' | null = null;
+let capturedInterruptOptions: any = {};
+jest.mock('@/hooks/usePairingInterrupt', () => ({
+  usePairingInterrupt: (opts: any) => {
+    capturedInterruptOptions = opts;
+    return mockAlarmReason;
+  },
 }));
 
 // Capture subcomponent props to allow triggering callbacks in tests
@@ -63,6 +74,12 @@ jest.mock('@/components/pairing', () => ({
     capturedCompletedProps = props;
     return <div data-testid="completed-stage">CompletedStage</div>;
   },
+  PairingInterruptBanner: ({ reason, alarmActive, onResume, onCancel }: any) => (
+    <div data-testid="interrupt-banner" data-reason={reason} data-alarm-active={alarmActive}>
+      <button data-testid="interrupt-resume" onClick={onResume}>Resume</button>
+      <button data-testid="interrupt-cancel" onClick={onCancel}>Cancel</button>
+    </div>
+  ),
 }));
 
 let mockPairingState: PairingState;
@@ -102,7 +119,10 @@ beforeEach(() => {
     hubRegistrationState: null,
     deviceName: '',
     isFavorite: false,
+    interruption: null,
   };
+  mockAlarmReason = null;
+  capturedInterruptOptions = {};
   mockHub = null;
   mockPlaceId = 'place-1';
   mockSubsystems = {};
@@ -506,5 +526,137 @@ describe('PairingPage – error handling', () => {
     await waitFor(() => {
       expect(mockPush).toHaveBeenCalledWith('/devices');
     });
+  });
+});
+
+describe('PairingPage – alarm interruption', () => {
+  const pairingSubAddr = 'SERV:subpairing:place-1';
+  const product = {
+    [Base.ATTR_ADDRESS]: 'SERV:product:c3c055',
+    [Product.ATTR_ID]: 'c3c055',
+    [Product.ATTR_NAME]: 'Smart Plug',
+  };
+
+  beforeEach(() => {
+    mockSubsystems = {
+      [pairingSubAddr]: { id: pairingSubAddr, [Base.ATTR_ADDRESS]: pairingSubAddr },
+    };
+    mockBridgeRequest.mockResolvedValue({ steps: [] });
+  });
+
+  it('wires the interrupt hook with the pairing subsystem address', () => {
+    render(<PairingPage />);
+    expect(capturedInterruptOptions).toEqual(expect.objectContaining({
+      pairingSubAddr,
+      enabled: true,
+      interrupted: false,
+    }));
+  });
+
+  it('enables the hook while searching but not during customize, completion or hub pairing', () => {
+    mockPairingState = { ...mockPairingState, stage: 'searching' };
+    const { unmount } = render(<PairingPage />);
+    expect(capturedInterruptOptions.enabled).toBe(true);
+    unmount();
+
+    mockPairingState = { ...mockPairingState, stage: 'customize' };
+    const second = render(<PairingPage />);
+    expect(capturedInterruptOptions.enabled).toBe(false);
+    second.unmount();
+
+    mockPairingState = { ...mockPairingState, stage: 'completed' };
+    const third = render(<PairingPage />);
+    expect(capturedInterruptOptions.enabled).toBe(false);
+    third.unmount();
+
+    mockPairingState = { ...mockPairingState, stage: 'steps', isHubPairing: true };
+    render(<PairingPage />);
+    expect(capturedInterruptOptions.enabled).toBe(false);
+  });
+
+  it('dispatches pairingInterrupted when the hook reports an interruption', () => {
+    render(<PairingPage />);
+    capturedInterruptOptions.onInterrupt('care');
+    expect(mockDispatch).toHaveBeenCalledWith({ type: 'pairing/pairingInterrupted', payload: 'care' });
+  });
+
+  it('shows the interrupt banner in place of the search stage', () => {
+    mockPairingState = { ...mockPairingState, stage: 'searching', interruption: 'incident' };
+    mockAlarmReason = 'incident';
+    render(<PairingPage />);
+    expect(screen.getByTestId('interrupt-banner')).toHaveAttribute('data-reason', 'incident');
+    expect(screen.getByTestId('interrupt-banner')).toHaveAttribute('data-alarm-active', 'true');
+    expect(screen.queryByTestId('searching-stage')).not.toBeInTheDocument();
+    expect(capturedInterruptOptions.interrupted).toBe(true);
+  });
+
+  it('shows the interrupt banner in place of the steps stage', () => {
+    mockPairingState = { ...mockPairingState, interruption: 'care' };
+    render(<PairingPage />);
+    expect(screen.getByTestId('interrupt-banner')).toHaveAttribute('data-alarm-active', 'false');
+    expect(screen.queryByTestId('steps-stage')).not.toBeInTheDocument();
+  });
+
+  it('does not show the banner once a device has paired', () => {
+    mockPairingState = { ...mockPairingState, stage: 'customize', interruption: 'care' };
+    render(<PairingPage />);
+    expect(screen.queryByTestId('interrupt-banner')).not.toBeInTheDocument();
+    expect(screen.getByTestId('customize-stage')).toBeInTheDocument();
+  });
+
+  it('does not auto-start pairing while an alarm is active', () => {
+    mockPairingState = { ...mockPairingState, product };
+    mockAlarmReason = 'incident';
+    render(<PairingPage />);
+    expect(mockBridgeRequest).not.toHaveBeenCalledWith(
+      PairingSubsystem.CMD_STARTPAIRING, expect.anything(), expect.anything(),
+    );
+  });
+
+  it('does not auto-start pairing after an interruption until the user resumes', () => {
+    mockPairingState = { ...mockPairingState, product, interruption: 'care' };
+    render(<PairingPage />);
+    expect(mockBridgeRequest).not.toHaveBeenCalledWith(
+      PairingSubsystem.CMD_STARTPAIRING, expect.anything(), expect.anything(),
+    );
+  });
+
+  it('resumes by searching again when pairing had already started', async () => {
+    mockPairingState = { ...mockPairingState, product };
+    const { rerender } = render(<PairingPage />);
+    await waitFor(() =>
+      expect(mockBridgeRequest).toHaveBeenCalledWith(
+        PairingSubsystem.CMD_STARTPAIRING, pairingSubAddr, { productAddress: 'SERV:product:c3c055' },
+      ),
+    );
+
+    mockPairingState = { ...mockPairingState, stage: 'searching', interruption: 'incident' };
+    rerender(<PairingPage />);
+    mockBridgeRequest.mockClear();
+    fireEvent.click(screen.getByTestId('interrupt-resume'));
+
+    expect(mockDispatch).toHaveBeenCalledWith({ type: 'pairing/pairingResumed' });
+    await waitFor(() =>
+      expect(mockBridgeRequest).toHaveBeenCalledWith(
+        PairingSubsystem.CMD_SEARCH, pairingSubAddr, { productAddress: 'SERV:product:c3c055' },
+      ),
+    );
+  });
+
+  it('resumes by clearing the interruption only when pairing never started', () => {
+    mockPairingState = { ...mockPairingState, product, interruption: 'care' };
+    render(<PairingPage />);
+    fireEvent.click(screen.getByTestId('interrupt-resume'));
+    expect(mockDispatch).toHaveBeenCalledWith({ type: 'pairing/pairingResumed' });
+    expect(mockBridgeRequest).not.toHaveBeenCalledWith(
+      PairingSubsystem.CMD_SEARCH, expect.anything(), expect.anything(),
+    );
+  });
+
+  it('navigates back to the product catalog when Cancel is clicked', () => {
+    mockPairingState = { ...mockPairingState, interruption: 'care' };
+    render(<PairingPage />);
+    fireEvent.click(screen.getByTestId('interrupt-cancel'));
+    expect(mockPush).toHaveBeenCalledWith('/product-catalog');
   });
 });

@@ -37,6 +37,8 @@ import {
   hubRegistrationError,
   customizationComplete,
   resetPairing,
+  pairingInterrupted,
+  pairingResumed,
 } from '@/store/slices/pairingSlice';
 import {
   StageIndicator,
@@ -44,7 +46,10 @@ import {
   SearchingStage,
   CustomizeStage,
   CompletedStage,
+  PairingInterruptBanner,
 } from '@/components/pairing';
+import type { PairingInterruptReason } from '@/components/pairing';
+import { usePairingInterrupt } from '@/hooks/usePairingInterrupt';
 
 export default function PairingPage() {
   const router = useRouter();
@@ -76,6 +81,21 @@ export default function PairingPage() {
     });
     return (sub?.[Base.ATTR_ADDRESS] as string) ?? null;
   })();
+
+  // ── Interrupt pairing on care alarm / alarm incident ───────
+
+  const handleInterrupt = useCallback((reason: PairingInterruptReason) => {
+    if (pollRef.current) clearInterval(pollRef.current);
+    pollRef.current = null;
+    dispatch(pairingInterrupted(reason));
+  }, [dispatch]);
+
+  const alarmReason = usePairingInterrupt({
+    pairingSubAddr,
+    enabled: !pairing.isHubPairing && (pairing.stage === 'steps' || pairing.stage === 'searching'),
+    interrupted: pairing.interruption !== null,
+    onInterrupt: handleInterrupt,
+  });
 
   // Stop pairing on unmount or page refresh/close
   useEffect(() => {
@@ -193,6 +213,7 @@ export default function PairingPage() {
 
     if (hasInitiated.current) return;
     if (!pairingSubAddr) return;
+    if (alarmReason || pairing.interruption) return;
     if (pairing.isHubPairing) return;
 
     if (pairing.product) {
@@ -202,7 +223,14 @@ export default function PairingPage() {
       hasInitiated.current = true;
       startSearch();
     }
-  }, [pairing.product, pairing.isHubPairing, pairing.stage, pairingSubAddr, startPairing, startSearch, dispatch]);
+  }, [pairing.product, pairing.isHubPairing, pairing.stage, pairing.interruption, alarmReason, pairingSubAddr, startPairing, startSearch, dispatch]);
+
+  // Resume after an interruption: search again if pairing had started,
+  // otherwise clearing the interruption lets the auto-start effect run.
+  const handleResume = useCallback(() => {
+    dispatch(pairingResumed());
+    if (hasInitiated.current) startSearch();
+  }, [dispatch, startSearch]);
 
   // ── Hub Registration ───────────────────────────────────────
 
@@ -333,7 +361,16 @@ export default function PairingPage() {
         <StageIndicator stage={pairing.stage} />
 
         <div className="bg-crane border border-heron rounded-[var(--border-radius-lg)] p-6">
-          {pairing.stage === 'steps' && (
+          {pairing.interruption && (pairing.stage === 'steps' || pairing.stage === 'searching') && (
+            <PairingInterruptBanner
+              reason={pairing.interruption}
+              alarmActive={alarmReason !== null}
+              onResume={handleResume}
+              onCancel={() => router.push('/product-catalog')}
+            />
+          )}
+
+          {!pairing.interruption && pairing.stage === 'steps' && (
             <StepsStage
               product={pairing.product}
               isHubPairing={pairing.isHubPairing}
@@ -348,7 +385,7 @@ export default function PairingPage() {
             />
           )}
 
-          {pairing.stage === 'searching' && (
+          {!pairing.interruption && pairing.stage === 'searching' && (
             <SearchingStage
               product={pairing.product}
               isHubPairing={pairing.isHubPairing}

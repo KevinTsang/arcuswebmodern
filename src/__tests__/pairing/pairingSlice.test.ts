@@ -2,6 +2,8 @@ import { Base, Product, PairingDevice as PairingDeviceCap } from '@arcus/core';
 import reducer, {
   loadProduct,
   startSearch,
+  pairingInterrupted,
+  pairingResumed,
   setDevices,
   devicePaired,
   deviceMispaired,
@@ -38,6 +40,7 @@ const initialState: PairingState = {
   deviceName: '',
   isFavorite: false,
   activeDevice: null,
+  interruption: null,
 };
 
 const mockProduct: PairingProduct = {
@@ -81,6 +84,34 @@ describe('pairingSlice', () => {
       expect(state.stage).toBe('searching');
       expect(state.searchTimedOut).toBe(false);
       expect(state.devices).toEqual([]);
+    });
+
+    it('clears a previous interruption', () => {
+      const prev = { ...initialState, interruption: 'care' as const };
+      expect(reducer(prev, startSearch()).interruption).toBeNull();
+    });
+  });
+
+  describe('pairingInterrupted', () => {
+    it('records an incident interruption and stops loading', () => {
+      const prev = { ...initialState, stage: 'searching' as const, loading: true };
+      const state = reducer(prev, pairingInterrupted('incident'));
+      expect(state.interruption).toBe('incident');
+      expect(state.loading).toBe(false);
+      expect(state.stage).toBe('searching');
+    });
+
+    it('records a care interruption', () => {
+      expect(reducer(initialState, pairingInterrupted('care')).interruption).toBe('care');
+    });
+  });
+
+  describe('pairingResumed', () => {
+    it('clears the interruption and keeps the stage', () => {
+      const prev = { ...initialState, stage: 'steps' as const, interruption: 'incident' as const };
+      const state = reducer(prev, pairingResumed());
+      expect(state.interruption).toBeNull();
+      expect(state.stage).toBe('steps');
     });
   });
 

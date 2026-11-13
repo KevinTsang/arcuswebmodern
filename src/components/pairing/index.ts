@@ -5,4 +5,5 @@ export { default as SearchingStage } from './SearchingStage';
 export { default as CustomizeStage } from './CustomizeStage';
 export { default as CompletedStage } from './CompletedStage';
 export { default as DeviceStateRow } from './DeviceStateRow';
-export type { PairingStage, PairingStep } from './types';
+export { default as PairingInterruptBanner } from './PairingInterruptBanner';
+export type { PairingStage, PairingStep, PairingInterruptReason } from './types';

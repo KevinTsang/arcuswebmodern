@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import type { PairingDevice, PairingProduct } from '@/store/entityTypes';
-import type { PairingStage, PairingStep } from '@/components/pairing/types';
+import type { PairingStage, PairingStep, PairingInterruptReason } from '@/components/pairing/types';
 
 export interface PairingState {
   stage: PairingStage;
@@ -16,6 +16,8 @@ export interface PairingState {
   deviceName: string;
   isFavorite: boolean;
   activeDevice: PairingDevice | null;
+  /** Set when a care alarm or alarm incident stopped pairing mode. */
+  interruption: PairingInterruptReason | null;
 }
 
 const initialState: PairingState = {
@@ -32,6 +34,7 @@ const initialState: PairingState = {
   deviceName: '',
   isFavorite: false,
   activeDevice: null,
+  interruption: null,
 };
 
 const pairingSlice = createSlice({
@@ -46,6 +49,14 @@ const pairingSlice = createSlice({
       state.stage = 'searching';
       state.searchTimedOut = false;
       state.devices = [];
+      state.interruption = null;
+    },
+    pairingInterrupted(state, action: PayloadAction<PairingInterruptReason>) {
+      state.interruption = action.payload;
+      state.loading = false;
+    },
+    pairingResumed(state) {
+      state.interruption = null;
     },
     setDevices(state, action: PayloadAction<PairingDevice[]>) {
       state.devices = action.payload;
@@ -117,6 +128,8 @@ const pairingSlice = createSlice({
 export const {
   loadProduct,
   startSearch,
+  pairingInterrupted,
+  pairingResumed,
   setDevices,
   devicePaired,
   deviceMispaired,
