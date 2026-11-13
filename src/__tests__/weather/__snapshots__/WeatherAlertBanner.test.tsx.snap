@@ -1,0 +1,20 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`WeatherAlertBanner matches snapshot 1`] = `
+<DocumentFragment>
+  <button
+    class="w-full bg-cardinal text-crane px-4 py-2.5 text-sm font-medium flex items-center justify-center gap-2 hover:bg-cardinal/90 transition-colors"
+    data-testid="weather-alert-banner"
+    type="button"
+  >
+    <span
+      class="icon-platform-weather-alert text-base animate-pulse"
+    />
+    <span
+      data-testid="weather-alert-banner-label"
+    >
+      Tornado Warning — Tap to view or snooze
+    </span>
+  </button>
+</DocumentFragment>
+`;

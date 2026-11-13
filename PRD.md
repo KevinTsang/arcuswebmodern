@@ -83,7 +83,7 @@ None.
 | Keypads | Button function assignment | None | **Missing** |
 | Pet doors | Open/close control, access settings | None | **Missing** |
 | Buttons / pendants | Configuration | None | **Missing** |
-| NOAA weather radios | Alert display, hush/snooze | None | **Missing** |
+| NOAA weather radios | Alert display, hush/snooze | Alert banner + panel with Snooze, NOAA location / station / alert-type configurators | **Done** |
 | Halo devices | Multi-function (smoke, CO, weather, nightlight) | None | **Missing** |
 | Presence sensors / pet tokens | Assignment to person | None | **Missing** |
 | Somfy motorized shades | Position control | None | **Missing** |
@@ -352,14 +352,16 @@ None.
 
 | Feature | Legacy | Modern | Status |
 |---------|--------|--------|--------|
-| NOAA weather alert display | Yes | No | **Missing** |
-| Alert snooze / hush controls | Yes | No | **Missing** |
-| Current conditions display | Yes | No | **Missing** |
-| Weather radio device integration | Yes | No | **Missing** |
+| NOAA weather alert display | Yes | Header banner + side panel (alert name, issued time, radio, county) | **Done** |
+| Alert snooze / hush controls | Yes | Snooze via `subweather:SnoozeAllAlerts`; stop playing radio | **Done** |
+| Current conditions display | Yes | Dashboard Weather card (alert status, last alert, per-radio state) | **Done** |
+| Weather radio device integration | Yes | NOAA location (SAME code), station scan/preview/select, alerts-of-interest configurators | **Done** |
 
 ### Gaps
 
-- Entire weather subsystem is absent from the modern client.
+- "Current conditions" means the weather-alert state the platform reports (`subweather` + `noaa:*`); the platform has no temperature/forecast API, and the legacy client showed none.
+- The Halo panel action (light toggle / play-stop radio) and Halo hush stay with the Halo device controls item.
+- No Cypress coverage yet: the fake platform has no weather radio device or `subweather` subsystem.
 
 ---
 
@@ -660,7 +662,7 @@ These are commonly used features that users will expect:
 
 13. **Water heater & softener controls** — Mode, temperature, salt level, recharge settings.
 14. **Shade / blind controls** — Position and tilt control.
-15. **Weather subsystem** — NOAA alerts, current conditions, weather radio integration.
+15. ~~**Weather subsystem** — NOAA alerts, current conditions, weather radio integration.~~ **DONE**
 16. **Thermostat fan mode & min/max enforcement** — Fan control, setpoint limits, separation enforcement.
 17. **Advanced device info** — Power usage, signal strength, OTA firmware status.
 18. **Keypad, pet door, button/pendant, Halo device controls** — Niche device type support.

@@ -1,0 +1,32 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`DeviceConfigurationPanel – weather radio configurators matches snapshot 1`] = `
+<DocumentFragment>
+  <div>
+    <p
+      class="text-sm text-grouse mb-6"
+    >
+      Halo Plus
+    </p>
+    <div
+      class="space-y-6"
+    >
+      <div
+        data-testid="noaa-location"
+      >
+        DRIV:dev:radio
+      </div>
+      <div
+        data-testid="noaa-radio"
+      >
+        DRIV:dev:radio
+      </div>
+      <div
+        data-testid="noaa-weather-alerts"
+      >
+        DRIV:dev:radio
+      </div>
+    </div>
+  </div>
+</DocumentFragment>
+`;

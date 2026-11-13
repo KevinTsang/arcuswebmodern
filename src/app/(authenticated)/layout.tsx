@@ -15,6 +15,7 @@ import { getDefaultPlaceId } from '@/store/thunks/placeSelection';
 import Header from '@/components/Header';
 import AlarmBanner from '@/components/AlarmBanner';
 import InvitationBanner from '@/components/InvitationBanner';
+import { WeatherAlertBanner } from '@/components/weather/WeatherAlertBanner';
 import { SidePanelProvider } from '@/components/SidePanel';
 import { SessionPlace } from '@/arcus/types';
 
@@ -78,6 +79,7 @@ export default function AuthenticatedLayout({
       <div className="min-h-screen flex flex-col">
         <Header />
         <AlarmBanner />
+        <WeatherAlertBanner />
         <InvitationBanner />
         <main className="flex-1">
           {!ready ? (

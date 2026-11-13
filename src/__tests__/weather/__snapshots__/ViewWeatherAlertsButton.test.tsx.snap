@@ -1,0 +1,13 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`ViewWeatherAlertsButton matches snapshot 1`] = `
+<DocumentFragment>
+  <button
+    class="text-sm text-peacock hover:underline"
+    data-testid="weather-view-alerts"
+    type="button"
+  >
+    View or snooze alerts
+  </button>
+</DocumentFragment>
+`;

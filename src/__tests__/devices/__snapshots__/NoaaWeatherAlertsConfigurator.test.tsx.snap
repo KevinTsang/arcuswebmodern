@@ -1,0 +1,112 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`NoaaWeatherAlertsConfigurator matches snapshot 1`] = `
+<DocumentFragment>
+  <div
+    data-testid="noaa-weather-alerts-configurator"
+  >
+    <p
+      class="text-sm font-medium text-swift mb-1"
+    >
+      Weather Alerts
+    </p>
+    <p
+      class="text-xs text-grouse mb-3"
+    >
+      Alerts can occur at any time of day. Hazards urgent enough may sound and wake people up in the middle of the night.
+    </p>
+    <div
+      class="mb-3"
+      data-testid="noaa-alert-group-mine"
+    >
+      <p
+        class="text-xs font-semibold text-coot uppercase mb-1"
+      >
+        My Alerts
+      </p>
+      <ul
+        class="space-y-1"
+      >
+        <li>
+          <label
+            class="flex items-center gap-2 text-sm text-swift cursor-pointer"
+          >
+            <input
+              checked=""
+              class="accent-peacock"
+              data-testid="noaa-alert-BZW"
+              type="checkbox"
+            />
+            Blizzard Warning
+          </label>
+        </li>
+        <li>
+          <label
+            class="flex items-center gap-2 text-sm text-swift cursor-pointer"
+          >
+            <input
+              checked=""
+              class="accent-peacock"
+              data-testid="noaa-alert-TOR"
+              type="checkbox"
+            />
+            Tornado Warning
+          </label>
+        </li>
+      </ul>
+    </div>
+    <div
+      class="mb-3"
+      data-testid="noaa-alert-group-popular"
+    >
+      <p
+        class="text-xs font-semibold text-coot uppercase mb-1"
+      >
+        Popular Alerts
+      </p>
+      <ul
+        class="space-y-1"
+      >
+        <li>
+          <label
+            class="flex items-center gap-2 text-sm text-swift cursor-pointer"
+          >
+            <input
+              class="accent-peacock"
+              data-testid="noaa-alert-SVR"
+              type="checkbox"
+            />
+            Severe Thunderstorm Warning
+          </label>
+        </li>
+      </ul>
+    </div>
+    <div
+      class="mb-3"
+      data-testid="noaa-alert-group-more"
+    >
+      <p
+        class="text-xs font-semibold text-coot uppercase mb-1"
+      >
+        More Alerts
+      </p>
+      <ul
+        class="space-y-1"
+      >
+        <li>
+          <label
+            class="flex items-center gap-2 text-sm text-swift cursor-pointer"
+          >
+            <input
+              class="accent-peacock"
+              data-testid="noaa-alert-AVA"
+              type="checkbox"
+            />
+            Avalanche Watch
+          </label>
+        </li>
+      </ul>
+    </div>
+  </div>
+</DocumentFragment>
+`;

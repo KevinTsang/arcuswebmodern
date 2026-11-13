@@ -1,0 +1,135 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`NoaaRadioConfigurator matches snapshot 1`] = `
+<DocumentFragment>
+  <div
+    data-testid="noaa-radio-configurator"
+  >
+    <p
+      class="text-sm font-medium text-swift mb-1"
+    >
+      Emergency Weather Station
+    </p>
+    <p
+      class="text-xs text-grouse mb-2"
+      data-testid="noaa-radio-selected"
+    >
+      Monitoring station 3
+    </p>
+    <button
+      class="px-3 py-1.5 text-sm bg-peacock text-crane rounded-[var(--border-radius-base)] hover:opacity-90 transition-opacity disabled:opacity-50"
+      data-testid="noaa-radio-scan"
+      type="button"
+    >
+      Scan for Stations
+    </button>
+  </div>
+</DocumentFragment>
+`;
+
+exports[`NoaaRadioConfigurator matches snapshot after a scan 1`] = `
+<DocumentFragment>
+  <div
+    data-testid="noaa-radio-configurator"
+  >
+    <p
+      class="text-sm font-medium text-swift mb-1"
+    >
+      Emergency Weather Station
+    </p>
+    <p
+      class="text-xs text-grouse mb-2"
+      data-testid="noaa-radio-selected"
+    >
+      Monitoring station 3
+    </p>
+    <p
+      class="text-xs text-grouse mb-2"
+    >
+      Play each station to find the clearest one. You'll hear it through the device.
+    </p>
+    <ul
+      class="space-y-2 mb-3"
+    >
+      <li
+        class="flex items-center gap-3"
+        data-testid="noaa-station-3"
+      >
+        <button
+          aria-label="Play station 3"
+          class="w-7 h-7 flex items-center justify-center rounded-full bg-pigeon text-coot text-xs hover:bg-heron"
+          data-testid="noaa-station-play-3"
+          type="button"
+        >
+          ▶
+        </button>
+        <label
+          class="flex-1 flex items-center justify-between cursor-pointer"
+        >
+          <span>
+            <span
+              class="block text-sm text-swift"
+            >
+              Station 3
+            </span>
+            <span
+              class="block text-xs text-grouse"
+            >
+              162.450 MHz
+            </span>
+          </span>
+          <input
+            checked=""
+            class="accent-peacock"
+            data-testid="noaa-station-select-3"
+            name="noaa-station-DRIV:dev:radio"
+            type="radio"
+          />
+        </label>
+      </li>
+      <li
+        class="flex items-center gap-3"
+        data-testid="noaa-station-1"
+      >
+        <button
+          aria-label="Play station 1"
+          class="w-7 h-7 flex items-center justify-center rounded-full bg-pigeon text-coot text-xs hover:bg-heron"
+          data-testid="noaa-station-play-1"
+          type="button"
+        >
+          ▶
+        </button>
+        <label
+          class="flex-1 flex items-center justify-between cursor-pointer"
+        >
+          <span>
+            <span
+              class="block text-sm text-swift"
+            >
+              Station 1
+            </span>
+            <span
+              class="block text-xs text-grouse"
+            >
+              162.400 MHz
+            </span>
+          </span>
+          <input
+            class="accent-peacock"
+            data-testid="noaa-station-select-1"
+            name="noaa-station-DRIV:dev:radio"
+            type="radio"
+          />
+        </label>
+      </li>
+    </ul>
+    <button
+      class="px-3 py-1.5 text-sm bg-peacock text-crane rounded-[var(--border-radius-base)] hover:opacity-90 transition-opacity disabled:opacity-50"
+      data-testid="noaa-radio-scan"
+      type="button"
+    >
+      Rescan
+    </button>
+  </div>
+</DocumentFragment>
+`;
