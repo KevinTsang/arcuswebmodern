@@ -1,0 +1,91 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`ThermostatSchedulePanel matches snapshot 1`] = `
+<DocumentFragment>
+  <div
+    class="space-y-4"
+    data-testid="thermostat-schedule-panel"
+  >
+    <p
+      class="text-sm text-coot"
+    >
+      Automating thermostats can lower your energy usage. Each mode has its own program: the thermostat follows the one matching its current mode. Choose a mode, then click ‘Add Event’ to set a temperature, time and days.
+    </p>
+    <div
+      class="flex items-center justify-between border border-heron rounded-[var(--border-radius-base)] px-4 py-3"
+    >
+      <span
+        class="text-sm font-medium text-swift"
+      >
+        Follow Schedule
+      </span>
+      <label
+        class="inline-flex items-center gap-2 cursor-pointer"
+      >
+        <button
+          aria-checked="true"
+          class="relative w-10 h-6 rounded-full transition-colors bg-peacock"
+          data-testid="thermostat-schedule-follow"
+          role="switch"
+        >
+          <span
+            class="absolute top-0.5 left-0.5 w-5 h-5 bg-crane rounded-full shadow transition-transform translate-x-4"
+          />
+        </button>
+      </label>
+    </div>
+    <div
+      data-testid="schedule-edit-panel"
+    >
+      <div
+        data-testid="thermostat-schedule-setpoints"
+      >
+        <label
+          class="block text-sm font-medium text-swift mb-2"
+        >
+          Temperature
+        </label>
+        <div
+          class="space-y-2"
+        >
+          <div
+            class="flex items-center justify-between bg-pigeon/50 rounded-[var(--border-radius-base)] px-4 py-3"
+          >
+            <span
+              class="text-sm font-medium text-swift"
+            >
+              Cool Set Point
+            </span>
+            <div
+              class="flex items-center gap-3"
+            >
+              <button
+                aria-label="Decrease Cool Set Point"
+                class="w-8 h-8 rounded-full bg-crane border border-heron text-swift flex items-center justify-center hover:bg-pigeon disabled:opacity-40 text-lg"
+                data-testid="thermostat-schedule-cool-down"
+                type="button"
+              >
+                -
+              </button>
+              <span
+                class="text-xl font-medium w-12 text-center text-peacock"
+                data-testid="thermostat-schedule-cool-value"
+              >
+                77°
+              </span>
+              <button
+                aria-label="Increase Cool Set Point"
+                class="w-8 h-8 rounded-full bg-crane border border-heron text-swift flex items-center justify-center hover:bg-pigeon disabled:opacity-40 text-lg"
+                data-testid="thermostat-schedule-cool-up"
+                type="button"
+              >
+                +
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</DocumentFragment>
+`;

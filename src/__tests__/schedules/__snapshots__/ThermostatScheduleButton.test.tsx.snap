@@ -1,0 +1,28 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`ThermostatScheduleButton matches snapshot 1`] = `
+<DocumentFragment>
+  <div
+    class="flex items-center justify-between px-2 py-2 text-xs"
+  >
+    <span
+      class="text-grouse"
+    >
+      Schedule: 
+      <span
+        class="text-coot"
+        data-testid="thermostat-schedule-status-DRIV:dev:therm-1"
+      >
+        On · 3 events
+      </span>
+    </span>
+    <button
+      class="text-peacock font-medium hover:underline"
+      data-testid="thermostat-schedule-open-DRIV:dev:therm-1"
+      type="button"
+    >
+      Edit Schedule
+    </button>
+  </div>
+</DocumentFragment>
+`;

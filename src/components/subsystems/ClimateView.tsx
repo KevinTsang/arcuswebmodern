@@ -7,13 +7,20 @@
  * temperature/humidity readings and thermostat device cards.
  */
 
-import { Base } from '@arcus/core';
+import { useMemo } from 'react';
+import { Base, ClimateSubsystem } from '@arcus/core';
 import { useClimateSubsystem } from '@/hooks/useClimateSubsystem';
 import { cToF, formatTemp } from '@/hooks/useDeviceConfig';
 import { DevicePanel } from '@/components/devices';
+import { ThermostatScheduleButton } from '@/components/schedules/ThermostatScheduleButton';
 
 export function ClimateView() {
-  const { temperature, humidity, controlDevices, tempDevices } = useClimateSubsystem();
+  const { subsystem, temperature, humidity, controlDevices, tempDevices } = useClimateSubsystem();
+  // Only thermostats (not fans, vents or space heaters) have HVAC schedules.
+  const thermostatAddrs = useMemo(
+    () => new Set((subsystem?.[ClimateSubsystem.ATTR_THERMOSTATS] as string[] | undefined) ?? []),
+    [subsystem],
+  );
 
   return (
     <div className="space-y-6">
@@ -42,7 +49,12 @@ export function ClimateView() {
         <div data-testid="climate-thermostats">
           <h3 className="text-sm font-medium text-swift mb-3">Thermostats</h3>
           {controlDevices.map((device) => (
-            <DevicePanel key={device.id} address={device[Base.ATTR_ADDRESS]} />
+            <div key={device.id}>
+              <DevicePanel address={device[Base.ATTR_ADDRESS]} />
+              {thermostatAddrs.has(device[Base.ATTR_ADDRESS]) && (
+                <ThermostatScheduleButton address={device[Base.ATTR_ADDRESS]} />
+              )}
+            </div>
           ))}
         </div>
       )}
