@@ -485,16 +485,16 @@ None.
 | Feature | Legacy | Modern | Status |
 |---------|--------|--------|--------|
 | In-app toast notifications | Yes | Yes | **Done** |
-| Notification call tree (alarm escalation) | Yes | No | **Missing** |
-| Push notification settings | Yes | No | **Missing** |
-| Email notification preferences | Yes | No | **Missing** |
-| Quiet hours / do-not-disturb | Yes | No | **Missing** |
+| Notification call tree (alarm escalation) | Yes | Yes (Settings → Notifications reuses the alarm call tree: reorder, enable/disable; links to Alarm settings) | **Done** |
+| Push notification settings | Yes (list/remove mobile devices) | Yes (lists devices via `person:ListMobileDevices`, removes with confirmation via `person:RemoveMobileDevice`) | **Done** |
+| Email notification preferences | Yes (promotional opt-in) | Yes (promotional-email toggle via `person:consentOffersPromotions`) | **Done** |
+| Quiet hours / do-not-disturb | No (OS settings only) | Partial (explains to use the phone's Do Not Disturb; the platform has no quiet-hours API) | **Partial** |
 
 ### Gaps
 
 - ~~**Bug:** Saving Profile → Edit Contact Info could blank the user's first and last name.~~ **DONE.** The form was seeded from `auth.person` (often just the session payload, with no names) and always wrote all three fields. `ContactInfoPanel` now loads the person with `base:GetAttributes` and stays disabled until that succeeds (error toast + retry on failure; a sign-in-again message with no session). It sends only the fields that changed, trimmed, and checks only those: names can't be blanked, and a changed phone must be a US number (phone characters only, 10 digits or 11 starting with 1, via `useFormValidation`'s new `phoneNumber` rule). Phones are sent as `(555) 123-4567`, the format the platform stores. Errors show after Save and follow typing, not blur. The Profile card refreshes after a save once #13 (`auth.person` follows the person's `base:ValueChange`) is merged.
 - Billing and subscription management is entirely absent.
-- Notification preferences and call tree management.
+- ~~Notification preferences and call tree management.~~ **DONE** (Settings → Notifications). Remaining: quiet hours / do-not-disturb has no platform attribute or command (the legacy client only pointed users to their phone's settings), so it is informational only; per-type email preferences don't exist on the platform beyond the promotional opt-in.
 - Account-level features (email management, phone verification, security questions, account deletion).
 
 ---

@@ -18,15 +18,20 @@ jest.mock('@/components/settings/InvitationSection', () => ({
   default: () => <div data-testid="invitation-section">Invitation Content</div>,
 }));
 
+jest.mock('@/components/settings/NotificationsSection', () => ({
+  NotificationsSection: () => <div data-testid="notifications-section">Notifications Content</div>,
+}));
+
 describe('SettingsPage – rendering', () => {
   it('shows Settings heading', () => {
     render(<SettingsPage />);
     expect(screen.getByText('Settings')).toBeInTheDocument();
   });
 
-  it('shows all three tab buttons', () => {
+  it('shows all four tab buttons', () => {
     render(<SettingsPage />);
     expect(screen.getByText('Profile')).toBeInTheDocument();
+    expect(screen.getByText('Notifications')).toBeInTheDocument();
     expect(screen.getByText('People & Places')).toBeInTheDocument();
     expect(screen.getByText('Invitation Code')).toBeInTheDocument();
   });
@@ -44,6 +49,13 @@ describe('SettingsPage – tab navigation', () => {
     render(<SettingsPage />);
     fireEvent.click(screen.getByText('People & Places'));
     expect(screen.getByTestId('people-places-section')).toBeInTheDocument();
+    expect(screen.queryByTestId('profile-section')).not.toBeInTheDocument();
+  });
+
+  it('switches to Notifications on tab click', () => {
+    render(<SettingsPage />);
+    fireEvent.click(screen.getByTestId('settings-tab-notifications'));
+    expect(screen.getByTestId('notifications-section')).toBeInTheDocument();
     expect(screen.queryByTestId('profile-section')).not.toBeInTheDocument();
   });
 

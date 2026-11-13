@@ -1,0 +1,33 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`MobileDeviceRow matches snapshot 1`] = `
+<DocumentFragment>
+  <ul>
+    <li
+      class="flex items-center justify-between gap-4 py-2 border-b border-heron last:border-b-0"
+      data-testid="mobile-device-1"
+    >
+      <div
+        class="min-w-0"
+      >
+        <p
+          class="text-sm font-medium text-swift truncate"
+        >
+          iOS 17.2
+        </p>
+        <p
+          class="text-xs text-grouse"
+        >
+          Device type: Apple iPhone 15
+        </p>
+      </div>
+      <button
+        class="text-sm text-peacock hover:underline disabled:opacity-50 flex-shrink-0"
+        data-testid="mobile-device-1-remove"
+      >
+        Remove
+      </button>
+    </li>
+  </ul>
+</DocumentFragment>
+`;

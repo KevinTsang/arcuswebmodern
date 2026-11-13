@@ -1,0 +1,86 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`PushNotificationsCard matches snapshot 1`] = `
+<DocumentFragment>
+  <div
+    class="border border-heron rounded-[var(--border-radius-base)] overflow-hidden"
+    data-testid="info-card-push-notifications"
+  >
+    <div
+      class="flex items-center justify-between px-4 py-3 bg-pigeon/30"
+    >
+      <h3
+        class="text-sm font-medium text-swift"
+      >
+        Push Notifications
+      </h3>
+      <span
+        data-testid="info-card-push-notifications-action"
+      />
+    </div>
+    <div
+      class="px-4 py-3 space-y-2"
+    >
+      <p
+        class="text-xs text-grouse"
+      >
+        These mobile devices receive your push notifications. Remove a device to stop sending notifications to it. Push notifications can only be sent to phones and tablets signed in to the mobile app.
+      </p>
+      <ul
+        data-testid="push-devices-list"
+      >
+        <li
+          class="flex items-center justify-between gap-4 py-2 border-b border-heron last:border-b-0"
+          data-testid="mobile-device-1"
+        >
+          <div
+            class="min-w-0"
+          >
+            <p
+              class="text-sm font-medium text-swift truncate"
+            >
+              iOS 17.2
+            </p>
+            <p
+              class="text-xs text-grouse"
+            >
+              Device type: Apple iPhone 15
+            </p>
+          </div>
+          <button
+            class="text-sm text-peacock hover:underline disabled:opacity-50 flex-shrink-0"
+            data-testid="mobile-device-1-remove"
+          >
+            Remove
+          </button>
+        </li>
+        <li
+          class="flex items-center justify-between gap-4 py-2 border-b border-heron last:border-b-0"
+          data-testid="mobile-device-2"
+        >
+          <div
+            class="min-w-0"
+          >
+            <p
+              class="text-sm font-medium text-swift truncate"
+            >
+              Android 14
+            </p>
+            <p
+              class="text-xs text-grouse"
+            >
+              Device type: Google Pixel 8
+            </p>
+          </div>
+          <button
+            class="text-sm text-peacock hover:underline disabled:opacity-50 flex-shrink-0"
+            data-testid="mobile-device-2-remove"
+          >
+            Remove
+          </button>
+        </li>
+      </ul>
+    </div>
+  </div>
+</DocumentFragment>
+`;

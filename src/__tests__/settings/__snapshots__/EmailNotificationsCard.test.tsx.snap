@@ -1,0 +1,60 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`EmailNotificationsCard matches snapshot 1`] = `
+<DocumentFragment>
+  <div
+    class="border border-heron rounded-[var(--border-radius-base)] overflow-hidden"
+    data-testid="info-card-email-notifications"
+  >
+    <div
+      class="flex items-center justify-between px-4 py-3 bg-pigeon/30"
+    >
+      <h3
+        class="text-sm font-medium text-swift"
+      >
+        Email Notifications
+      </h3>
+      <span
+        data-testid="info-card-email-notifications-action"
+      />
+    </div>
+    <div
+      class="px-4 py-3 space-y-2"
+    >
+      <div
+        class="flex items-start justify-between gap-4 py-3 border-b border-heron"
+      >
+        <div>
+          <p
+            class="text-sm font-medium text-swift"
+          >
+            Promotional emails
+          </p>
+          <p
+            class="text-xs text-grouse mt-0.5"
+          >
+            Receive news, offers and promotions by email.
+          </p>
+        </div>
+        <button
+          aria-checked="false"
+          aria-label="Promotional emails"
+          class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 bg-heron"
+          data-testid="email-prefs-promotions"
+          role="switch"
+        >
+          <span
+            class="inline-block h-4 w-4 rounded-full bg-crane shadow transition-transform translate-x-1"
+          />
+        </button>
+      </div>
+      <p
+        class="text-xs text-grouse"
+        data-testid="email-prefs-note"
+      >
+        Account emails, such as password resets, are always sent to alex@example.com. Who is notified about alarms is set by the alarm call tree.
+      </p>
+    </div>
+  </div>
+</DocumentFragment>
+`;

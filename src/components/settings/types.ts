@@ -1,3 +1,4 @@
+import { MobileDevice, Person } from '@arcus/core';
 import type { PersonData, PlaceData } from '@/store/entityTypes';
 
 export type { PlaceData };
@@ -47,4 +48,28 @@ export interface PlaceWithPeople {
   role: string;
   placeData: PlaceData | null;
   people: PersonData[];
+}
+
+// ── Notification preferences ─────────────────────────────────────
+
+/** A mobile device registered for push notifications (`person:ListMobileDevices`). */
+export interface MobileDeviceData {
+  [MobileDevice.ATTR_DEVICEINDEX]: number;
+  [MobileDevice.ATTR_OSTYPE]?: string;
+  [MobileDevice.ATTR_OSVERSION]?: string;
+  [MobileDevice.ATTR_DEVICEVENDOR]?: string;
+  [MobileDevice.ATTR_DEVICEMODEL]?: string;
+  [MobileDevice.ATTR_NAME]?: string;
+}
+
+/** Response of `person:ListMobileDevices`. */
+export interface ListMobileDevicesResponse {
+  mobileDevices?: MobileDeviceData[];
+}
+
+/** The person attributes the email preferences card reads with `base:GetAttributes`. */
+export interface PersonEmailPrefs {
+  [Person.ATTR_EMAIL]?: string;
+  /** Epoch ms when the person opted in to promotional emails; 0 (or absent) when opted out. */
+  [Person.ATTR_CONSENTOFFERSPROMOTIONS]?: number;
 }
