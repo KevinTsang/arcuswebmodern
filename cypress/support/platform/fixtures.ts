@@ -605,7 +605,7 @@ export function createFixture(): PlatformData {
     placeId: PLACE_ID,
     accountId: ACCOUNT_ID,
     places: [
-      { placeId: PLACE_ID, placeName: 'Maple Street', accountId: ACCOUNT_ID, role: 'OWNER' },
+      { placeId: PLACE_ID, placeName: 'Maple Street', accountId: ACCOUNT_ID, role: 'OWNER', primary: true },
       { placeId: LAKE_PLACE_ID, placeName: 'Lake House', accountId: 'account-lake', role: 'FULL_ACCESS' },
     ],
     entities,

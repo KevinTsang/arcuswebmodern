@@ -191,6 +191,40 @@ describe('People & Places', () => {
     });
   });
 
+  it('labels each person with their role at the place', () => {
+    tid(`person-${PLACE_ID}-${GUEST_PERSON_ID}`).should('contain', 'Full Access');
+    cy.expectRequest(Place.CMD_LISTPERSONSWITHACCESS, (r) => r.destination === addr.place);
+  });
+
+  it('shows the service level and cellular backup of each place', () => {
+    placeValue(PLACE_ID, 'service-level').should('have.text', 'Basic');
+    placeValue(PLACE_ID, 'cellular-backup').should('have.text', 'Not included');
+    placeValue(LAKE_PLACE_ID, 'service-level').should('have.text', 'Premium');
+  });
+
+  it('adds a partial-access person with a PIN', () => {
+    tid(`place-invite-${PLACE_ID}`).click();
+    tid('access-type-partial').check();
+    field('first-name').type('Riley');
+    field('last-name').type('Rivera');
+    field('pin-code').type('2468');
+    field('verify-pin-code').type('2468');
+    tid('partial-add').click();
+
+    cy.expectRequest(Place.CMD_ADDPERSON, (r) => r.destination === addr.place).then((r) => {
+      expect(r.attributes.person).to.deep.include({ [Person.ATTR_FIRSTNAME]: 'Riley', [Person.ATTR_LASTNAME]: 'Rivera' });
+    });
+    cy.expectRequest(Person.CMD_CHANGEPINV2, (r) =>
+      r.transport === 'rest' && r.attributes.pin === '2468' && r.attributes.place === PLACE_ID);
+    cy.toast('Riley Rivera has been added to Maple Street.');
+    tid(`place-card-${PLACE_ID}`).should('contain', 'Riley Rivera').and('contain', 'Partial Access');
+  });
+
+  it("doesn't offer to remove the primary place", () => {
+    tid(`place-remove-${PLACE_ID}`).should('not.exist');
+    tid(`place-remove-hint-${PLACE_ID}`).should('contain', 'primary place');
+  });
+
   it('edits the active place', () => {
     tid(`place-edit-${PLACE_ID}`).click();
     tid('side-panel-right-title').should('have.text', 'Edit Place');
@@ -205,6 +239,66 @@ describe('People & Places', () => {
     cy.toast('Place info updated.');
     tid(`place-info-${PLACE_ID}`).find('h3').should('have.text', 'Maple Street House');
     placeValue(PLACE_ID, 'address').should('contain', '62799');
+  });
+});
+
+describe('People & Places – invitations and place removal', () => {
+  const BEACH_ID = 'place-beach';
+
+  beforeEach(() => {
+    cy.signIn({
+      path: '/settings',
+      customize: (p) => {
+        p.data.invitationCodes['PEND-9'] = {
+          code: 'PEND-9',
+          placeId: PLACE_ID,
+          placeName: 'Maple Street',
+          inviteeEmail: 'robin@example.com',
+          inviteeFirstName: 'Robin',
+          inviteeLastName: 'Park',
+          invitorFirstName: 'Alex',
+          invitorLastName: 'Rivera',
+        };
+        p.data.entities[`SERV:place:${BEACH_ID}`] = {
+          [Base.ATTR_ADDRESS]: `SERV:place:${BEACH_ID}`,
+          [Base.ATTR_ID]: BEACH_ID,
+          [Base.ATTR_TYPE]: 'place',
+          [Place.ATTR_NAME]: 'Beach Condo',
+          [Place.ATTR_SERVICELEVEL]: Place.SERVICELEVEL_PREMIUM,
+          [Place.ATTR_SERVICEADDONS]: [Place.SERVICEADDON_CELLBACKUP],
+          [Place.ATTR_ACCOUNT]: p.data.accountId,
+        };
+        p.data.places.push({ placeId: BEACH_ID, placeName: 'Beach Condo', accountId: p.data.accountId, role: 'OWNER' });
+      },
+    });
+    tid('settings-tab-people-places').click();
+  });
+
+  it('cancels a pending invitation', () => {
+    tid(`invitation-${PLACE_ID}-PEND-9`).should('contain', 'Robin Park').and('contain', 'Invitation Sent');
+    tid(`invitation-${PLACE_ID}-PEND-9-cancel`).click();
+    tid('side-panel-right-title').should('have.text', 'Cancel Invitation');
+    tid('cancel-invitation-message').should('contain', 'Robin Park').and('contain', 'Maple Street');
+    tid('cancel-invitation-confirm').click();
+
+    cy.expectRequest(Place.CMD_CANCELINVITATION, (r) => r.destination === addr.place && r.attributes.code === 'PEND-9');
+    cy.toast('Invitation to Robin Park cancelled.');
+    tid(`invitation-${PLACE_ID}-PEND-9`).should('not.exist');
+  });
+
+  it('shows the cellular backup add-on and removes an owned place', () => {
+    placeValue(BEACH_ID, 'cellular-backup').should('have.text', 'Included in plan');
+    tid(`place-remove-${BEACH_ID}`).click();
+    tid('side-panel-right-title').should('have.text', 'Remove Place');
+    tid('remove-place-submit').should('be.disabled');
+    field('confirm').type('remove');
+    tid('remove-place-submit').click();
+    tid('remove-place-delete').click();
+
+    cy.expectRequest(Place.CMD_DELETE, (r) => r.destination === `SERV:place:${BEACH_ID}`);
+    cy.toast('Beach Condo has been removed from your account.');
+    placeCard(BEACH_ID).should('not.exist');
+    placeCard(PLACE_ID).should('exist');
   });
 });
 

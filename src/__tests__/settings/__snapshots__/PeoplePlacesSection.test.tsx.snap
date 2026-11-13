@@ -80,6 +80,21 @@ exports[`PeoplePlacesSection – add place matches snapshot at a place the user 
               <span
                 class="text-grouse"
               >
+                Cellular Backup
+              </span>
+              <span
+                class="text-swift"
+                data-testid="place-info-place-1-value-cellular-backup"
+              >
+                Not included
+              </span>
+            </div>
+            <div
+              class="flex justify-between text-sm"
+            >
+              <span
+                class="text-grouse"
+              >
                 Role
               </span>
               <span
@@ -162,6 +177,11 @@ exports[`PeoplePlacesSection – add place matches snapshot at a place the user 
                   <div
                     class="flex items-center gap-2 flex-shrink-0"
                   >
+                    <span
+                      class="text-xs text-grouse capitalize"
+                    >
+                      Full Access
+                    </span>
                     <button
                       class="text-xs text-peacock hover:underline"
                       data-testid="person-place-1-SERV:person:p2-details"
@@ -170,7 +190,51 @@ exports[`PeoplePlacesSection – add place matches snapshot at a place the user 
                     </button>
                   </div>
                 </div>
+                <div
+                  class="flex items-center justify-between px-3 py-2 rounded border border-dashed border-heron"
+                  data-testid="invitation-place-1-INV-1"
+                >
+                  <div
+                    class="min-w-0"
+                  >
+                    <p
+                      class="text-sm text-swift truncate"
+                    >
+                      Robin Park
+                    </p>
+                    <p
+                      class="text-xs text-grouse truncate"
+                    >
+                      robin@test.com
+                    </p>
+                  </div>
+                  <div
+                    class="flex items-center gap-2 flex-shrink-0"
+                  >
+                    <span
+                      class="text-xs text-grouse"
+                    >
+                      Invitation Sent
+                    </span>
+                    <button
+                      class="text-xs text-cardinal hover:underline"
+                      data-testid="invitation-place-1-INV-1-cancel"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
               </div>
+            </div>
+            <div
+              class="border-t border-heron mt-3 pt-3 flex items-center justify-between text-sm"
+            >
+              <p
+                class="text-xs text-grouse"
+                data-testid="place-remove-hint-place-1"
+              >
+                Switch to another place to remove this one.
+              </p>
             </div>
           </div>
         </div>
@@ -244,6 +308,21 @@ exports[`PeoplePlacesSection – add place matches snapshot at a place the user 
               <span
                 class="text-grouse"
               >
+                Cellular Backup
+              </span>
+              <span
+                class="text-swift"
+                data-testid="place-info-place-2-value-cellular-backup"
+              >
+                Not included
+              </span>
+            </div>
+            <div
+              class="flex justify-between text-sm"
+            >
+              <span
+                class="text-grouse"
+              >
                 Role
               </span>
               <span
@@ -297,7 +376,13 @@ exports[`PeoplePlacesSection – add place matches snapshot at a place the user 
                   </div>
                   <div
                     class="flex items-center gap-2 flex-shrink-0"
-                  />
+                  >
+                    <span
+                      class="text-xs text-grouse capitalize"
+                    >
+                      Account Owner
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -400,6 +485,21 @@ exports[`PeoplePlacesSection – add place matches snapshot while a guest place 
               <span
                 class="text-grouse"
               >
+                Cellular Backup
+              </span>
+              <span
+                class="text-swift"
+                data-testid="place-info-place-1-value-cellular-backup"
+              >
+                Not included
+              </span>
+            </div>
+            <div
+              class="flex justify-between text-sm"
+            >
+              <span
+                class="text-grouse"
+              >
                 Role
               </span>
               <span
@@ -476,6 +576,11 @@ exports[`PeoplePlacesSection – add place matches snapshot while a guest place 
                   <div
                     class="flex items-center gap-2 flex-shrink-0"
                   >
+                    <span
+                      class="text-xs text-grouse capitalize"
+                    >
+                      Full Access
+                    </span>
                     <button
                       class="text-xs text-peacock hover:underline"
                       data-testid="person-place-1-SERV:person:p2-details"
@@ -484,7 +589,51 @@ exports[`PeoplePlacesSection – add place matches snapshot while a guest place 
                     </button>
                   </div>
                 </div>
+                <div
+                  class="flex items-center justify-between px-3 py-2 rounded border border-dashed border-heron"
+                  data-testid="invitation-place-1-INV-1"
+                >
+                  <div
+                    class="min-w-0"
+                  >
+                    <p
+                      class="text-sm text-swift truncate"
+                    >
+                      Robin Park
+                    </p>
+                    <p
+                      class="text-xs text-grouse truncate"
+                    >
+                      robin@test.com
+                    </p>
+                  </div>
+                  <div
+                    class="flex items-center gap-2 flex-shrink-0"
+                  >
+                    <span
+                      class="text-xs text-grouse"
+                    >
+                      Invitation Sent
+                    </span>
+                    <button
+                      class="text-xs text-cardinal hover:underline"
+                      data-testid="invitation-place-1-INV-1-cancel"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
               </div>
+            </div>
+            <div
+              class="border-t border-heron mt-3 pt-3 flex items-center justify-between text-sm"
+            >
+              <button
+                class="text-sm text-cardinal hover:underline"
+                data-testid="place-remove-place-1"
+              >
+                Remove Place
+              </button>
             </div>
           </div>
         </div>
@@ -558,6 +707,21 @@ exports[`PeoplePlacesSection – add place matches snapshot while a guest place 
               <span
                 class="text-grouse"
               >
+                Cellular Backup
+              </span>
+              <span
+                class="text-swift"
+                data-testid="place-info-place-2-value-cellular-backup"
+              >
+                Not included
+              </span>
+            </div>
+            <div
+              class="flex justify-between text-sm"
+            >
+              <span
+                class="text-grouse"
+              >
                 Role
               </span>
               <span
@@ -617,7 +781,13 @@ exports[`PeoplePlacesSection – add place matches snapshot while a guest place 
                   </div>
                   <div
                     class="flex items-center gap-2 flex-shrink-0"
-                  />
+                  >
+                    <span
+                      class="text-xs text-grouse capitalize"
+                    >
+                      Account Owner
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -720,6 +890,21 @@ exports[`PeoplePlacesSection – add place when the person is only a guest match
               <span
                 class="text-grouse"
               >
+                Cellular Backup
+              </span>
+              <span
+                class="text-swift"
+                data-testid="place-info-place-2-value-cellular-backup"
+              >
+                Not included
+              </span>
+            </div>
+            <div
+              class="flex justify-between text-sm"
+            >
+              <span
+                class="text-grouse"
+              >
                 Role
               </span>
               <span
@@ -779,7 +964,13 @@ exports[`PeoplePlacesSection – add place when the person is only a guest match
                   </div>
                   <div
                     class="flex items-center gap-2 flex-shrink-0"
-                  />
+                  >
+                    <span
+                      class="text-xs text-grouse capitalize"
+                    >
+                      Account Owner
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>

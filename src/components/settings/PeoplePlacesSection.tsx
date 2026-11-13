@@ -19,7 +19,7 @@ import { useAppSelector } from '@/store/hooks';
 import { useSidePanel } from '@/components/SidePanel';
 import PlaceCard from './PlaceCard';
 import { type PlaceWithPeople, type PlaceData } from './types';
-import type { ListPersonsResponse } from '@/arcus/types';
+import type { ListPersonsWithAccessResponse, PendingInvitationsResponse } from '@/arcus/types';
 import { AddPlacePanel } from './AddPlacePanel';
 import { AddPlaceControls } from './AddPlaceControls';
 import { getAddPlaceAccess } from '@/lib/addPlaceAccess';
@@ -67,20 +67,28 @@ export default function PeoplePlacesSection() {
         const res = await SessionService.ListAvailablePlaces();
         const available = res.places ?? [];
 
-        // Fetch full attributes + people for each place in parallel
+        // Fetch full attributes, people (with their roles) and, for owned
+        // places, pending invitations for each place in parallel
         const enriched = await Promise.all(
-          available.map(async (ap) => {
+          available.map(async (ap): Promise<PlaceWithPeople> => {
             const placeAddress = `SERV:place:${ap.placeId}`;
-            const [placeData, personsResult] = await Promise.all([
+            const [placeData, personsResult, invitesResult] = await Promise.all([
               Bridge.request<PlaceData>(Base.CMD_GETATTRIBUTES, placeAddress, {}).catch(() => null),
-              Bridge.request<ListPersonsResponse>(Place.CMD_LISTPERSONS, placeAddress, {}).catch(() => ({ persons: [] })),
+              Bridge.request<ListPersonsWithAccessResponse>(Place.CMD_LISTPERSONSWITHACCESS, placeAddress, {})
+                .catch((): ListPersonsWithAccessResponse => ({ persons: [] })),
+              ap.role === OWNER
+                ? Bridge.request<PendingInvitationsResponse>(Place.CMD_PENDINGINVITATIONS, placeAddress, {})
+                  .catch((): PendingInvitationsResponse => ({ invitations: [] }))
+                : Promise.resolve<PendingInvitationsResponse>({ invitations: [] }),
             ]);
             return {
               placeId: ap.placeId,
               name: ap.name,
               role: ap.role,
+              primary: ap.primary,
               placeData,
-              people: personsResult.persons ?? [],
+              people: (personsResult?.persons ?? []).filter((p) => p?.person),
+              invitations: invitesResult?.invitations ?? [],
             };
           }),
         );

@@ -8,14 +8,17 @@ import { addNotification } from '@/store/slices/uiSlice';
 import { useSidePanel } from '@/components/SidePanel';
 import type { PersonData } from '@/store/entityTypes';
 import InfoRow from './InfoRow';
+import { formatRole } from './settingsHelper';
 
 interface PersonDetailPanelProps {
   person: PersonData;
+  /** The person's role at the place (FULL_ACCESS or HOBBIT), if known. */
+  role?: string;
   placeId: string;
   onRemoved?: () => void;
 }
 
-export default function PersonDetailPanel({ person, placeId, onRemoved }: PersonDetailPanelProps) {
+export default function PersonDetailPanel({ person, role, placeId, onRemoved }: PersonDetailPanelProps) {
   const dispatch = useAppDispatch();
   const { closeRight } = useSidePanel();
   const [removing, setRemoving] = useState(false);
@@ -26,7 +29,11 @@ export default function PersonDetailPanel({ person, placeId, onRemoved }: Person
   const phone = person[PersonCap.ATTR_MOBILENUMBER] ?? '';
 
   const handleRemove = useCallback(async () => {
-    if (!window.confirm('Remove this person from the place?')) return;
+    // A partial-access person exists only at this place, so removing them deletes them.
+    const message = role === 'HOBBIT'
+      ? 'Remove this person? Partial-access people are deleted when removed.'
+      : 'Remove this person from the place?';
+    if (!window.confirm(message)) return;
     setRemoving(true);
     try {
       await Bridge.request(PersonCap.CMD_REMOVEFROMPLACE, person[Base.ATTR_ADDRESS], {
@@ -40,13 +47,14 @@ export default function PersonDetailPanel({ person, placeId, onRemoved }: Person
     } finally {
       setRemoving(false);
     }
-  }, [person, placeId, dispatch, closeRight, onRemoved]);
+  }, [person, role, placeId, dispatch, closeRight, onRemoved]);
 
   return (
     <div className="p-4 space-y-4">
       <InfoRow label="Name" value={name || '—'} />
       <InfoRow label="Email" value={email || '—'} />
       <InfoRow label="Phone" value={phone || '—'} />
+      {role && <InfoRow label="Access" value={formatRole(role)} />}
       <div className="border-t border-heron pt-4">
         <button
           onClick={handleRemove}

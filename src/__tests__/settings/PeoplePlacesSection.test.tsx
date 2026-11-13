@@ -5,6 +5,7 @@ import PeoplePlacesSection from '@/components/settings/PeoplePlacesSection';
 import { AddPlacePanel } from '@/components/settings/AddPlacePanel';
 import type { PlaceData, PersonData } from '@/store/entityTypes';
 import type { SessionPlace } from '@/arcus/types';
+import type { Invitation } from '@arcus/core/services/types';
 
 const mockOpenRight = jest.fn();
 const mockBridgeRequest = jest.fn();
@@ -51,6 +52,7 @@ jest.mock('@/store/hooks', () => ({
   useAppSelector: (sel: (s: any) => any) =>
     sel({
       place: { placeId: mockActivePlaceId, place: mockActivePlace },
+      subsystems: { ids: [], entities: {} },
       auth: {
         person: { [Base.ATTR_ADDRESS]: 'SERV:person:p1', personId: 'p1', places: mockSessionPlaces },
         // The active place's account — must not be used as the AddPlace target.
@@ -112,6 +114,17 @@ const person2: PersonData = {
   [Person.ATTR_EMAIL]: 'jane@test.com',
 };
 
+const pendingInvitation: Invitation = {
+  code: 'INV-1',
+  placeId: 'place-1',
+  placeName: 'My Home',
+  inviteeEmail: 'robin@test.com',
+  inviteeFirstName: 'Robin',
+  inviteeLastName: 'Park',
+  invitorFirstName: 'Me',
+  invitorLastName: 'User',
+};
+
 const person3: PersonData = {
   [Base.ATTR_ADDRESS]: 'SERV:person:p3',
   [Person.ATTR_FIRSTNAME]: 'Bob',
@@ -134,13 +147,16 @@ beforeEach(() => {
       if (addr === 'SERV:place:place-1') return Promise.resolve(ownerPlaceData);
       if (addr === 'SERV:place:place-2') return Promise.resolve(guestPlaceData);
     }
-    if (type === Place.CMD_LISTPERSONS) {
+    if (type === Place.CMD_LISTPERSONSWITHACCESS) {
       if (addr === 'SERV:place:place-1') {
-        return Promise.resolve({ persons: [person1, person2] });
+        return Promise.resolve({ persons: [{ person: person1, role: 'OWNER' }, { person: person2, role: 'FULL_ACCESS' }] });
       }
       if (addr === 'SERV:place:place-2') {
-        return Promise.resolve({ persons: [person1, person3] });
+        return Promise.resolve({ persons: [{ person: person1, role: 'FULL_ACCESS' }, { person: person3, role: 'OWNER' }] });
       }
+    }
+    if (type === Place.CMD_PENDINGINVITATIONS && addr === 'SERV:place:place-1') {
+      return Promise.resolve({ invitations: [pendingInvitation] });
     }
     return Promise.resolve({});
   });
@@ -179,7 +195,7 @@ describe('PeoplePlacesSection – displays all places', () => {
       expect(screen.getByText('Beach House')).toBeInTheDocument();
       expect(screen.getByText(/456 Ocean Dr/)).toBeInTheDocument();
       expect(screen.getByText('Basic')).toBeInTheDocument();
-      expect(screen.getByText('Full Access')).toBeInTheDocument();
+      expect(screen.getByTestId('place-info-place-2-value-role')).toHaveTextContent('Full Access');
     });
   });
 
@@ -424,5 +440,46 @@ describe('PeoplePlacesSection – add place', () => {
       await screen.findByTestId('add-place-section');
       expect(asFragment()).toMatchSnapshot();
     });
+  });
+});
+
+describe('PeoplePlacesSection – roles, invitations and removal', () => {
+  it('lists people with access and their roles', async () => {
+    render(<PeoplePlacesSection />);
+    expect(await screen.findByTestId('person-place-1-SERV:person:p2')).toHaveTextContent('Full Access');
+    expect(screen.getByTestId('person-place-2-SERV:person:p3')).toHaveTextContent('Account Owner');
+    expect(mockBridgeRequest).toHaveBeenCalledWith(Place.CMD_LISTPERSONSWITHACCESS, 'SERV:place:place-1', {});
+  });
+
+  it("lists pending invitations only for the person's own places", async () => {
+    render(<PeoplePlacesSection />);
+    expect(await screen.findByTestId('invitation-place-1-INV-1')).toHaveTextContent('Robin Park');
+    expect(mockBridgeRequest).toHaveBeenCalledWith(Place.CMD_PENDINGINVITATIONS, 'SERV:place:place-1', {});
+    expect(mockBridgeRequest).not.toHaveBeenCalledWith(Place.CMD_PENDINGINVITATIONS, 'SERV:place:place-2', expect.anything());
+  });
+
+  it('still lists the place when people or invitations fail to load', async () => {
+    mockBridgeRequest.mockImplementation((type: string, addr: string) => {
+      if (type === Base.CMD_GETATTRIBUTES) {
+        return Promise.resolve(addr === 'SERV:place:place-1' ? ownerPlaceData : guestPlaceData);
+      }
+      return Promise.reject(new Error('fail'));
+    });
+    render(<PeoplePlacesSection />);
+    expect(await screen.findByTestId('place-no-people-place-1')).toBeInTheDocument();
+    expect(screen.queryByTestId('invitation-place-1-INV-1')).not.toBeInTheDocument();
+  });
+
+  it('marks the primary place so it cannot be removed', async () => {
+    mockActivePlaceId = 'place-2';
+    mockListAvailablePlaces.mockResolvedValue({ places: [{ ...ownerPlace, primary: true }, guestPlace] });
+    render(<PeoplePlacesSection />);
+    expect(await screen.findByTestId('place-remove-hint-place-1')).toHaveTextContent('primary place');
+  });
+
+  it('offers removal of an owned place that is neither primary nor active', async () => {
+    mockActivePlaceId = 'place-2';
+    render(<PeoplePlacesSection />);
+    expect(await screen.findByTestId('place-remove-place-1')).toBeInTheDocument();
   });
 });

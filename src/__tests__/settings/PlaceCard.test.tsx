@@ -1,9 +1,10 @@
 import { Fragment, type ReactElement } from 'react';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
-import { Base, Person, Place } from '@arcus/core';
+import { Base, CellBackupSubsystem, Person, Place } from '@arcus/core';
 import PlaceCard from '@/components/settings/PlaceCard';
 import type { PlaceWithPeople } from '@/components/settings/types';
-import type { PlaceData } from '@/store/entityTypes';
+import type { PlaceData, SubsystemEntity } from '@/store/entityTypes';
+import type { Invitation } from '@arcus/core/services/types';
 
 // ── Mocks ─────────────────────────────────────────────────────────────
 
@@ -37,9 +38,15 @@ const activePlace: PlaceData = {
   [Place.ATTR_NAME]: 'Home',
 };
 
+// Subsystems loaded for the active place (the cellbackup subsystem, in some tests).
+let mockSubsystems: { [address: string]: SubsystemEntity } = {};
+
 jest.mock('@/store/hooks', () => ({
   useAppSelector: (sel: (s: any) => any) =>
-    sel({ place: { placeId: 'place-home', place: activePlace } }),
+    sel({
+      place: { placeId: 'place-home', place: activePlace },
+      subsystems: { ids: Object.keys(mockSubsystems), entities: mockSubsystems },
+    }),
   useAppDispatch: () => mockDispatch,
 }));
 
@@ -60,13 +67,17 @@ function makePlace(overrides: Partial<PlaceWithPeople> = {}): PlaceWithPeople {
     },
     people: [
       {
-        [Base.ATTR_ADDRESS]: 'SERV:person:p2',
-        [Base.ATTR_ID]: 'p2',
-        [Person.ATTR_FIRSTNAME]: 'Jane',
-        [Person.ATTR_LASTNAME]: 'Smith',
-        [Person.ATTR_EMAIL]: 'jane@test.com',
+        person: {
+          [Base.ATTR_ADDRESS]: 'SERV:person:p2',
+          [Base.ATTR_ID]: 'p2',
+          [Person.ATTR_FIRSTNAME]: 'Jane',
+          [Person.ATTR_LASTNAME]: 'Smith',
+          [Person.ATTR_EMAIL]: 'jane@test.com',
+        },
+        role: 'FULL_ACCESS',
       },
     ],
+    invitations: [],
     ...overrides,
   };
 }
@@ -104,6 +115,7 @@ const homePlace = makePlace({
 
 beforeEach(() => {
   jest.clearAllMocks();
+  mockSubsystems = {};
   mockBridgeRequest.mockImplementation((type: string) =>
     type === Place.CMD_CREATEINVITATION
       ? Promise.resolve({ invitation: { code: 'abc', inviteeEmail: 'robin@test.com' } })
@@ -292,5 +304,195 @@ describe('PlaceCard – guest places', () => {
     expect(screen.queryByTestId('place-invite-place-lake')).not.toBeInTheDocument();
     expect(screen.queryByTestId('manage-api-keys-place-lake')).not.toBeInTheDocument();
     expect(screen.queryByTestId('place-edit-place-lake')).not.toBeInTheDocument();
+  });
+});
+
+// ── Roles ─────────────────────────────────────────────────────────────
+
+const ownerPerson = {
+  person: {
+    [Base.ATTR_ADDRESS]: 'SERV:person:p9',
+    [Base.ATTR_ID]: 'p9',
+    [Person.ATTR_FIRSTNAME]: 'Olive',
+    [Person.ATTR_LASTNAME]: 'Owner',
+  },
+  role: 'OWNER',
+};
+
+const hobbit = {
+  person: {
+    [Base.ATTR_ADDRESS]: 'SERV:person:p3',
+    [Base.ATTR_ID]: 'p3',
+    [Person.ATTR_FIRSTNAME]: 'Kid',
+  },
+  role: 'HOBBIT',
+};
+
+describe('PlaceCard – roles', () => {
+  it("labels each person with their role at the place", () => {
+    render(<PlaceCard {...defaultProps} place={makePlace({ people: [...makePlace().people, hobbit] })} />);
+    expect(screen.getByTestId('person-place-lake-p2')).toHaveTextContent('Full Access');
+    expect(screen.getByTestId('person-place-lake-p3')).toHaveTextContent('Partial Access');
+  });
+
+  it("labels the account owner and offers no Details for them", () => {
+    render(<PlaceCard {...defaultProps} isOwner={false} place={makePlace({ role: 'FULL_ACCESS', people: [ownerPerson] })} />);
+    expect(screen.getByTestId('person-place-lake-p9')).toHaveTextContent('Account Owner');
+    expect(screen.queryByTestId('person-place-lake-p9-details')).not.toBeInTheDocument();
+  });
+
+  it('offers Details for partial-access people and passes their role to the panel', () => {
+    render(<PlaceCard {...defaultProps} place={makePlace({ people: [hobbit] })} />);
+    fireEvent.click(screen.getByTestId('person-place-lake-p3-details'));
+    renderOpenedPanel();
+    expect(screen.getByTestId('info-value-access')).toHaveTextContent('Partial Access');
+  });
+
+  it('shows no role badge when the role is unknown', () => {
+    render(<PlaceCard {...defaultProps} place={makePlace({ people: [{ ...hobbit, role: '' }] })} />);
+    expect(screen.getByTestId('person-place-lake-p3')).toHaveTextContent('Kid');
+    expect(screen.getByTestId('person-place-lake-p3')).not.toHaveTextContent('Partial Access');
+  });
+});
+
+// ── Pending invitations ──────────────────────────────────────────────
+
+const invitation: Invitation = {
+  code: 'INV-1',
+  placeId: 'place-lake',
+  placeName: 'Lake House',
+  inviteeEmail: 'robin@test.com',
+  inviteeFirstName: 'Robin',
+  inviteeLastName: 'Park',
+  invitorFirstName: 'Me',
+  invitorLastName: 'User',
+};
+
+describe('PlaceCard – pending invitations', () => {
+  it('lists pending invitations with a Cancel action for owners', () => {
+    render(<PlaceCard {...defaultProps} place={makePlace({ invitations: [invitation] })} />);
+    expect(screen.getByTestId('invitation-place-lake-INV-1')).toHaveTextContent('Robin Park');
+    expect(screen.getByTestId('invitation-place-lake-INV-1')).toHaveTextContent('Invitation Sent');
+    expect(screen.getByTestId('invitation-place-lake-INV-1-cancel')).toBeInTheDocument();
+  });
+
+  it('lists an invitation even when nobody else is at the place yet', () => {
+    render(<PlaceCard {...defaultProps} place={makePlace({ people: [], invitations: [invitation] })} />);
+    expect(screen.queryByTestId('place-no-people-place-lake')).not.toBeInTheDocument();
+    expect(screen.getByTestId('invitation-place-lake-INV-1')).toBeInTheDocument();
+  });
+
+  it('offers no Cancel to non-owners', () => {
+    render(<PlaceCard {...defaultProps} isOwner={false} place={makePlace({ role: 'FULL_ACCESS', invitations: [invitation] })} />);
+    expect(screen.queryByTestId('invitation-place-lake-INV-1-cancel')).not.toBeInTheDocument();
+  });
+
+  it("cancels the invitation on this card's place and refreshes", async () => {
+    render(<PlaceCard {...defaultProps} place={makePlace({ invitations: [invitation] })} />);
+    fireEvent.click(screen.getByTestId('invitation-place-lake-INV-1-cancel'));
+    expect(mockOpenRight).toHaveBeenCalledWith(expect.anything(), {
+      title: 'Cancel Invitation',
+      key: 'cancel-invitation:place-lake:INV-1',
+    });
+    renderOpenedPanel();
+    fireEvent.click(screen.getByTestId('cancel-invitation-confirm'));
+
+    await waitFor(() => expect(defaultProps.onRefresh).toHaveBeenCalled());
+    expect(mockBridgeRequest).toHaveBeenCalledWith(Place.CMD_CANCELINVITATION, 'SERV:place:place-lake', { code: 'INV-1' });
+  });
+});
+
+// ── Cellular backup ──────────────────────────────────────────────────
+
+describe('PlaceCard – cellular backup', () => {
+  const cellBackup = (attrs: Partial<SubsystemEntity>): SubsystemEntity => ({
+    id: 'SERV:cellbackup:place-home',
+    [Base.ATTR_ADDRESS]: 'SERV:cellbackup:place-home',
+    ...attrs,
+  });
+
+  it('says the add-on is not included when the plan has no add-ons', () => {
+    render(<PlaceCard {...defaultProps} />);
+    expect(screen.getByTestId('place-info-place-lake-value-cellular-backup')).toHaveTextContent('Not included');
+  });
+
+  it('says the add-on is included when place:serviceAddons lists it', () => {
+    const place = makePlace();
+    render(
+      <PlaceCard
+        {...defaultProps}
+        place={{ ...place, placeData: { ...place.placeData!, [Place.ATTR_SERVICEADDONS]: [Place.SERVICEADDON_CELLBACKUP] } }}
+      />,
+    );
+    expect(screen.getByTestId('place-info-place-lake-value-cellular-backup')).toHaveTextContent('Included in plan');
+  });
+
+  it("shows the active place's live cellular backup status", () => {
+    mockSubsystems = {
+      'SERV:cellbackup:place-home': cellBackup({
+        [CellBackupSubsystem.ATTR_STATUS]: CellBackupSubsystem.STATUS_NOTREADY,
+        [CellBackupSubsystem.ATTR_NOTREADYSTATE]: CellBackupSubsystem.NOTREADYSTATE_NEEDSMODEM,
+      }),
+    };
+    render(<PlaceCard {...defaultProps} place={homePlace} isActive />);
+    expect(screen.getByTestId('place-info-place-home-value-cellular-backup')).toHaveTextContent('Not ready (no 4G modem)');
+  });
+
+  it("doesn't show the active place's status on another place's card", () => {
+    mockSubsystems = {
+      'SERV:cellbackup:place-home': cellBackup({ [CellBackupSubsystem.ATTR_STATUS]: CellBackupSubsystem.STATUS_ACTIVE }),
+    };
+    render(<PlaceCard {...defaultProps} />);
+    expect(screen.getByTestId('place-info-place-lake-value-cellular-backup')).toHaveTextContent('Not included');
+  });
+
+  it('is hidden when the place attributes failed to load', () => {
+    render(<PlaceCard {...defaultProps} place={makePlace({ placeData: null })} />);
+    expect(screen.queryByTestId('place-info-place-lake-value-cellular-backup')).not.toBeInTheDocument();
+  });
+});
+
+// ── Remove place ─────────────────────────────────────────────────────
+
+describe('PlaceCard – remove place', () => {
+  it('offers Remove Place on an owned, non-primary, non-active place', () => {
+    render(<PlaceCard {...defaultProps} />);
+    expect(screen.getByTestId('place-remove-place-lake')).toHaveTextContent('Remove Place');
+  });
+
+  it('explains why the primary place cannot be removed', () => {
+    render(<PlaceCard {...defaultProps} place={makePlace({ primary: true })} />);
+    expect(screen.queryByTestId('place-remove-place-lake')).not.toBeInTheDocument();
+    expect(screen.getByTestId('place-remove-hint-place-lake')).toHaveTextContent('primary place');
+  });
+
+  it('asks to switch away before removing the active place', () => {
+    render(<PlaceCard {...defaultProps} isActive />);
+    expect(screen.queryByTestId('place-remove-place-lake')).not.toBeInTheDocument();
+    expect(screen.getByTestId('place-remove-hint-place-lake')).toHaveTextContent('Switch to another place');
+  });
+
+  it('is not offered to guests or when the place failed to load', () => {
+    const { rerender } = render(<PlaceCard {...defaultProps} isOwner={false} place={makePlace({ role: 'FULL_ACCESS' })} />);
+    expect(screen.queryByTestId('place-remove-place-lake')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('place-remove-hint-place-lake')).not.toBeInTheDocument();
+    rerender(<PlaceCard {...defaultProps} place={makePlace({ placeData: null })} />);
+    expect(screen.queryByTestId('place-remove-place-lake')).not.toBeInTheDocument();
+  });
+
+  it("deletes this card's place and refreshes", async () => {
+    render(<PlaceCard {...defaultProps} />);
+    fireEvent.click(screen.getByTestId('place-remove-place-lake'));
+    expect(mockOpenRight).toHaveBeenCalledWith(expect.anything(), {
+      title: 'Remove Place',
+      key: 'remove-place:place-lake',
+    });
+    renderOpenedPanel();
+    fireEvent.change(screen.getByTestId('field-confirm'), { target: { value: 'remove' } });
+    fireEvent.click(screen.getByTestId('remove-place-submit'));
+    fireEvent.click(screen.getByTestId('remove-place-delete'));
+
+    await waitFor(() => expect(defaultProps.onRefresh).toHaveBeenCalled());
+    expect(mockBridgeRequest).toHaveBeenCalledWith(Place.CMD_DELETE, 'SERV:place:place-lake', {});
   });
 });

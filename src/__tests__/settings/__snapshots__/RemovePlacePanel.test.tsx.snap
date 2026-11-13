@@ -1,0 +1,66 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`RemovePlacePanel – rendering matches snapshot 1`] = `
+<DocumentFragment>
+  <div
+    class="p-4 space-y-4"
+  >
+    <p
+      class="text-sm text-swift"
+      data-testid="remove-place-message"
+    >
+      Removing 
+      <span
+        class="font-medium"
+      >
+        Lake House
+      </span>
+       will remove all devices associated with the place. We will ensure that any billing plans are cancelled.
+    </p>
+    <p
+      class="text-sm text-grouse"
+    >
+      Type 
+      <span
+        class="font-medium text-swift"
+      >
+        REMOVE
+      </span>
+       below and click Submit.
+    </p>
+    <div>
+      <label
+        class="block text-sm text-grouse mb-1"
+        for="remove-place-confirm-input"
+      >
+        Confirm
+      </label>
+      <input
+        autocomplete="off"
+        class="w-full border border-heron rounded-[var(--border-radius-base)] px-3 py-2 text-sm text-swift focus:outline-none focus:border-peacock disabled:opacity-50"
+        data-testid="field-confirm"
+        id="remove-place-confirm-input"
+        placeholder="REMOVE"
+        type="text"
+        value=""
+      />
+    </div>
+    <div
+      class="flex gap-2 pt-2"
+    >
+      <button
+        class="px-4 py-2 bg-cardinal text-crane rounded-[var(--border-radius-base)] text-sm font-medium hover:bg-cardinal/90 disabled:opacity-50"
+        data-testid="remove-place-submit"
+        disabled=""
+      >
+        Submit
+      </button>
+      <button
+        class="px-4 py-2 border border-heron rounded-[var(--border-radius-base)] text-sm text-coot hover:bg-pigeon"
+      >
+        Cancel
+      </button>
+    </div>
+  </div>
+</DocumentFragment>
+`;

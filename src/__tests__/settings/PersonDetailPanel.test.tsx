@@ -89,6 +89,35 @@ describe('PersonDetailPanel', () => {
     expect(mockBridgeRequest).not.toHaveBeenCalled();
   });
 
+  it("shows the person's access at the place", () => {
+    render(<PersonDetailPanel person={mockPerson} role="FULL_ACCESS" placeId="place-1" />);
+    expect(screen.getByTestId('info-value-access')).toHaveTextContent('Full Access');
+  });
+
+  it('shows no access row when the role is unknown', () => {
+    render(<PersonDetailPanel person={mockPerson} placeId="place-1" />);
+    expect(screen.queryByTestId('info-value-access')).not.toBeInTheDocument();
+  });
+
+  it('warns that removing a partial-access person deletes them', () => {
+    render(<PersonDetailPanel person={mockPerson} role="HOBBIT" placeId="place-1" />);
+    fireEvent.click(screen.getByText('Remove from Place'));
+    expect(window.confirm).toHaveBeenCalledWith(expect.stringContaining('deleted'));
+  });
+
+  it('reports a failed removal', async () => {
+    mockBridgeRequest.mockRejectedValueOnce(new Error('fail'));
+    render(<PersonDetailPanel person={mockPerson} placeId="place-1" />);
+    fireEvent.click(screen.getByText('Remove from Place'));
+    await waitFor(() =>
+      expect(mockDispatch).toHaveBeenCalledWith({
+        type: 'ui/addNotification',
+        payload: { type: 'error', message: 'Failed to remove person.' },
+      }),
+    );
+    expect(mockCloseRight).not.toHaveBeenCalled();
+  });
+
   it('closes panel on Close', () => {
     render(<PersonDetailPanel person={mockPerson} placeId="place-1" />);
     fireEvent.click(screen.getByText('Close'));

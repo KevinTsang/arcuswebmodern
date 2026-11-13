@@ -72,6 +72,22 @@ export interface ListPersonsResponse {
   persons: PersonData[];
 }
 
+/** A person at a place and their role there (OWNER, FULL_ACCESS or HOBBIT). */
+export interface PersonWithAccess {
+  person: PersonData;
+  role: string;
+}
+
+/** place:ListPersonsWithAccess response. */
+export interface ListPersonsWithAccessResponse {
+  persons: PersonWithAccess[];
+}
+
+/** place:AddPerson response: the new person's address. */
+export interface AddPersonResponse {
+  newPerson: string;
+}
+
 export interface GetHubResponse {
   hub: HubData;
 }

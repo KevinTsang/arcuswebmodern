@@ -67,6 +67,8 @@ export interface SessionPlaceFixture {
   placeName: string;
   accountId: string;
   role: string;
+  /** The person's primary place, which can't be deleted (`primary` in sess:ListAvailablePlaces). */
+  primary?: boolean;
 }
 
 export interface HistoryEntryFixture {
