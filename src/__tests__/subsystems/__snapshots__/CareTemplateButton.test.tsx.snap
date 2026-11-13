@@ -1,0 +1,22 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`CareTemplateButton matches snapshot 1`] = `
+<DocumentFragment>
+  <button
+    class="w-full text-left border border-heron rounded-[var(--border-radius-base)] p-3 hover:bg-pigeon/50"
+    data-testid="care-template-1"
+    type="button"
+  >
+    <span
+      class="block text-sm font-medium text-swift"
+    >
+      No Activity Detected
+    </span>
+    <span
+      class="block text-xs text-grouse mt-0.5"
+    >
+      Trigger an alarm if no activity occurs.
+    </span>
+  </button>
+</DocumentFragment>
+`;

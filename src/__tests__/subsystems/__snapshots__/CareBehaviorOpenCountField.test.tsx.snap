@@ -1,0 +1,284 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`CareBehaviorOpenCountField matches snapshot 1`] = `
+<DocumentFragment>
+  <div
+    class="space-y-1.5"
+  >
+    <div
+      class="flex items-center justify-between gap-3"
+    >
+      <label
+        class="flex items-center gap-2 text-sm text-swift min-w-0"
+      >
+        <input
+          checked=""
+          data-testid="care-field-open-device-DRIV:dev:door-1"
+          type="checkbox"
+        />
+        <span
+          class="truncate"
+        >
+          Pantry Door
+        </span>
+      </label>
+      <select
+        aria-label="Maximum opens for Pantry Door"
+        class="text-sm border border-heron rounded px-2 py-1 bg-crane text-swift"
+        data-testid="care-field-open-limit-DRIV:dev:door-1"
+      >
+        <option
+          value="1"
+        >
+          1 time
+        </option>
+        <option
+          value="2"
+        >
+          2 times
+        </option>
+        <option
+          value="3"
+        >
+          3 times
+        </option>
+        <option
+          value="4"
+        >
+          4 times
+        </option>
+        <option
+          value="5"
+        >
+          5 times
+        </option>
+        <option
+          value="6"
+        >
+          6 times
+        </option>
+        <option
+          value="7"
+        >
+          7 times
+        </option>
+        <option
+          value="8"
+        >
+          8 times
+        </option>
+        <option
+          value="9"
+        >
+          9 times
+        </option>
+        <option
+          value="10"
+        >
+          10 times
+        </option>
+        <option
+          value="11"
+        >
+          11 times
+        </option>
+        <option
+          value="12"
+        >
+          12 times
+        </option>
+        <option
+          value="13"
+        >
+          13 times
+        </option>
+        <option
+          value="14"
+        >
+          14 times
+        </option>
+        <option
+          value="15"
+        >
+          15 times
+        </option>
+        <option
+          value="16"
+        >
+          16 times
+        </option>
+        <option
+          value="17"
+        >
+          17 times
+        </option>
+        <option
+          value="18"
+        >
+          18 times
+        </option>
+        <option
+          value="19"
+        >
+          19 times
+        </option>
+        <option
+          value="20"
+        >
+          20 times
+        </option>
+        <option
+          value="21"
+        >
+          21 times
+        </option>
+        <option
+          value="22"
+        >
+          22 times
+        </option>
+        <option
+          value="23"
+        >
+          23 times
+        </option>
+        <option
+          value="24"
+        >
+          24 times
+        </option>
+        <option
+          value="25"
+        >
+          25 times
+        </option>
+        <option
+          value="26"
+        >
+          26 times
+        </option>
+        <option
+          value="27"
+        >
+          27 times
+        </option>
+        <option
+          value="28"
+        >
+          28 times
+        </option>
+        <option
+          value="29"
+        >
+          29 times
+        </option>
+        <option
+          value="30"
+        >
+          30 times
+        </option>
+        <option
+          value="31"
+        >
+          31 times
+        </option>
+        <option
+          value="32"
+        >
+          32 times
+        </option>
+        <option
+          value="33"
+        >
+          33 times
+        </option>
+        <option
+          value="34"
+        >
+          34 times
+        </option>
+        <option
+          value="35"
+        >
+          35 times
+        </option>
+        <option
+          value="36"
+        >
+          36 times
+        </option>
+        <option
+          value="37"
+        >
+          37 times
+        </option>
+        <option
+          value="38"
+        >
+          38 times
+        </option>
+        <option
+          value="39"
+        >
+          39 times
+        </option>
+        <option
+          value="40"
+        >
+          40 times
+        </option>
+        <option
+          value="41"
+        >
+          41 times
+        </option>
+        <option
+          value="42"
+        >
+          42 times
+        </option>
+        <option
+          value="43"
+        >
+          43 times
+        </option>
+        <option
+          value="44"
+        >
+          44 times
+        </option>
+        <option
+          value="45"
+        >
+          45 times
+        </option>
+        <option
+          value="46"
+        >
+          46 times
+        </option>
+        <option
+          value="47"
+        >
+          47 times
+        </option>
+        <option
+          value="48"
+        >
+          48 times
+        </option>
+        <option
+          value="49"
+        >
+          49 times
+        </option>
+        <option
+          value="50"
+        >
+          50 times
+        </option>
+      </select>
+    </div>
+  </div>
+</DocumentFragment>
+`;

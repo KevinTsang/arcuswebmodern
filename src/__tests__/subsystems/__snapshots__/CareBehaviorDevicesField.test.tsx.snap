@@ -1,0 +1,38 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`CareBehaviorDevicesField matches snapshot 1`] = `
+<DocumentFragment>
+  <div
+    class="space-y-1.5"
+  >
+    <label
+      class="flex items-center gap-2 text-sm text-coot"
+    >
+      <input
+        data-testid="care-field-devices-all"
+        type="checkbox"
+      />
+      Select All
+    </label>
+    <label
+      class="flex items-center gap-2 text-sm text-swift"
+    >
+      <input
+        checked=""
+        data-testid="care-field-device-DRIV:dev:motion-1"
+        type="checkbox"
+      />
+      Hall Motion
+    </label>
+    <label
+      class="flex items-center gap-2 text-sm text-swift"
+    >
+      <input
+        data-testid="care-field-device-DRIV:dev:door-1"
+        type="checkbox"
+      />
+      DRIV:dev:door-1
+    </label>
+  </div>
+</DocumentFragment>
+`;

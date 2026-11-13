@@ -1,0 +1,107 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`CareBehaviorRow matches snapshot 1`] = `
+<DocumentFragment>
+  <div
+    class="flex items-center gap-3 border border-heron rounded-[var(--border-radius-base)] p-4 "
+    data-enabled="true"
+    data-testid="care-behavior-row-behavior-1"
+  >
+    <div
+      class="flex-1 min-w-0"
+    >
+      <h4
+        class="text-sm font-medium text-swift truncate"
+        data-testid="care-behavior-name-behavior-1"
+      >
+        Morning activity
+      </h4>
+      <p
+        class="text-xs text-grouse mt-0.5"
+      >
+        No Activity Detected
+      </p>
+      <p
+        class="text-xs text-grouse mt-0.5"
+        data-testid="care-behavior-summary-behavior-1"
+      >
+        1 Device · 30 Minutes · 24/7
+      </p>
+    </div>
+    <label
+      class="inline-flex items-center gap-2 cursor-pointer"
+    >
+      <button
+        aria-checked="true"
+        class="relative w-10 h-6 rounded-full transition-colors bg-peacock"
+        data-testid="care-behavior-toggle-behavior-1"
+        role="switch"
+      >
+        <span
+          class="absolute top-0.5 left-0.5 w-5 h-5 bg-crane rounded-full shadow transition-transform translate-x-4"
+        />
+      </button>
+    </label>
+    <button
+      class="text-sm border border-heron px-3 py-1 rounded-[var(--border-radius-base)] text-coot hover:bg-pigeon"
+      data-testid="care-behavior-edit-behavior-1"
+      type="button"
+    >
+      Edit
+    </button>
+  </div>
+</DocumentFragment>
+`;
+
+exports[`CareBehaviorRow matches snapshot when disabled 1`] = `
+<DocumentFragment>
+  <div
+    class="flex items-center gap-3 border border-heron rounded-[var(--border-radius-base)] p-4 opacity-60"
+    data-enabled="false"
+    data-testid="care-behavior-row-behavior-1"
+  >
+    <div
+      class="flex-1 min-w-0"
+    >
+      <h4
+        class="text-sm font-medium text-swift truncate"
+        data-testid="care-behavior-name-behavior-1"
+      >
+        Morning activity
+      </h4>
+      <p
+        class="text-xs text-grouse mt-0.5"
+      >
+        No Activity Detected
+      </p>
+      <p
+        class="text-xs text-grouse mt-0.5"
+        data-testid="care-behavior-summary-behavior-1"
+      >
+        1 Device · 30 Minutes · 24/7
+      </p>
+    </div>
+    <label
+      class="inline-flex items-center gap-2 cursor-pointer"
+    >
+      <button
+        aria-checked="false"
+        class="relative w-10 h-6 rounded-full transition-colors bg-pigeon"
+        data-testid="care-behavior-toggle-behavior-1"
+        role="switch"
+      >
+        <span
+          class="absolute top-0.5 left-0.5 w-5 h-5 bg-crane rounded-full shadow transition-transform translate-x-0"
+        />
+      </button>
+    </label>
+    <button
+      class="text-sm border border-heron px-3 py-1 rounded-[var(--border-radius-base)] text-coot hover:bg-pigeon"
+      data-testid="care-behavior-edit-behavior-1"
+      type="button"
+    >
+      Edit
+    </button>
+  </div>
+</DocumentFragment>
+`;

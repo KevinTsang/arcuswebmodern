@@ -269,10 +269,10 @@ None.
 | Care status display (alert / all clear) | Yes | Yes | **Done** |
 | Last alert cause display | Yes | Yes | **Done** |
 | Clear care alert | Yes | Yes | **Done** |
-| Behavior list with enable/disable | Yes | Yes (read-only list) | **Partial** |
-| Behavior creation from templates | Yes | No | **Missing** |
-| Behavior editing (devices, time windows, thresholds) | Yes | No | **Missing** |
-| Behavior deletion | Yes | No | **Missing** |
+| Behavior list with enable/disable | Yes | Yes (Behaviors tab, `subcare:ListBehaviors` + enable/disable switch via `subcare:UpdateBehavior`) | **Done** |
+| Behavior creation from templates | Yes | Yes (library from `subcare:ListBehaviorTemplates`, recommended vs. additional-devices-required preview, `subcare:AddBehavior`) | **Done** |
+| Behavior editing (devices, time windows, thresholds) | Yes | Yes (name, devices, open counts, duration, temperature range, curfew time, monitoring windows; platform name/window errors shown) | **Done** |
+| Behavior deletion | Yes | Yes (confirm + `subcare:RemoveBehavior`) | **Done** |
 | Activity timeline | Yes | No | **Missing** |
 | Care device management | Yes | No | **Missing** |
 | Care call tree / notification settings | Yes | No | **Missing** |
@@ -282,7 +282,6 @@ None.
 
 ### Gaps
 
-- Full behavior CRUD (create, edit, delete care behaviors).
 - Activity timeline.
 - Care-specific notification/call tree management.
 - Alarm mode switching (ON vs VISIT).
@@ -695,7 +694,7 @@ These are commonly used features that users will expect:
 
 ### Tier 2 — Important Gaps (Full Feature Parity)
 
-6. **Care behavior CRUD** — Create, edit, delete care behaviors with device/time/threshold configuration.
+6. ~~**Care behavior CRUD**~~ — **DONE.** Behavior list with enable/disable, creation from templates, editing (devices, open counts, duration, temperature range, curfew, monitoring windows) and deletion.
 7. **Lock access management** — PIN assignment per person, temporary PINs with expiry.
 8. **Hub firmware updates** — Firmware version display and update workflow.
 9. **Hub WiFi configuration** — WiFi SSID/password setup, network scanning.

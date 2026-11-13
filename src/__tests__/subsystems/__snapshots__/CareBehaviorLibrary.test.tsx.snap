@@ -1,0 +1,81 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`CareBehaviorLibrary matches snapshot 1`] = `
+<DocumentFragment>
+  <div
+    class="space-y-4"
+    data-testid="care-behavior-library"
+  >
+    <div>
+      <h3
+        class="text-sm font-medium text-swift"
+        data-testid="care-library-title"
+      >
+        Care Behaviors Library
+      </h3>
+      <p
+        class="text-xs text-grouse mt-0.5"
+      >
+        Care Behaviors help you monitor your loved ones' daily routines and can trigger a Care Alarm if those routines are disrupted.
+      </p>
+    </div>
+    <div>
+      <h4
+        class="text-xs font-medium text-coot uppercase tracking-wide mb-2"
+      >
+        Recommended For You
+      </h4>
+      <div
+        class="space-y-2"
+      >
+        <button
+          class="w-full text-left border border-heron rounded-[var(--border-radius-base)] p-3 hover:bg-pigeon/50"
+          data-testid="care-template-1"
+          type="button"
+        >
+          <span
+            class="block text-sm font-medium text-swift"
+          >
+            No Activity Detected
+          </span>
+          <span
+            class="block text-xs text-grouse mt-0.5"
+          >
+            Trigger an alarm if no activity occurs.
+          </span>
+        </button>
+      </div>
+    </div>
+    <div
+      class="opacity-70"
+      data-testid="care-library-unavailable"
+    >
+      <h4
+        class="text-xs font-medium text-coot uppercase tracking-wide mb-2"
+      >
+        More Behaviors (Additional Devices Required)
+      </h4>
+      <div
+        class="space-y-2"
+      >
+        <button
+          class="w-full text-left border border-heron rounded-[var(--border-radius-base)] p-3 hover:bg-pigeon/50"
+          data-testid="care-template-6"
+          type="button"
+        >
+          <span
+            class="block text-sm font-medium text-swift"
+          >
+            Curfew
+          </span>
+          <span
+            class="block text-xs text-grouse mt-0.5"
+          >
+            Trigger a Care Alarm when a loved one is not home by a certain time.
+          </span>
+        </button>
+      </div>
+    </div>
+  </div>
+</DocumentFragment>
+`;

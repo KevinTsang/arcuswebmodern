@@ -1,0 +1,268 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`CareBehaviorEditor rendering matches snapshot for a read-only template preview 1`] = `
+<DocumentFragment>
+  <div
+    class="space-y-5"
+    data-testid="care-behavior-editor"
+  >
+    <p
+      class="text-sm text-cardinal"
+      data-testid="care-editor-unavailable"
+    >
+      There are no devices paired that meet the requirement for this Care Behavior.
+    </p>
+    <h3
+      class="text-base font-medium text-swift"
+      data-testid="care-editor-template-name"
+    >
+      Curfew
+    </h3>
+    <p
+      class="text-sm text-grouse"
+      data-testid="care-editor-description"
+    >
+      Trigger a Care Alarm when a loved one is not home by a certain time.
+    </p>
+    <section
+      class="border-t border-heron pt-4"
+      data-testid="care-section-devices"
+    >
+      <div
+        class="flex items-baseline justify-between gap-3 mb-1"
+      >
+        <h4
+          class="text-sm font-medium text-swift"
+        >
+          Participating Devices
+        </h4>
+      </div>
+      <p
+        class="text-xs text-grouse mb-2"
+      >
+        Choose the devices.
+      </p>
+    </section>
+    <section
+      class="border-t border-heron pt-4"
+      data-testid="care-section-time"
+    >
+      <div
+        class="flex items-baseline justify-between gap-3 mb-1"
+      >
+        <h4
+          class="text-sm font-medium text-swift"
+        >
+          Curfew Time
+        </h4>
+      </div>
+      <p
+        class="text-xs text-grouse mb-2"
+      >
+        Choose what time.
+      </p>
+    </section>
+  </div>
+</DocumentFragment>
+`;
+
+exports[`CareBehaviorEditor rendering matches snapshot for an existing behavior 1`] = `
+<DocumentFragment>
+  <div
+    class="space-y-5"
+    data-testid="care-behavior-editor"
+  >
+    <div>
+      <label
+        class="block text-xs font-medium text-coot mb-1"
+        for="care-behavior-name"
+      >
+        Care Behavior Name
+      </label>
+      <input
+        class="w-full text-sm border border-heron rounded-[var(--border-radius-base)] px-3 py-2 bg-crane text-swift"
+        data-testid="care-editor-name"
+        id="care-behavior-name"
+        maxlength="36"
+        value="Morning activity"
+      />
+    </div>
+    <p
+      class="text-sm text-grouse"
+      data-testid="care-editor-description"
+    >
+      Trigger an alarm if no activity occurs.
+    </p>
+    <section
+      class="border-t border-heron pt-4"
+      data-testid="care-section-devices"
+    >
+      <div
+        class="flex items-baseline justify-between gap-3 mb-1"
+      >
+        <h4
+          class="text-sm font-medium text-swift"
+        >
+          Participating Devices
+        </h4>
+        <span
+          class="text-xs text-grouse"
+          data-testid="care-section-status-devices"
+        >
+          1 Device
+        </span>
+      </div>
+      <p
+        class="text-xs text-grouse mb-2"
+      >
+        Choose the devices that will trigger a Care Alarm.
+      </p>
+      <div
+        class="space-y-1.5"
+      >
+        <label
+          class="flex items-center gap-2 text-sm text-coot"
+        >
+          <input
+            data-testid="care-field-devices-all"
+            type="checkbox"
+          />
+          Select All
+        </label>
+        <label
+          class="flex items-center gap-2 text-sm text-swift"
+        >
+          <input
+            checked=""
+            data-testid="care-field-device-DRIV:dev:motion-1"
+            type="checkbox"
+          />
+          Hall Motion
+        </label>
+        <label
+          class="flex items-center gap-2 text-sm text-swift"
+        >
+          <input
+            data-testid="care-field-device-DRIV:dev:door-1"
+            type="checkbox"
+          />
+          DRIV:dev:door-1
+        </label>
+      </div>
+    </section>
+    <section
+      class="border-t border-heron pt-4"
+      data-testid="care-section-duration"
+    >
+      <div
+        class="flex items-baseline justify-between gap-3 mb-1"
+      >
+        <h4
+          class="text-sm font-medium text-swift"
+        >
+          No Activity For...
+        </h4>
+        <span
+          class="text-xs text-grouse"
+          data-testid="care-section-status-duration"
+        >
+          30 Minutes
+        </span>
+      </div>
+      <p
+        class="text-xs text-grouse mb-2"
+      >
+        Trigger the alarm when no activity is detected for a period of time.
+      </p>
+      <select
+        aria-label="No Activity For..."
+        class="text-sm border border-heron rounded px-2 py-1 bg-crane text-swift"
+        data-testid="care-field-duration"
+      >
+        <option
+          value="1800"
+        >
+          30 Minutes
+        </option>
+        <option
+          value="3600"
+        >
+          60 Minutes
+        </option>
+        <option
+          value="7200"
+        >
+          120 Minutes
+        </option>
+      </select>
+    </section>
+    <section
+      class="border-t border-heron pt-4"
+      data-testid="care-section-timeWindows"
+    >
+      <div
+        class="flex items-baseline justify-between gap-3 mb-1"
+      >
+        <h4
+          class="text-sm font-medium text-swift"
+        >
+          Days & Times To Monitor
+        </h4>
+        <span
+          class="text-xs text-grouse"
+          data-testid="care-section-status-timeWindows"
+        >
+          24/7
+        </span>
+      </div>
+      <p
+        class="text-xs text-grouse mb-2"
+      >
+        Choose when you want to monitor for lack of activity.
+      </p>
+      <div
+        class="space-y-2"
+      >
+        <p
+          class="text-xs text-grouse"
+          data-testid="care-field-windows-always"
+        >
+          Monitored 24/7.
+        </p>
+        <button
+          class="text-xs text-peacock hover:underline"
+          data-testid="care-window-add"
+          type="button"
+        >
+          + Add Event
+        </button>
+      </div>
+    </section>
+    <div
+      class="flex gap-2 border-t border-heron pt-4"
+    >
+      <button
+        class="bg-peacock text-crane px-5 py-2 rounded-[var(--border-radius-base)] text-sm hover:opacity-90 disabled:opacity-50"
+        data-testid="care-editor-save"
+        type="button"
+      >
+        Save
+      </button>
+      <button
+        class="border border-heron px-5 py-2 rounded-[var(--border-radius-base)] text-sm text-coot hover:bg-pigeon"
+        data-testid="care-editor-cancel"
+        type="button"
+      >
+        Cancel
+      </button>
+      <button
+        class="ml-auto text-sm text-cardinal hover:underline disabled:opacity-50"
+        data-testid="care-editor-remove"
+        type="button"
+      >
+        Remove Behavior
+      </button>
+    </div>
+  </div>
+</DocumentFragment>
+`;

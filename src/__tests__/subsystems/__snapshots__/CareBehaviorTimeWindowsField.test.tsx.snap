@@ -1,0 +1,179 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`CareBehaviorTimeWindowsField matches snapshot 1`] = `
+<DocumentFragment>
+  <div
+    class="space-y-2"
+  >
+    <div
+      class="flex items-center justify-between px-3 py-1.5 rounded border border-heron"
+      data-testid="care-window-0"
+    >
+      <span
+        class="text-sm text-swift"
+      >
+        Mon 6:00 AM – Mon 9:00 AM
+      </span>
+      <button
+        class="text-xs text-cardinal hover:underline"
+        data-testid="care-window-remove-0"
+        type="button"
+      >
+        Remove
+      </button>
+    </div>
+    <button
+      class="text-xs text-peacock hover:underline"
+      data-testid="care-window-add"
+      type="button"
+    >
+      + Add Event
+    </button>
+  </div>
+</DocumentFragment>
+`;
+
+exports[`CareBehaviorTimeWindowsField matches snapshot while adding an event 1`] = `
+<DocumentFragment>
+  <div
+    class="space-y-2"
+  >
+    <div
+      class="space-y-2 p-3 rounded border border-heron bg-pigeon/30"
+    >
+      <div
+        class="flex flex-wrap items-center gap-2 text-sm text-coot"
+      >
+        <span
+          class="w-10"
+        >
+          From
+        </span>
+        <select
+          aria-label="Start day"
+          class="text-sm border border-heron rounded px-2 py-1 bg-crane text-swift"
+          data-testid="care-window-start-day"
+        >
+          <option
+            value="Sunday"
+          >
+            Sunday
+          </option>
+          <option
+            value="Monday"
+          >
+            Monday
+          </option>
+          <option
+            value="Tuesday"
+          >
+            Tuesday
+          </option>
+          <option
+            value="Wednesday"
+          >
+            Wednesday
+          </option>
+          <option
+            value="Thursday"
+          >
+            Thursday
+          </option>
+          <option
+            value="Friday"
+          >
+            Friday
+          </option>
+          <option
+            value="Saturday"
+          >
+            Saturday
+          </option>
+        </select>
+        <input
+          aria-label="Start time"
+          class="text-sm border border-heron rounded px-2 py-1 bg-crane text-swift"
+          data-testid="care-window-start-time"
+          type="time"
+          value="08:00"
+        />
+      </div>
+      <div
+        class="flex flex-wrap items-center gap-2 text-sm text-coot"
+      >
+        <span
+          class="w-10"
+        >
+          To
+        </span>
+        <select
+          aria-label="End day"
+          class="text-sm border border-heron rounded px-2 py-1 bg-crane text-swift"
+          data-testid="care-window-end-day"
+        >
+          <option
+            value="Sunday"
+          >
+            Sunday
+          </option>
+          <option
+            value="Monday"
+          >
+            Monday
+          </option>
+          <option
+            value="Tuesday"
+          >
+            Tuesday
+          </option>
+          <option
+            value="Wednesday"
+          >
+            Wednesday
+          </option>
+          <option
+            value="Thursday"
+          >
+            Thursday
+          </option>
+          <option
+            value="Friday"
+          >
+            Friday
+          </option>
+          <option
+            value="Saturday"
+          >
+            Saturday
+          </option>
+        </select>
+        <input
+          aria-label="End time"
+          class="text-sm border border-heron rounded px-2 py-1 bg-crane text-swift"
+          data-testid="care-window-end-time"
+          type="time"
+          value="17:00"
+        />
+      </div>
+      <div
+        class="flex gap-2"
+      >
+        <button
+          class="bg-peacock text-crane px-3 py-1 rounded-[var(--border-radius-base)] text-xs hover:opacity-90"
+          data-testid="care-window-save"
+          type="button"
+        >
+          Add
+        </button>
+        <button
+          class="border border-heron px-3 py-1 rounded-[var(--border-radius-base)] text-xs text-coot hover:bg-pigeon"
+          data-testid="care-window-cancel"
+          type="button"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+</DocumentFragment>
+`;
