@@ -1,0 +1,117 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`ZigbeeNetworkCard matches snapshot 1`] = `
+<DocumentFragment>
+  <section
+    class="border border-heron rounded-[var(--border-radius-base)] p-4"
+    data-testid="hub-zigbee"
+  >
+    <h3
+      class="text-sm font-medium text-swift mb-3"
+      data-testid="hub-zigbee-title"
+    >
+      Zigbee Network
+    </h3>
+    <div
+      class="space-y-2 mb-3"
+    >
+      <div
+        class="flex justify-between text-sm"
+      >
+        <span
+          class="text-grouse"
+        >
+          Channel
+        </span>
+        <span
+          class="text-swift"
+          data-testid="hub-zigbee-value-channel"
+        >
+          20
+        </span>
+      </div>
+      <div
+        class="flex justify-between text-sm"
+      >
+        <span
+          class="text-grouse"
+        >
+          PAN ID
+        </span>
+        <span
+          class="text-swift"
+          data-testid="hub-zigbee-value-pan-id"
+        >
+          0x1A2B
+        </span>
+      </div>
+      <div
+        class="flex justify-between text-sm"
+      >
+        <span
+          class="text-grouse"
+        >
+          Transmit Power
+        </span>
+        <span
+          class="text-swift"
+          data-testid="hub-zigbee-value-transmit-power"
+        >
+          8 dBm
+        </span>
+      </div>
+      <div
+        class="flex justify-between text-sm"
+      >
+        <span
+          class="text-grouse"
+        >
+          Power Mode
+        </span>
+        <span
+          class="text-swift"
+          data-testid="hub-zigbee-value-power-mode"
+        >
+          BOOST
+        </span>
+      </div>
+      <div
+        class="flex justify-between text-sm"
+      >
+        <span
+          class="text-grouse"
+        >
+          Network State
+        </span>
+        <span
+          class="text-swift"
+          data-testid="hub-zigbee-value-network-state"
+        >
+          UP
+        </span>
+      </div>
+      <div
+        class="flex justify-between text-sm"
+      >
+        <span
+          class="text-grouse"
+        >
+          Radio Firmware
+        </span>
+        <span
+          class="text-swift"
+          data-testid="hub-zigbee-value-radio-firmware"
+        >
+          6.4.1
+        </span>
+      </div>
+    </div>
+    <button
+      class="bg-peacock text-crane px-4 py-1.5 rounded-[var(--border-radius-base)] text-sm hover:opacity-90 disabled:opacity-50 mb-3"
+      data-testid="hub-zigbee-load"
+    >
+      Show Radio Statistics
+    </button>
+  </section>
+</DocumentFragment>
+`;

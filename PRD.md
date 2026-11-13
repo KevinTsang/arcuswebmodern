@@ -464,20 +464,18 @@ None.
 | Hub firmware update workflow | Yes | No | **Missing** |
 | Hub WiFi configuration (SSID, password, scan) | Yes | No | **Missing** |
 | Hub name configuration | Yes | No | **Missing** |
-| Cellular backup activation & status | Yes | No | **Missing** |
-| Z-Wave network topology / neighbor info | Yes | No | **Missing** |
-| Z-Wave node metrics (signal strength, routing) | Yes | No | **Missing** |
-| Zigbee channel info / radio statistics | Yes | Partial (via MCP) | **Partial** |
-| Hub sounds / volume control | Yes | No | **Missing** |
-| Hub 4G data usage | Yes | No | **Missing** |
+| Cellular backup activation & status | Yes | Yes (Devices › Hub › Advanced: CellBackupSubsystem status, 4G modem/SIM/signal, add/remove the CELLBACKUP add-on via `account:UpdateServicePlan`) | **Done** |
+| Z-Wave network topology / neighbor info | Yes | Yes (`hubzwave:NetworkInformation`: neighbors, routes, routing tables, zombie nodes; controller attributes) | **Done** |
+| Z-Wave node metrics (signal strength, routing) | Yes | Yes (per-node metrics from `hubzwave:NetworkInformation`, shown as the hub reports them) | **Done** |
+| Zigbee channel info / radio statistics | Yes | Yes (channel, PAN ID, power, state; `hubzigbee:GetStats` counters) | **Done** |
+| Hub sounds / volume control | Yes | Yes (`hubvol:volume` Off/Low/Medium/High, test sound via `hubsounds:PlayTone` / `Quiet`) | **Done** |
+| Hub 4G data usage | Yes | No — `hub4g:*` requests are admin-only in hub-bridge (`hub.bridge.admin.only.messages`), so a client can't call `hub4g:GetStatistics` | **Blocked** |
 
 ### Gaps
 
 - Hub firmware update workflow.
 - Hub WiFi and network configuration.
-- Cellular backup management.
-- Advanced Z-Wave diagnostics (topology, per-node metrics).
-- Hub audio/sound settings.
+- Hub 4G data usage: needs the platform to expose `hub4g:GetStatistics` to clients (currently admin-only).
 
 ---
 
@@ -665,7 +663,7 @@ These are commonly used features that users will expect:
 17. **Advanced device info** — Power usage, signal strength, OTA firmware status.
 18. **Keypad, pet door, button/pendant, Halo device controls** — Niche device type support.
 19. **Cloud device pairing** — Nest, Hue, Lutron bridge pairing flows.
-20. **Hub advanced features** — Sounds/volume, cellular backup, Z-Wave topology, 4G usage.
+20. **Hub advanced features** — **Partial.** Sounds/volume, cellular backup status and add-on, Z-Wave topology and node metrics, Zigbee channel and radio stats are done (Devices › Hub › Advanced). 4G data usage is blocked: `hub4g:*` is admin-only on the platform.
 21. **Mobile device presence tracking** — Phone location for home/away detection.
 22. **Ownership transfer, place deletion, cancel invitations** — Account and place lifecycle.
 23. **Pro monitoring trial & plan selection** — Trial activation, monthly vs annual.

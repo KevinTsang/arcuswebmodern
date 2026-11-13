@@ -1,0 +1,116 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`ZWaveNodeTable matches snapshot 1`] = `
+<DocumentFragment>
+  <div
+    class="overflow-x-auto"
+  >
+    <table
+      class="w-full text-xs text-left"
+      data-testid="zwave-nodes"
+    >
+      <thead>
+        <tr
+          class="text-grouse border-b border-heron"
+        >
+          <th
+            class="py-2 pr-3 font-medium"
+          >
+            Node
+          </th>
+          <th
+            class="py-2 pr-3 font-medium"
+          >
+            Metrics
+          </th>
+          <th
+            class="py-2 pr-3 font-medium"
+          >
+            Neighbors
+          </th>
+          <th
+            class="py-2 pr-3 font-medium"
+          >
+            Route
+          </th>
+          <th
+            class="py-2 font-medium"
+          >
+            Routing Table
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr
+          class="border-b border-heron/50 align-top text-swift"
+          data-testid="zwave-node-2"
+        >
+          <td
+            class="py-2 pr-3 font-medium"
+          >
+            2
+          </td>
+          <td
+            class="py-2 pr-3 break-words"
+            data-testid="zwave-node-2-metrics"
+          >
+            rssi: -60, txFailures: 1
+          </td>
+          <td
+            class="py-2 pr-3 break-words"
+            data-testid="zwave-node-2-neighbors"
+          >
+            1, 10
+          </td>
+          <td
+            class="py-2 pr-3 break-words"
+            data-testid="zwave-node-2-route"
+          >
+            -
+          </td>
+          <td
+            class="py-2 break-words"
+            data-testid="zwave-node-2-routing"
+          >
+            1, 10
+          </td>
+        </tr>
+        <tr
+          class="border-b border-heron/50 align-top text-swift"
+          data-testid="zwave-node-10"
+        >
+          <td
+            class="py-2 pr-3 font-medium"
+          >
+            10
+          </td>
+          <td
+            class="py-2 pr-3 break-words"
+            data-testid="zwave-node-10-metrics"
+          >
+            rssi: -80
+          </td>
+          <td
+            class="py-2 pr-3 break-words"
+            data-testid="zwave-node-10-neighbors"
+          >
+            2
+          </td>
+          <td
+            class="py-2 pr-3 break-words"
+            data-testid="zwave-node-10-route"
+          >
+            2
+          </td>
+          <td
+            class="py-2 break-words"
+            data-testid="zwave-node-10-routing"
+          >
+            -
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</DocumentFragment>
+`;

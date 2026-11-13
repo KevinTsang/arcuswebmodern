@@ -1,0 +1,41 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`HubAdvancedSettings matches snapshot 1`] = `
+<DocumentFragment>
+  <div
+    class="p-[var(--gutter)] max-w-3xl"
+  >
+    <a
+      class="text-sm text-peacock hover:underline"
+      data-testid="hub-advanced-back"
+      href="/devices"
+    >
+      ‹ Devices
+    </a>
+    <h2
+      class="text-[length:var(--font-size-h2)] font-[var(--heading-font-weight)] text-swift mt-2 mb-4"
+      data-testid="hub-advanced-title"
+    >
+      Hub Advanced Settings
+    </h2>
+    <div
+      class="space-y-4"
+    >
+      <div
+        data-testid="mock-sounds"
+      >
+        SERV:LWF-1234:hub
+      </div>
+      <div
+        data-testid="mock-cellular"
+      />
+      <div
+        data-testid="mock-zwave"
+      />
+      <div
+        data-testid="mock-zigbee"
+      />
+    </div>
+  </div>
+</DocumentFragment>
+`;

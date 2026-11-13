@@ -1,0 +1,147 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`ZWaveNetworkCard matches snapshot 1`] = `
+<DocumentFragment>
+  <section
+    class="border border-heron rounded-[var(--border-radius-base)] p-4"
+    data-testid="hub-zwave"
+  >
+    <h3
+      class="text-sm font-medium text-swift mb-3"
+      data-testid="hub-zwave-title"
+    >
+      Z-Wave Network
+    </h3>
+    <div
+      class="space-y-2 mb-3"
+    >
+      <div
+        class="flex justify-between text-sm"
+      >
+        <span
+          class="text-grouse"
+        >
+          Devices
+        </span>
+        <span
+          class="text-swift"
+          data-testid="hub-zwave-value-devices"
+        >
+          3
+        </span>
+      </div>
+      <div
+        class="flex justify-between text-sm"
+      >
+        <span
+          class="text-grouse"
+        >
+          Home ID
+        </span>
+        <span
+          class="text-swift"
+          data-testid="hub-zwave-value-home-id"
+        >
+          E1A2B3C4
+        </span>
+      </div>
+      <div
+        class="flex justify-between text-sm"
+      >
+        <span
+          class="text-grouse"
+        >
+          Controller State
+        </span>
+        <span
+          class="text-swift"
+          data-testid="hub-zwave-value-controller-state"
+        >
+          NORMAL
+        </span>
+      </div>
+      <div
+        class="flex justify-between text-sm"
+      >
+        <span
+          class="text-grouse"
+        >
+          Firmware
+        </span>
+        <span
+          class="text-swift"
+          data-testid="hub-zwave-value-firmware"
+        >
+          6.81
+        </span>
+      </div>
+      <div
+        class="flex justify-between text-sm"
+      >
+        <span
+          class="text-grouse"
+        >
+          Protocol
+        </span>
+        <span
+          class="text-swift"
+          data-testid="hub-zwave-value-protocol"
+        >
+          4.61
+        </span>
+      </div>
+      <div
+        class="flex justify-between text-sm"
+      >
+        <span
+          class="text-grouse"
+        >
+          Static Update Controller
+        </span>
+        <span
+          class="text-swift"
+          data-testid="hub-zwave-value-static-update-controller"
+        >
+          Yes
+        </span>
+      </div>
+      <div
+        class="flex justify-between text-sm"
+      >
+        <span
+          class="text-grouse"
+        >
+          Secondary Controller
+        </span>
+        <span
+          class="text-swift"
+          data-testid="hub-zwave-value-secondary-controller"
+        >
+          No
+        </span>
+      </div>
+      <div
+        class="flex justify-between text-sm"
+      >
+        <span
+          class="text-grouse"
+        >
+          Network Rebuild
+        </span>
+        <span
+          class="text-swift"
+          data-testid="hub-zwave-value-network-rebuild"
+        >
+          Never rebuilt
+        </span>
+      </div>
+    </div>
+    <button
+      class="bg-peacock text-crane px-4 py-1.5 rounded-[var(--border-radius-base)] text-sm hover:opacity-90 disabled:opacity-50 mb-3"
+      data-testid="hub-zwave-load"
+    >
+      Show Network Topology
+    </button>
+  </section>
+</DocumentFragment>
+`;
