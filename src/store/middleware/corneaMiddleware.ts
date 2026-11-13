@@ -7,13 +7,13 @@
  */
 
 import type { Middleware } from '@reduxjs/toolkit';
-import type { RootState } from '../store';
+import type { RootState, AppDispatch } from '../store';
 import cornea from '@arcus/core/cornea';
-import auth from '@arcus/core/auth';
 import propertyAliases from '@arcus/core/property-aliases';
 import { Base, Person, AlarmIncident } from '@arcus/core';
 import type { ArcusPayload } from '../entityTypes';
-import { loginSuccess, logout, sessionExpired } from '../slices/authSlice';
+import { loginSuccess, logout, sessionResuming, sessionExpired } from '../slices/authSlice';
+import { resumeSessionThunk } from '../thunks/resumeSessionThunk';
 import { deviceAdded, deviceUpdated, deviceRemoved } from '../slices/devicesSlice';
 import { subsystemAdded, subsystemUpdated, subsystemRemoved } from '../slices/subsystemsSlice';
 import { ruleAdded, ruleUpdated, ruleRemoved } from '../slices/rulesSlice';
@@ -114,7 +114,7 @@ function applyPropertyAlias(eventName: string, obj: ArcusPayload): void {
   if (alias) alias(obj);
 }
 
-function subscribeToCorneaEvents(dispatch: (action: { type: string }) => void, getState: () => RootState): void {
+function subscribeToCorneaEvents(dispatch: AppDispatch, getState: () => RootState): void {
   // Clean up any previous subscriptions
   unsubscribeFromCorneaEvents();
 
@@ -226,31 +226,27 @@ function subscribeToCorneaEvents(dispatch: (action: { type: string }) => void, g
     () => cornea.off(`place ${Person.EVENT_INVITATIONCANCELLED}`, onInvitationCancelled),
   );
 
-  // Session unauthorized — marks session as expired and clears auth state.
-  // Fired by Cornea on a 4001 close code or an `error.unauthorized` response.
-  const onUnauthorized = () => {
-    dispatch(sessionExpired());
+  // The platform ended this socket's session: a 4001 close or an
+  // `error.unauthorized` response (Cornea emits `sess unauthorized`), or a
+  // `sess:SessionExpired` push while the socket is still healthy. Signing in
+  // again on another tab or client (e.g. switching between the deployed dev
+  // client and a local instance) ends the old session this way. Rather than
+  // send the user to /login, try the browser's current session cookie first;
+  // resumeSessionThunk marks the session expired (AuthProvider then redirects
+  // to /login?expired=1) only if that fails. sessionResuming() unsubscribes
+  // these listeners first, so the old socket's close isn't handled twice.
+  const onSessionEnded = () => {
+    dispatch(sessionResuming());
+    dispatch(resumeSessionThunk());
   };
+
+  const onUnauthorized = onSessionEnded;
+  const onSessionExpiredEvent = onSessionEnded;
 
   cornea.on('sess unauthorized', onUnauthorized);
   cleanupListeners.push(
     () => cornea.off('sess unauthorized', onUnauthorized),
   );
-
-  // Platform session expiry — the server pushes `sess:SessionExpired` when the
-  // session is too old / has ended while the socket is still healthy (no 4001
-  // close, so `sess unauthorized` never fires). Without this bridge the app
-  // keeps appearing authenticated. Mark the session expired (AuthProvider then
-  // redirects to /login?expired=1) and tear the socket down so partysocket
-  // stops reconnecting with a dead session. Mirrors legacy app.js
-  // SessionService.onSessionExpired handling.
-  const onSessionExpiredEvent = () => {
-    dispatch(sessionExpired());
-    // logout(false) skips the server request — the session is already gone —
-    // and cleans up Cornea. Dispatching sessionExpired() first unsubscribes
-    // these listeners, so the resulting close event is not re-interpreted.
-    auth.logout(false).catch(() => {});
-  };
 
   cornea.on('sess sess:SessionExpired', onSessionExpiredEvent);
   cleanupListeners.push(
@@ -275,11 +271,13 @@ export const corneaMiddleware: Middleware = (storeApi) => (next) => (action) => 
 
   // After loginSuccess is dispatched, subscribe to Cornea events
   if (loginSuccess.match(action)) {
-    subscribeToCorneaEvents(storeApi.dispatch, storeApi.getState);
+    // The store applies the thunk middleware, so this dispatch accepts thunks.
+    subscribeToCorneaEvents(storeApi.dispatch as AppDispatch, storeApi.getState);
   }
 
-  // After logout or session expiry, unsubscribe from Cornea events
-  if (logout.match(action) || sessionExpired.match(action)) {
+  // After logout, session expiry, or an ended session that is being resumed,
+  // unsubscribe from Cornea events
+  if (logout.match(action) || sessionExpired.match(action) || sessionResuming.match(action)) {
     unsubscribeFromCorneaEvents();
   }
 

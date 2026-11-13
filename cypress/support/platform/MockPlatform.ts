@@ -272,6 +272,21 @@ export class MockPlatform {
     this.emit('SERV:sess:', 'sess:SessionExpired', {});
   }
 
+  /**
+   * Simulate the user signing in on another tab or client that shares this
+   * browser's session cookie: the platform ends this session's sockets (4001)
+   * and the cookie now holds the new, valid session.
+   */
+  replaceSession(): void {
+    this.dropConnections(4001);
+  }
+
+  /** Simulate the session ending everywhere: the cookie is no longer valid and the sockets close (4001). */
+  revokeSession(): void {
+    this.authenticated = false;
+    this.dropConnections(4001);
+  }
+
   /** Simulate the platform closing every socket with the given close code. */
   dropConnections(code: number): void {
     for (const socket of [...this.sockets]) socket.serverClose(code);

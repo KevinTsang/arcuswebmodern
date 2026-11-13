@@ -4,6 +4,7 @@ import reducer, {
   accountUpdated,
   loginFailed,
   logout,
+  sessionResuming,
   sessionExpired,
   type AuthState,
 } from '@/store/slices/authSlice';
@@ -86,6 +87,24 @@ describe('authSlice', () => {
     expect(state.sessionExpired).toBe(true);
     expect(state.person).toBeNull();
     expect(state.account).toBeNull();
+  });
+
+  it('sessionResuming holds the app on its loading state while keeping the person', () => {
+    const logged = reducer(initial, loginSuccess({
+      person: { name: 'Test' },
+      account: { state: 'ACTIVE' },
+    }));
+    const state = reducer(logged, sessionResuming());
+    expect(state.authenticated).toBe(false);
+    expect(state.authenticating).toBe(true);
+    expect(state.sessionExpired).toBe(false);
+    expect(state.person).toEqual({ name: 'Test' });
+    expect(state.account).toEqual({ state: 'ACTIVE' });
+  });
+
+  it('sessionResuming clears a stale sessionExpired flag', () => {
+    const expired = reducer(initial, sessionExpired());
+    expect(reducer(expired, sessionResuming()).sessionExpired).toBe(false);
   });
 
   it('loginSuccess clears sessionExpired flag', () => {

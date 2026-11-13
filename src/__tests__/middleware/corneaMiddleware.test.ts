@@ -21,11 +21,12 @@ jest.mock('@arcus/core/cornea', () => ({
   },
 }));
 
-const mockAuthLogout = jest.fn().mockResolvedValue(undefined);
+// Stands in for the thunk; its own tests cover resuming the session.
+const RESUME_ACTION = { type: 'auth/resumeSession/test' };
+const mockResumeSession = jest.fn(() => RESUME_ACTION);
 
-jest.mock('@arcus/core/auth', () => ({
-  __esModule: true,
-  default: { logout: (...args: any[]) => mockAuthLogout(...args) },
+jest.mock('@/store/thunks/resumeSessionThunk', () => ({
+  resumeSessionThunk: () => mockResumeSession(),
 }));
 
 jest.mock('@arcus/core/property-aliases', () => ({
@@ -46,7 +47,7 @@ const flushPromises = () => new Promise((r) => setTimeout(r, 0));
 
 import { configureStore } from '@reduxjs/toolkit';
 import { Base, Device, Switch, Hub, Person, Place, AlarmIncident } from '@arcus/core';
-import authReducer, { loginSuccess, logout } from '@/store/slices/authSlice';
+import authReducer, { loginSuccess, logout, sessionExpired } from '@/store/slices/authSlice';
 import devicesReducer from '@/store/slices/devicesSlice';
 import subsystemsReducer from '@/store/slices/subsystemsSlice';
 import rulesReducer from '@/store/slices/rulesSlice';
@@ -90,7 +91,7 @@ function emit(event: string, data?: any) {
 describe('corneaMiddleware', () => {
   beforeEach(() => {
     listeners.clear();
-    mockAuthLogout.mockClear();
+    mockResumeSession.mockClear();
   });
 
   it('subscribes to Cornea events after loginSuccess', () => {
@@ -189,27 +190,50 @@ describe('corneaMiddleware', () => {
     });
   });
 
-  it('dispatches logout on sess unauthorized', () => {
-    const store = createTestStore();
-    store.dispatch(loginSuccess({ person: { n: 1 }, account: { n: 1 } }));
-    expect(store.getState().auth.authenticated).toBe(true);
+  describe.each([
+    ['sess unauthorized', 'a 4001 close or error.unauthorized'],
+    ['sess sess:SessionExpired', 'a SessionExpired push'],
+  ])('when the platform ends the session (%s)', (event) => {
+    it('holds the app on its loading state and resumes the session', () => {
+      const store = createTestStore();
+      store.dispatch(loginSuccess({ person: { n: 1 }, account: { n: 1 } }));
+      expect(store.getState().auth.authenticated).toBe(true);
 
-    emit('sess unauthorized');
-    expect(store.getState().auth.authenticated).toBe(false);
+      emit(event);
+
+      // Not sent to /login yet: AuthProvider waits while authenticating
+      expect(store.getState().auth.authenticated).toBe(false);
+      expect(store.getState().auth.authenticating).toBe(true);
+      expect(store.getState().auth.sessionExpired).toBe(false);
+      expect(mockResumeSession).toHaveBeenCalledTimes(1);
+    });
+
+    it('unsubscribes the ended session\'s listeners before resuming', () => {
+      const store = createTestStore();
+      store.dispatch(loginSuccess({ person: {}, account: {} }));
+
+      emit(event);
+
+      let totalListeners = 0;
+      for (const fns of listeners.values()) totalListeners += fns.size;
+      expect(totalListeners).toBe(0);
+
+      // A second end event from the old socket is not handled again
+      emit('sess unauthorized');
+      emit('sess sess:SessionExpired');
+      expect(mockResumeSession).toHaveBeenCalledTimes(1);
+    });
   });
 
-  it('expires the session and tears down the socket on sess:SessionExpired', () => {
+  it('resubscribes once the resumed session signs in', () => {
     const store = createTestStore();
-    store.dispatch(loginSuccess({ person: { n: 1 }, account: { n: 1 } }));
-    expect(store.getState().auth.authenticated).toBe(true);
+    store.dispatch(loginSuccess({ person: {}, account: {} }));
+    emit('sess unauthorized');
 
-    emit('sess sess:SessionExpired');
+    store.dispatch(loginSuccess({ person: {}, account: {} }));
 
-    // Session flagged expired (AuthProvider redirects to /login?expired=1)
-    expect(store.getState().auth.authenticated).toBe(false);
-    expect(store.getState().auth.sessionExpired).toBe(true);
-    // Socket torn down without a server request (session is already gone)
-    expect(mockAuthLogout).toHaveBeenCalledWith(false);
+    expect(listeners.get('sess unauthorized')?.size).toBe(1);
+    expect(listeners.get(`dev ${Base.EVENT_VALUECHANGE}`)?.size).toBe(1);
   });
 
   it('unsubscribes the SessionExpired listener after session expiry', () => {
@@ -217,7 +241,7 @@ describe('corneaMiddleware', () => {
     store.dispatch(loginSuccess({ person: {}, account: {} }));
     expect(listeners.has('sess sess:SessionExpired')).toBe(true);
 
-    emit('sess sess:SessionExpired');
+    store.dispatch(sessionExpired());
 
     // off() leaves an (empty) Set behind rather than removing the key
     const fns = listeners.get('sess sess:SessionExpired');
