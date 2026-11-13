@@ -1,0 +1,23 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`DeviceInfoRow matches snapshot 1`] = `
+<DocumentFragment>
+  <dl>
+    <div
+      class="flex justify-between"
+    >
+      <dt
+        class="text-sm text-grouse"
+      >
+        Power Usage
+      </dt>
+      <dd
+        class="text-sm text-swift text-right"
+        data-testid="device-detail-power-usage"
+      >
+        62 W
+      </dd>
+    </div>
+  </dl>
+</DocumentFragment>
+`;

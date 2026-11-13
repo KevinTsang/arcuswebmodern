@@ -57,9 +57,9 @@ None.
 | Device identification (blink/beep) | Yes | Yes | **Done** |
 | Device removal with confirmation | Yes (removal steps, Cancel, Force Remove after timeout) | Yes (removal steps, waits for `base:Deleted`, Cancel/close stops hub unpairing, Force Remove after 4 min) | **Done** |
 | Device settings/configuration panel | Yes | Yes (enum, range, text parameter types) | **Done** |
-| Power usage display (instantaneous) | Yes | No | **Missing** |
-| OTA firmware update status | Yes | No | **Missing** |
-| Signal strength display | Yes | No | **Missing** |
+| Power usage display (instantaneous) | Yes (`pow:instantaneous` badge) | Yes (`pow:instantaneous` row on device details, live via ValueChange; list badge) | **Done** |
+| OTA firmware update status | Yes ("Firmware Updating" state) | Yes (`devota` status on device details: updating with target version + progress bar, completed, failed with retries/reason) | **Done** |
+| Signal strength display | Yes | Yes (`devconn:signal` on device details as Excellent/Good/Fair/Poor + %, hidden while offline) | **Done** |
 
 ### 3.2 Device Controls by Type
 
@@ -662,7 +662,7 @@ These are commonly used features that users will expect:
 14. **Shade / blind controls** — Position and tilt control.
 15. **Weather subsystem** — NOAA alerts, current conditions, weather radio integration.
 16. **Thermostat fan mode & min/max enforcement** — Fan control, setpoint limits, separation enforcement.
-17. **Advanced device info** — Power usage, signal strength, OTA firmware status.
+17. ~~**Advanced device info**~~ — **DONE.** Instantaneous power usage, signal strength and OTA firmware update status on the device detail panel.
 18. **Keypad, pet door, button/pendant, Halo device controls** — Niche device type support.
 19. **Cloud device pairing** — Nest, Hue, Lutron bridge pairing flows.
 20. **Hub advanced features** — Sounds/volume, cellular backup, Z-Wave topology, 4G usage.

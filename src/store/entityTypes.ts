@@ -8,7 +8,7 @@
  */
 
 import {
-  Base, Device, DeviceConnection, DevicePower, DeviceAdvanced,
+  Base, Device, DeviceConnection, DevicePower, DeviceAdvanced, DeviceOta, PowerUse,
   Scene, Rule, RuleTemplate, Person, AlarmIncident, Place,
   Account,
   PairingDevice as PairingDeviceCap, Product,
@@ -42,7 +42,15 @@ export type DeviceEntity = ArcusEntity & Partial<
   Record<typeof DeviceConnection.ATTR_STATE, string> &
   Record<typeof DeviceAdvanced.ATTR_ERRORS, Record<string, string>> &
   Record<typeof DevicePower.ATTR_BATTERY, number> &
-  Record<typeof DevicePower.ATTR_SOURCE, string>
+  Record<typeof DevicePower.ATTR_SOURCE, string> &
+  Record<typeof DeviceConnection.ATTR_SIGNAL, number> &
+  Record<typeof PowerUse.ATTR_INSTANTANEOUS, number> &
+  Record<typeof DeviceOta.ATTR_STATUS, string> &
+  Record<typeof DeviceOta.ATTR_CURRENTVERSION, string> &
+  Record<typeof DeviceOta.ATTR_TARGETVERSION, string> &
+  Record<typeof DeviceOta.ATTR_PROGRESSPERCENT, number> &
+  Record<typeof DeviceOta.ATTR_RETRYCOUNT, number> &
+  Record<typeof DeviceOta.ATTR_LASTFAILREASON, string>
 >;
 
 /** Scene entity with known scene attributes. */

@@ -16,8 +16,9 @@ import { useAppDispatch } from '@/store/hooks';
 import { addNotification } from '@/store/slices/uiSlice';
 import { useDeviceActions } from '@/hooks/useDeviceActions';
 import { useDeviceRemoval } from '@/hooks/useDeviceRemoval';
-import { testIdSlug } from '@/lib/testId';
 import { DeviceRemovalSection } from './removal/DeviceRemovalSection';
+import { DeviceInfoRow } from './DeviceInfoRow';
+import { DeviceAdvancedInfo } from './DeviceAdvancedInfo';
 
 interface DeviceDetailPanelProps {
   address: string;
@@ -78,26 +79,26 @@ export function DeviceDetailPanel({ address }: DeviceDetailPanelProps) {
       {/* Info rows */}
       <dl className="space-y-3 mb-8">
         {devType && (
-          <InfoRow label="Type" value={devType} />
+          <DeviceInfoRow label="Type" value={devType} />
         )}
         {vendor && (
-          <InfoRow label="Manufacturer" value={vendor} />
+          <DeviceInfoRow label="Manufacturer" value={vendor} />
         )}
         {model && (
-          <InfoRow label="Model" value={model} />
+          <DeviceInfoRow label="Model" value={model} />
         )}
         {productId && (
-          <InfoRow label="Product ID" value={productId} />
+          <DeviceInfoRow label="Product ID" value={productId} />
         )}
         {protocol && (
-          <InfoRow label="Protocol" value={formatProtocol(protocol)} />
+          <DeviceInfoRow label="Protocol" value={formatProtocol(protocol)} />
         )}
         {firmwareVersion && (
-          <InfoRow label="Firmware" value={firmwareVersion} />
+          <DeviceInfoRow label="Firmware" value={firmwareVersion} />
         )}
-        <InfoRow label="Connection" value={offline ? 'Offline' : 'Online'} />
+        <DeviceInfoRow label="Connection" value={offline ? 'Offline' : 'Online'} />
         {powerSource && (
-          <InfoRow
+          <DeviceInfoRow
             label="Power"
             value={
               powerSource === 'BATTERY' && battery != null
@@ -108,6 +109,7 @@ export function DeviceDetailPanel({ address }: DeviceDetailPanelProps) {
             }
           />
         )}
+        <DeviceAdvancedInfo device={device} offline={offline} />
       </dl>
 
       {/* Removal section */}
@@ -130,13 +132,4 @@ function formatProtocol(protocol: string): string {
     default:
       return protocol;
   }
-}
-
-function InfoRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex justify-between">
-      <dt className="text-sm text-grouse">{label}</dt>
-      <dd data-testid={`device-detail-${testIdSlug(label)}`} className="text-sm text-swift text-right">{value}</dd>
-    </div>
-  );
 }
