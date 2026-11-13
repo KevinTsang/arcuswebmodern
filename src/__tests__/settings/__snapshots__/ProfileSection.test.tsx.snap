@@ -1,0 +1,225 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`ProfileSection matches snapshot 1`] = `
+<DocumentFragment>
+  <div
+    class="space-y-6"
+  >
+    <div
+      class="border border-heron rounded-[var(--border-radius-base)] overflow-hidden"
+      data-testid="info-card-contact-information"
+    >
+      <div
+        class="flex items-center justify-between px-4 py-3 bg-pigeon/30"
+      >
+        <h3
+          class="text-sm font-medium text-swift"
+        >
+          Contact Information
+        </h3>
+        <span
+          data-testid="info-card-contact-information-action"
+        >
+          <button
+            class="text-sm text-peacock hover:underline"
+          >
+            Edit
+          </button>
+        </span>
+      </div>
+      <div
+        class="px-4 py-3 space-y-2"
+      >
+        <div
+          class="flex justify-between text-sm"
+        >
+          <span
+            class="text-grouse"
+          >
+            Name
+          </span>
+          <span
+            class="text-swift"
+            data-testid="info-card-contact-information-value-name"
+          >
+            John Doe
+          </span>
+        </div>
+        <div
+          class="flex justify-between text-sm"
+        >
+          <span
+            class="text-grouse"
+          >
+            Phone
+          </span>
+          <span
+            class="text-swift"
+            data-testid="info-card-contact-information-value-phone"
+          >
+            555-1234
+          </span>
+        </div>
+      </div>
+    </div>
+    <div
+      data-testid="email-card"
+    />
+    <div
+      class="border border-heron rounded-[var(--border-radius-base)] overflow-hidden"
+      data-testid="info-card-password"
+    >
+      <div
+        class="flex items-center justify-between px-4 py-3 bg-pigeon/30"
+      >
+        <h3
+          class="text-sm font-medium text-swift"
+        >
+          Password
+        </h3>
+        <span
+          data-testid="info-card-password-action"
+        >
+          <button
+            class="text-sm text-peacock hover:underline"
+          >
+            Change
+          </button>
+        </span>
+      </div>
+      <div
+        class="px-4 py-3 space-y-2"
+      >
+        <div
+          class="flex justify-between text-sm"
+        >
+          <span
+            class="text-grouse"
+          >
+            Password
+          </span>
+          <span
+            class="text-swift"
+            data-testid="info-card-password-value-password"
+          >
+            ••••••••
+          </span>
+        </div>
+      </div>
+    </div>
+    <div
+      class="border border-heron rounded-[var(--border-radius-base)] overflow-hidden"
+      data-testid="info-card-pin-code"
+    >
+      <div
+        class="flex items-center justify-between px-4 py-3 bg-pigeon/30"
+      >
+        <h3
+          class="text-sm font-medium text-swift"
+        >
+          PIN Code
+        </h3>
+        <span
+          data-testid="info-card-pin-code-action"
+        >
+          <button
+            class="text-sm text-peacock hover:underline"
+          >
+            Change
+          </button>
+        </span>
+      </div>
+      <div
+        class="px-4 py-3 space-y-2"
+      >
+        <div
+          class="flex justify-between text-sm"
+        >
+          <span
+            class="text-grouse"
+          >
+            PIN Code
+          </span>
+          <span
+            class="text-swift"
+            data-testid="info-card-pin-code-value-pin-code"
+          >
+            ••••
+          </span>
+        </div>
+      </div>
+    </div>
+    <div
+      data-testid="security-questions-card"
+    />
+    <div
+      class="border border-heron rounded-[var(--border-radius-base)] overflow-hidden"
+      data-testid="info-card-service-plan"
+    >
+      <div
+        class="flex items-center justify-between px-4 py-3 bg-pigeon/30"
+      >
+        <h3
+          class="text-sm font-medium text-swift"
+        >
+          Service Plan
+        </h3>
+        <span
+          data-testid="info-card-service-plan-action"
+        />
+      </div>
+      <div
+        class="px-4 py-3 space-y-2"
+      >
+        <div
+          class="flex justify-between text-sm"
+        >
+          <span
+            class="text-grouse"
+          >
+            Current Plan
+          </span>
+          <span
+            class="text-swift"
+            data-testid="info-card-service-plan-value-current-plan"
+          >
+            Premium
+          </span>
+        </div>
+      </div>
+    </div>
+    <div
+      class="border border-heron rounded-[var(--border-radius-base)] overflow-hidden"
+      data-testid="info-card-delete-account"
+    >
+      <div
+        class="flex items-center justify-between px-4 py-3 bg-pigeon/30"
+      >
+        <h3
+          class="text-sm font-medium text-swift"
+        >
+          Delete Account
+        </h3>
+        <span
+          data-testid="info-card-delete-account-action"
+        >
+          <button
+            class="text-sm text-cardinal hover:underline"
+          >
+            Delete
+          </button>
+        </span>
+      </div>
+      <div
+        class="px-4 py-3 space-y-2"
+      >
+        <p
+          class="text-sm text-grouse"
+        >
+          Permanently delete your Arcus login and personal information.
+        </p>
+      </div>
+    </div>
+  </div>
+</DocumentFragment>
+`;

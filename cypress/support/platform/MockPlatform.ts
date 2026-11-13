@@ -27,6 +27,17 @@ import {
 
 type AppWindow = Window & typeof globalThis;
 
+/** The `security_question` i18n bundle (`i18n:LoadLocalizedStrings`). */
+const SECURITY_QUESTIONS: { [key: string]: string } = {
+  'security_question:question1': 'What was the name of your first pet?',
+  'security_question:question2': 'What city were you born in?',
+  'security_question:question3': 'What was the make of your first car?',
+  'security_question:question4': 'What is your favorite book?',
+};
+
+/** The signed-in person's security answers at the start of each test. */
+const SECURITY_ANSWERS: { [questionId: string]: string } = { question2: 'Springfield' };
+
 const WS_CONNECTING = 0;
 const WS_OPEN = 1;
 const WS_CLOSED = 3;
@@ -147,6 +158,8 @@ export class MockPlatform {
   requests: LoggedRequest[] = [];
   /** Addresses of objects created during the current test, removed by `cleanupCreated()`. */
   created = new Set<string>();
+  /** The signed-in person's security answers, keyed by question id (`person:GetSecurityAnswers`). */
+  securityAnswers: { [questionId: string]: string } = { ...SECURITY_ANSWERS };
 
   private sockets = new Set<MockSocket>();
   private overrides = new Map<string, Handler>();
@@ -164,6 +177,7 @@ export class MockPlatform {
     this.data = createFixture();
     this.requests = [];
     this.created.clear();
+    this.securityAnswers = { ...SECURITY_ANSWERS };
     this.sockets.clear();
     this.overrides.clear();
     this.failures.clear();
@@ -620,6 +634,25 @@ export class MockPlatform {
       return {};
     },
     'person:SendPasswordReset': () => ({}),
+    [Person.CMD_GETSECURITYANSWERS]: () => ({ securityAnswers: { ...this.securityAnswers } }),
+    [Person.CMD_SETSECURITYANSWERS]: ({ attrs }) => {
+      const answers: { [questionId: string]: string } = {};
+      for (const n of [1, 2, 3]) {
+        const question = attrs[`securityQuestion${n}`];
+        if (typeof question === 'string') answers[question] = String(attrs[`securityAnswer${n}`] ?? '');
+      }
+      if (Object.keys(answers).length === 0) {
+        throw new PlatformFailure('request.param.missing', 'securityQuestion1 is required');
+      }
+      this.securityAnswers = answers;
+      return {};
+    },
+    [Person.CMD_SENDVERIFICATIONEMAIL]: () => ({}),
+    [Person.CMD_DELETELOGIN]: ({ destination }) => {
+      this.mustGet(destination);
+      return {};
+    },
+    'i18n:LoadLocalizedStrings': () => ({ localizedStrings: { ...SECURITY_QUESTIONS } }),
     'person:ResetPassword': ({ attrs }) => {
       if (attrs.token !== 'RESET-99') throw new PlatformFailure('error.token.invalid', 'Invalid reset code');
       this.data.login.password = attrs.password as string;
@@ -627,6 +660,12 @@ export class MockPlatform {
     },
 
     // Account
+    [Account.CMD_DELETE]: ({ destination }) => {
+      if (destination !== `SERV:account:${this.data.accountId}`) {
+        throw new PlatformFailure('error.unauthorized', 'Only the owner can delete the account');
+      }
+      return {};
+    },
     [Account.CMD_ADDPLACE]: ({ attrs }) => ({
       place: this.createPlace(attrs.place as Attrs, 'OWNER'),
     }),

@@ -1,0 +1,74 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`ChangeEmailPanel matches snapshot 1`] = `
+<DocumentFragment>
+  <div
+    class="p-4 space-y-4"
+  >
+    <p
+      class="text-sm text-grouse"
+    >
+      Current email: 
+      <span
+        class="text-swift"
+        data-testid="change-email-current"
+      >
+        alex@example.com
+      </span>
+    </p>
+    <div>
+      <label
+        class="block text-sm text-grouse mb-1"
+        for="change-email"
+      >
+        New Email
+      </label>
+      <input
+        autocomplete="email"
+        class="w-full border border-heron rounded-[var(--border-radius-base)] px-3 py-2 text-sm text-swift focus:outline-none focus:border-peacock disabled:opacity-50"
+        data-testid="field-new-email"
+        id="change-email"
+        type="email"
+        value=""
+      />
+    </div>
+    <div>
+      <label
+        class="block text-sm text-grouse mb-1"
+        for="change-email-confirm"
+      >
+        Confirm New Email
+      </label>
+      <input
+        autocomplete="email"
+        class="w-full border border-heron rounded-[var(--border-radius-base)] px-3 py-2 text-sm text-swift focus:outline-none focus:border-peacock disabled:opacity-50"
+        data-testid="field-confirm-new-email"
+        id="change-email-confirm"
+        type="email"
+        value=""
+      />
+    </div>
+    <p
+      class="text-xs text-grouse"
+    >
+      You will sign in with the new email, and will need to verify it.
+    </p>
+    <div
+      class="flex gap-2 pt-2"
+    >
+      <button
+        class="px-4 py-2 bg-peacock text-crane rounded-[var(--border-radius-base)] text-sm font-medium hover:bg-peacock/90 disabled:opacity-50"
+        data-testid="change-email-save"
+        disabled=""
+      >
+        Change Email
+      </button>
+      <button
+        class="px-4 py-2 border border-heron rounded-[var(--border-radius-base)] text-sm text-coot hover:bg-pigeon"
+      >
+        Cancel
+      </button>
+    </div>
+  </div>
+</DocumentFragment>
+`;
