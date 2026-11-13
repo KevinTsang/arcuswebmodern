@@ -8,6 +8,7 @@ import {
   HomeFamilyView,
   LawnGardenView,
   GenericDeviceListView,
+  WaterView,
 } from '@/components/subsystems';
 
 /**
@@ -31,6 +32,8 @@ export function SubsystemView({ config, action }: { config: SubsystemConfigEntry
       return <HomeFamilyView />;
     case 'lawn-garden':
       return <LawnGardenView />;
+    case 'water':
+      return <WaterView config={config} />;
     default:
       return <GenericDeviceListView config={config} />;
   }

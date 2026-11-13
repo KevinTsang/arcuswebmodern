@@ -1,0 +1,77 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`WaterFlowConfigurator matches snapshot 1`] = `
+<DocumentFragment>
+  <div>
+    <p
+      class="text-sm font-medium text-swift mb-2"
+    >
+      Water Flow
+    </p>
+    <label
+      class="block text-xs font-medium text-coot mb-1"
+      for="flow-rate-DRIV:dev:softener"
+    >
+      Continuous Water Flow
+    </label>
+    <p
+      class="text-xs text-grouse mb-2"
+    >
+      Choose the flow rate that triggers a push notification and email when it has been reached for 20 minutes.
+    </p>
+    <select
+      class="w-full px-3 py-1.5 text-sm bg-crane border border-heron rounded-[var(--border-radius-base)] text-swift disabled:opacity-50"
+      data-testid="water-flow-rate"
+      id="flow-rate-DRIV:dev:softener"
+    >
+      <option
+        value="OFF"
+      >
+        OFF - Disable push notification and email
+      </option>
+      <option
+        value="LOW"
+      >
+        LOW (0.3 GPM or more) - Faucet trickling
+      </option>
+      <option
+        value="MEDIUM"
+      >
+        MEDIUM (2.0 GPM or more) - Faucet left running
+      </option>
+      <option
+        value="HIGH"
+      >
+        HIGH (8.0 GPM or more) - Several faucets running or a burst pipe
+      </option>
+    </select>
+    <div
+      class="flex items-start justify-between gap-4 py-3 border-b border-heron"
+    >
+      <div>
+        <p
+          class="text-sm font-medium text-swift"
+        >
+          Excessive Water Flow
+        </p>
+        <p
+          class="text-xs text-grouse mt-0.5"
+        >
+          The softener learns your average daily water usage and alerts the account owner when a day's usage is significantly higher than usual.
+        </p>
+      </div>
+      <button
+        aria-checked="false"
+        aria-label="Excessive Water Flow"
+        class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 bg-heron"
+        data-testid="water-flow-excessive-toggle"
+        role="switch"
+      >
+        <span
+          class="inline-block h-4 w-4 rounded-full bg-crane shadow transition-transform translate-x-1"
+        />
+      </button>
+    </div>
+  </div>
+</DocumentFragment>
+`;
