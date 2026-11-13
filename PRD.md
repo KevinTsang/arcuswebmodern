@@ -679,15 +679,14 @@ These are commonly used features that users will expect:
     (`favorites`, `doorsLocks`, …) and writes `dashboard:cards` / `dashboard:hidden`
     while the home page reads `dashboardCards`, so saved preferences never
     affect the dashboard.
-25. **Split `login/page.tsx` into per-view components** — The login route
-    (`src/app/login/page.tsx`, ~570 lines) defines four views in one file:
-    `LoginForm`, `SendCodeForm`, `ResetPasswordForm` and `ResetConfirmation`,
-    plus the branding shell, switched on `?view=`. That breaks the
-    one-component-per-file convention in CLAUDE.md and makes each form hard to
-    unit-test in isolation. Move each form into its own file under
-    `src/components/login/` (sharing the validation constraints from a
-    `constraints.ts`), keep `page.tsx` as the thin `?view=` router + layout, and
-    give each component its own test file.
+25. ~~**Split `login/page.tsx` into per-view components**~~ — **DONE.**
+    `LoginForm`, `SendCodeForm`, `ResetPasswordForm` and `ResetConfirmation`
+    now live in their own files under `src/components/login/`, each building
+    its constraints from `src/lib/validationRules.ts` (per item 27, no separate
+    `constraints.ts`). `src/app/login/page.tsx` is just the `?view=` router and
+    the branding layout. Markup, test IDs and behaviour are unchanged (the page
+    snapshot is identical). Each view has its own test file in
+    `src/__tests__/login/`, and `LoginPage.test.tsx` covers the view routing.
 26. ~~**Fix the Alarms `deviceAttributes` in `subsystemConfig`**~~ — **DONE.**
     The Alarms entry listed `subsecurity:securityDevices` / `subsafety:totalDevices`
     under the `subalarm` namespace, so `useSubsystemDevices('subalarm')` found no

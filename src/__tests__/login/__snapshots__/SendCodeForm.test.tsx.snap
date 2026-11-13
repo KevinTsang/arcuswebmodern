@@ -1,0 +1,71 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`SendCodeForm matches snapshot 1`] = `
+<DocumentFragment>
+  <div
+    class="w-full max-w-sm"
+  >
+    <h3
+      class="text-xl font-semibold text-swift mb-2"
+    >
+      Forgot Password
+    </h3>
+    <p
+      class="text-coot mb-1"
+    >
+      Don't worry, just enter the email address you registered with and we will send you instructions to reset your password.
+    </p>
+    <p
+      class="text-sm text-grouse mb-6"
+    >
+      But hurry, the link will expire in 30 minutes.
+    </p>
+    <form>
+      <div
+        class="mb-4"
+      >
+        <label
+          class="block text-sm font-medium text-swift mb-1"
+          for="resetEmail"
+        >
+          Email Address
+        </label>
+        <input
+          autocomplete="email"
+          class="w-full px-3 py-2 border border-grouse rounded-[var(--border-radius-base)] focus:outline-none focus:border-peacock"
+          id="resetEmail"
+          type="email"
+          value=""
+        />
+      </div>
+      <p
+        class="text-sm mb-4"
+      >
+        <a
+          class="text-peacock hover:underline"
+          href="/login?view=reset-password"
+        >
+          Already have a code from Support? Click here.
+        </a>
+      </p>
+      <div
+        class="flex gap-4"
+      >
+        <button
+          class="bg-peacock text-crane px-6 py-2.5 rounded-[var(--border-radius-base)] hover:opacity-90 transition-opacity disabled:opacity-50"
+          data-testid="reset-send"
+          type="submit"
+        >
+          Send Email
+        </button>
+        <button
+          class="bg-heron text-swift px-6 py-2.5 rounded-[var(--border-radius-base)] border border-grouse hover:bg-crane transition-colors"
+          type="button"
+        >
+          Back
+        </button>
+      </div>
+    </form>
+  </div>
+</DocumentFragment>
+`;

@@ -1,0 +1,92 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`LoginForm matches snapshot 1`] = `
+<DocumentFragment>
+  <form
+    class="w-full max-w-sm"
+  >
+    <div
+      class="mb-4"
+    >
+      <label
+        class="block text-sm font-medium text-swift mb-1"
+        for="email"
+      >
+        Email
+        <input
+          autocomplete="email"
+          class="w-full px-3 py-2 border border-grouse rounded-[var(--border-radius-base)] focus:outline-none focus:border-peacock"
+          id="email"
+          type="email"
+          value=""
+        />
+      </label>
+    </div>
+    <div
+      class="mb-4"
+    >
+      <label
+        class="block text-sm font-medium text-swift mb-1"
+        for="password"
+      >
+        Password
+        <input
+          autocomplete="current-password"
+          class="w-full px-3 py-2 border border-grouse rounded-[var(--border-radius-base)] focus:outline-none focus:border-peacock"
+          id="password"
+          type="password"
+          value=""
+        />
+      </label>
+    </div>
+    <div
+      class="mb-6 flex items-center gap-2"
+    >
+      <input
+        class="rounded"
+        id="isPublic"
+        type="checkbox"
+      />
+      <label
+        class="text-sm text-coot"
+        for="isPublic"
+      >
+        I am on a public computer
+      </label>
+    </div>
+    <div
+      class="flex items-center gap-4 mb-6"
+    >
+      <button
+        class="bg-peacock text-crane px-6 py-2.5 rounded-[var(--border-radius-base)] hover:opacity-90 transition-opacity disabled:opacity-50"
+        data-testid="login-submit"
+        type="submit"
+      >
+        Login
+      </button>
+      <a
+        class="bg-heron text-swift px-6 py-2.5 rounded-[var(--border-radius-base)] border border-grouse hover:bg-crane transition-colors"
+        href="/create-account"
+      >
+        Create An Account
+      </a>
+    </div>
+    <div
+      class="flex gap-6 text-xs uppercase"
+    >
+      <a
+        class="text-peacock hover:underline"
+        href="/invite"
+      >
+        Use Invitation Code
+      </a>
+      <a
+        class="text-peacock hover:underline"
+        href="/login?view=send-code"
+      >
+        Forgot Password?
+      </a>
+    </div>
+  </form>
+</DocumentFragment>
+`;
