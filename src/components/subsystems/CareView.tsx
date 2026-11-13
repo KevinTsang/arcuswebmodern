@@ -27,7 +27,7 @@ export function CareView() {
         <button
           onClick={() => setTab('status')}
           data-testid="care-tab-status"
-          className={`px-4 py-1.5 rounded text-sm font-medium transition-colors ${
+          className={`px-4 py-1.5 rounded-[var(--border-radius-base)] text-sm font-medium transition-colors ${
             tab === 'status' ? 'bg-crane text-swift shadow-sm' : 'text-grouse hover:text-coot'
           }`}
         >
@@ -36,7 +36,7 @@ export function CareView() {
         <button
           onClick={() => setTab('behaviors')}
           data-testid="care-tab-behaviors"
-          className={`px-4 py-1.5 rounded text-sm font-medium transition-colors ${
+          className={`px-4 py-1.5 rounded-[var(--border-radius-base)] text-sm font-medium transition-colors ${
             tab === 'behaviors' ? 'bg-crane text-swift shadow-sm' : 'text-grouse hover:text-coot'
           }`}
         >
@@ -45,7 +45,7 @@ export function CareView() {
         <button
           onClick={() => setTab('notifications')}
           data-testid="care-tab-notifications"
-          className={`px-4 py-1.5 rounded text-sm font-medium transition-colors ${
+          className={`px-4 py-1.5 rounded-[var(--border-radius-base)] text-sm font-medium transition-colors ${
             tab === 'notifications' ? 'bg-crane text-swift shadow-sm' : 'text-grouse hover:text-coot'
           }`}
         >

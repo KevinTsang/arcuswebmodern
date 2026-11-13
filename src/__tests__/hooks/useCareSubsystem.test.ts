@@ -1,7 +1,7 @@
 import { renderHook } from '@testing-library/react';
 import { CareSubsystem } from '@arcus/core';
 import { useCareSubsystem } from '@/hooks/useCareSubsystem';
-import type { SubsystemEntity, CareBehavior, CareCallEntry } from '@/store/entityTypes';
+import type { SubsystemEntity, CareBehavior, CallTreeEntry } from '@/store/entityTypes';
 import { makeSubsystem } from '../helpers/factories';
 
 // ── Mocks ─────────────────────────────────────────────────────────────
@@ -35,6 +35,7 @@ describe('useCareSubsystem', () => {
       expect(result.current.behaviors).toEqual([]);
       expect(result.current.careDevices).toEqual([]);
       expect(result.current.callTree).toEqual([]);
+      expect(result.current.callTreeEnabled).toBe(true);
       expect(result.current.lastAlertCause).toBeUndefined();
       expect(result.current.silent).toBe(false);
     });
@@ -125,9 +126,27 @@ describe('useCareSubsystem', () => {
     });
   });
 
+  describe('callTreeEnabled', () => {
+    it('is false when the platform says only the owner is notified (BASIC)', () => {
+      mockUseSubsystem.mockReturnValue(makeSubsystem(CARE_ADDR, {
+        [CareSubsystem.ATTR_CALLTREEENABLED]: false,
+      }));
+      const { result } = renderHook(() => useCareSubsystem());
+      expect(result.current.callTreeEnabled).toBe(false);
+    });
+
+    it('is true when the platform enables the call tree (PREMIUM)', () => {
+      mockUseSubsystem.mockReturnValue(makeSubsystem(CARE_ADDR, {
+        [CareSubsystem.ATTR_CALLTREEENABLED]: true,
+      }));
+      const { result } = renderHook(() => useCareSubsystem());
+      expect(result.current.callTreeEnabled).toBe(true);
+    });
+  });
+
   describe('callTree', () => {
     it('returns callTree from the subsystem', () => {
-      const callTree: CareCallEntry[] = [
+      const callTree: CallTreeEntry[] = [
         { person: 'SERV:person:person1', enabled: true },
         { person: 'SERV:person:person2', enabled: false },
       ];

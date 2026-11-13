@@ -1,0 +1,456 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`CallTreeList matches snapshot 1`] = `
+<DocumentFragment>
+  <div>
+    <h3
+      class="text-base font-medium text-swift mb-1"
+    >
+      Notification List
+    </h3>
+    <p
+      class="text-xs text-grouse mb-3"
+    >
+      People are notified in this order.
+    </p>
+    <div
+      class="space-y-2"
+    >
+      <div
+        class="flex items-center gap-3 px-3 py-2.5 rounded-[var(--border-radius-base)] border border-heron "
+        data-enabled="true"
+        data-position="1"
+        data-testid="calltree-entry-SERV:person:alice"
+      >
+        <span
+          class="text-xs font-medium text-grouse w-5 text-center"
+        >
+          1
+        </span>
+        <span
+          class="text-sm text-swift flex-1"
+        >
+          Alice
+        </span>
+        <div
+          class="flex items-center gap-1"
+        >
+          <button
+            aria-label="Move Alice up"
+            class="p-1 text-grouse hover:text-swift disabled:opacity-30"
+            data-testid="calltree-move-up-SERV:person:alice"
+            disabled=""
+          >
+            <svg
+              class="w-4 h-4"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+            >
+              <path
+                clip-rule="evenodd"
+                d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z"
+                fill-rule="evenodd"
+              />
+            </svg>
+          </button>
+          <button
+            aria-label="Move Alice down"
+            class="p-1 text-grouse hover:text-swift disabled:opacity-30"
+            data-testid="calltree-move-down-SERV:person:alice"
+          >
+            <svg
+              class="w-4 h-4"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+            >
+              <path
+                clip-rule="evenodd"
+                d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                fill-rule="evenodd"
+              />
+            </svg>
+          </button>
+        </div>
+        <button
+          aria-checked="true"
+          aria-label="Disable notifications for Alice"
+          class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 disabled:cursor-not-allowed bg-peacock"
+          data-testid="calltree-toggle-SERV:person:alice"
+          role="switch"
+        >
+          <span
+            class="inline-block h-4 w-4 rounded-full bg-crane shadow transition-transform translate-x-6"
+          />
+        </button>
+      </div>
+      <div
+        class="flex items-center gap-3 px-3 py-2.5 rounded-[var(--border-radius-base)] border border-heron "
+        data-enabled="true"
+        data-position="2"
+        data-testid="calltree-entry-SERV:person:bob"
+      >
+        <span
+          class="text-xs font-medium text-grouse w-5 text-center"
+        >
+          2
+        </span>
+        <span
+          class="text-sm text-swift flex-1"
+        >
+          Bob
+        </span>
+        <div
+          class="flex items-center gap-1"
+        >
+          <button
+            aria-label="Move Bob up"
+            class="p-1 text-grouse hover:text-swift disabled:opacity-30"
+            data-testid="calltree-move-up-SERV:person:bob"
+          >
+            <svg
+              class="w-4 h-4"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+            >
+              <path
+                clip-rule="evenodd"
+                d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z"
+                fill-rule="evenodd"
+              />
+            </svg>
+          </button>
+          <button
+            aria-label="Move Bob down"
+            class="p-1 text-grouse hover:text-swift disabled:opacity-30"
+            data-testid="calltree-move-down-SERV:person:bob"
+          >
+            <svg
+              class="w-4 h-4"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+            >
+              <path
+                clip-rule="evenodd"
+                d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                fill-rule="evenodd"
+              />
+            </svg>
+          </button>
+        </div>
+        <button
+          aria-checked="true"
+          aria-label="Disable notifications for Bob"
+          class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 disabled:cursor-not-allowed bg-peacock"
+          data-testid="calltree-toggle-SERV:person:bob"
+          role="switch"
+        >
+          <span
+            class="inline-block h-4 w-4 rounded-full bg-crane shadow transition-transform translate-x-6"
+          />
+        </button>
+      </div>
+      <div
+        class="flex items-center gap-3 px-3 py-2.5 rounded-[var(--border-radius-base)] border border-heron opacity-50"
+        data-enabled="false"
+        data-position="3"
+        data-testid="calltree-entry-SERV:person:carol"
+      >
+        <span
+          class="text-xs font-medium text-grouse w-5 text-center"
+        >
+          3
+        </span>
+        <span
+          class="text-sm text-swift flex-1"
+        >
+          Carol
+        </span>
+        <div
+          class="flex items-center gap-1"
+        >
+          <button
+            aria-label="Move Carol up"
+            class="p-1 text-grouse hover:text-swift disabled:opacity-30"
+            data-testid="calltree-move-up-SERV:person:carol"
+          >
+            <svg
+              class="w-4 h-4"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+            >
+              <path
+                clip-rule="evenodd"
+                d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z"
+                fill-rule="evenodd"
+              />
+            </svg>
+          </button>
+          <button
+            aria-label="Move Carol down"
+            class="p-1 text-grouse hover:text-swift disabled:opacity-30"
+            data-testid="calltree-move-down-SERV:person:carol"
+            disabled=""
+          >
+            <svg
+              class="w-4 h-4"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+            >
+              <path
+                clip-rule="evenodd"
+                d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                fill-rule="evenodd"
+              />
+            </svg>
+          </button>
+        </div>
+        <button
+          aria-checked="false"
+          aria-label="Enable notifications for Carol"
+          class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 disabled:cursor-not-allowed bg-heron"
+          data-testid="calltree-toggle-SERV:person:carol"
+          role="switch"
+        >
+          <span
+            class="inline-block h-4 w-4 rounded-full bg-crane shadow transition-transform translate-x-1"
+          />
+        </button>
+      </div>
+    </div>
+  </div>
+</DocumentFragment>
+`;
+
+exports[`CallTreeList matches snapshot with an owner and a limit 1`] = `
+<DocumentFragment>
+  <div>
+    <h3
+      class="text-base font-medium text-swift mb-1"
+    >
+      Notification List
+    </h3>
+    <p
+      class="text-xs text-grouse mb-3"
+    >
+      People are notified in this order.
+    </p>
+    <p
+      class="text-xs text-grouse mb-3"
+      data-testid="calltree-limit"
+    >
+      Up to 6 people can be notified (2 of 6 selected).
+    </p>
+    <div
+      class="space-y-2"
+    >
+      <div
+        class="flex items-center gap-3 px-3 py-2.5 rounded-[var(--border-radius-base)] border border-heron "
+        data-enabled="true"
+        data-position="1"
+        data-testid="calltree-entry-SERV:person:alice"
+      >
+        <span
+          class="text-xs font-medium text-grouse w-5 text-center"
+        >
+          1
+        </span>
+        <span
+          class="text-sm text-swift flex-1"
+        >
+          Alice
+          <span
+            class="ml-2 text-xs text-grouse"
+          >
+            Account owner · always notified
+          </span>
+        </span>
+        <div
+          class="flex items-center gap-1"
+        >
+          <button
+            aria-label="Move Alice up"
+            class="p-1 text-grouse hover:text-swift disabled:opacity-30"
+            data-testid="calltree-move-up-SERV:person:alice"
+            disabled=""
+          >
+            <svg
+              class="w-4 h-4"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+            >
+              <path
+                clip-rule="evenodd"
+                d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z"
+                fill-rule="evenodd"
+              />
+            </svg>
+          </button>
+          <button
+            aria-label="Move Alice down"
+            class="p-1 text-grouse hover:text-swift disabled:opacity-30"
+            data-testid="calltree-move-down-SERV:person:alice"
+          >
+            <svg
+              class="w-4 h-4"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+            >
+              <path
+                clip-rule="evenodd"
+                d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                fill-rule="evenodd"
+              />
+            </svg>
+          </button>
+        </div>
+        <button
+          aria-checked="true"
+          aria-label="Disable notifications for Alice"
+          class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 disabled:cursor-not-allowed bg-peacock"
+          data-testid="calltree-toggle-SERV:person:alice"
+          disabled=""
+          role="switch"
+          title="The account owner is always notified"
+        >
+          <span
+            class="inline-block h-4 w-4 rounded-full bg-crane shadow transition-transform translate-x-6"
+          />
+        </button>
+      </div>
+      <div
+        class="flex items-center gap-3 px-3 py-2.5 rounded-[var(--border-radius-base)] border border-heron "
+        data-enabled="true"
+        data-position="2"
+        data-testid="calltree-entry-SERV:person:bob"
+      >
+        <span
+          class="text-xs font-medium text-grouse w-5 text-center"
+        >
+          2
+        </span>
+        <span
+          class="text-sm text-swift flex-1"
+        >
+          Bob
+        </span>
+        <div
+          class="flex items-center gap-1"
+        >
+          <button
+            aria-label="Move Bob up"
+            class="p-1 text-grouse hover:text-swift disabled:opacity-30"
+            data-testid="calltree-move-up-SERV:person:bob"
+          >
+            <svg
+              class="w-4 h-4"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+            >
+              <path
+                clip-rule="evenodd"
+                d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z"
+                fill-rule="evenodd"
+              />
+            </svg>
+          </button>
+          <button
+            aria-label="Move Bob down"
+            class="p-1 text-grouse hover:text-swift disabled:opacity-30"
+            data-testid="calltree-move-down-SERV:person:bob"
+          >
+            <svg
+              class="w-4 h-4"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+            >
+              <path
+                clip-rule="evenodd"
+                d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                fill-rule="evenodd"
+              />
+            </svg>
+          </button>
+        </div>
+        <button
+          aria-checked="true"
+          aria-label="Disable notifications for Bob"
+          class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 disabled:cursor-not-allowed bg-peacock"
+          data-testid="calltree-toggle-SERV:person:bob"
+          role="switch"
+        >
+          <span
+            class="inline-block h-4 w-4 rounded-full bg-crane shadow transition-transform translate-x-6"
+          />
+        </button>
+      </div>
+      <div
+        class="flex items-center gap-3 px-3 py-2.5 rounded-[var(--border-radius-base)] border border-heron opacity-50"
+        data-enabled="false"
+        data-position="3"
+        data-testid="calltree-entry-SERV:person:carol"
+      >
+        <span
+          class="text-xs font-medium text-grouse w-5 text-center"
+        >
+          3
+        </span>
+        <span
+          class="text-sm text-swift flex-1"
+        >
+          Carol
+        </span>
+        <div
+          class="flex items-center gap-1"
+        >
+          <button
+            aria-label="Move Carol up"
+            class="p-1 text-grouse hover:text-swift disabled:opacity-30"
+            data-testid="calltree-move-up-SERV:person:carol"
+          >
+            <svg
+              class="w-4 h-4"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+            >
+              <path
+                clip-rule="evenodd"
+                d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z"
+                fill-rule="evenodd"
+              />
+            </svg>
+          </button>
+          <button
+            aria-label="Move Carol down"
+            class="p-1 text-grouse hover:text-swift disabled:opacity-30"
+            data-testid="calltree-move-down-SERV:person:carol"
+            disabled=""
+          >
+            <svg
+              class="w-4 h-4"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+            >
+              <path
+                clip-rule="evenodd"
+                d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                fill-rule="evenodd"
+              />
+            </svg>
+          </button>
+        </div>
+        <button
+          aria-checked="false"
+          aria-label="Enable notifications for Carol"
+          class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 disabled:cursor-not-allowed bg-heron"
+          data-testid="calltree-toggle-SERV:person:carol"
+          role="switch"
+        >
+          <span
+            class="inline-block h-4 w-4 rounded-full bg-crane shadow transition-transform translate-x-1"
+          />
+        </button>
+      </div>
+    </div>
+  </div>
+</DocumentFragment>
+`;

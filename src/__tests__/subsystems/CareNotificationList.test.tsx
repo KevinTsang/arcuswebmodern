@@ -1,7 +1,7 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { Base, CareSubsystem, Person } from '@arcus/core';
 import { CareNotificationList } from '@/components/subsystems/CareNotificationList';
-import type { CareCallEntry } from '@/store/entityTypes';
+import type { CallTreeEntry } from '@/store/entityTypes';
 
 // ── Mocks ─────────────────────────────────────────────────────────────
 
@@ -35,11 +35,12 @@ jest.mock('@/store/hooks', () => ({
 }));
 
 interface MockCare {
-  callTree: CareCallEntry[];
+  callTree: CallTreeEntry[];
+  callTreeEnabled: boolean;
   subsystem?: { [key: string]: string };
 }
 
-const defaultCallTree: CareCallEntry[] = [
+const defaultCallTree: CallTreeEntry[] = [
   { person: ALICE, enabled: true },
   { person: BOB, enabled: false },
   { person: CAROL, enabled: true },
@@ -54,6 +55,7 @@ jest.mock('@/hooks/useCareSubsystem', () => ({
 function resetCare(overrides?: Partial<MockCare>) {
   mockCare = {
     callTree: defaultCallTree.map((e) => ({ ...e })),
+    callTreeEnabled: true,
     subsystem: { [Base.ATTR_ADDRESS]: CARE_ADDR },
     ...overrides,
   };
@@ -108,10 +110,34 @@ describe('CareNotificationList', () => {
     expect(screen.queryByRole('switch')).not.toBeInTheDocument();
   });
 
-  it('shows Unknown for a person who is not loaded', () => {
+  it('says when a person in the call tree is no longer at the place', () => {
     resetCare({ callTree: [{ person: 'SERV:person:missing', enabled: true }] });
     render(<CareNotificationList />);
-    expect(screen.getByText('Unknown')).toBeInTheDocument();
+    expect(screen.getByText('Someone no longer at this place')).toBeInTheDocument();
+  });
+
+  it('shows that only the owner is notified when the call tree is off (BASIC)', () => {
+    resetCare({ callTreeEnabled: false });
+    render(<CareNotificationList />);
+    expect(screen.getByTestId('care-calltree-owner-only')).toHaveTextContent(
+      'only the account owner is notified when a care alarm is triggered',
+    );
+    expect(screen.queryByRole('switch')).not.toBeInTheDocument();
+  });
+
+  it('matches snapshot when the call tree is off', () => {
+    resetCare({ callTreeEnabled: false });
+    const { asFragment } = render(<CareNotificationList />);
+    expect(asFragment()).toMatchSnapshot();
+  });
+
+  it('does not lock anyone or limit how many people are enabled', () => {
+    resetCare({
+      callTree: Array.from({ length: 8 }, (_, i) => ({ person: `SERV:person:p${i}`, enabled: i < 7 })),
+    });
+    render(<CareNotificationList />);
+    expect(screen.queryByTestId('calltree-limit')).not.toBeInTheDocument();
+    expect(screen.getByTestId('calltree-toggle-SERV:person:p7')).not.toBeDisabled();
   });
 
   // ── Interactions (success) ────────────────────────────────────────
@@ -203,7 +229,7 @@ describe('CareNotificationList', () => {
     await waitFor(() => {
       expect(mockDispatch).toHaveBeenCalledWith({
         type: 'ui/addNotification',
-        payload: { type: 'error', message: 'Failed to update notification list' },
+        payload: { type: 'error', message: 'Failed to update the care notification list' },
       });
     });
     // Controls are usable again after the failure.
@@ -218,7 +244,7 @@ describe('CareNotificationList', () => {
     await waitFor(() => {
       expect(mockDispatch).toHaveBeenCalledWith({
         type: 'ui/addNotification',
-        payload: { type: 'error', message: 'Failed to update notification list' },
+        payload: { type: 'error', message: 'Failed to update the care notification list' },
       });
     });
   });

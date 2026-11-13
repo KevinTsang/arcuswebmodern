@@ -8,14 +8,20 @@
  * writes the whole list back to the subsystem's call tree attribute.
  * Shared by the alarm (`subalarm:callTree`) and care (`subcare:callTree`)
  * notification lists.
+ *
+ * Edits apply to a local copy straight away, so a quick second edit builds
+ * on the first even before the platform's value change reaches the store.
+ * The copy is replaced whenever the store's list changes, and restored from
+ * it when a save fails.
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { Base, Person } from '@arcus/core';
 import Bridge from '@arcus/core/bridge';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import { selectAllPeople } from '@/store/slices/peopleSlice';
 import { addNotification } from '@/store/slices/uiSlice';
+import { ConfirmDialog } from '@/components/shared';
 import type { CallTreeEntry } from '@/store/entityTypes';
 
 export interface CallTreeListProps {
@@ -25,62 +31,101 @@ export interface CallTreeListProps {
   subsystemAddress?: string;
   /** Call tree attribute key, e.g. `AlarmSubsystem.ATTR_CALLTREE`. */
   attribute: string;
+  /** Names the list in messages, e.g. "alarm notification list". */
+  label: string;
   /** Explanatory text shown under the heading. */
   description: string;
   /** Text shown when the call tree is empty. */
   emptyMessage: string;
+  /** A person who is always notified and can't be switched off (the alarm list's place owner). */
+  lockedPersonAddress?: string;
+  /** The most people who can be enabled at once. No limit when omitted. */
+  maxEnabled?: number;
 }
 
 export function CallTreeList({
-  callTree, subsystemAddress, attribute, description, emptyMessage,
+  callTree, subsystemAddress, attribute, label, description, emptyMessage,
+  lockedPersonAddress, maxEnabled,
 }: CallTreeListProps) {
   const dispatch = useAppDispatch();
   const people = useAppSelector(selectAllPeople);
   const [saving, setSaving] = useState(false);
+  const [entries, setEntries] = useState(callTree);
+  const [syncedCallTree, setSyncedCallTree] = useState(callTree);
+  const [pendingNoneEnabled, setPendingNoneEnabled] = useState<CallTreeEntry[] | null>(null);
+  // The store's list, for restoring the copy when a save fails.
+  const latestCallTree = useRef(callTree);
+  useEffect(() => {
+    latestCallTree.current = callTree;
+  }, [callTree]);
+
+  // Take the store's list whenever it changes (a saved edit, or a change made elsewhere).
+  if (callTree !== syncedCallTree) {
+    setSyncedCallTree(callTree);
+    setEntries(callTree);
+  }
+
+  const enabledCount = entries.filter((e) => e.enabled).length;
+  const atLimit = maxEnabled !== undefined && enabledCount >= maxEnabled;
 
   const getPersonName = useCallback((personAddr: string): string => {
     const person = people.find((p) => p[Base.ATTR_ADDRESS] === personAddr);
-    if (!person) return 'Unknown';
+    if (!person) return people.length === 0 ? 'Loading…' : 'Someone no longer at this place';
     const first = (person[Person.ATTR_FIRSTNAME] as string) ?? '';
     const last = (person[Person.ATTR_LASTNAME] as string) ?? '';
-    return `${first} ${last}`.trim() || 'Unknown';
+    return `${first} ${last}`.trim() || 'Unnamed person';
   }, [people]);
 
   const saveCallTree = useCallback(async (updated: CallTreeEntry[]) => {
     if (!subsystemAddress) return;
+    setEntries(updated);
     setSaving(true);
     try {
       await Bridge.request(Base.CMD_SETATTRIBUTES, subsystemAddress, {
         [attribute]: updated,
       });
     } catch {
-      dispatch(addNotification({ type: 'error', message: 'Failed to update notification list' }));
+      setEntries(latestCallTree.current);
+      dispatch(addNotification({ type: 'error', message: `Failed to update the ${label}` }));
     }
     setSaving(false);
-  }, [subsystemAddress, attribute, dispatch]);
+  }, [subsystemAddress, attribute, label, dispatch]);
 
   const handleToggle = useCallback((index: number) => {
-    const updated = callTree.map((entry, i) =>
-      i === index ? { ...entry, enabled: !entry.enabled } : entry,
-    );
+    const entry = entries[index];
+    if (!entry) return;
+    if (entry.person === lockedPersonAddress) return;
+    if (!entry.enabled && atLimit) return;
+    const updated = entries.map((e, i) => (i === index ? { ...e, enabled: !e.enabled } : e));
+    if (!updated.some((e) => e.enabled)) {
+      setPendingNoneEnabled(updated);
+      return;
+    }
     saveCallTree(updated);
-  }, [callTree, saveCallTree]);
+  }, [entries, lockedPersonAddress, atLimit, saveCallTree]);
+
+  const confirmNoneEnabled = useCallback(() => {
+    if (pendingNoneEnabled) saveCallTree(pendingNoneEnabled);
+    setPendingNoneEnabled(null);
+  }, [pendingNoneEnabled, saveCallTree]);
+
+  const cancelNoneEnabled = useCallback(() => setPendingNoneEnabled(null), []);
 
   const handleMoveUp = useCallback((index: number) => {
     if (index === 0) return;
-    const updated = [...callTree];
+    const updated = [...entries];
     [updated[index - 1], updated[index]] = [updated[index], updated[index - 1]];
     saveCallTree(updated);
-  }, [callTree, saveCallTree]);
+  }, [entries, saveCallTree]);
 
   const handleMoveDown = useCallback((index: number) => {
-    if (index >= callTree.length - 1) return;
-    const updated = [...callTree];
+    if (index >= entries.length - 1) return;
+    const updated = [...entries];
     [updated[index], updated[index + 1]] = [updated[index + 1], updated[index]];
     saveCallTree(updated);
-  }, [callTree, saveCallTree]);
+  }, [entries, saveCallTree]);
 
-  if (callTree.length === 0) {
+  if (entries.length === 0) {
     return (
       <div>
         <h3 className="text-base font-medium text-swift mb-2">Notification List</h3>
@@ -93,21 +138,36 @@ export function CallTreeList({
     <div>
       <h3 className="text-base font-medium text-swift mb-1">Notification List</h3>
       <p className="text-xs text-grouse mb-3">{description}</p>
+      {maxEnabled !== undefined && (
+        <p data-testid="calltree-limit" className="text-xs text-grouse mb-3">
+          Up to {maxEnabled} people can be notified ({enabledCount} of {maxEnabled} selected).
+        </p>
+      )}
+      {enabledCount === 0 && (
+        <p data-testid="calltree-none-enabled" className="text-xs text-cardinal mb-3">
+          No one is set to be notified.
+        </p>
+      )}
       <div className="space-y-2">
-        {callTree.map((entry, index) => {
+        {entries.map((entry, index) => {
           const name = getPersonName(entry.person ?? '');
+          const locked = entry.person !== undefined && entry.person === lockedPersonAddress;
+          const blockedByLimit = !entry.enabled && atLimit;
           return (
             <div
               key={entry.person ?? index}
               data-testid={`calltree-entry-${entry.person ?? index}`}
               data-position={index + 1}
               data-enabled={entry.enabled ?? false}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded border border-heron ${
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-[var(--border-radius-base)] border border-heron ${
                 !entry.enabled ? 'opacity-50' : ''
               }`}
             >
               <span className="text-xs font-medium text-grouse w-5 text-center">{index + 1}</span>
-              <span className="text-sm text-swift flex-1">{name}</span>
+              <span className="text-sm text-swift flex-1">
+                {name}
+                {locked && <span className="ml-2 text-xs text-grouse">Account owner · always notified</span>}
+              </span>
               <div className="flex items-center gap-1">
                 <button
                   onClick={() => handleMoveUp(index)}
@@ -123,7 +183,7 @@ export function CallTreeList({
                 <button
                   onClick={() => handleMoveDown(index)}
                   data-testid={`calltree-move-down-${entry.person ?? index}`}
-                  disabled={index >= callTree.length - 1 || saving}
+                  disabled={index >= entries.length - 1 || saving}
                   className="p-1 text-grouse hover:text-swift disabled:opacity-30"
                   aria-label={`Move ${name} down`}
                 >
@@ -135,8 +195,12 @@ export function CallTreeList({
               <button
                 onClick={() => handleToggle(index)}
                 data-testid={`calltree-toggle-${entry.person ?? index}`}
-                disabled={saving}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 ${
+                disabled={saving || locked || blockedByLimit}
+                title={
+                  locked ? 'The account owner is always notified'
+                    : blockedByLimit ? `Up to ${maxEnabled} people can be notified` : undefined
+                }
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 disabled:cursor-not-allowed ${
                   entry.enabled ? 'bg-peacock' : 'bg-heron'
                 }`}
                 role="switch"
@@ -151,6 +215,15 @@ export function CallTreeList({
           );
         })}
       </div>
+      <ConfirmDialog
+        open={pendingNoneEnabled !== null}
+        title="No one will be notified"
+        message={`With everyone switched off, no one on the ${label} will be called. Save anyway?`}
+        confirmLabel="Save Anyway"
+        destructive
+        onConfirm={confirmNoneEnabled}
+        onCancel={cancelNoneEnabled}
+      />
     </div>
   );
 }

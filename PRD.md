@@ -203,7 +203,7 @@ None.
 | Alarm banner on active incidents | Yes | Yes | **Done** |
 | Device participation list | Yes | Yes | **Done** |
 | Participation editing per device | Yes | Yes (ON, PARTIAL, both, none) | **Done** |
-| Notification / call tree management | Yes (ordered, up to 6 people) | Yes (ordered, enable/disable, reorder) | **Done** |
+| Notification / call tree management | Yes (ordered, up to 6 people) | Yes (ordered, enable/disable, reorder; owner always notified, up to 6 enabled) | **Done** |
 | Alarm delays / grace period configuration | Yes | Yes (exit/entrance delay per mode) | **Done** |
 | Strobe / siren settings | Yes | Yes (silent alarm toggle per mode) | **Done** |
 | Silent / audible mode toggle | Yes | Yes (per mode) | **Done** |
@@ -228,7 +228,7 @@ None.
 | Behavior deletion | Yes | No | **Missing** |
 | Activity timeline | Yes | No | **Missing** |
 | Care device management | Yes | No | **Missing** |
-| Care call tree / notification settings | Yes | Yes (ordered, enable/disable, reorder; Notifications tab) | **Done** |
+| Care call tree / notification settings | Yes | Yes (ordered, enable/disable, reorder; Notifications tab; owner-only notice when `subcare:callTreeEnabled` is false) | **Done** |
 | Alarm mode (ON / VISIT) | Yes | No | **Missing** |
 | Silent mode toggle | Yes | Yes (display only) | **Partial** |
 | Panic alert | No | No (panic comes from keypads, pendants and rules) | **N/A** |
@@ -643,6 +643,9 @@ These are commonly used features that users will expect:
 2. ~~**Alarm device participation & settings**~~ — **DONE.** Device participation (ON/PARTIAL/both/none), notification call tree (ordered, enable/disable, reorder), delay settings (exit/entrance per mode), silent alarm, arming sounds.
 3. **Thermostat scheduling** — Temperature programs by time-of-day and day-of-week.
 4. ~~**Notification call tree (Care)**~~ — **DONE.** Care Notifications tab edits `subcare:callTree` (ordered, enable/disable, reorder) using the shared `CallTreeList` component that also backs the alarm call tree.
+   - When `subcare:callTreeEnabled` is false (BASIC places) the platform notifies only the account owner, so the tab says so instead of showing an editable list.
+   - `CallTreeList` applies edits to a local copy, so a quick second edit isn't lost before the platform's value change arrives, and it asks before saving a list with no one enabled.
+   - The alarm list keeps legacy's rules: the place owner (from `place:ListPersonsWithAccess`, via `usePlaceOwnerAddress`) can't be switched off, and at most six people can be enabled. Legacy's care settings had neither rule, so the care list doesn't either.
 5. **Billing & subscription management** — Service plan display, payment methods, invoicing.
 
 ### Tier 2 — Important Gaps (Full Feature Parity)

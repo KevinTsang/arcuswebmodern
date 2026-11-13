@@ -1,7 +1,7 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { Base, AlarmSubsystem, Person } from '@arcus/core';
 import { AlarmNotificationList } from '@/components/subsystems/AlarmNotificationList';
-import type { AlarmCallEntry } from '@/store/entityTypes';
+import type { CallTreeEntry } from '@/store/entityTypes';
 
 // ── Mocks ─────────────────────────────────────────────────────────────
 
@@ -53,7 +53,7 @@ jest.mock('@/store/hooks', () => ({
   useAppDispatch: () => mockDispatch,
 }));
 
-const defaultCallTree: AlarmCallEntry[] = [
+const defaultCallTree: CallTreeEntry[] = [
   { person: 'SERV:person:person-1', enabled: true },
   { person: 'SERV:person:person-2', enabled: true },
   { person: 'SERV:person:person-3', enabled: false },
@@ -68,6 +68,12 @@ const defaultAlarm = {
 };
 
 let mockAlarm = { ...defaultAlarm, callTree: [...defaultCallTree] };
+
+let mockOwnerAddress: string | undefined;
+
+jest.mock('@/hooks/usePlaceOwnerAddress', () => ({
+  usePlaceOwnerAddress: () => mockOwnerAddress,
+}));
 
 jest.mock('@/hooks/useAlarmSubsystem', () => ({
   useAlarmSubsystem: () => mockAlarm,
@@ -86,6 +92,7 @@ function resetAlarm(overrides?: Partial<typeof defaultAlarm>) {
 beforeEach(() => {
   jest.clearAllMocks();
   mockBridgeRequest.mockResolvedValue({});
+  mockOwnerAddress = undefined;
   resetAlarm();
 });
 
@@ -144,7 +151,7 @@ describe('AlarmNotificationList', () => {
       callTree: [{ person: 'SERV:person:unknown-addr', enabled: true }],
     });
     render(<AlarmNotificationList />);
-    expect(screen.getByText('Unknown')).toBeInTheDocument();
+    expect(screen.getByText('Someone no longer at this place')).toBeInTheDocument();
   });
 
   it('reflects enabled/disabled state on toggle switches', () => {
@@ -269,7 +276,7 @@ describe('AlarmNotificationList', () => {
     await waitFor(() => {
       expect(mockDispatch).toHaveBeenCalledWith({
         type: 'ui/addNotification',
-        payload: { type: 'error', message: 'Failed to update notification list' },
+        payload: { type: 'error', message: 'Failed to update the alarm notification list' },
       });
     });
   });
@@ -284,7 +291,7 @@ describe('AlarmNotificationList', () => {
     await waitFor(() => {
       expect(mockDispatch).toHaveBeenCalledWith({
         type: 'ui/addNotification',
-        payload: { type: 'error', message: 'Failed to update notification list' },
+        payload: { type: 'error', message: 'Failed to update the alarm notification list' },
       });
     });
   });
@@ -318,5 +325,49 @@ describe('AlarmNotificationList', () => {
     const moveDownCarol = screen.getByRole('button', { name: /Move Carol Davis down/i });
     expect(moveDownCarol).toBeDisabled();
     expect(mockBridgeRequest).not.toHaveBeenCalled();
+  });
+
+  // ── Owner and limit (legacy alarm rules) ──────────────────────────
+
+  describe('owner and limit', () => {
+    it('locks the place owner so they stay notified', () => {
+      mockOwnerAddress = 'SERV:person:person-1';
+      render(<AlarmNotificationList />);
+
+      const ownerToggle = screen.getByTestId('calltree-toggle-SERV:person:person-1');
+      expect(ownerToggle).toBeDisabled();
+      expect(ownerToggle).toHaveAttribute('title', 'The account owner is always notified');
+      expect(screen.getByText('Account owner · always notified')).toBeInTheDocument();
+      fireEvent.click(ownerToggle);
+      expect(mockBridgeRequest).not.toHaveBeenCalled();
+    });
+
+    it('still lets the owner be reordered', async () => {
+      mockOwnerAddress = 'SERV:person:person-1';
+      render(<AlarmNotificationList />);
+      fireEvent.click(screen.getByTestId('calltree-move-down-SERV:person:person-1'));
+      await waitFor(() => expect(mockBridgeRequest).toHaveBeenCalled());
+    });
+
+    it('shows how many of the 6 places are used', () => {
+      render(<AlarmNotificationList />);
+      expect(screen.getByTestId('calltree-limit')).toHaveTextContent(
+        'Up to 6 people can be notified (2 of 6 selected).',
+      );
+    });
+
+    it('does not enable a seventh person', () => {
+      const tree = Array.from({ length: 7 }, (_, i) => ({ person: `SERV:person:p${i}`, enabled: i < 6 }));
+      resetAlarm({ callTree: tree });
+      render(<AlarmNotificationList />);
+
+      const seventh = screen.getByTestId('calltree-toggle-SERV:person:p6');
+      expect(seventh).toBeDisabled();
+      expect(seventh).toHaveAttribute('title', 'Up to 6 people can be notified');
+      fireEvent.click(seventh);
+      expect(mockBridgeRequest).not.toHaveBeenCalled();
+      // Someone already enabled can still be switched off.
+      expect(screen.getByTestId('calltree-toggle-SERV:person:p0')).not.toBeDisabled();
+    });
   });
 });

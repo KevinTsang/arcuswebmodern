@@ -176,12 +176,6 @@ export interface CallTreeEntry {
   enabled?: boolean;
 }
 
-/** Alarm call tree entry from AlarmSubsystem / SecuritySubsystem. */
-export type AlarmCallEntry = CallTreeEntry;
-
-/** Care call tree entry from CareSubsystem. */
-export type CareCallEntry = CallTreeEntry;
-
 /** Chime configuration from DoorsNLocksSubsystem. */
 export type ChimeConfig = Record<string, boolean>;
 
