@@ -7,6 +7,8 @@ import OpenCloseDoor from './OpenCloseDoor';
 import OpenCloseValve from './OpenCloseValve';
 import ThermostatControl from './ThermostatControl';
 import MultiToggle from './MultiToggle';
+import ShadeLevelControl from './ShadeLevelControl';
+import BlindStateControl from './BlindStateControl';
 
 interface DeviceActionsProps {
   address: string;
@@ -28,6 +30,10 @@ function DeviceActionsInner({ address, action }: DeviceActionsProps) {
       return <ThermostatControl address={address} />;
     case 'multi-toggle':
       return <MultiToggle address={address} />;
+    case 'changeShadeLevel':
+      return <ShadeLevelControl address={address} />;
+    case 'changeBlindState':
+      return <BlindStateControl address={address} />;
     default:
       return null;
   }

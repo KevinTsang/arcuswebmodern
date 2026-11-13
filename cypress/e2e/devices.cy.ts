@@ -5,9 +5,11 @@
  */
 
 import {
-  Base, Contact, Device, DeviceConnection, Dimmer, DoorLock, Hub, HubAdvanced, HubZwave, Switch, Thermostat, Valve,
+  Base, Contact, Device, DeviceConnection, Dimmer, DoorLock, Hub, HubAdvanced, HubZwave, Shade, Somfyv1, Switch,
+  Thermostat, Valve,
 } from '../../packages/arcus-core/src/capabilities/capabilities';
-import { DEVICE, DEVICE_NAME, addr } from '../support/platform/fixtures';
+import { DEVICE, DEVICE_NAME, PLACE_ID, addr } from '../support/platform/fixtures';
+import type { Attrs } from '../support/platform/types';
 import { tid } from '../support/selectors';
 
 /** The list row for a device. */
@@ -18,6 +20,26 @@ function deviceRow(address: string) {
 function status(address: string) {
   return tid(`device-status-${address}`);
 }
+
+/** A device entity for specs that need a type the default household lacks. */
+function extraDevice(id: string, name: string, typeHint: string, caps: string[], attrs: Attrs): Attrs {
+  return {
+    [Base.ATTR_ADDRESS]: addr.device(id),
+    [Base.ATTR_ID]: id,
+    [Base.ATTR_TYPE]: 'dev',
+    [Base.ATTR_CAPS]: ['base', 'dev', 'devadv', 'devconn', 'devpow', ...caps],
+    [Base.ATTR_TAGS]: [],
+    [Device.ATTR_NAME]: name,
+    [Device.ATTR_DEVTYPEHINT]: typeHint,
+    [Device.ATTR_PLACE]: PLACE_ID,
+    [Device.ATTR_PRODUCTID]: `prod-${id}`,
+    [DeviceConnection.ATTR_STATE]: DeviceConnection.STATE_ONLINE,
+    ...attrs,
+  };
+}
+
+const SHADE = addr.device('shade');
+const BLIND = addr.device('blind');
 
 describe('Devices page', () => {
   it('lists the hub and every device with its status', () => {
@@ -90,6 +112,57 @@ describe('Devices page', () => {
       r.destination === DEVICE.valve && r.attributes[Valve.ATTR_VALVESTATE] === Valve.VALVESTATE_CLOSED);
     status(DEVICE.valve).should('have.text', 'Closed');
     tid(`device-valve-toggle-${DEVICE.valve}`).should('have.text', 'Open');
+  });
+
+  it('steps a shade\'s position and reflects the reported level', () => {
+    cy.signIn({
+      path: '/devices',
+      customize: (p) => {
+        p.data.entities[SHADE] = extraDevice('shade', 'Living Room Shade', 'Shade', ['shade'], {
+          [Shade.ATTR_LEVEL]: 30,
+          [Shade.ATTR_SHADESTATE]: Shade.SHADESTATE_OK,
+        });
+      },
+    });
+    status(SHADE).should('have.text', '30% Open');
+    tid(`device-shade-level-${SHADE}`).should('have.text', '30%');
+    tid(`device-shade-up-${SHADE}`).click().click();
+    tid(`device-shade-level-${SHADE}`).should('have.text', '50%');
+    cy.expectRequestAttrs(Base.CMD_SETATTRIBUTES, { [Shade.ATTR_LEVEL]: 50 });
+    status(SHADE).should('have.text', '50% Open');
+  });
+
+  it('reports a failed shade move', () => {
+    cy.signIn({
+      path: '/devices',
+      customize: (p) => {
+        p.data.entities[SHADE] = extraDevice('shade', 'Living Room Shade', 'Shade', ['shade'], {
+          [Shade.ATTR_LEVEL]: 30,
+        });
+      },
+    });
+    cy.platform().invoke('failRequest', Base.CMD_SETATTRIBUTES);
+    tid(`device-shade-down-${SHADE}`).click();
+    cy.toast('Failed to move the shade');
+    tid(`device-shade-level-${SHADE}`).should('have.text', '30%');
+  });
+
+  it('opens a Somfy blind and moves it to its favorite position', () => {
+    cy.signIn({
+      path: '/devices',
+      customize: (p) => {
+        p.data.entities[BLIND] = extraDevice('blind', 'Office Blinds', 'SomfyV1Blind', ['somfyv1'], {
+          [Somfyv1.ATTR_TYPE]: Somfyv1.TYPE_BLIND,
+          [Somfyv1.ATTR_CURRENTSTATE]: Somfyv1.CURRENTSTATE_CLOSED,
+        });
+      },
+    });
+    status(BLIND).should('have.text', 'Closed');
+    tid(`device-blind-open-${BLIND}`).should('have.text', 'Open').click();
+    cy.expectRequest(Somfyv1.CMD_GOTOOPEN, (r) => r.destination === BLIND);
+    tid(`device-blind-open-${BLIND}`).should('be.disabled');
+    tid(`device-blind-favorite-${BLIND}`).click();
+    cy.expectRequest(Somfyv1.CMD_GOTOFAVORITE, (r) => r.destination === BLIND);
   });
 
   it('adjusts thermostat setpoints from the list', () => {

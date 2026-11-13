@@ -1,0 +1,33 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`BlindStateControl snapshots matches snapshot 1`] = `
+<DocumentFragment>
+  <div
+    aria-label="Blind position"
+    class="flex items-center gap-2"
+    role="group"
+  >
+    <button
+      class="px-3 py-1.5 rounded-[var(--border-radius-base)] text-sm font-medium bg-pigeon text-coot hover:bg-heron disabled:opacity-50 disabled:hover:bg-pigeon"
+      data-testid="device-blind-open-DRIV:dev:blind"
+      type="button"
+    >
+      Open
+    </button>
+    <button
+      class="px-3 py-1.5 rounded-[var(--border-radius-base)] text-sm font-medium bg-pigeon text-coot hover:bg-heron disabled:opacity-50 disabled:hover:bg-pigeon"
+      data-testid="device-blind-close-DRIV:dev:blind"
+      type="button"
+    >
+      Close
+    </button>
+    <button
+      class="px-3 py-1.5 rounded-[var(--border-radius-base)] text-sm font-medium bg-pigeon text-coot hover:bg-heron disabled:opacity-50 disabled:hover:bg-pigeon"
+      data-testid="device-blind-favorite-DRIV:dev:blind"
+      type="button"
+    >
+      Favorite
+    </button>
+  </div>
+</DocumentFragment>
+`;

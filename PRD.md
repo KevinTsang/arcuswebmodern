@@ -77,7 +77,7 @@ None.
 | Water valves | Open/close | Open/close | **Done** |
 | Water heaters | Mode control, temperature | None | **Missing** |
 | Water softeners | Salt level, recharge time, settings | None | **Missing** |
-| Shades / blinds | Position, tilt | Config references action but no component | **Missing** |
+| Shades / blinds | Position, tilt | `ShadeLevelControl`: −/+ steps `shade:level` in 10% increments (debounced, as legacy), `<n>% Open` / Obstructed status, obstruction hint. Tilt: the platform has no tilt-angle capability; Somfy blind-type devices (below) are the legacy client's only tilt control | **Done** |
 | Irrigation controllers | Zone-by-zone control, schedules, modes | Zone list display only | **Partial** |
 | Cameras (live) | HLS streaming, PTZ, recording, clips | Device panel with status only | **Partial** |
 | Keypads | Button function assignment | None | **Missing** |
@@ -86,7 +86,7 @@ None.
 | NOAA weather radios | Alert display, hush/snooze | None | **Missing** |
 | Halo devices | Multi-function (smoke, CO, weather, nightlight) | None | **Missing** |
 | Presence sensors / pet tokens | Assignment to person | None | **Missing** |
-| Somfy motorized shades | Position control | None | **Missing** |
+| Somfy motorized shades | Position control | `BlindStateControl`: Open/Close (blind) or Up/Down (shade) plus Favorite via `somfyv1:GoTo*`, 5 s cooldown on Open/Close, Open/Closed (Up/Down) status | **Done** |
 
 ### 3.3 Thermostat Sub-Features
 
@@ -706,7 +706,7 @@ These are commonly used features that users will expect:
 ### Tier 3 — Completeness Gaps (Niche Device Types & Polish)
 
 13. **Water heater & softener controls** — Mode, temperature, salt level, recharge settings.
-14. **Shade / blind controls** — Position and tilt control.
+14. ~~**Shade / blind controls**~~ — **DONE.** Shade position stepper (`shade:level`) and Somfy V1 Open/Close/Favorite controls in the device list, with status text. No separate tilt-angle control: the platform exposes none (legacy offered none either).
 15. **Weather subsystem** — NOAA alerts, current conditions, weather radio integration.
 16. **Thermostat fan mode & min/max enforcement** — Fan control, setpoint limits, separation enforcement.
 17. **Advanced device info** — Power usage, signal strength, OTA firmware status.

@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import { Base, DoorLock, Valve } from '@arcus/core';
+import { Base, DoorLock, Shade, Somfyv1, Valve } from '@arcus/core';
 import { DeviceActions } from '@/components/devices/DeviceActions';
 import type { DeviceEntity } from '@/store/entityTypes';
 import { makeDevice } from '../helpers/factories';
@@ -67,5 +67,18 @@ describe('DeviceActions', () => {
     render(<DeviceActions address="DRIV:dev:test" action="thermostat-slider" />);
     // Off mode renders "Off" text
     expect(screen.getByText('Off')).toBeInTheDocument();
+  });
+
+  it('renders ShadeLevelControl for changeShadeLevel action', () => {
+    mockDevice = makeDevice('DRIV:dev:test', { [Shade.ATTR_LEVEL]: 40 });
+    render(<DeviceActions address="DRIV:dev:test" action="changeShadeLevel" />);
+    expect(screen.getByTestId('device-shade-level-DRIV:dev:test')).toHaveTextContent('40%');
+  });
+
+  it('renders BlindStateControl for changeBlindState action', () => {
+    mockDevice = makeDevice('DRIV:dev:test', { [Somfyv1.ATTR_TYPE]: Somfyv1.TYPE_BLIND });
+    render(<DeviceActions address="DRIV:dev:test" action="changeBlindState" />);
+    expect(screen.getByTestId('device-blind-open-DRIV:dev:test')).toHaveTextContent('Open');
+    expect(screen.getByTestId('device-blind-favorite-DRIV:dev:test')).toBeEnabled();
   });
 });
