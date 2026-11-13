@@ -119,6 +119,53 @@ None.
 | Fullscreen mode | Yes (cross-browser) | No | **Missing** |
 | Preview image / thumbnail | Yes | No | **Missing** |
 
+### 3.5 Next-Generation Z-Wave (S2 Security & QR Code Pairing)
+
+Modern-only: the legacy client never supported Z-Wave S2. The platform side
+landed in arcusplatform PR #502 ("Let clients enter the S2 PIN when pairing a
+Z-Wave device"). Its client contract is `docs/zwave-s2-pin-pairing.md` in
+arcusplatform, under "What a client must do".
+
+| Feature | Legacy | Modern | Status |
+|---------|--------|--------|--------|
+| Opt in to S2 PIN entry (`s2PinEntry: true` on `subpairing:StartPairing` and `subpairing:Search`) | No | No | **Missing** |
+| S2 PIN prompt: on `subpairing:s2PinRequestId`, call `GetS2PinRequest`, show DSK groups 2–8 to check against the label, take the 5-digit PIN, count down to `expires` | No | No | **Missing** |
+| Submit / decline (`SubmitS2Pin` once, `CancelS2Pin` on DSK mismatch or give-up; retry only on `request.param.invalid`) | No | No | **Missing** |
+| Scan the device's Z-Wave QR code with the browser camera to fill the PIN and check the DSK automatically | No | No | **Missing** |
+| Show S2 failures (`subpairing:PairingFailed` `zwave.s2.pin.timeout` / `zwave.s2.pin.failed`) with "exclude or factory reset and pair again" guidance | No | No | **Missing** |
+| Show the granted vs requested security class (`ZWAV:Security` / `ZWAV:SecurityRequested` in `devadv:protocolAttrs`) on device details, and flag devices that joined with less than they asked for | No | No | **Missing** |
+| SmartStart: add scanned QR codes to a provisioning list so devices join when powered on | No | No | **Missing** (blocked: no platform API yet) |
+
+### Gaps
+
+- **S2 PIN entry.** The pairing flow must opt in with `s2PinEntry`. Without it
+  the hub never grants S2 Authenticated or Access Control, and those devices
+  fall back to S2 Unauthenticated or S0. When `s2PinRequestId` turns non-empty,
+  open a prompt with the DSK and a countdown to `s2PinExpires` (about 195 s).
+  The prompt closes when the ID goes empty again. There is only one attempt: a
+  wrong well-formed PIN uses it up, and the device then has to be excluded and
+  paired again.
+- **QR code scanning.** The Z-Wave QR label is a numeric string. It starts with
+  `90`, and its DSK field gives all eight groups. Add a "Scan QR code" option to
+  the PIN prompt that uses `navigator.mediaDevices.getUserMedia` (rear camera,
+  `facingMode: 'environment'`). Decode with a maintained library, or with
+  `BarcodeDetector` where the browser has it. Parse the DSK from the code,
+  compare groups 2–8 with the DSK the hub reported, and submit group 1 as the
+  PIN only when they match. If they don't match, warn the user and offer
+  `CancelS2Pin`. Handle a denied or missing camera (and plain-HTTP origins,
+  where `getUserMedia` is unavailable) by falling back to typing the PIN. Stop
+  the camera stream when the prompt closes or the request expires.
+- **Security visibility.** Show the granted S2/S0 class on the device's
+  advanced info, so you can find devices that joined with less than they asked
+  for.
+- **SmartStart (follow-up).** Scanning a QR code *before* inclusion, so the hub
+  adds the device as soon as it is powered, needs a provisioning-list API on the
+  platform (hubzwave or subpairing). It isn't in arcusplatform yet, so build the
+  QR scanner and parser so a provisioning flow can reuse them later.
+- **Testing.** Mock `getUserMedia` and the decoder in unit tests. Extend the
+  Cypress fake platform with `GetS2PinRequest` / `SubmitS2Pin` / `CancelS2Pin`
+  and the `s2PinRequestId` value changes.
+
 ---
 
 ## 4. Scenes
@@ -493,13 +540,13 @@ None.
 | Hub WiFi configuration during setup | Yes | No | **Missing** |
 | Cloud device pairing (Nest, Hue, Lutron) | Yes | No | **Missing** |
 | Care alarm interrupt (cancel pairing on alert) | Yes | No | **Missing** |
-| Incident interrupt (cancel pairing on alarm) | Yes | No | **Missing** |
+| Incident interrupt (cancel pairing on alarm) | Yes | Yes (the incident redirect to the alarms page stops searching and keeps the pairing flow) | **Done** |
 
 ### Gaps
 
 - Hub WiFi configuration during pairing.
 - Cloud device / third-party bridge pairing flows.
-- Pairing interruption on alarm/care events.
+- Pairing interruption on care alarm events.
 
 ---
 
@@ -680,15 +727,25 @@ These are commonly used features that users will expect:
     (`favorites`, `doorsLocks`, …) and writes `dashboard:cards` / `dashboard:hidden`
     while the home page reads `dashboardCards`, so saved preferences never
     affect the dashboard.
-25. **Split `login/page.tsx` into per-view components** — The login route
-    (`src/app/login/page.tsx`, ~570 lines) defines four views in one file:
-    `LoginForm`, `SendCodeForm`, `ResetPasswordForm` and `ResetConfirmation`,
-    plus the branding shell, switched on `?view=`. That breaks the
-    one-component-per-file convention in CLAUDE.md and makes each form hard to
-    unit-test in isolation. Move each form into its own file under
-    `src/components/login/` (sharing the validation constraints from a
-    `constraints.ts`), keep `page.tsx` as the thin `?view=` router + layout, and
-    give each component its own test file.
+25. ~~**Split `login/page.tsx` into per-view components**~~ — **DONE.**
+    `LoginForm`, `SendCodeForm`, `ResetPasswordForm` and `ResetConfirmation`
+    now live in their own files under `src/components/login/`, each building
+    its constraints from `src/lib/validationRules.ts` (per item 27, no separate
+    `constraints.ts`). `src/app/login/page.tsx` is just the `?view=` router and
+    the branding layout. Each view has its own test file in
+    `src/__tests__/login/`, and `LoginPage.test.tsx` covers the view routing.
+    - **Fixed in review:**
+      - The forms use the shared `FormField`, which gained `name` and `className`
+        props.
+      - Back buttons navigate explicitly instead of calling `router.back()`.
+      - A failure to load the place after a successful login no longer shows
+        "Invalid username or password".
+      - The reset form shows the email field when the send-code link has no
+        valid email.
+      - The reset form maps platform error codes to readable messages
+        (`src/components/login/resetErrors.ts`). An unknown email reads the same
+        as a bad code, so the form doesn't reveal whether an account exists.
+      - "Cannot be your email address" ignores letter case.
 26. ~~**Fix the Alarms `deviceAttributes` in `subsystemConfig`**~~ — **DONE.**
     The Alarms entry listed `subsecurity:securityDevices` / `subsafety:totalDevices`
     under the `subalarm` namespace, so `useSubsystemDevices('subalarm')` found no
@@ -755,6 +812,26 @@ These are commonly used features that users will expect:
       matching `RulePanel`'s deliberate save order.
     - The last full run (before these fixes) passed every other spec: 208 of
       212 tests, with 1 test skipped in `history.cy.ts` by design.
+30. **Next-generation Z-Wave (S2 + QR code pairing)** — S2 PIN entry during
+    pairing, camera QR-code scanning to fill the PIN and verify the DSK, and
+    granted security class display. See §3.5. Platform support is in
+    arcusplatform PR #502. SmartStart provisioning is blocked on a platform API.
+31. **Enforce the platform's 100-character password limit** — The platform rejects
+    passwords over 100 characters (`MAX_PASSWORD_LENGTH` in arcusplatform's
+    `ResetPasswordRESTHandler`). That check throws instead of returning an error
+    event, so the client gets a bare HTTP 500 and the reset form shows only the
+    generic "An error occurred" message.
+    - **Fix:** add `maximum: 100` to `NEW_PASSWORD_RULE`
+      (`src/lib/validationRules.ts`), with a field error such as "must be 100
+      characters or fewer", so it's caught before the request.
+    - **Affected forms:** sign-up (`CreateAccountContext`), accepting an
+      invitation (`src/app/invite/page.tsx`) and password reset
+      (`ResetPasswordForm`). `ChangePasswordPanel` has its own hand-written
+      8-character check and should get the same limit; ideally it would use
+      `NEW_PASSWORD_RULE` too.
+    - **Before changing it:** check that the platform's sign-up, invitation and
+      change-password paths use the same 100-character maximum, and list the
+      limit in the password rules each form shows.
 
 ---
 

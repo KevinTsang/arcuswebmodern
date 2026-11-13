@@ -631,7 +631,7 @@ export class MockPlatform {
     },
     'person:SendPasswordReset': () => ({}),
     'person:ResetPassword': ({ attrs }) => {
-      if (attrs.token !== 'RESET-99') throw new PlatformFailure('error.token.invalid', 'Invalid reset code');
+      if (attrs.token !== 'RESET-99') throw new PlatformFailure('person.reset.token_failed', 'Unable to reset password because reset token doesn\'t match, perhaps try again.');
       this.data.login.password = attrs.password as string;
       return {};
     },
@@ -1009,6 +1009,19 @@ export class MockPlatform {
       const customizations = new Set((pairing[PairingDevice.ATTR_CUSTOMIZATIONS] as string[]) ?? []);
       customizations.add(attrs.customization as string);
       pairing[PairingDevice.ATTR_CUSTOMIZATIONS] = [...customizations];
+      return {};
+    },
+    // Errors match the platform's DismissRequestHandler and PairingDeviceResolver, not the
+    // capability docs (which call Dismiss idempotent and name request.state.invalid).
+    [PairingDevice.CMD_DISMISS]: ({ destination }) => {
+      const pairing = this.data.entities[destination];
+      if (!pairing) {
+        throw new PlatformFailure('request.destination.notfound', `No object addressed [${destination}] was found`);
+      }
+      if (pairing[PairingDevice.ATTR_PAIRINGSTATE] !== PairingDevice.PAIRINGSTATE_PAIRED) {
+        throw new PlatformFailure('request.invalid', 'Can only dismiss fully PAIRED devices');
+      }
+      this.removeEntity(destination);
       return {};
     },
 

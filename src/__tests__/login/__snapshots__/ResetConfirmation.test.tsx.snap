@@ -1,0 +1,27 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`ResetConfirmation matches snapshot 1`] = `
+<DocumentFragment>
+  <div
+    class="w-full max-w-sm"
+    data-testid="reset-confirmation"
+  >
+    <h3
+      class="text-xl font-semibold text-swift mb-2"
+    >
+      Password Reset
+    </h3>
+    <p
+      class="text-coot mb-6"
+    >
+      Your password has successfully been reset.
+    </p>
+    <a
+      class="inline-block bg-peacock text-crane px-6 py-2.5 rounded-[var(--border-radius-base)] hover:opacity-90 transition-opacity"
+      href="/login"
+    >
+      Back to login
+    </a>
+  </div>
+</DocumentFragment>
+`;
