@@ -671,12 +671,12 @@ This is a new feature in the modern client with no legacy equivalent.
 | Runs read-only as uid 1000 under the arcus-k8s mounts and limits | Yes | Yes | **Done** |
 | Browsers still running the legacy page move to this client | — | Yes (legacy `/build/dist/*.js` bundle requests get a script that reloads the page once) | **Done** |
 | Build / tag / push | Yes (gradle `:tools:khakis:pushDocker`) | Yes (`docker/bin/build.sh [--push]`) | **Done** |
-| CI image publishing | No | No | **Missing** |
+| CI image publishing | No | Yes (`.github/workflows/publish-image.yml` runs `docker/bin/build.sh --push` after CI passes on `main`, or by hand) | **Done** |
 
 ### Gaps
 
 - `server.json` holds only the two platform URLs. `run-nginx` ignores legacy's `ARCUS_REDIRECT_URI`, `ARCUS_ENABLE_HUB_WIFI_SCAN`, `ARCUS_ENABLE_BATTERY_PERCENTAGE`, `ARCUS_ENABLE_YEARLY_SUBSCRIPTION`, `ARCUS_IOS_DOWNLOAD_URI` and `ARCUS_ANDROID_DOWNLOAD_URI`. Nothing in this client reads them, and battery percentages are always shown (legacy showed them only with the flag on, which arcus-k8s sets). When a feature needs one (hub WiFi scan, billing, app download links), add its key to `run-nginx`, `ServerConfig` and `ArcusCoreConfig` together. A `NEXT_PUBLIC_*` value won't do, because the image bakes none in.
-- No workflow builds and pushes the image. For now it is published by hand with `docker/bin/build.sh --push`.
+- The publish workflow is skipped until the repository has the `REGISTRY_NAME` variable (registry path, e.g. `us-west1-docker.pkg.dev/<project>/<repo>`) and the `REGISTRY_USERNAME` / `REGISTRY_PASSWORD` secrets (for Google Artifact Registry, `_json_key` and a service account key's JSON). It logs in to the host part of `REGISTRY_NAME`. Switching to keyless Workload Identity Federation would need `id-token: write` and `google-github-actions/auth` in place of the password login.
 - **TODO — static-server:** arcus-k8s points `staticResourceBaseUrl`, `secureStaticResourceBaseUrl` and the notification service's resource URL at `static-server`, which still runs the legacy arcusweb image (Iris brand logo and 22 device-type icons). The mobile apps, legacy web and platform emails also request catalog product and pairing-step images, customization and action images, more brand logos and device types, and the email/invoice assets (`o/res_templates`). Those exist in the old Iris resource root (about 120 MB once unused parts are dropped) but aren't in any repo. Decide where they live (licensing, and whether a 120 MB set belongs in this repo, a separate repo or a private bucket), then build a replacement image.
 
 ---
