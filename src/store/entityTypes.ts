@@ -180,8 +180,26 @@ export interface CareCallEntry {
   enabled?: boolean;
 }
 
-/** Chime configuration from DoorsNLocksSubsystem. */
-export type ChimeConfig = Record<string, boolean>;
+/** One device's entry in DoorsNLocksSubsystem `chimeConfig` (a DoorChimeConfig struct). */
+export interface DoorChimeEntry {
+  device: string;
+  enabled: boolean;
+}
+
+/** Chime configuration from DoorsNLocksSubsystem: one entry per chime-capable device. */
+export type ChimeConfig = DoorChimeEntry[];
+
+/** Whether a person's PIN is on a lock (a LockAuthorizationState struct). */
+export type LockAuthorizationStatus = 'AUTHORIZED' | 'UNAUTHORIZED' | 'PENDING';
+
+/** One person's entry in DoorsNLocksSubsystem `authorizationByLock`. */
+export interface LockAuthorizationEntry {
+  person: string;
+  state: LockAuthorizationStatus;
+}
+
+/** DoorsNLocksSubsystem `authorizationByLock`, keyed by lock device address. */
+export type LockAuthorizationMap = Record<string, LockAuthorizationEntry[]>;
 
 /**
  * Zone watering entry from the LawnNGardenSubsystem `zonesWatering` map,

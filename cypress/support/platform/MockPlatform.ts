@@ -14,10 +14,13 @@
  */
 
 import {
-  Account, AlarmIncident, AlarmSubsystem, Base, Device, Hub, HubZwave, PairingDevice,
+  Account, AlarmIncident, AlarmSubsystem, Base, Device, DoorsNLocksSubsystem, Hub, HubZwave, PairingDevice,
   PairingSubsystem, Person, Place, Rule, RuleTemplate, Scene, SceneTemplate, Scheduler,
   SecuritySubsystem,
 } from '../../../packages/arcus-core/src/capabilities/capabilities';
+import {
+  LockAuthorizationOperation, LockAuthorizationState,
+} from '../../../packages/arcus-core/src/capabilities/doorsNLocksTypes';
 import { createFixture, PLACE_ID } from './fixtures';
 import {
   PlatformFailure,
@@ -918,6 +921,31 @@ export class MockPlatform {
           [SecuritySubsystem.ATTR_ALARMMODE]: SecuritySubsystem.ALARMMODE_OFF,
         });
       }
+      return {};
+    },
+
+    // Doors & Locks: apply each operation to the lock's access list at once
+    // (the real subsystem reports PENDING until the lock confirms).
+    [DoorsNLocksSubsystem.CMD_AUTHORIZEPEOPLE]: ({ destination, attrs }) => {
+      interface AuthState { person: string; state: string }
+      interface AuthOperation { person: string; operation: string }
+      const entity = this.mustGet(destination);
+      const device = attrs.device as string;
+      const ops = attrs.operations as unknown as AuthOperation[];
+      const byLock = {
+        ...((entity[DoorsNLocksSubsystem.ATTR_AUTHORIZATIONBYLOCK] as unknown as Record<string, AuthState[]> | undefined) ?? {}),
+      };
+      byLock[device] = (byLock[device] ?? []).map((entry) => {
+        const op = ops.find((o) => o.person === entry.person);
+        if (!op) return entry;
+        return {
+          person: entry.person,
+          state: op.operation === LockAuthorizationOperation.OPERATION_AUTHORIZE
+            ? LockAuthorizationState.STATE_AUTHORIZED
+            : LockAuthorizationState.STATE_UNAUTHORIZED,
+        };
+      });
+      this.updateEntity(destination, { [DoorsNLocksSubsystem.ATTR_AUTHORIZATIONBYLOCK]: byLock as unknown as Json });
       return {};
     },
 

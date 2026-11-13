@@ -1,0 +1,74 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`DoorChimeSettings matches snapshot 1`] = `
+<DocumentFragment>
+  <div
+    data-testid="door-chime-settings"
+  >
+    <h3
+      class="text-base font-medium text-swift"
+    >
+      Chime Hub
+    </h3>
+    <p
+      class="text-xs text-grouse mt-0.5 mb-2"
+    >
+      Chime the hub when a contact sensor or hinge is opened.
+    </p>
+    <div
+      class="flex items-start justify-between gap-4 py-3 border-b border-heron"
+    >
+      <div>
+        <p
+          class="text-sm font-medium text-swift"
+        >
+          Back Door
+        </p>
+        <p
+          class="text-xs text-grouse mt-0.5"
+        >
+          Chime when opened
+        </p>
+      </div>
+      <button
+        aria-checked="true"
+        aria-label="Back Door"
+        class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 bg-peacock"
+        data-testid="door-chime-toggle-DRIV:dev:back"
+        role="switch"
+      >
+        <span
+          class="inline-block h-4 w-4 rounded-full bg-crane shadow transition-transform translate-x-6"
+        />
+      </button>
+    </div>
+    <div
+      class="flex items-start justify-between gap-4 py-3 border-b border-heron"
+    >
+      <div>
+        <p
+          class="text-sm font-medium text-swift"
+        >
+          Kitchen Window
+        </p>
+        <p
+          class="text-xs text-grouse mt-0.5"
+        >
+          Chime when opened
+        </p>
+      </div>
+      <button
+        aria-checked="false"
+        aria-label="Kitchen Window"
+        class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 bg-heron"
+        data-testid="door-chime-toggle-DRIV:dev:kitchen"
+        role="switch"
+      >
+        <span
+          class="inline-block h-4 w-4 rounded-full bg-crane shadow transition-transform translate-x-1"
+        />
+      </button>
+    </div>
+  </div>
+</DocumentFragment>
+`;

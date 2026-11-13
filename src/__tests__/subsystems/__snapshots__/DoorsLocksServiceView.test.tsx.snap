@@ -1,0 +1,37 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`DoorsLocksServiceView matches snapshot 1`] = `
+<DocumentFragment>
+  <div>
+    <div
+      class="flex gap-1 bg-pigeon rounded-[var(--border-radius-base)] p-1 mb-6 w-fit"
+    >
+      <a
+        aria-current="page"
+        class="px-4 py-1.5 rounded text-sm font-medium transition-colors bg-crane text-swift shadow-sm"
+        data-testid="doors-tab-status"
+        href="/services/doors-locks/status"
+      >
+        Status
+      </a>
+      <a
+        class="px-4 py-1.5 rounded text-sm font-medium transition-colors text-grouse hover:text-coot"
+        data-testid="doors-tab-access-list"
+        href="/services/doors-locks/access-list"
+      >
+        Access List
+      </a>
+      <a
+        class="px-4 py-1.5 rounded text-sm font-medium transition-colors text-grouse hover:text-coot"
+        data-testid="doors-tab-more"
+        href="/services/doors-locks/more"
+      >
+        More
+      </a>
+    </div>
+    <div
+      data-testid="status-view"
+    />
+  </div>
+</DocumentFragment>
+`;

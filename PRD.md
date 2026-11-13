@@ -319,16 +319,25 @@ None.
 | Door/window contact status | Yes | Yes | **Done** |
 | Motorized / garage door controls | Yes | Yes | **Done** |
 | Unlocked / open count summary | Yes | Yes | **Done** |
-| Access list (PIN codes per user) | Yes | No | **Missing** |
-| Temporary PINs with expiry | Yes | No | **Missing** |
-| PIN history | Yes | No | **Missing** |
-| Door chime configuration | Yes | No | **Missing** |
+| Access list (PIN codes per user) | Yes | Yes | **Done** |
+| Temporary PINs with expiry | No (no platform API) | No | **Missing** |
+| PIN history | Yes | Yes | **Done** |
+| Door chime configuration | Yes | Yes | **Done** |
 | Pet door controls | Yes | No | **Missing** |
 
 ### Gaps
 
-- Access management (assign PINs to people for locks, temporary PINs).
-- Door chime configuration.
+- ~~Access management (assign PINs to people for locks).~~ **DONE.** Doors & Locks now has route-driven
+  Status / Access List / More tabs (`/services/doors-locks/<action>`). The Access List shows each keypad
+  lock with the people whose PIN is on it (from `subdoorsnlocks:authorizationByLock`), PENDING people
+  while the lock updates, and PIN slots used (`doorlock:numPinsSupported`). Ticking a person sends
+  `subdoorsnlocks:AuthorizePeople` with one AUTHORIZE / DEAUTHORIZE operation (error toast on failure).
+  Each lock has a collapsible PIN history (`dev:ListHistoryEntries` on the lock, paged).
+- Temporary PINs with expiry: not built. Neither the platform (`doorlock:AuthorizePerson` takes only a
+  person; PINs are per person per place) nor the legacy client supports them, so this needs a platform
+  API and a product decision first.
+- ~~Door chime configuration.~~ **DONE.** The More tab toggles the hub chime per contact sensor by
+  writing `subdoorsnlocks:chimeConfig` (a list of `{device, enabled}`) back with one entry flipped.
 - Pet door controls.
 
 ---
@@ -696,7 +705,7 @@ These are commonly used features that users will expect:
 ### Tier 2 — Important Gaps (Full Feature Parity)
 
 6. **Care behavior CRUD** — Create, edit, delete care behaviors with device/time/threshold configuration.
-7. **Lock access management** — PIN assignment per person, temporary PINs with expiry.
+7. **Lock access management** — **Partial.** PIN assignment per person per lock, PIN history and door chime configuration are done. Temporary PINs with expiry are left out: there is no platform API for them.
 8. **Hub firmware updates** — Firmware version display and update workflow.
 9. **Hub WiFi configuration** — WiFi SSID/password setup, network scanning.
 10. **Irrigation scheduling & zone control** — Per-zone start/stop, schedule modes (even/odd/interval).
