@@ -8,6 +8,7 @@ import { addNotification } from '@/store/slices/uiSlice';
 import { useSidePanel } from '@/components/SidePanel';
 import { ScheduleEditPanel } from '@/components/schedules';
 import { ControlSwitch } from '@/components/shared/ControlSwitch';
+import { FavoriteToggle } from '@/components/shared/FavoriteToggle';
 import type { SceneEntity } from '@/store/entityTypes';
 
 /** Scenes are scheduled by firing `scene:Fire` on the platform "FIRE" schedule group. */
@@ -101,6 +102,7 @@ export function SceneCard({
           </p>
         </div>
         <div className="flex items-center gap-2 ml-3">
+          <FavoriteToggle entity={scene} name={name} testId={`scene-favorite-${sceneId}`} />
           <button
             onClick={handleOpenSchedule}
             data-testid={`scene-schedule-${sceneId}`}

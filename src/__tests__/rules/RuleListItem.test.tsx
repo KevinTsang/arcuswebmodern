@@ -100,4 +100,48 @@ describe('RuleListItem', () => {
     fireEvent.click(screen.getByText('Edit'));
     expect(onEdit).toHaveBeenCalledWith(enabledRule);
   });
+
+  describe('favorite', () => {
+    const favId = 'rule-favorite-SERV:rule:place-1.1';
+    const favoriteRule: RuleEntity = { ...enabledRule, [Base.ATTR_TAGS]: ['FAVORITE'] };
+
+    it('renders an unfilled star when the rule is not a favorite', () => {
+      render(<RuleListItem rule={enabledRule} onEdit={jest.fn()} />);
+      expect(screen.getByTestId(favId)).toHaveAttribute('aria-pressed', 'false');
+    });
+
+    it('renders a filled star when the rule is tagged FAVORITE', () => {
+      render(<RuleListItem rule={favoriteRule} onEdit={jest.fn()} />);
+      expect(screen.getByTestId(favId)).toHaveAttribute('aria-pressed', 'true');
+    });
+
+    it('adds the FAVORITE tag via base:AddTags when clicked', async () => {
+      render(<RuleListItem rule={enabledRule} onEdit={jest.fn()} />);
+      fireEvent.click(screen.getByTestId(favId));
+      await waitFor(() => {
+        expect(mockBridge).toHaveBeenCalledWith(Base.CMD_ADDTAGS, 'SERV:rule:place-1.1', { tags: ['FAVORITE'] });
+      });
+      expect(mockBridge).toHaveBeenCalledTimes(1);
+    });
+
+    it('removes the FAVORITE tag via base:RemoveTags for a favorite rule', async () => {
+      render(<RuleListItem rule={favoriteRule} onEdit={jest.fn()} />);
+      fireEvent.click(screen.getByTestId(favId));
+      await waitFor(() => {
+        expect(mockBridge).toHaveBeenCalledWith(Base.CMD_REMOVETAGS, 'SERV:rule:place-1.1', { tags: ['FAVORITE'] });
+      });
+    });
+
+    it('dispatches an error notification when favoriting fails', async () => {
+      mockBridge.mockRejectedValueOnce(new Error('fail'));
+      render(<RuleListItem rule={enabledRule} onEdit={jest.fn()} />);
+      fireEvent.click(screen.getByTestId(favId));
+      await waitFor(() => {
+        expect(mockDispatch).toHaveBeenCalledWith({
+          type: 'ui/addNotification',
+          payload: { type: 'error', message: 'Failed to add My Rule to favorites' },
+        });
+      });
+    });
+  });
 });

@@ -299,3 +299,46 @@ describe('SceneCard – schedule', () => {
     });
   });
 });
+
+describe('SceneCard – favorite', () => {
+  const favId = 'scene-favorite-SERV:scene:s1';
+
+  it('renders an unfilled star when the scene is not a favorite', () => {
+    render(<SceneCard scene={baseScene()} onEdit={jest.fn()} />);
+    expect(screen.getByTestId(favId)).toHaveAttribute('aria-pressed', 'false');
+  });
+
+  it('renders a filled star when the scene is tagged FAVORITE', () => {
+    render(<SceneCard scene={baseScene({ [Base.ATTR_TAGS]: ['FAVORITE'] })} onEdit={jest.fn()} />);
+    expect(screen.getByTestId(favId)).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  it('adds the FAVORITE tag via base:AddTags when clicked', async () => {
+    render(<SceneCard scene={baseScene()} onEdit={jest.fn()} />);
+    fireEvent.click(screen.getByTestId(favId));
+    await waitFor(() => {
+      expect(mockBridgeRequest).toHaveBeenCalledWith(Base.CMD_ADDTAGS, 'SERV:scene:s1', { tags: ['FAVORITE'] });
+    });
+    expect(mockBridgeRequest).not.toHaveBeenCalledWith(Scene.CMD_FIRE, expect.anything(), expect.anything());
+  });
+
+  it('removes the FAVORITE tag via base:RemoveTags for a favorite scene', async () => {
+    render(<SceneCard scene={baseScene({ [Base.ATTR_TAGS]: ['FAVORITE'] })} onEdit={jest.fn()} />);
+    fireEvent.click(screen.getByTestId(favId));
+    await waitFor(() => {
+      expect(mockBridgeRequest).toHaveBeenCalledWith(Base.CMD_REMOVETAGS, 'SERV:scene:s1', { tags: ['FAVORITE'] });
+    });
+  });
+
+  it('dispatches an error notification when favoriting fails', async () => {
+    mockBridgeRequest.mockRejectedValueOnce(new Error('fail'));
+    render(<SceneCard scene={baseScene()} onEdit={jest.fn()} />);
+    fireEvent.click(screen.getByTestId(favId));
+    await waitFor(() => {
+      expect(mockDispatch).toHaveBeenCalledWith({
+        type: 'ui/addNotification',
+        payload: { type: 'error', message: 'Failed to add Good Morning to favorites' },
+      });
+    });
+  });
+});

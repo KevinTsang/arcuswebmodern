@@ -48,6 +48,21 @@ describe('Rules', () => {
     ruleRow(LEAK_ALERT).should('have.attr', 'data-enabled', 'true');
   });
 
+  it('adds and removes a rule favorite (PRD §23)', () => {
+    tid(`rule-favorite-${LIGHTS_ON_MOTION}`).should('have.attr', 'data-favorite', 'false').click();
+    cy.expectRequest(Base.CMD_ADDTAGS, (r) => r.destination === RULE.lightsOnMotion);
+    tid(`rule-favorite-${LIGHTS_ON_MOTION}`).should('have.attr', 'data-favorite', 'true').click();
+    cy.expectRequest(Base.CMD_REMOVETAGS, (r) => r.destination === RULE.lightsOnMotion);
+    tid(`rule-favorite-${LIGHTS_ON_MOTION}`).should('have.attr', 'data-favorite', 'false');
+  });
+
+  it('reports a failed rule favorite toggle', () => {
+    cy.platform().invoke('failRequest', Base.CMD_ADDTAGS);
+    tid(`rule-favorite-${LEAK_ALERT}`).click();
+    cy.toast(`Failed to add ${RULE_NAME.leakAlert} to favorites`);
+    tid(`rule-favorite-${LEAK_ALERT}`).should('have.attr', 'data-favorite', 'false');
+  });
+
   it('resolves template variables to device names when editing', () => {
     tid(`rule-edit-${LIGHTS_ON_MOTION}`).click();
     tid('side-panel-right-title').should('have.text', 'Edit Rule');
