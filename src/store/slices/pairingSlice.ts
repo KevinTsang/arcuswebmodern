@@ -1,6 +1,8 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import type { PairingDevice, PairingProduct } from '@/store/entityTypes';
-import type { PairingStage, PairingStep } from '@/components/pairing/types';
+import type { OAuthStatus, PairingStage, PairingStep } from '@/components/pairing/types';
+import type { PairingInput, StartPairingResponse } from '@/arcus/types';
+import { initialFormValues, type PairingFormValues } from '@/lib/cloudPairing';
 
 export interface PairingState {
   stage: PairingStage;
@@ -16,6 +18,17 @@ export interface PairingState {
   deviceName: string;
   isFavorite: boolean;
   activeDevice: PairingDevice | null;
+  /** How the product pairs, from subpairing:StartPairing (null until it answers). */
+  pairingMode: StartPairingResponse['mode'] | null;
+  /** Vendor sign-in URL for OAuth products. */
+  oauthUrl: string | null;
+  /** Inputs a cloud (IPCD) product needs before searching, e.g. a serial number. */
+  form: PairingInput[];
+  formValues: PairingFormValues;
+  /** Progress of the OAuth sign-in popup (null when not signing in). */
+  oauthStatus: OAuthStatus | null;
+  /** Why a cloud search failed, shown on the searching stage. */
+  searchError: string | null;
 }
 
 const initialState: PairingState = {
@@ -32,6 +45,12 @@ const initialState: PairingState = {
   deviceName: '',
   isFavorite: false,
   activeDevice: null,
+  pairingMode: null,
+  oauthUrl: null,
+  form: [],
+  formValues: {},
+  oauthStatus: null,
+  searchError: null,
 };
 
 const pairingSlice = createSlice({
@@ -45,6 +64,7 @@ const pairingSlice = createSlice({
     startSearch(state) {
       state.stage = 'searching';
       state.searchTimedOut = false;
+      state.searchError = null;
       state.devices = [];
     },
     setDevices(state, action: PayloadAction<PairingDevice[]>) {
@@ -68,6 +88,44 @@ const pairingSlice = createSlice({
     setSteps(state, action: PayloadAction<PairingStep[]>) {
       state.steps = action.payload;
       state.currentStep = 0;
+    },
+    setPairingConfig(state, action: PayloadAction<StartPairingResponse>) {
+      const { steps, mode, oauthUrl, form } = action.payload;
+      state.steps = steps ?? [];
+      state.currentStep = 0;
+      state.pairingMode = mode ?? null;
+      state.oauthUrl = oauthUrl ?? null;
+      state.form = form ?? [];
+      state.formValues = initialFormValues(state.form);
+    },
+    setFormValue(state, action: PayloadAction<{ name: string; value: string }>) {
+      state.formValues[action.payload.name] = action.payload.value;
+    },
+    startOAuth(state) {
+      state.stage = 'searching';
+      state.oauthStatus = 'connecting';
+      state.searchTimedOut = false;
+      state.devices = [];
+    },
+    setOAuthStatus(state, action: PayloadAction<OAuthStatus>) {
+      state.oauthStatus = action.payload;
+    },
+    setSearchError(state, action: PayloadAction<string | null>) {
+      state.searchError = action.payload;
+    },
+    returnToSteps(state) {
+      state.stage = 'steps';
+      state.currentStep = 0;
+      state.oauthStatus = null;
+      state.searchTimedOut = false;
+      state.searchError = null;
+      state.devices = [];
+    },
+    showFormStep(state) {
+      state.stage = 'steps';
+      state.currentStep = Math.max(state.steps.length - 1, 0);
+      state.searchError = null;
+      state.devices = [];
     },
     nextStep(state) {
       state.currentStep += 1;
@@ -123,6 +181,13 @@ export const {
   searchTimedOut,
   setPairingLoading,
   setSteps,
+  setPairingConfig,
+  setFormValue,
+  startOAuth,
+  setOAuthStatus,
+  setSearchError,
+  returnToSteps,
+  showFormStep,
   nextStep,
   prevStep,
   setHubId,

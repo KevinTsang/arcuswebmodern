@@ -1,0 +1,43 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`PairingForm matches snapshot 1`] = `
+<DocumentFragment>
+  <div
+    class="space-y-3 mb-4"
+    data-testid="pairing-form"
+  >
+    <div>
+      <label
+        class="block text-sm font-medium text-swift mb-1"
+        for="pairing-form-sn"
+      >
+        Serial Number
+      </label>
+      <input
+        class="w-full px-3 py-2 border border-heron rounded-[var(--border-radius-base)] text-sm text-swift bg-crane focus:outline-none focus:border-peacock"
+        data-testid="pairing-form-sn"
+        id="pairing-form-sn"
+        maxlength="12"
+        required=""
+        type="text"
+        value=""
+      />
+    </div>
+    <div>
+      <label
+        class="block text-sm font-medium text-swift mb-1"
+        for="pairing-form-nick"
+      >
+        Nickname
+      </label>
+      <input
+        class="w-full px-3 py-2 border border-heron rounded-[var(--border-radius-base)] text-sm text-swift bg-crane focus:outline-none focus:border-peacock"
+        data-testid="pairing-form-nick"
+        id="pairing-form-nick"
+        type="text"
+        value=""
+      />
+    </div>
+  </div>
+</DocumentFragment>
+`;

@@ -1,0 +1,98 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`OAuthConnectStage matches snapshot after the login window closed 1`] = `
+<DocumentFragment>
+  <div
+    class="text-center py-6"
+    data-status="closed"
+    data-testid="oauth-connect"
+  >
+    <h3
+      class="text-lg font-semibold text-swift mb-4"
+      data-testid="oauth-title"
+    >
+      No New Nest Devices Found
+    </h3>
+    <div
+      class="bg-pigeon/30 rounded-[var(--border-radius-base)] p-4 mb-4 text-left"
+      data-testid="oauth-failed"
+    >
+      <h4
+        class="text-sm font-semibold text-swift mb-1"
+      >
+        Nest Login Window Closed
+      </h4>
+      <p
+        class="text-sm text-grouse"
+      >
+        Do you want to try again? If not, you can cancel pairing below.
+      </p>
+    </div>
+    <div
+      class="flex gap-2 justify-center mt-4"
+    >
+      <button
+        class="px-4 py-2 bg-peacock text-crane rounded-[var(--border-radius-base)] text-sm font-medium hover:bg-peacock/90"
+        data-testid="oauth-retry"
+      >
+        Retry Login
+      </button>
+      <button
+        class="px-4 py-2 border border-heron rounded-[var(--border-radius-base)] text-sm text-coot hover:bg-pigeon"
+        data-testid="oauth-cancel"
+      >
+        Cancel
+      </button>
+    </div>
+  </div>
+</DocumentFragment>
+`;
+
+exports[`OAuthConnectStage matches snapshot while connecting 1`] = `
+<DocumentFragment>
+  <div
+    class="text-center py-6"
+    data-status="connecting"
+    data-testid="oauth-connect"
+  >
+    <h3
+      class="text-lg font-semibold text-swift mb-4"
+      data-testid="oauth-title"
+    >
+      Connecting…
+    </h3>
+    <div
+      class="animate-pulse mb-4"
+    >
+      <div
+        class="w-16 h-16 bg-peacock/10 rounded-full flex items-center justify-center mx-auto"
+      >
+        <span
+          class="icon-app-cloud-1 text-2xl text-peacock"
+        />
+      </div>
+    </div>
+    <p
+      class="text-sm text-grouse mb-4"
+    >
+      Sign in to your Nest account in the popup window to connect your devices.
+    </p>
+    <button
+      class="px-4 py-2 border border-heron rounded-[var(--border-radius-base)] text-sm text-coot hover:bg-pigeon"
+      data-testid="oauth-show-popup"
+    >
+      Show Nest Login Window
+    </button>
+    <div
+      class="flex gap-2 justify-center mt-4"
+    >
+      <button
+        class="px-4 py-2 border border-heron rounded-[var(--border-radius-base)] text-sm text-coot hover:bg-pigeon"
+        data-testid="oauth-cancel"
+      >
+        Cancel
+      </button>
+    </div>
+  </div>
+</DocumentFragment>
+`;

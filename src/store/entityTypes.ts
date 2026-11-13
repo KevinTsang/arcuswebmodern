@@ -271,5 +271,6 @@ export type PairingProduct = ArcusPayload
   & Record<typeof Product.ATTR_ID, string>
   & Partial<
     Record<typeof Product.ATTR_PAIRINGMODE, string> &
+    Record<typeof Product.ATTR_PROTOFAMILY, string> &
     Record<typeof Product.ATTR_APPREQUIRED, boolean>
   >;

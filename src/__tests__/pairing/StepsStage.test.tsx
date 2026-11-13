@@ -159,3 +159,67 @@ describe('StepsStage – product pairing with steps', () => {
   });
 
 });
+
+describe('StepsStage – cloud pairing', () => {
+  const oauthProduct: PairingProduct = { ...mockProduct, [Product.ATTR_VENDOR]: 'Nest' };
+  const form = [
+    { type: 'TEXT' as const, name: 'sn', label: 'Serial Number', required: true },
+    { type: 'HIDDEN' as const, name: 'model', label: 'Model', value: 'X1' },
+  ];
+
+  it('matches snapshot on the form step', () => {
+    const { asFragment } = render(
+      <StepsStage {...defaultProps} product={mockProduct} steps={mockSteps} currentStep={2} form={form} formValues={{ sn: 'AB12', model: 'X1' }} />,
+    );
+    expect(asFragment()).toMatchSnapshot();
+  });
+
+  it('labels the last-step button as signing in for OAuth products', () => {
+    render(<StepsStage {...defaultProps} product={oauthProduct} steps={mockSteps} currentStep={2} isOAuth />);
+    expect(screen.getByTestId('pairing-search')).toHaveTextContent('Sign In to Nest');
+  });
+
+  it('signs in from the no-steps view for OAuth products', () => {
+    render(<StepsStage {...defaultProps} product={oauthProduct} isOAuth />);
+    expect(screen.getByText('Sign in to your Nest account to connect your devices.')).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId('pairing-search'));
+    expect(mockStartSearch).toHaveBeenCalledTimes(1);
+  });
+
+  it('uses generic sign-in copy without a vendor', () => {
+    render(<StepsStage {...defaultProps} product={{ ...mockProduct, [Product.ATTR_VENDOR]: '' }} isOAuth />);
+    expect(screen.getByTestId('pairing-search')).toHaveTextContent(/^Sign In$/);
+  });
+
+  it('shows the form only on the last step', () => {
+    const { rerender } = render(
+      <StepsStage {...defaultProps} product={mockProduct} steps={mockSteps} currentStep={0} form={form} formValues={{ sn: '' }} />,
+    );
+    expect(screen.queryByTestId('pairing-form')).not.toBeInTheDocument();
+    rerender(<StepsStage {...defaultProps} product={mockProduct} steps={mockSteps} currentStep={2} form={form} formValues={{ sn: '' }} />);
+    expect(screen.getByLabelText('Serial Number')).toBeInTheDocument();
+  });
+
+  it('disables searching until the form is valid', () => {
+    const { rerender } = render(
+      <StepsStage {...defaultProps} product={mockProduct} steps={mockSteps} currentStep={2} form={form} formValues={{ sn: '' }} />,
+    );
+    expect(screen.getByTestId('pairing-search')).toBeDisabled();
+    rerender(<StepsStage {...defaultProps} product={mockProduct} steps={mockSteps} currentStep={2} form={form} formValues={{ sn: 'AB12' }} />);
+    expect(screen.getByTestId('pairing-search')).toBeEnabled();
+  });
+
+  it('dispatches form changes', () => {
+    render(<StepsStage {...defaultProps} product={mockProduct} steps={mockSteps} currentStep={2} form={form} formValues={{ sn: '' }} />);
+    fireEvent.change(screen.getByLabelText('Serial Number'), { target: { value: 'AB12' } });
+    expect(mockDispatch).toHaveBeenCalledWith(
+      expect.objectContaining({ type: 'pairing/setFormValue', payload: { name: 'sn', value: 'AB12' } }),
+    );
+  });
+
+  it('shows the form in the no-steps view and gates the search button', () => {
+    render(<StepsStage {...defaultProps} product={mockProduct} form={form} formValues={{ sn: '' }} />);
+    expect(screen.getByLabelText('Serial Number')).toBeInTheDocument();
+    expect(screen.getByTestId('pairing-search')).toBeDisabled();
+  });
+});

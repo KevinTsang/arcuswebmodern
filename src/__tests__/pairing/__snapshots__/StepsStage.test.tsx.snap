@@ -1,0 +1,66 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`StepsStage – cloud pairing matches snapshot on the form step 1`] = `
+<DocumentFragment>
+  <div>
+    <h3
+      class="text-lg font-semibold text-swift mb-4"
+    >
+      Pairing Instructions
+    </h3>
+    <div
+      class="text-sm text-grouse mb-2"
+      data-testid="pairing-step"
+    >
+      Step 3 of 3
+    </div>
+    <div
+      class="bg-pigeon/30 rounded-[var(--border-radius-base)] p-4 mb-4 min-h-[100px]"
+      data-testid="pairing-instructions"
+    >
+      <p
+        class="text-sm text-swift mb-2 last:mb-0"
+      >
+        Done
+      </p>
+    </div>
+    <div
+      class="space-y-3 mb-4"
+      data-testid="pairing-form"
+    >
+      <div>
+        <label
+          class="block text-sm font-medium text-swift mb-1"
+          for="pairing-form-sn"
+        >
+          Serial Number
+        </label>
+        <input
+          class="w-full px-3 py-2 border border-heron rounded-[var(--border-radius-base)] text-sm text-swift bg-crane focus:outline-none focus:border-peacock"
+          data-testid="pairing-form-sn"
+          id="pairing-form-sn"
+          required=""
+          type="text"
+          value="AB12"
+        />
+      </div>
+    </div>
+    <div
+      class="flex gap-2"
+    >
+      <button
+        class="px-4 py-2 border border-heron rounded-[var(--border-radius-base)] text-sm text-coot hover:bg-pigeon"
+        data-testid="pairing-prev"
+      >
+        Previous
+      </button>
+      <button
+        class="px-4 py-2 bg-peacock text-crane rounded-[var(--border-radius-base)] text-sm font-medium hover:bg-peacock/90 disabled:opacity-50"
+        data-testid="pairing-search"
+      >
+        Search for Device
+      </button>
+    </div>
+  </div>
+</DocumentFragment>
+`;

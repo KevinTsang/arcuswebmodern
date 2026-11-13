@@ -2,7 +2,7 @@ import { Base, Product } from '@arcus/core';
 import type { PairingDevice, PairingProduct } from '@/store/entityTypes';
 import type { AppDispatch } from '@/store/store';
 import { HUB_REGISTRATION_ERRORS } from '@/arcus/types';
-import { hubRetry } from '@/store/slices/pairingSlice';
+import { hubRetry, showFormStep } from '@/store/slices/pairingSlice';
 import DeviceStateRow from './DeviceStateRow';
 
 interface SearchingStageProps {
@@ -11,6 +11,8 @@ interface SearchingStageProps {
   devices: PairingDevice[];
   searchTimedOut: boolean;
   hubRegistrationState: string | null;
+  /** Why a cloud search failed, e.g. an unrecognised device code. */
+  searchError?: string | null;
   dispatch: AppDispatch;
   onStartSearch: () => void;
   onCancel: () => void;
@@ -22,6 +24,7 @@ export default function SearchingStage({
   devices,
   searchTimedOut,
   hubRegistrationState,
+  searchError = null,
   dispatch,
   onStartSearch,
   onCancel,
@@ -67,6 +70,34 @@ export default function SearchingStage({
             <p className="text-xs text-grouse mt-2">This may take a few minutes.</p>
           </>
         )}
+      </div>
+    );
+  }
+
+  // Cloud search rejected (e.g. unrecognised device code)
+  if (searchError) {
+    return (
+      <div data-testid="pairing-search-error" className="text-center py-6">
+        <h3 className="text-lg font-semibold text-swift mb-4">Attention</h3>
+        <div className="bg-pigeon/30 rounded-[var(--border-radius-base)] p-4 mb-4 text-left">
+          <h4 className="text-sm font-semibold text-swift mb-1">Hmm… There&apos;s a problem with that code.</h4>
+          <p data-testid="pairing-search-error-message" className="text-sm text-grouse">{searchError}</p>
+        </div>
+        <div className="flex gap-2 justify-center">
+          <button
+            onClick={() => dispatch(showFormStep())}
+            data-testid="pairing-reenter-code"
+            className="px-4 py-2 bg-peacock text-crane rounded-[var(--border-radius-base)] text-sm font-medium hover:bg-peacock/90"
+          >
+            Re-Enter Code
+          </button>
+          <button
+            onClick={onCancel}
+            className="px-4 py-2 border border-heron rounded-[var(--border-radius-base)] text-sm text-coot hover:bg-pigeon"
+          >
+            Cancel
+          </button>
+        </div>
       </div>
     );
   }

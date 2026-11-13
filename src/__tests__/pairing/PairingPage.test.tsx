@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import { Base, Product, PairingDevice, PairingSubsystem } from '@arcus/core';
 import PairingPage from '@/app/(authenticated)/pairing/page';
 import type { ArcusEntity, SubsystemEntity } from '@/store/entityTypes';
@@ -39,6 +39,11 @@ jest.mock('@/store/slices/pairingSlice', () => ({
   searchTimedOut: () => ({ type: 'pairing/searchTimedOut' }),
   setPairingLoading: (payload: unknown) => ({ type: 'pairing/setPairingLoading', payload }),
   setSteps: (payload: unknown) => ({ type: 'pairing/setSteps', payload }),
+  setPairingConfig: (payload: unknown) => ({ type: 'pairing/setPairingConfig', payload }),
+  startOAuth: () => ({ type: 'pairing/startOAuth' }),
+  setOAuthStatus: (payload: unknown) => ({ type: 'pairing/setOAuthStatus', payload }),
+  setSearchError: (payload: unknown) => ({ type: 'pairing/setSearchError', payload }),
+  returnToSteps: () => ({ type: 'pairing/returnToSteps' }),
   startHubRegistration: () => ({ type: 'pairing/startHubRegistration' }),
   hubRegistered: () => ({ type: 'pairing/hubRegistered' }),
   setHubRegistrationState: (payload: unknown) => ({ type: 'pairing/setHubRegistrationState', payload }),
@@ -50,11 +55,24 @@ jest.mock('@/store/slices/pairingSlice', () => ({
 // Capture subcomponent props to allow triggering callbacks in tests
 let capturedCustomizeProps: any = {};
 let capturedCompletedProps: any = {};
+let capturedStepsProps: any = {};
+let capturedSearchingProps: any = {};
+let capturedOAuthProps: any = {};
 
 jest.mock('@/components/pairing', () => ({
   StageIndicator: ({ stage }: any) => <div data-testid="stage-indicator">{stage}</div>,
-  StepsStage: () => <div data-testid="steps-stage">StepsStage</div>,
-  SearchingStage: () => <div data-testid="searching-stage">SearchingStage</div>,
+  StepsStage: (props: any) => {
+    capturedStepsProps = props;
+    return <div data-testid="steps-stage">StepsStage</div>;
+  },
+  SearchingStage: (props: any) => {
+    capturedSearchingProps = props;
+    return <div data-testid="searching-stage">SearchingStage</div>;
+  },
+  OAuthConnectStage: (props: any) => {
+    capturedOAuthProps = props;
+    return <div data-testid="oauth-stage">OAuthConnectStage</div>;
+  },
   CustomizeStage: (props: any) => {
     capturedCustomizeProps = props;
     return <div data-testid="customize-stage">CustomizeStage</div>;
@@ -69,6 +87,7 @@ let mockPairingState: PairingState;
 let mockHub: ArcusEntity | null = null;
 let mockPlaceId: string | null = 'place-1';
 let mockSubsystems: Record<string, SubsystemEntity> = {};
+let mockRedirectBaseUrl: string | undefined;
 
 jest.mock('@/store/hooks', () => ({
   useAppSelector: (sel: (s: any) => any) =>
@@ -80,6 +99,7 @@ jest.mock('@/store/hooks', () => ({
         ids: Object.keys(mockSubsystems),
       },
       pairing: mockPairingState,
+      auth: { person: { redirectBaseUrl: mockRedirectBaseUrl } },
     }),
   useAppDispatch: () => mockDispatch,
 }));
@@ -88,6 +108,10 @@ beforeEach(() => {
   jest.clearAllMocks();
   capturedCustomizeProps = {};
   capturedCompletedProps = {};
+  capturedStepsProps = {};
+  capturedSearchingProps = {};
+  capturedOAuthProps = {};
+  mockRedirectBaseUrl = undefined;
   mockPairingState = {
     stage: 'steps',
     product: null,
@@ -102,6 +126,12 @@ beforeEach(() => {
     hubRegistrationState: null,
     deviceName: '',
     isFavorite: false,
+    pairingMode: null,
+    oauthUrl: null,
+    form: [],
+    formValues: {},
+    oauthStatus: null,
+    searchError: null,
   };
   mockHub = null;
   mockPlaceId = 'place-1';
@@ -506,5 +536,363 @@ describe('PairingPage – error handling', () => {
     await waitFor(() => {
       expect(mockPush).toHaveBeenCalledWith('/devices');
     });
+  });
+});
+
+describe('PairingPage – cloud pairing', () => {
+  const pairingSubAddr = 'SERV:subpairing:place-1';
+  const OAUTH_URL = 'https://oauth.example.com/nest/start?place=place-1';
+  const nestProduct = {
+    [Base.ATTR_ADDRESS]: 'SERV:product:nest01',
+    [Product.ATTR_ID]: 'nest01',
+    [Product.ATTR_NAME]: 'Nest Thermostat',
+    [Product.ATTR_VENDOR]: 'Nest',
+    [Product.ATTR_PAIRINGMODE]: Product.PAIRINGMODE_OAUTH,
+  };
+  const ipcdProduct = {
+    [Base.ATTR_ADDRESS]: 'SERV:product:ipcd01',
+    [Product.ATTR_ID]: 'ipcd01',
+    [Product.ATTR_NAME]: 'WiFi Plug',
+    [Product.ATTR_VENDOR]: 'Acme',
+    [Product.ATTR_PAIRINGMODE]: Product.PAIRINGMODE_IPCD,
+  };
+  const pairedDevice = {
+    [Base.ATTR_ADDRESS]: 'SERV:pairdev:1',
+    [PairingDevice.ATTR_PAIRINGSTATE]: PairingDevice.PAIRINGSTATE_PAIRED,
+    [PairingDevice.ATTR_PAIRINGPHASE]: PairingDevice.PAIRINGPHASE_PAIRED,
+    [PairingDevice.ATTR_DEVICEADDRESS]: 'DRIV:dev:1',
+  };
+
+  interface FakePopup {
+    closed: boolean;
+    close: jest.Mock;
+    focus: jest.Mock;
+  }
+  let fakePopup: FakePopup;
+  let openSpy: jest.SpyInstance;
+
+  const oauthState = (overrides: Partial<PairingState> = {}): PairingState => ({
+    ...mockPairingState,
+    product: nestProduct,
+    pairingMode: 'OAUTH',
+    oauthUrl: OAUTH_URL,
+    ...overrides,
+  });
+
+  const postFromPopup = (type: string, origin = 'https://oauth.example.com') => {
+    act(() => {
+      window.dispatchEvent(new MessageEvent('message', { origin, data: { type } }));
+    });
+  };
+
+  beforeEach(() => {
+    mockSubsystems = {
+      [pairingSubAddr]: { id: pairingSubAddr, [Base.ATTR_ADDRESS]: pairingSubAddr },
+    };
+    fakePopup = { closed: false, close: jest.fn(), focus: jest.fn() };
+    fakePopup.close.mockImplementation(() => { fakePopup.closed = true; });
+    openSpy = jest.spyOn(window, 'open').mockReturnValue(fakePopup as unknown as Window);
+    mockBridgeRequest.mockResolvedValue({ devices: [] });
+  });
+
+  afterEach(() => {
+    openSpy.mockRestore();
+    jest.useRealTimers();
+  });
+
+  it('stores the OAuth config and does not search after StartPairing', async () => {
+    mockPairingState = { ...mockPairingState, product: nestProduct };
+    sessionStorage.setItem('pairing:product', JSON.stringify(nestProduct));
+    const config = { mode: 'OAUTH', steps: [], oauthUrl: OAUTH_URL };
+    mockBridgeRequest.mockResolvedValueOnce(config);
+
+    render(<PairingPage />);
+
+    await waitFor(() => {
+      expect(mockDispatch).toHaveBeenCalledWith({ type: 'pairing/setPairingConfig', payload: config });
+    });
+    expect(mockBridgeRequest).not.toHaveBeenCalledWith(PairingSubsystem.CMD_SEARCH, expect.anything(), expect.anything());
+  });
+
+  it('waits for the form when a cloud product has no steps but needs input', async () => {
+    mockPairingState = { ...mockPairingState, product: ipcdProduct };
+    sessionStorage.setItem('pairing:product', JSON.stringify(ipcdProduct));
+    mockBridgeRequest.mockResolvedValueOnce({
+      mode: 'CLOUD', steps: [], form: [{ type: 'TEXT', name: 'sn', label: 'Serial Number' }],
+    });
+
+    render(<PairingPage />);
+
+    await waitFor(() => {
+      expect(mockDispatch).toHaveBeenCalledWith(expect.objectContaining({ type: 'pairing/setPairingConfig' }));
+    });
+    expect(mockBridgeRequest).not.toHaveBeenCalledWith(PairingSubsystem.CMD_SEARCH, expect.anything(), expect.anything());
+  });
+
+  it('passes OAuth and form props to StepsStage', () => {
+    const form = [{ type: 'TEXT' as const, name: 'sn', label: 'Serial Number' }];
+    mockPairingState = oauthState({ form, formValues: { sn: 'X' } });
+    render(<PairingPage />);
+    expect(capturedStepsProps.isOAuth).toBe(true);
+    expect(capturedStepsProps.form).toEqual(form);
+    expect(capturedStepsProps.formValues).toEqual({ sn: 'X' });
+  });
+
+  it('treats a Lutron bridged product as OAuth before StartPairing answers', () => {
+    mockPairingState = {
+      ...mockPairingState,
+      product: {
+        ...nestProduct,
+        [Product.ATTR_PAIRINGMODE]: Product.PAIRINGMODE_BRIDGED_DEVICE,
+        [Product.ATTR_PROTOFAMILY]: 'Lutron',
+      },
+    };
+    render(<PairingPage />);
+    expect(capturedStepsProps.isOAuth).toBe(true);
+  });
+
+  it('does not treat a hub product as OAuth', () => {
+    mockPairingState = { ...mockPairingState, pairingMode: 'HUB' };
+    render(<PairingPage />);
+    expect(capturedStepsProps.isOAuth).toBe(false);
+  });
+
+  it('opens the sign-in popup instead of searching when continuing an OAuth product', () => {
+    mockPairingState = oauthState();
+    render(<PairingPage />);
+
+    act(() => capturedStepsProps.onStartSearch());
+
+    expect(mockDispatch).toHaveBeenCalledWith({ type: 'pairing/startOAuth' });
+    expect(openSpy).toHaveBeenCalledWith(`${OAUTH_URL}&template=v2-web`, expect.any(String), expect.stringContaining('width=400'));
+    expect(fakePopup.focus).toHaveBeenCalled();
+    expect(mockBridgeRequest).not.toHaveBeenCalledWith(PairingSubsystem.CMD_SEARCH, expect.anything(), expect.anything());
+  });
+
+  it('closes the popup and customizes the first paired device', async () => {
+    jest.useFakeTimers();
+    mockPairingState = oauthState();
+    mockBridgeRequest.mockResolvedValue({ devices: [pairedDevice] });
+    render(<PairingPage />);
+
+    act(() => capturedStepsProps.onStartSearch());
+    await act(async () => {
+      jest.advanceTimersByTime(3000);
+    });
+
+    expect(mockBridgeRequest).toHaveBeenCalledWith(PairingSubsystem.CMD_LISTPAIRINGDEVICES, pairingSubAddr, {});
+    expect(fakePopup.close).toHaveBeenCalled();
+    expect(mockDispatch).toHaveBeenCalledWith({
+      type: 'pairing/devicePaired',
+      payload: { device: pairedDevice, defaultName: '' },
+    });
+  });
+
+  it('times out the sign-in and closes the popup', async () => {
+    jest.useFakeTimers();
+    mockPairingState = oauthState();
+    render(<PairingPage />);
+
+    act(() => capturedStepsProps.onStartSearch());
+    await act(async () => {
+      jest.advanceTimersByTime(180000);
+    });
+
+    expect(fakePopup.close).toHaveBeenCalled();
+    expect(mockDispatch).toHaveBeenCalledWith({ type: 'pairing/setOAuthStatus', payload: 'timedOut' });
+  });
+
+  it('reports a blocked popup', () => {
+    openSpy.mockReturnValue(null);
+    mockPairingState = oauthState();
+    render(<PairingPage />);
+
+    act(() => capturedStepsProps.onStartSearch());
+
+    expect(mockDispatch).toHaveBeenCalledWith({ type: 'pairing/setOAuthStatus', payload: 'blocked' });
+  });
+
+  it('reports the popup being closed by the user', () => {
+    jest.useFakeTimers();
+    mockPairingState = oauthState();
+    render(<PairingPage />);
+
+    act(() => capturedStepsProps.onStartSearch());
+    fakePopup.closed = true;
+    act(() => {
+      jest.advanceTimersByTime(400);
+    });
+
+    expect(mockDispatch).toHaveBeenCalledWith({ type: 'pairing/setOAuthStatus', payload: 'closed' });
+  });
+
+  it('shows an error when the platform gave no OAuth URL', () => {
+    mockPairingState = oauthState({ oauthUrl: null });
+    render(<PairingPage />);
+
+    act(() => capturedStepsProps.onStartSearch());
+
+    expect(openSpy).not.toHaveBeenCalled();
+    expect(mockDispatch).toHaveBeenCalledWith({
+      type: 'ui/addNotification',
+      payload: { type: 'error', message: 'Sign-in is not available for this product right now.' },
+    });
+  });
+
+  it('marks the sign-in authorized when the popup reports completion', () => {
+    mockPairingState = oauthState();
+    render(<PairingPage />);
+    act(() => capturedStepsProps.onStartSearch());
+
+    postFromPopup('arcus-oauth-popup-complete');
+
+    expect(fakePopup.close).toHaveBeenCalled();
+    expect(mockDispatch).toHaveBeenCalledWith({ type: 'pairing/setOAuthStatus', payload: 'authorized' });
+  });
+
+  it('returns to the catalog when the popup asks to', () => {
+    mockPairingState = oauthState();
+    render(<PairingPage />);
+    act(() => capturedStepsProps.onStartSearch());
+
+    postFromPopup('arcus-oauth-exit-to-catalog');
+
+    expect(mockPush).toHaveBeenCalledWith('/product-catalog');
+  });
+
+  it('opens the support page when the popup asks to', () => {
+    mockRedirectBaseUrl = 'https://redirect.example.com';
+    mockPairingState = oauthState();
+    render(<PairingPage />);
+    act(() => capturedStepsProps.onStartSearch());
+
+    postFromPopup('arcus-oauth-exit-to-support');
+
+    expect(openSpy).toHaveBeenLastCalledWith('https://redirect.example.com/support', '_blank', 'noopener');
+    expect(mockDispatch).toHaveBeenCalledWith({ type: 'pairing/setOAuthStatus', payload: 'closed' });
+  });
+
+  it('does not open a support page when the session has no redirect URL', () => {
+    mockPairingState = oauthState();
+    render(<PairingPage />);
+    act(() => capturedStepsProps.onStartSearch());
+
+    postFromPopup('arcus-oauth-exit-to-support');
+
+    expect(openSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('ignores popup messages from other origins', () => {
+    mockPairingState = oauthState();
+    render(<PairingPage />);
+    act(() => capturedStepsProps.onStartSearch());
+
+    postFromPopup('arcus-oauth-exit-to-catalog', 'https://evil.example.com');
+
+    expect(mockPush).not.toHaveBeenCalled();
+  });
+
+  it('renders the OAuth stage instead of the searching stage while signing in', () => {
+    mockPairingState = oauthState({ stage: 'searching', oauthStatus: 'connecting' });
+    render(<PairingPage />);
+    expect(screen.getByTestId('oauth-stage')).toBeInTheDocument();
+    expect(screen.queryByTestId('searching-stage')).not.toBeInTheDocument();
+    expect(capturedOAuthProps.vendor).toBe('Nest');
+    expect(capturedOAuthProps.status).toBe('connecting');
+  });
+
+  it('focuses the popup from the OAuth stage', () => {
+    mockPairingState = oauthState();
+    const { rerender } = render(<PairingPage />);
+    act(() => capturedStepsProps.onStartSearch());
+    fakePopup.focus.mockClear();
+    mockPairingState = oauthState({ stage: 'searching', oauthStatus: 'connecting' });
+    rerender(<PairingPage />);
+
+    act(() => capturedOAuthProps.onFocusPopup());
+
+    expect(fakePopup.focus).toHaveBeenCalled();
+  });
+
+  it('returns to the steps from the OAuth stage', () => {
+    mockPairingState = oauthState({ stage: 'searching', oauthStatus: 'timedOut' });
+    render(<PairingPage />);
+    act(() => capturedOAuthProps.onShowSteps());
+    expect(mockDispatch).toHaveBeenCalledWith({ type: 'pairing/returnToSteps' });
+  });
+
+  it('retries the sign-in from the OAuth stage', () => {
+    mockPairingState = oauthState({ stage: 'searching', oauthStatus: 'closed' });
+    render(<PairingPage />);
+    act(() => capturedOAuthProps.onRetry());
+    expect(openSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('cancels from the OAuth stage', () => {
+    mockPairingState = oauthState({ stage: 'searching', oauthStatus: 'connecting' });
+    render(<PairingPage />);
+    capturedOAuthProps.onCancel();
+    expect(mockPush).toHaveBeenCalledWith('/product-catalog');
+  });
+
+  it('sends the trimmed form values with Search for cloud products', async () => {
+    mockPairingState = {
+      ...mockPairingState,
+      product: ipcdProduct,
+      pairingMode: 'CLOUD',
+      form: [
+        { type: 'TEXT', name: 'sn', label: 'Serial Number' },
+        { type: 'HIDDEN', name: 'model', label: 'Model', value: 'X1' },
+      ],
+      formValues: { sn: ' AB-12 ', model: 'X1' },
+    };
+    render(<PairingPage />);
+
+    await act(async () => capturedStepsProps.onStartSearch());
+
+    expect(mockBridgeRequest).toHaveBeenCalledWith(PairingSubsystem.CMD_SEARCH, pairingSubAddr, {
+      productAddress: 'SERV:product:ipcd01',
+      form: { sn: 'AB-12', model: 'X1' },
+    });
+  });
+
+  it('shows the code error when the platform rejects a cloud search', async () => {
+    mockPairingState = { ...mockPairingState, product: ipcdProduct, pairingMode: 'CLOUD' };
+    mockBridgeRequest.mockImplementation((cmd: string) => (cmd === PairingSubsystem.CMD_SEARCH ? Promise.reject({ code: 'request.invalid' }) : Promise.resolve({ steps: [{ id: 's1', order: 1 }] })));
+    render(<PairingPage />);
+
+    await act(async () => capturedStepsProps.onStartSearch());
+
+    expect(mockDispatch).toHaveBeenCalledWith({
+      type: 'pairing/setSearchError',
+      payload: 'We don\'t recognize that code. Confirm the code entered is correct.',
+    });
+  });
+
+  it('shows a notification when a cloud search fails because the hub is offline', async () => {
+    mockPairingState = { ...mockPairingState, product: ipcdProduct, pairingMode: 'CLOUD' };
+    mockBridgeRequest.mockImplementation((cmd: string) => (cmd === PairingSubsystem.CMD_SEARCH ? Promise.reject({ code: 'hub.offline' }) : Promise.resolve({ steps: [{ id: 's1', order: 1 }] })));
+    render(<PairingPage />);
+
+    await act(async () => capturedStepsProps.onStartSearch());
+
+    expect(mockDispatch).toHaveBeenCalledWith({
+      type: 'ui/addNotification',
+      payload: { type: 'error', message: 'Failed to search for devices.' },
+    });
+  });
+
+  it('passes the search error to SearchingStage', () => {
+    mockPairingState = { ...mockPairingState, stage: 'searching', searchError: 'Bad code' };
+    render(<PairingPage />);
+    expect(capturedSearchingProps.searchError).toBe('Bad code');
+  });
+
+  it('closes the popup when leaving the page', () => {
+    mockPairingState = oauthState();
+    const { unmount } = render(<PairingPage />);
+    act(() => capturedStepsProps.onStartSearch());
+    unmount();
+    expect(fakePopup.close).toHaveBeenCalled();
   });
 });

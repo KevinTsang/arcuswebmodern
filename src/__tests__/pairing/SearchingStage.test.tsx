@@ -134,3 +134,33 @@ describe('SearchingStage – hub registration', () => {
     );
   });
 });
+
+describe('SearchingStage – cloud search error', () => {
+  it('matches snapshot', () => {
+    const { asFragment } = render(<SearchingStage {...defaultProps} searchError="Bad code" />);
+    expect(asFragment()).toMatchSnapshot();
+  });
+
+  it('shows the error instead of the searching view', () => {
+    render(<SearchingStage {...defaultProps} searchError="We don't recognize that code." />);
+    expect(screen.getByTestId('pairing-search-error-message')).toHaveTextContent("We don't recognize that code.");
+    expect(screen.queryByTestId('pairing-searching')).not.toBeInTheDocument();
+  });
+
+  it('returns to the form step to re-enter the code', () => {
+    render(<SearchingStage {...defaultProps} searchError="Bad code" />);
+    fireEvent.click(screen.getByTestId('pairing-reenter-code'));
+    expect(mockDispatch).toHaveBeenCalledWith(expect.objectContaining({ type: 'pairing/showFormStep' }));
+  });
+
+  it('cancels pairing', () => {
+    render(<SearchingStage {...defaultProps} searchError="Bad code" />);
+    fireEvent.click(screen.getByText('Cancel'));
+    expect(mockCancel).toHaveBeenCalled();
+  });
+
+  it('shows the searching view when the error is null', () => {
+    render(<SearchingStage {...defaultProps} searchError={null} />);
+    expect(screen.getByTestId('pairing-searching')).toBeInTheDocument();
+  });
+});

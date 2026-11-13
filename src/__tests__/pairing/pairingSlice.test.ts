@@ -8,6 +8,13 @@ import reducer, {
   searchTimedOut,
   setPairingLoading,
   setSteps,
+  setPairingConfig,
+  setFormValue,
+  startOAuth,
+  setOAuthStatus,
+  setSearchError,
+  returnToSteps,
+  showFormStep,
   nextStep,
   prevStep,
   setHubId,
@@ -38,6 +45,12 @@ const initialState: PairingState = {
   deviceName: '',
   isFavorite: false,
   activeDevice: null,
+  pairingMode: null,
+  oauthUrl: null,
+  form: [],
+  formValues: {},
+  oauthStatus: null,
+  searchError: null,
 };
 
 const mockProduct: PairingProduct = {
@@ -231,9 +244,103 @@ describe('pairingSlice', () => {
         deviceName: 'My Plug',
         isFavorite: true,
         activeDevice: mockDevice,
+        pairingMode: 'OAUTH',
+        oauthUrl: 'https://oauth.example.com/start?x=1',
+        form: [{ type: 'TEXT', name: 'sn', label: 'Serial' }],
+        formValues: { sn: 'abc' },
+        oauthStatus: 'closed',
+        searchError: 'Bad code',
       };
       const state = reducer(dirty, resetPairing());
       expect(state).toEqual(initialState);
+    });
+  });
+
+  describe('cloud pairing', () => {
+    const steps = [
+      { id: 's1', order: 1, instructions: ['one'] },
+      { id: 's2', order: 2, instructions: ['two'] },
+    ];
+
+    it('setPairingConfig stores steps, mode, OAuth URL and form defaults', () => {
+      const prev = { ...initialState, currentStep: 3 };
+      const state = reducer(prev, setPairingConfig({
+        steps,
+        mode: 'CLOUD',
+        oauthUrl: 'https://oauth.example.com/start',
+        form: [
+          { type: 'TEXT', name: 'sn', label: 'Serial' },
+          { type: 'HIDDEN', name: 'model', label: 'Model', value: 'X1' },
+        ],
+      }));
+      expect(state.steps).toEqual(steps);
+      expect(state.currentStep).toBe(0);
+      expect(state.pairingMode).toBe('CLOUD');
+      expect(state.oauthUrl).toBe('https://oauth.example.com/start');
+      expect(state.formValues).toEqual({ sn: '', model: 'X1' });
+    });
+
+    it('setPairingConfig defaults missing fields', () => {
+      const state = reducer(initialState, setPairingConfig({ steps: [], mode: 'HUB' }));
+      expect(state.oauthUrl).toBeNull();
+      expect(state.form).toEqual([]);
+      expect(state.formValues).toEqual({});
+    });
+
+    it('setFormValue updates one input', () => {
+      const prev = { ...initialState, formValues: { sn: '', model: 'X1' } };
+      const state = reducer(prev, setFormValue({ name: 'sn', value: 'ABC' }));
+      expect(state.formValues).toEqual({ sn: 'ABC', model: 'X1' });
+    });
+
+    it('startOAuth moves to searching with a connecting popup', () => {
+      const prev = { ...initialState, devices: [mockDevice], searchTimedOut: true };
+      const state = reducer(prev, startOAuth());
+      expect(state.stage).toBe('searching');
+      expect(state.oauthStatus).toBe('connecting');
+      expect(state.devices).toEqual([]);
+      expect(state.searchTimedOut).toBe(false);
+    });
+
+    it('setOAuthStatus records popup progress', () => {
+      const state = reducer({ ...initialState, oauthStatus: 'connecting' }, setOAuthStatus('closed'));
+      expect(state.oauthStatus).toBe('closed');
+    });
+
+    it('setSearchError records and clears the error', () => {
+      const withError = reducer(initialState, setSearchError('Bad code'));
+      expect(withError.searchError).toBe('Bad code');
+      expect(reducer(withError, setSearchError(null)).searchError).toBeNull();
+    });
+
+    it('startSearch clears a previous search error', () => {
+      const state = reducer({ ...initialState, searchError: 'Bad code' }, startSearch());
+      expect(state.searchError).toBeNull();
+    });
+
+    it('returnToSteps goes back to the first step and leaves OAuth', () => {
+      const prev: PairingState = {
+        ...initialState, stage: 'searching', currentStep: 1, oauthStatus: 'timedOut', searchTimedOut: true, devices: [mockDevice],
+      };
+      const state = reducer(prev, returnToSteps());
+      expect(state.stage).toBe('steps');
+      expect(state.currentStep).toBe(0);
+      expect(state.oauthStatus).toBeNull();
+      expect(state.searchTimedOut).toBe(false);
+      expect(state.devices).toEqual([]);
+    });
+
+    it('showFormStep returns to the last step to re-enter the code', () => {
+      const prev: PairingState = { ...initialState, stage: 'searching', steps, searchError: 'Bad code' };
+      const state = reducer(prev, showFormStep());
+      expect(state.stage).toBe('steps');
+      expect(state.currentStep).toBe(1);
+      expect(state.searchError).toBeNull();
+    });
+
+    it('showFormStep stays on step 0 when there are no steps', () => {
+      const state = reducer({ ...initialState, stage: 'searching' }, showFormStep());
+      expect(state.currentStep).toBe(0);
     });
   });
 });

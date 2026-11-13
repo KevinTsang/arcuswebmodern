@@ -492,14 +492,14 @@ None.
 | Completion with success/failure | Yes | Yes | **Done** |
 | Kit activation flow | Yes | Yes | **Done** |
 | Hub WiFi configuration during setup | Yes | No | **Missing** |
-| Cloud device pairing (Nest, Hue, Lutron) | Yes | No | **Missing** |
+| Cloud device pairing (Nest, Hue, Lutron) | Yes | Yes (OAuth popup for Nest/Honeywell/Lutron; cloud form + Search for IPCD; Hue via hub search) | **Done** |
 | Care alarm interrupt (cancel pairing on alert) | Yes | No | **Missing** |
 | Incident interrupt (cancel pairing on alarm) | Yes | No | **Missing** |
 
 ### Gaps
 
 - Hub WiFi configuration during pairing.
-- Cloud device / third-party bridge pairing flows.
+- ~~Cloud device / third-party bridge pairing flows.~~ Done — OAuth sign-in popup (`subpairing:StartPairing` `oauthUrl`), IPCD pairing form sent with `subpairing:Search`. Follow-ups: per-device customization when one sign-in adds several devices (the first paired device is customized; others can be renamed from Devices), and the legacy mobile/IE11 OAuth warnings in the catalog.
 - Pairing interruption on alarm/care events.
 
 ---
@@ -664,7 +664,7 @@ These are commonly used features that users will expect:
 16. **Thermostat fan mode & min/max enforcement** — Fan control, setpoint limits, separation enforcement.
 17. **Advanced device info** — Power usage, signal strength, OTA firmware status.
 18. **Keypad, pet door, button/pendant, Halo device controls** — Niche device type support.
-19. **Cloud device pairing** — Nest, Hue, Lutron bridge pairing flows.
+19. ~~**Cloud device pairing** — Nest, Hue, Lutron bridge pairing flows.~~ **DONE**
 20. **Hub advanced features** — Sounds/volume, cellular backup, Z-Wave topology, 4G usage.
 21. **Mobile device presence tracking** — Phone location for home/away detection.
 22. **Ownership transfer, place deletion, cancel invitations** — Account and place lifecycle.

@@ -120,6 +120,92 @@ describe('Device pairing', () => {
   });
 });
 
+describe('Cloud (OAuth) pairing', () => {
+  const OAUTH_URL = 'https://oauth.example.test/acme/start?place=1';
+  const OAUTH_ORIGIN = 'https://oauth.example.test';
+
+  interface FakePopup {
+    closed: boolean;
+    close: () => void;
+    focus: () => void;
+  }
+
+  it('signs in through the vendor popup and customizes the device it adds', () => {
+    const popup: FakePopup = {
+      closed: false,
+      close() { this.closed = true; },
+      focus() { /* no-op */ },
+    };
+    cy.signIn({
+      path: '/product-catalog',
+      customize: (p) => {
+        p.onRequest(PairingSubsystem.CMD_STARTPAIRING, () => ({
+          mode: 'OAUTH',
+          oauthUrl: OAUTH_URL,
+          steps: [{ id: 'oauth-1', order: 1, instructions: ['Sign in to your Acme account to connect your devices.'] }],
+        }));
+      },
+    });
+    cy.window().then((win) => {
+      cy.wrap(cy.stub(win, 'open').returns(popup)).as('open');
+    });
+
+    product(PRODUCT.plug).click();
+    tid('pairing-instructions').should('contain', 'Sign in to your Acme account');
+    tid('pairing-search').should('have.text', 'Sign In to Acme').click();
+
+    cy.get('@open').should('have.been.calledWith', `${OAUTH_URL}&template=v2-web`);
+    tid('oauth-connect').should('have.attr', 'data-status', 'connecting');
+
+    // The user closes the window without signing in, then retries.
+    cy.wrap(popup).invoke('close');
+    tid('oauth-connect').should('have.attr', 'data-status', 'closed');
+    tid('oauth-failed').should('contain', 'Acme Login Window Closed');
+    cy.wrap(popup).then((p) => { p.closed = false; });
+    tid('oauth-retry').click();
+    cy.get('@open').should('have.been.calledTwice');
+    tid('oauth-connect').should('have.attr', 'data-status', 'connecting');
+
+    // The popup reports success and the platform adds the vendor's device.
+    cy.window().then((win) => {
+      win.dispatchEvent(new win.MessageEvent('message', {
+        origin: OAUTH_ORIGIN,
+        data: { type: 'arcus-oauth-popup-complete' },
+      }));
+    });
+    tid('oauth-connect').should('have.attr', 'data-status', 'authorized');
+    cy.platform().then((p) => {
+      p.addEntity({
+        [Base.ATTR_ADDRESS]: 'DRIV:dev:oauth-thermostat',
+        [Base.ATTR_ID]: 'oauth-thermostat',
+        [Base.ATTR_TYPE]: 'dev',
+        [Base.ATTR_CAPS]: ['base', 'dev'],
+        [Base.ATTR_TAGS]: [],
+        [Device.ATTR_NAME]: 'Acme Thermostat',
+        [Device.ATTR_DEVTYPEHINT]: 'Thermostat',
+      });
+      p.addEntity({
+        [Base.ATTR_ADDRESS]: 'SERV:pairdev:oauth-1',
+        [Base.ATTR_ID]: 'oauth-1',
+        [Base.ATTR_TYPE]: 'pairdev',
+        [PairingDevice.ATTR_PAIRINGSTATE]: PairingDevice.PAIRINGSTATE_PAIRED,
+        [PairingDevice.ATTR_PAIRINGPHASE]: PairingDevice.PAIRINGPHASE_PAIRED,
+        [PairingDevice.ATTR_DEVICEADDRESS]: 'DRIV:dev:oauth-thermostat',
+        [PairingDevice.ATTR_CUSTOMIZATIONS]: [],
+      });
+    });
+
+    cy.get('[data-testid="pairing-device-name"]', { timeout: 15000 }).type('Hallway Thermostat');
+    tid('pairing-customize-save').click();
+    cy.expectRequest(Base.CMD_SETATTRIBUTES, (r) =>
+      r.destination === 'DRIV:dev:oauth-thermostat' && r.attributes[Device.ATTR_NAME] === 'Hallway Thermostat');
+    tid('pairing-complete').should('have.attr', 'data-mispaired', 'false');
+    cy.platform().then((p) => {
+      expect(p.requestsOf(PairingSubsystem.CMD_SEARCH), 'OAuth products never search').to.be.empty;
+    });
+  });
+});
+
 describe('Hub setup', () => {
   beforeEach(() => {
     cy.signIn({

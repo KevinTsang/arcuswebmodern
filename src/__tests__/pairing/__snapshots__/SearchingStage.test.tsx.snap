@@ -1,0 +1,46 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`SearchingStage – cloud search error matches snapshot 1`] = `
+<DocumentFragment>
+  <div
+    class="text-center py-6"
+    data-testid="pairing-search-error"
+  >
+    <h3
+      class="text-lg font-semibold text-swift mb-4"
+    >
+      Attention
+    </h3>
+    <div
+      class="bg-pigeon/30 rounded-[var(--border-radius-base)] p-4 mb-4 text-left"
+    >
+      <h4
+        class="text-sm font-semibold text-swift mb-1"
+      >
+        Hmm… There's a problem with that code.
+      </h4>
+      <p
+        class="text-sm text-grouse"
+        data-testid="pairing-search-error-message"
+      >
+        Bad code
+      </p>
+    </div>
+    <div
+      class="flex gap-2 justify-center"
+    >
+      <button
+        class="px-4 py-2 bg-peacock text-crane rounded-[var(--border-radius-base)] text-sm font-medium hover:bg-peacock/90"
+        data-testid="pairing-reenter-code"
+      >
+        Re-Enter Code
+      </button>
+      <button
+        class="px-4 py-2 border border-heron rounded-[var(--border-radius-base)] text-sm text-coot hover:bg-pigeon"
+      >
+        Cancel
+      </button>
+    </div>
+  </div>
+</DocumentFragment>
+`;
