@@ -382,6 +382,39 @@ To authenticate, use the **/login** page: it POSTs credentials to the platform, 
 `irisAuthToken` for you. (You can also paste a still-valid token onto the `.example.com`
 domain in DevTools, but scripted login is more robust.)
 
+### Sharing a session with the deployed dev client
+
+The browser stores `irisAuthToken` against the **platform** host, not the page,
+so every page that can send it (see above) uses the same session: other tabs, the
+deployed dev client and a local `npm run dev` or container instance. Switching
+between them needs no new sign-in when:
+
+- both run in the **same browser profile**, and
+- both pages are **same-site with the platform**: the local instance on
+  `localdev.example.com` and the deployed client on any other `*.example.com` host.
+
+Signing in again on any of them makes the platform end the previous session (4001
+close or `sess:SessionExpired`) and stores the new token in that shared cookie. The
+other clients then reconnect with that cookie (`resumeSessionThunk`) and reload their
+place, rather than sending you to `/login?expired=1`. Signing out still signs out
+everywhere, because the cookie is cleared.
+
+A page that isn't same-site with the platform (`localhost`, a deployed client on
+another domain) can't share the session from client code: the cookie is HttpOnly and
+`SameSite`, so the page can't read it, and the browser won't send it. The options are:
+
+1. **Serve it from the platform's site** (recommended): add a `localdev.<domain>`
+   hosts entry, as above, and deploy the dev client under the same domain.
+2. **Platform cookie config:** issue `irisAuthToken` with `SameSite=None; Secure`
+   so it's sent cross-site. This is a platform change and loosens CSRF protection
+   for every client, so it isn't recommended.
+3. **Dev reverse proxy** in front of the platform, with `Set-Cookie` rewritten to the
+   page's host. The proxied page gets a working session of its own, but it isn't
+   shared with the deployed client.
+
+A token copied from DevTools onto the page's URL or into page storage isn't offered:
+that puts the session token where scripts and logs can read it.
+
 ### Pointing at a different backend
 
 The image reads the platform URLs when the container starts, from the same `ARCUS_*`
@@ -448,8 +481,10 @@ so platform traffic stays same-origin and is fully intercepted; the normal
 - **Every request is logged** — assert on it with
   `cy.expectRequest(type, predicate)` or `cy.expectRequestAttrs(type, attrs)`.
 - **Failure paths**: `platform.failRequest(type, code, message)` makes the next
-  request of that type fail; `platform.expireSession()` / `dropConnections(code)`
-  simulate the platform ending the session.
+  request of that type fail; `platform.expireSession()` / `revokeSession()` /
+  `dropConnections(code)` simulate the platform ending the session, and
+  `replaceSession()` simulates signing in on another client that shares the cookie
+  (this session's sockets close with 4001, the cookie stays valid).
 - **Server pushes**: `platform.updateEntity(address, attrs)`, `addEntity(entity)`,
   `removeEntity(address)` and `emit(source, type, attrs)` drive real-time updates
   from the test.

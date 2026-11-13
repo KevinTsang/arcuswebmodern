@@ -123,12 +123,34 @@ describe('Authentication', () => {
     tid('session-expired-notice').should('be.visible');
   });
 
-  it('redirects to login when the platform closes the socket as unauthorized', () => {
+  it('redirects to login when the platform closes the socket and the cookie is no longer valid', () => {
     cy.signIn();
-    cy.platform().invoke('dropConnections', 4001);
+    cy.platform().invoke('revokeSession');
 
     cy.location('pathname', { timeout: 20000 }).should('eq', '/login');
     tid('session-expired-notice').should('be.visible');
+  });
+
+  it('adopts the shared session when another client signs in and ends this one', () => {
+    cy.signIn();
+    cy.platform().its('connectionAttempts').then((before) => {
+      cy.platform().invoke('replaceSession');
+
+      // Reconnects with the replacement cookie instead of bouncing to /login
+      cy.platform().its('connectionAttempts', { timeout: 10000 }).should('be.gt', before);
+    });
+    cy.platform().its('openSocketCount', { timeout: 10000 }).should('eq', 1);
+    cy.location('pathname').should('eq', '/home');
+    tid('header-greeting').should('have.text', 'Hello, Alex');
+  });
+
+  it('adopts the shared session when the platform pushes SessionExpired but the cookie is still valid', () => {
+    cy.signIn();
+    cy.platform().invoke('emit', 'SERV:sess:', 'sess:SessionExpired', {});
+
+    cy.platform().its('openSocketCount', { timeout: 10000 }).should('eq', 1);
+    cy.location('pathname').should('eq', '/home');
+    tid('header-greeting').should('have.text', 'Hello, Alex');
   });
 
   it('sends the password reset email and reaches the confirmation screen', () => {

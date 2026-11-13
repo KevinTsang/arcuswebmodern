@@ -49,6 +49,17 @@ const authSlice = createSlice({
       state.person = null;
       state.account = null;
     },
+    /**
+     * The platform ended this socket's session (another client signed in, or
+     * it expired). Hold the app on its loading screen while
+     * resumeSessionThunk tries the browser's current session cookie, which a
+     * newer sign-in on another tab or client may have replaced.
+     */
+    sessionResuming(state) {
+      state.authenticated = false;
+      state.authenticating = true;
+      state.sessionExpired = false;
+    },
     sessionExpired(state) {
       state.authenticated = false;
       state.authenticating = false;
@@ -69,5 +80,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { setAuthenticating, loginSuccess, accountUpdated, loginFailed, logout, sessionExpired } = authSlice.actions;
+export const { setAuthenticating, loginSuccess, accountUpdated, loginFailed, logout, sessionResuming, sessionExpired } = authSlice.actions;
 export default authSlice.reducer;
