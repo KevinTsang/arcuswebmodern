@@ -1,0 +1,21 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`CellularBackupRow matches snapshot 1`] = `
+<DocumentFragment>
+  <div
+    class="flex justify-between text-sm"
+  >
+    <span
+      class="text-grouse"
+    >
+      Cellular Backup
+    </span>
+    <span
+      class="text-swift"
+      data-testid="info-value-cellular-backup"
+    >
+      Included in plan
+    </span>
+  </div>
+</DocumentFragment>
+`;

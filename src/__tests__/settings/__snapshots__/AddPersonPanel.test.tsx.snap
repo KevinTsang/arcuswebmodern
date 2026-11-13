@@ -17,6 +17,62 @@ exports[`AddPersonPanel – rendering matches snapshot 1`] = `
       </span>
       .
     </p>
+    <fieldset
+      class="space-y-2"
+    >
+      <legend
+        class="block text-sm text-grouse mb-1"
+      >
+        Access
+      </legend>
+      <label
+        class="flex gap-2 items-start p-2 border border-heron rounded-[var(--border-radius-base)] cursor-pointer"
+      >
+        <input
+          checked=""
+          class="mt-1"
+          data-testid="access-type-full"
+          name="access-type"
+          type="radio"
+          value="FULL_ACCESS"
+        />
+        <span>
+          <span
+            class="block text-sm text-swift"
+          >
+            Full Access (email required)
+          </span>
+          <span
+            class="block text-xs text-grouse"
+          >
+            Same access as the account owner: add and remove people, control alarms and locks, view and change settings, and more. Ideal for a spouse, partner or roommate.
+          </span>
+        </span>
+      </label>
+      <label
+        class="flex gap-2 items-start p-2 border border-heron rounded-[var(--border-radius-base)] cursor-pointer"
+      >
+        <input
+          class="mt-1"
+          data-testid="access-type-partial"
+          name="access-type"
+          type="radio"
+          value="HOBBIT"
+        />
+        <span>
+          <span
+            class="block text-sm text-swift"
+          >
+            Partial Access
+          </span>
+          <span
+            class="block text-xs text-grouse"
+          >
+            A PIN for alarms and locks and rule notifications, without a login. Ideal for children, family, friends and service personnel.
+          </span>
+        </span>
+      </label>
+    </fieldset>
     <div>
       <label
         class="block text-sm text-grouse mb-1"

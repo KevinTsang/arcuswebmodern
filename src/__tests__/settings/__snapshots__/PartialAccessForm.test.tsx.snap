@@ -1,0 +1,129 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`PartialAccessForm – rendering matches snapshot 1`] = `
+<DocumentFragment>
+  <div
+    class="space-y-4"
+    data-testid="partial-access-form"
+  >
+    <div>
+      <label
+        class="block text-sm text-grouse mb-1"
+        for="partial-first-name"
+      >
+        First Name
+      </label>
+      <input
+        class="w-full border border-heron rounded-[var(--border-radius-base)] px-3 py-2 text-sm text-swift focus:outline-none focus:border-peacock disabled:opacity-50"
+        data-testid="field-first-name"
+        id="partial-first-name"
+        type="text"
+        value=""
+      />
+    </div>
+    <div>
+      <label
+        class="block text-sm text-grouse mb-1"
+        for="partial-last-name"
+      >
+        Last Name
+      </label>
+      <input
+        class="w-full border border-heron rounded-[var(--border-radius-base)] px-3 py-2 text-sm text-swift focus:outline-none focus:border-peacock disabled:opacity-50"
+        data-testid="field-last-name"
+        id="partial-last-name"
+        type="text"
+        value=""
+      />
+    </div>
+    <div>
+      <label
+        class="block text-sm text-grouse mb-1"
+        for="partial-email"
+      >
+        Email (optional)
+      </label>
+      <input
+        class="w-full border border-heron rounded-[var(--border-radius-base)] px-3 py-2 text-sm text-swift focus:outline-none focus:border-peacock disabled:opacity-50"
+        data-testid="field-email-optional"
+        id="partial-email"
+        type="email"
+        value=""
+      />
+    </div>
+    <div>
+      <label
+        class="block text-sm text-grouse mb-1"
+        for="partial-phone"
+      >
+        Phone Number (optional)
+      </label>
+      <input
+        class="w-full border border-heron rounded-[var(--border-radius-base)] px-3 py-2 text-sm text-swift focus:outline-none focus:border-peacock disabled:opacity-50"
+        data-testid="field-phone-number-optional"
+        id="partial-phone"
+        type="tel"
+        value=""
+      />
+    </div>
+    <p
+      class="text-xs text-grouse"
+    >
+      By entering a phone number you acknowledge that this person has agreed to receive phone calls in the event of an alarm.
+    </p>
+    <p
+      class="text-sm text-grouse"
+    >
+      Assign a unique 4-digit PIN code to let this person arm and disarm alarms and lock and unlock locks.
+    </p>
+    <div>
+      <label
+        class="block text-sm text-grouse mb-1"
+        for="partial-pin"
+      >
+        PIN Code
+      </label>
+      <input
+        autocomplete="new-password"
+        class="w-full border border-heron rounded-[var(--border-radius-base)] px-3 py-2 text-sm text-swift focus:outline-none focus:border-peacock disabled:opacity-50"
+        data-testid="field-pin-code"
+        id="partial-pin"
+        type="password"
+        value=""
+      />
+    </div>
+    <div>
+      <label
+        class="block text-sm text-grouse mb-1"
+        for="partial-verify-pin"
+      >
+        Verify PIN Code
+      </label>
+      <input
+        autocomplete="new-password"
+        class="w-full border border-heron rounded-[var(--border-radius-base)] px-3 py-2 text-sm text-swift focus:outline-none focus:border-peacock disabled:opacity-50"
+        data-testid="field-verify-pin-code"
+        id="partial-verify-pin"
+        type="password"
+        value=""
+      />
+    </div>
+    <div
+      class="flex gap-2 pt-2"
+    >
+      <button
+        class="px-4 py-2 bg-peacock text-crane rounded-[var(--border-radius-base)] text-sm font-medium hover:bg-peacock/90 disabled:opacity-50"
+        data-testid="partial-add"
+        disabled=""
+      >
+        Add Person
+      </button>
+      <button
+        class="px-4 py-2 border border-heron rounded-[var(--border-radius-base)] text-sm text-coot hover:bg-pigeon"
+      >
+        Cancel
+      </button>
+    </div>
+  </div>
+</DocumentFragment>
+`;

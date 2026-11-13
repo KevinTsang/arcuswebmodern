@@ -376,15 +376,14 @@ None.
 | Change PIN per person/place | Yes | Yes | **Done** |
 | Relationship tagging (spouse, friend, service, etc.) | Yes | Yes | **Done** |
 | Invitation code display with copy | Yes | Yes | **Done** |
-| Cancel pending invitations | Yes | No | **Missing** |
-| Full-access vs partial-access roles | Yes | No | **Missing** |
-| Ownership transfer / designation | Yes | No | **Missing** |
+| Cancel pending invitations | Yes | Yes (pending invites listed on owned place cards, confirm + `place:CancelInvitation`) | **Done** |
+| Full-access vs partial-access roles | Yes | Yes (role badges via `place:ListPersonsWithAccess`; add partial-access person with `place:AddPerson` + PIN) | **Done** |
+| Ownership transfer / designation | No platform API | Account Owner shown per person; owner can't be removed | **Partial** |
 
 ### Gaps
 
-- Cancel pending outgoing invitations.
-- Full-access vs partial-access (PIN-only) person roles.
-- Ownership transfer.
+- Ownership transfer: the platform has no command to move a place/account to another person (`person:PromoteToAccount` only gives a guest a new account of their own) and the legacy client has no UI for it either, so only owner designation is shown. Needs a platform API.
+- Partial-access add form doesn't set a relationship tag yet; editing a partial-access person's contact info/PIN after creation still goes through the existing person detail panel (remove only).
 - **Bug:** Contact info does not load on the person detail view.
 
 ---
@@ -397,14 +396,13 @@ None.
 | Place switching | Yes | Yes | **Done** |
 | Add new place | Yes | Yes | **Done** |
 | Place settings (name, address) | Yes | Yes | **Done** |
-| Place deletion | Yes | No | **Missing** |
-| Service level display | Yes | No | **Missing** |
-| Cellular backup status | Yes | No | **Missing** |
+| Place deletion | Yes | Yes (type REMOVE + confirm, `place:Delete`; not the primary or the active place) | **Done** |
+| Service level display | Yes | Yes (all levels incl. annual) | **Done** |
+| Cellular backup status | Yes | Yes (add-on from `place:serviceAddons`; live `cellbackup:status` for the active place) | **Done** |
 
 ### Gaps
 
-- Place deletion.
-- Service level and cellular backup status display.
+- Deleting the active place isn't offered (switch to another place first); changing the service plan or adding/removing the Cellular Backup add-on is not built.
 
 ---
 
@@ -667,7 +665,7 @@ These are commonly used features that users will expect:
 19. **Cloud device pairing** — Nest, Hue, Lutron bridge pairing flows.
 20. **Hub advanced features** — Sounds/volume, cellular backup, Z-Wave topology, 4G usage.
 21. **Mobile device presence tracking** — Phone location for home/away detection.
-22. **Ownership transfer, place deletion, cancel invitations** — Account and place lifecycle.
+22. **Ownership transfer, place deletion, cancel invitations** — **Partial.** Cancel invitations, full/partial-access roles (display + add partial-access person), place deletion, service level and cellular backup status are done; ownership transfer has no platform API.
 23. **Pro monitoring trial & plan selection** — Trial activation, monthly vs annual.
 24. **Consolidate the dashboard card ↔ subsystem mappings** — The home page keeps
     its own `SERVICE_TO_NAMESPACE` table (`src/app/(authenticated)/home/page.tsx`)

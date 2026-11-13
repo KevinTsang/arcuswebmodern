@@ -1,0 +1,40 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`PendingInvitationRow matches snapshot 1`] = `
+<DocumentFragment>
+  <div
+    class="flex items-center justify-between px-3 py-2 rounded border border-dashed border-heron"
+    data-testid="inv"
+  >
+    <div
+      class="min-w-0"
+    >
+      <p
+        class="text-sm text-swift truncate"
+      >
+        Robin Park
+      </p>
+      <p
+        class="text-xs text-grouse truncate"
+      >
+        robin@test.com
+      </p>
+    </div>
+    <div
+      class="flex items-center gap-2 flex-shrink-0"
+    >
+      <span
+        class="text-xs text-grouse"
+      >
+        Invitation Sent
+      </span>
+      <button
+        class="text-xs text-cardinal hover:underline"
+        data-testid="inv-cancel"
+      >
+        Cancel
+      </button>
+    </div>
+  </div>
+</DocumentFragment>
+`;

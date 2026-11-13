@@ -1,6 +1,8 @@
-import type { PersonData, PlaceData } from '@/store/entityTypes';
+import type { PlaceData } from '@/store/entityTypes';
+import type { Invitation } from '@arcus/core/services/types';
+import type { PersonWithAccess } from '@/arcus/types';
 
-export type { PlaceData };
+export type { PlaceData, PersonWithAccess };
 
 // ── Relationships (from arcusweb config/relationships.json) ──────
 
@@ -46,5 +48,10 @@ export interface PlaceWithPeople {
   name: string;
   role: string;
   placeData: PlaceData | null;
-  people: PersonData[];
+  /** Everyone with access to the place, with their role there. */
+  people: PersonWithAccess[];
+  /** Invitations sent for the place and not yet accepted (owners only; empty otherwise). */
+  invitations: Invitation[];
+  /** Whether this is the person's primary place, which can't be deleted. */
+  primary?: boolean;
 }

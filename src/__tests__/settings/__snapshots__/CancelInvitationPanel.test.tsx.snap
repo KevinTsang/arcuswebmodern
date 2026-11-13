@@ -1,0 +1,49 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`CancelInvitationPanel matches snapshot 1`] = `
+<DocumentFragment>
+  <div
+    class="p-4 space-y-4"
+  >
+    <p
+      class="text-sm font-medium text-cardinal"
+    >
+      Are you sure?
+    </p>
+    <p
+      class="text-sm text-swift"
+      data-testid="cancel-invitation-message"
+    >
+      You will have to re-invite 
+      <span
+        class="font-medium"
+      >
+        Robin Park
+      </span>
+       to give them access to 
+      <span
+        class="font-medium"
+      >
+        Lake House
+      </span>
+      .
+    </p>
+    <div
+      class="flex gap-2 pt-2"
+    >
+      <button
+        class="px-4 py-2 bg-cardinal text-crane rounded-[var(--border-radius-base)] text-sm font-medium hover:bg-cardinal/90 disabled:opacity-50"
+        data-testid="cancel-invitation-confirm"
+      >
+        Cancel Invitation
+      </button>
+      <button
+        class="px-4 py-2 border border-heron rounded-[var(--border-radius-base)] text-sm text-coot hover:bg-pigeon"
+        data-testid="cancel-invitation-back"
+      >
+        Keep Invitation
+      </button>
+    </div>
+  </div>
+</DocumentFragment>
+`;

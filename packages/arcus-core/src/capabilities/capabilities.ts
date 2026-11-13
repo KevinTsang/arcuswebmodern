@@ -1839,6 +1839,8 @@ export const Place = {
   SERVICELEVEL_PREMIUM_PROMON_FREE: 'PREMIUM_PROMON_FREE',
   SERVICELEVEL_PREMIUM_ANNUAL: 'PREMIUM_ANNUAL',
   SERVICELEVEL_PREMIUM_PROMON_ANNUAL: 'PREMIUM_PROMON_ANNUAL',
+  // Not in the capability definition: the add-on the platform lists in place:serviceAddons.
+  SERVICEADDON_CELLBACKUP: 'CELLBACKUP',
   CMD_LISTDEVICES: 'place:ListDevices',
   CMD_GETHUB: 'place:GetHub',
   CMD_STARTADDINGDEVICES: 'place:StartAddingDevices',

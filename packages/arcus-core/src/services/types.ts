@@ -12,6 +12,8 @@ export interface AvailablePlace {
   placeId: string;
   name: string;
   role: string;
+  /** True for the person's primary place (the first place of their own account), which can't be deleted. */
+  primary?: boolean;
 }
 
 export interface ListAvailablePlacesResponse {

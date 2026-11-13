@@ -68,6 +68,21 @@ exports[`PlaceCard – rendering matches snapshot 1`] = `
           <span
             class="text-grouse"
           >
+            Cellular Backup
+          </span>
+          <span
+            class="text-swift"
+            data-testid="place-info-place-lake-value-cellular-backup"
+          >
+            Not included
+          </span>
+        </div>
+        <div
+          class="flex justify-between text-sm"
+        >
+          <span
+            class="text-grouse"
+          >
             Role
           </span>
           <span
@@ -144,6 +159,11 @@ exports[`PlaceCard – rendering matches snapshot 1`] = `
               <div
                 class="flex items-center gap-2 flex-shrink-0"
               >
+                <span
+                  class="text-xs text-grouse capitalize"
+                >
+                  Full Access
+                </span>
                 <button
                   class="text-xs text-peacock hover:underline"
                   data-testid="person-place-lake-p2-details"
@@ -153,6 +173,16 @@ exports[`PlaceCard – rendering matches snapshot 1`] = `
               </div>
             </div>
           </div>
+        </div>
+        <div
+          class="border-t border-heron mt-3 pt-3 flex items-center justify-between text-sm"
+        >
+          <button
+            class="text-sm text-cardinal hover:underline"
+            data-testid="place-remove-place-lake"
+          >
+            Remove Place
+          </button>
         </div>
       </div>
     </div>

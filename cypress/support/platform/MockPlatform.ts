@@ -433,10 +433,6 @@ export class MockPlatform {
     return entity;
   }
 
-  private placeAddress(): string {
-    return `SERV:place:${this.data.placeId}`;
-  }
-
   private pairingSubsystemAddress(): string {
     return `SERV:subpairing:${PLACE_ID}`;
   }
@@ -472,7 +468,9 @@ export class MockPlatform {
       return {};
     },
     'sess:ListAvailablePlaces': () => ({
-      places: this.data.places.map((p) => ({ placeId: p.placeId, name: p.placeName, role: p.role })),
+      places: this.data.places.map((p) => ({
+        placeId: p.placeId, name: p.placeName, role: p.role, primary: p.primary ?? false,
+      })),
     }),
     'sess:GetPreferences': () => ({ prefs: this.data.preferences }),
     'sess:SetPreferences': ({ attrs }) => {
@@ -515,6 +513,52 @@ export class MockPlatform {
     // Place
     [Place.CMD_LISTDEVICES]: () => ({ devices: this.entitiesIn('DRIV', 'dev') }),
     [Place.CMD_LISTPERSONS]: () => ({ persons: this.entitiesIn('SERV', 'person') }),
+    // Everyone is at every place in the fake. The signed-in person has their
+    // session role; a person without a login is partial access (a hobbit).
+    [Place.CMD_LISTPERSONSWITHACCESS]: ({ destination }) => {
+      const placeId = destination.slice('SERV:place:'.length);
+      const ownRole = this.data.places.find((p) => p.placeId === placeId)?.role ?? 'OWNER';
+      return {
+        persons: this.entitiesIn('SERV', 'person').map((person) => ({
+          person,
+          role: person[Base.ATTR_ID] === this.data.personId
+            ? ownRole
+            : person[Person.ATTR_HASLOGIN] === false ? 'HOBBIT' : 'FULL_ACCESS',
+        })),
+      };
+    },
+    [Place.CMD_ADDPERSON]: ({ attrs }) => {
+      const personId = this.nextId('person');
+      const address = `SERV:person:${personId}`;
+      this.data.entities[address] = {
+        ...(attrs.person as Attrs),
+        [Base.ATTR_ADDRESS]: address,
+        [Base.ATTR_ID]: personId,
+        [Base.ATTR_TYPE]: 'person',
+        [Person.ATTR_HASLOGIN]: false,
+      };
+      this.created.add(address);
+      return { newPerson: address };
+    },
+    [Place.CMD_PENDINGINVITATIONS]: ({ destination }) => {
+      const placeId = destination.slice('SERV:place:'.length);
+      return {
+        invitations: Object.values(this.data.invitationCodes)
+          .filter((i) => i.placeId === placeId) as unknown as Json,
+      };
+    },
+    [Place.CMD_CANCELINVITATION]: ({ attrs }) => {
+      const code = attrs.code as string;
+      if (!this.data.invitationCodes[code]) throw new PlatformFailure('error.notfound', 'Unknown invitation');
+      delete this.data.invitationCodes[code];
+      return {};
+    },
+    [Place.CMD_DELETE]: ({ destination }) => {
+      const place = this.mustGet(destination);
+      this.data.places = this.data.places.filter((p) => p.placeId !== place[Base.ATTR_ID]);
+      this.removeEntity(destination);
+      return {};
+    },
     [Place.CMD_GETHUB]: () => ({
       hub: Object.values(this.data.entities).find((e) => e[Base.ATTR_TYPE] === 'hub') ?? {},
     }),
@@ -533,12 +577,12 @@ export class MockPlatform {
         .filter((h) => h.subjectAddress === destination)
         .slice(0, (attrs.limit as number | undefined) ?? 20) as unknown as Json,
     }),
-    [Place.CMD_CREATEINVITATION]: ({ attrs }) => {
+    [Place.CMD_CREATEINVITATION]: ({ destination, attrs }) => {
       const code = `NEW-${this.nextId('INVITE').toUpperCase()}`;
-      const place = this.mustGet(this.placeAddress());
+      const place = this.mustGet(destination);
       const invitation: InvitationFixture = {
         code,
-        placeId: this.data.placeId,
+        placeId: place[Base.ATTR_ID] as string,
         placeName: (place[Place.ATTR_NAME] as string) ?? 'Place',
         inviteeEmail: attrs.email as string,
         inviteeFirstName: (attrs.firstName as string) ?? '',
