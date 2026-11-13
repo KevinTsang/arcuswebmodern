@@ -1,4 +1,4 @@
-import { Device, DeviceConnection } from '@arcus/core';
+import { Device, DeviceConnection, Shade, Somfyv1 } from '@arcus/core';
 import {
   cToF,
   formatTemp,
@@ -191,6 +191,33 @@ describe('getDeviceStatusText', () => {
 
   it('returns Ok for motion sensor', () => {
     expect(getDeviceStatusText({ [Device.ATTR_DEVTYPEHINT]: 'Motion' }, BASE_CONFIG)).toBe('Ok');
+  });
+
+  it('returns the shade position, or Obstructed', () => {
+    expect(
+      getDeviceStatusText({ [Device.ATTR_DEVTYPEHINT]: 'Shade', [Shade.ATTR_LEVEL]: 30 }, BASE_CONFIG),
+    ).toBe('30% Open');
+    expect(
+      getDeviceStatusText(
+        { [Device.ATTR_DEVTYPEHINT]: 'Shade', [Shade.ATTR_LEVEL]: 30, [Shade.ATTR_SHADESTATE]: Shade.SHADESTATE_OBSTRUCTION },
+        BASE_CONFIG,
+      ),
+    ).toBe('Obstructed');
+  });
+
+  it('returns the Somfy blind position', () => {
+    expect(
+      getDeviceStatusText(
+        { [Device.ATTR_DEVTYPEHINT]: 'SomfyV1Blind', [Somfyv1.ATTR_TYPE]: Somfyv1.TYPE_BLIND, [Somfyv1.ATTR_CURRENTSTATE]: Somfyv1.CURRENTSTATE_CLOSED },
+        BASE_CONFIG,
+      ),
+    ).toBe('Closed');
+    expect(
+      getDeviceStatusText(
+        { [Device.ATTR_DEVTYPEHINT]: 'SomfyV1Blind', [Somfyv1.ATTR_CURRENTSTATE]: Somfyv1.CURRENTSTATE_OPEN },
+        BASE_CONFIG,
+      ),
+    ).toBe('Up');
   });
 });
 

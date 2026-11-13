@@ -18,6 +18,7 @@ import { useAppSelector } from '../store/hooks';
 import { selectDeviceByAddress } from '../store/slices/devicesSlice';
 import { getLockStatus } from '../lib/lockStatus';
 import { getValveStatus } from '../lib/valveStatus';
+import { getBlindStatus, getShadeStatus } from '../lib/shadeStatus';
 import {
   resolveDeviceConfig,
   resolveDeviceBadges,
@@ -391,6 +392,10 @@ export function getDeviceStatusText(device: DeviceObj, config: DeviceWebConfig):
       return 'Ok';
     case 'watervalve':
       return getValveStatus(device).label;
+    case 'shade':
+      return getShadeStatus(device).label;
+    case 'somfyv1blind':
+      return getBlindStatus(device).label;
     default:
       return on ? 'On' : 'Off';
   }

@@ -1,0 +1,87 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`ShadeLevelControl snapshots matches snapshot 1`] = `
+<DocumentFragment>
+  <div
+    class="flex flex-col items-end gap-1"
+  >
+    <div
+      aria-label="Shade position"
+      class="flex items-center gap-2"
+      role="group"
+    >
+      <button
+        aria-label="Lower shade"
+        class="w-7 h-7 flex items-center justify-center rounded-[var(--border-radius-base)] text-sm font-medium bg-pigeon text-coot hover:bg-heron disabled:opacity-50 disabled:hover:bg-pigeon"
+        data-testid="device-shade-down-DRIV:dev:shade"
+        type="button"
+      >
+        −
+      </button>
+      <span
+        aria-live="polite"
+        class="min-w-12 text-center text-sm font-medium text-swift"
+        data-level="30"
+        data-testid="device-shade-level-DRIV:dev:shade"
+      >
+        30%
+      </span>
+      <button
+        aria-label="Raise shade"
+        class="w-7 h-7 flex items-center justify-center rounded-[var(--border-radius-base)] text-sm font-medium bg-pigeon text-coot hover:bg-heron disabled:opacity-50 disabled:hover:bg-pigeon"
+        data-testid="device-shade-up-DRIV:dev:shade"
+        type="button"
+      >
+        +
+      </button>
+    </div>
+  </div>
+</DocumentFragment>
+`;
+
+exports[`ShadeLevelControl snapshots matches snapshot when obstructed 1`] = `
+<DocumentFragment>
+  <div
+    class="flex flex-col items-end gap-1"
+  >
+    <div
+      aria-describedby="device-shade-hint-DRIV:dev:shade"
+      aria-label="Shade position"
+      class="flex items-center gap-2"
+      role="group"
+    >
+      <button
+        aria-label="Lower shade"
+        class="w-7 h-7 flex items-center justify-center rounded-[var(--border-radius-base)] text-sm font-medium bg-pigeon text-coot hover:bg-heron disabled:opacity-50 disabled:hover:bg-pigeon"
+        data-testid="device-shade-down-DRIV:dev:shade"
+        type="button"
+      >
+        −
+      </button>
+      <span
+        aria-live="polite"
+        class="min-w-12 text-center text-sm font-medium text-swift"
+        data-level="30"
+        data-testid="device-shade-level-DRIV:dev:shade"
+      >
+        30%
+      </span>
+      <button
+        aria-label="Raise shade"
+        class="w-7 h-7 flex items-center justify-center rounded-[var(--border-radius-base)] text-sm font-medium bg-pigeon text-coot hover:bg-heron disabled:opacity-50 disabled:hover:bg-pigeon"
+        data-testid="device-shade-up-DRIV:dev:shade"
+        type="button"
+      >
+        +
+      </button>
+    </div>
+    <p
+      class="max-w-48 text-right text-xs text-cardinal"
+      data-testid="device-shade-hint-DRIV:dev:shade"
+      id="device-shade-hint-DRIV:dev:shade"
+    >
+      The shade reported an obstruction. Clear it, then set the position again.
+    </p>
+  </div>
+</DocumentFragment>
+`;
