@@ -6,3 +6,4 @@ export { Countdown } from './Countdown';
 export { ConfirmDialog } from './ConfirmDialog';
 export { StagedProgress } from './StagedProgress';
 export { ArcusLogo } from './ArcusLogo';
+export { FavoriteToggle } from './FavoriteToggle';

@@ -563,17 +563,20 @@ None.
 | Feature | Legacy | Modern | Status |
 |---------|--------|--------|--------|
 | Favorite devices | Yes | Yes | **Done** |
-| Favorite scenes | Yes | No toggle UI yet (card reads tag) | **Partial** |
-| Favorite rules | Yes | No toggle UI yet | **Missing** |
+| Favorite scenes | Yes | Yes (star on each scene card) | **Done** |
+| Favorite rules | Yes | Yes (star on each rule row) | **Done** |
 | Dashboard favorites card | Yes | Yes | **Done** |
 | Toggle favorite from device detail | Yes | Yes | **Done** |
 
 ### Gaps
 
-- Scene and rule favorite **toggles** are not yet exposed in the UI. The
-  underlying mechanism now works — the dashboard favorites card recognizes any
-  object tagged `FAVORITE` — so adding a star control to the scene/rule lists
-  that calls `setFavorite()` (`@/lib/favorites`) is all that remains.
+None. Scene cards and rule rows now have a star toggle (shared
+`FavoriteToggle` component) that calls `setFavorite()` from `@/lib/favorites`.
+The star follows the store's `base:tags`, which the platform's
+`base:ValueChange` updates, and a failed request shows an error toast. The
+dashboard favorites card still lists devices and scenes only, as the legacy
+client does, so a favorited rule shows its star in the rules list but not on
+the dashboard.
 
 ### Notes
 

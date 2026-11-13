@@ -56,6 +56,20 @@ describe('Scenes', () => {
     cy.toast(`Failed to run ${SCENE_NAME.movieTime}`);
   });
 
+  it('adds and removes a scene favorite (PRD §23)', () => {
+    tid(`scene-favorite-${MOVIE_TIME}`).should('have.attr', 'data-favorite', 'false').click();
+    cy.expectRequest(Base.CMD_ADDTAGS, (r) => r.destination === SCENE.movieTime);
+    tid(`scene-favorite-${MOVIE_TIME}`).should('have.attr', 'data-favorite', 'true').click();
+    cy.expectRequest(Base.CMD_REMOVETAGS, (r) => r.destination === SCENE.movieTime);
+    tid(`scene-favorite-${MOVIE_TIME}`).should('have.attr', 'data-favorite', 'false');
+  });
+
+  it('reports a failed scene favorite toggle', () => {
+    cy.platform().invoke('failRequest', Base.CMD_ADDTAGS);
+    tid(`scene-favorite-${MOVIE_TIME}`).click();
+    cy.toast(`Failed to add ${SCENE_NAME.movieTime} to favorites`);
+  });
+
   it('toggles per-scene notifications', () => {
     tid(`scene-notification-${GOOD_NIGHT}`).should('have.attr', 'data-enabled', 'false').click();
     cy.expectRequest(Base.CMD_SETATTRIBUTES, (r) =>

@@ -3,6 +3,7 @@ import Bridge from '@arcus/core/bridge';
 import { Base, Rule } from '@arcus/core';
 import { useAppDispatch } from '@/store/hooks';
 import { addNotification } from '@/store/slices/uiSlice';
+import { FavoriteToggle } from '@/components/shared/FavoriteToggle';
 import type { RuleEntity } from '@/store/entityTypes';
 
 interface RuleListItemProps {
@@ -41,6 +42,7 @@ export function RuleListItem({ rule, onEdit }: RuleListItemProps) {
           )}
         </div>
         <div className="flex items-center gap-3 flex-shrink-0">
+          <FavoriteToggle entity={rule} name={name} testId={`rule-favorite-${ruleId}`} />
           <button
             onClick={handleToggle}
             className={`
