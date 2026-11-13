@@ -1,6 +1,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { Base, PairingDevice as PairingDeviceCap } from '@arcus/core';
 import type { PairingDevice, PairingProduct } from '@/store/entityTypes';
-import type { PairingStage, PairingStep } from '@/components/pairing/types';
+import type { PairingFlow, PairingStage, PairingStep } from '@/components/pairing/types';
 
 export interface PairingState {
   stage: PairingStage;
@@ -10,12 +11,16 @@ export interface PairingState {
   currentStep: number;
   devices: PairingDevice[];
   searchTimedOut: boolean;
+  /** The search could not be started (the pairing list or Search request failed). */
+  searchFailed: boolean;
   loading: boolean;
   hubId: string;
   hubRegistrationState: string | null;
   deviceName: string;
   isFavorite: boolean;
   activeDevice: PairingDevice | null;
+  /** The current pairing flow. Unlike the rest of this state it survives resetPairing. */
+  flow: PairingFlow | null;
 }
 
 const initialState: PairingState = {
@@ -26,13 +31,22 @@ const initialState: PairingState = {
   currentStep: 0,
   devices: [],
   searchTimedOut: false,
+  searchFailed: false,
   loading: false,
   hubId: '',
   hubRegistrationState: null,
   deviceName: '',
   isFavorite: false,
   activeDevice: null,
+  flow: null,
 };
+
+/** Record that the flow is done with a device, so later searches in the flow skip it. */
+function settle(state: PairingState, device: PairingDevice) {
+  if (state.flow) {
+    state.flow.settled[device[Base.ATTR_ADDRESS]] = device[PairingDeviceCap.ATTR_PAIRINGSTATE];
+  }
+}
 
 const pairingSlice = createSlice({
   name: 'pairing',
@@ -45,6 +59,7 @@ const pairingSlice = createSlice({
     startSearch(state) {
       state.stage = 'searching';
       state.searchTimedOut = false;
+      state.searchFailed = false;
       state.devices = [];
     },
     setDevices(state, action: PayloadAction<PairingDevice[]>) {
@@ -58,9 +73,13 @@ const pairingSlice = createSlice({
     deviceMispaired(state, action: PayloadAction<PairingDevice>) {
       state.activeDevice = action.payload;
       state.stage = 'completed';
+      settle(state, action.payload);
     },
     searchTimedOut(state) {
       state.searchTimedOut = true;
+    },
+    searchFailed(state) {
+      state.searchFailed = true;
     },
     setPairingLoading(state, action: PayloadAction<boolean>) {
       state.loading = action.payload;
@@ -107,9 +126,17 @@ const pairingSlice = createSlice({
     },
     customizationComplete(state) {
       state.stage = 'completed';
+      if (state.activeDevice) settle(state, state.activeDevice);
     },
-    resetPairing() {
-      return initialState;
+    startPairingFlow(state, action: PayloadAction<PairingFlow>) {
+      state.flow = action.payload;
+    },
+    endPairingFlow(state) {
+      state.flow = null;
+    },
+    /** Reset the wizard. The pairing flow is kept: it ends with endPairingFlow. */
+    resetPairing(state) {
+      return { ...initialState, flow: state.flow };
     },
   },
 });
@@ -121,6 +148,7 @@ export const {
   devicePaired,
   deviceMispaired,
   searchTimedOut,
+  searchFailed,
   setPairingLoading,
   setSteps,
   nextStep,
@@ -134,6 +162,8 @@ export const {
   setDeviceName,
   setFavorite,
   customizationComplete,
+  startPairingFlow,
+  endPairingFlow,
   resetPairing,
 } = pairingSlice.actions;
 export default pairingSlice.reducer;

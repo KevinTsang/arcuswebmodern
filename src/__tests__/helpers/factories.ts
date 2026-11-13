@@ -2,9 +2,10 @@
  * Shared test factory functions for creating entity fixtures.
  */
 
-import { Base } from '@arcus/core';
+import { Base, PairingDevice as PairingDeviceCap } from '@arcus/core';
 import type {
   DeviceEntity,
+  PairingDevice,
   SubsystemEntity,
   IncidentEntity,
   SceneEntity,
@@ -56,6 +57,26 @@ export function makePerson(address: string, overrides: Partial<PersonEntity> = {
   return {
     id: address,
     [Base.ATTR_ADDRESS]: address,
+    ...overrides,
+  };
+}
+
+/** Pairing phase that goes with each pairing state. */
+const PAIRING_PHASE: Record<string, string> = {
+  [PairingDeviceCap.PAIRINGSTATE_PAIRING]: PairingDeviceCap.PAIRINGPHASE_JOIN,
+  [PairingDeviceCap.PAIRINGSTATE_PAIRED]: PairingDeviceCap.PAIRINGPHASE_PAIRED,
+  [PairingDeviceCap.PAIRINGSTATE_MISPAIRED]: PairingDeviceCap.PAIRINGPHASE_FAILED,
+  [PairingDeviceCap.PAIRINGSTATE_MISCONFIGURED]: PairingDeviceCap.PAIRINGPHASE_FAILED,
+};
+
+/** Pairing record `SERV:pairdev:<id>` for the device `DRIV:dev:<id>`, not yet customized. */
+export function makePairingDevice(id: string, state: string, overrides: Partial<PairingDevice> = {}): PairingDevice {
+  return {
+    [Base.ATTR_ADDRESS]: `SERV:pairdev:${id}`,
+    [PairingDeviceCap.ATTR_PAIRINGSTATE]: state,
+    [PairingDeviceCap.ATTR_PAIRINGPHASE]: PAIRING_PHASE[state] ?? PairingDeviceCap.PAIRINGPHASE_JOIN,
+    [PairingDeviceCap.ATTR_DEVICEADDRESS]: `DRIV:dev:${id}`,
+    [PairingDeviceCap.ATTR_CUSTOMIZATIONS]: [],
     ...overrides,
   };
 }

@@ -53,7 +53,6 @@ const defaultAlarm = {
   offlineDevices: [] as string[],
   callTree: [] as { person: string; enabled: boolean }[],
   modeSettings: defaultModeSettings,
-  recordOnSecurity: false,
   fanShutoffOnSmoke: false,
   fanShutoffOnCO: false,
   securitySubsystem: { id: 'SERV:subsecurity:abc', [Base.ATTR_ADDRESS]: 'SERV:subsecurity:abc' } as SubsystemEntity,
