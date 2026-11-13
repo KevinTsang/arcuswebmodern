@@ -1,0 +1,33 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`CareSilentToggle matches snapshot 1`] = `
+<DocumentFragment>
+  <div
+    class="flex items-start justify-between gap-4 py-3 border-b border-heron"
+  >
+    <div>
+      <p
+        class="text-sm font-medium text-swift"
+      >
+        Silent Alarm
+      </p>
+      <p
+        class="text-xs text-grouse mt-0.5"
+      >
+        Mute the siren when a care alarm is triggered. Notifications and calls are still sent.
+      </p>
+    </div>
+    <button
+      aria-checked="false"
+      aria-label="Silent Alarm"
+      class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 bg-heron"
+      data-testid="care-silent-toggle"
+      role="switch"
+    >
+      <span
+        class="inline-block h-4 w-4 rounded-full bg-crane shadow transition-transform translate-x-1"
+      />
+    </button>
+  </div>
+</DocumentFragment>
+`;

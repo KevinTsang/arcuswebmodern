@@ -300,6 +300,7 @@ export function createFixture(): PlatformData {
     }),
     subsystem('subcare', {
       [CareSubsystem.ATTR_CAREDEVICES]: [DEVICE.motion],
+      [CareSubsystem.ATTR_CARECAPABLEDEVICES]: [DEVICE.motion, DEVICE.contact],
       [CareSubsystem.ATTR_BEHAVIORS]: [
         { name: 'Morning activity', description: 'Expect motion in the hallway by 9 AM', enabled: true, type: 'INACTIVITY' },
         { name: 'Night wandering', description: 'Alert on door activity overnight', enabled: false, type: 'OPEN' },

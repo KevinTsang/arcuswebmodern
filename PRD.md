@@ -273,19 +273,17 @@ None.
 | Behavior creation from templates | Yes | No | **Missing** |
 | Behavior editing (devices, time windows, thresholds) | Yes | No | **Missing** |
 | Behavior deletion | Yes | No | **Missing** |
-| Activity timeline | Yes | No | **Missing** |
-| Care device management | Yes | No | **Missing** |
+| Activity timeline | Yes | Yes (Activity tab: `subcare:ListDetailedActivity` per day for the last 14 days, filter by care device, paged) | **Done** |
+| Care device management | Yes | Yes (Devices tab: choose which care-capable devices are monitored, `subcare:careDevices`) | **Done** |
 | Care call tree / notification settings | Yes | No | **Missing** |
-| Alarm mode (ON / VISIT) | Yes | No | **Missing** |
-| Silent mode toggle | Yes | Yes (display only) | **Partial** |
+| Alarm mode (ON / VISIT) | Yes | Yes (On / Off on the Status tab; disabled until a behavior exists, as in legacy) | **Done** |
+| Silent mode toggle | Yes | Yes | **Done** |
 | Panic alert | No | No (panic comes from keypads, pendants and rules) | **N/A** |
 
 ### Gaps
 
 - Full behavior CRUD (create, edit, delete care behaviors).
-- Activity timeline.
 - Care-specific notification/call tree management.
-- Alarm mode switching (ON vs VISIT).
 
 ---
 

@@ -1,0 +1,80 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`CareDevices matches snapshot 1`] = `
+<DocumentFragment>
+  <div
+    class="max-w-lg"
+  >
+    <h3
+      class="text-base font-medium text-swift mb-1"
+    >
+      Care Devices
+    </h3>
+    <p
+      class="text-xs text-grouse mb-3"
+      data-testid="care-devices-summary"
+    >
+      1 of 2 devices monitored. Behaviors and the activity timeline only use the devices selected here.
+    </p>
+    <div
+      class="space-y-2"
+    >
+      <label
+        class="flex items-center justify-between gap-3 px-3 py-2.5 rounded border border-heron cursor-pointer"
+        data-selected="false"
+        data-testid="care-device-DRIV:dev:door"
+      >
+        <span
+          class="text-sm text-swift flex-1 min-w-0 truncate"
+        >
+          Back Door
+        </span>
+        <input
+          aria-label="Monitor Back Door"
+          class="h-4 w-4 accent-peacock disabled:opacity-50"
+          data-testid="care-device-toggle-DRIV:dev:door"
+          type="checkbox"
+        />
+      </label>
+      <label
+        class="flex items-center justify-between gap-3 px-3 py-2.5 rounded border border-heron cursor-pointer"
+        data-selected="true"
+        data-testid="care-device-DRIV:dev:motion"
+      >
+        <span
+          class="text-sm text-swift flex-1 min-w-0 truncate"
+        >
+          Hallway Motion
+        </span>
+        <input
+          aria-label="Monitor Hallway Motion"
+          checked=""
+          class="h-4 w-4 accent-peacock disabled:opacity-50"
+          data-testid="care-device-toggle-DRIV:dev:motion"
+          type="checkbox"
+        />
+      </label>
+    </div>
+  </div>
+</DocumentFragment>
+`;
+
+exports[`CareDevices matches snapshot when empty 1`] = `
+<DocumentFragment>
+  <div
+    class="text-center py-8"
+    data-testid="care-devices-empty"
+  >
+    <p
+      class="text-grouse mb-2"
+    >
+      No care-capable devices.
+    </p>
+    <p
+      class="text-sm text-grouse"
+    >
+      Motion, contact and other sensors you pair can be used by the care service.
+    </p>
+  </div>
+</DocumentFragment>
+`;

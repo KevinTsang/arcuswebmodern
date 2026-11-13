@@ -14,7 +14,7 @@
  */
 
 import {
-  Account, AlarmIncident, AlarmSubsystem, Base, Device, Hub, HubZwave, PairingDevice,
+  Account, AlarmIncident, AlarmSubsystem, Base, CareSubsystem, Device, Hub, HubZwave, PairingDevice,
   PairingSubsystem, Person, Place, Rule, RuleTemplate, Scene, SceneTemplate, Scheduler,
   SecuritySubsystem,
 } from '../../../packages/arcus-core/src/capabilities/capabilities';
@@ -922,9 +922,22 @@ export class MockPlatform {
     },
 
     // Care
-    'subcare:Clear': ({ destination }) => {
-      this.updateEntity(destination, { 'subcare:alarmState': 'READY' });
+    [CareSubsystem.CMD_CLEAR]: ({ destination }) => {
+      this.updateEntity(destination, { [CareSubsystem.ATTR_ALARMSTATE]: CareSubsystem.ALARMSTATE_READY });
       return {};
+    },
+    [CareSubsystem.CMD_LISTDETAILEDACTIVITY]: ({ destination, attrs }) => {
+      // History of the requested devices (default: the care devices), newest
+      // first, starting at the token timestamp. One page holds everything.
+      const care = this.mustGet(destination);
+      const devices = new Set((attrs.devices as string[] | undefined)
+        ?? (care[CareSubsystem.ATTR_CAREDEVICES] as string[] | undefined) ?? []);
+      const before = attrs.token ? Number(attrs.token) : Number.POSITIVE_INFINITY;
+      return {
+        results: this.data.history
+          .filter((h) => devices.has(h.subjectAddress) && h.timestamp <= before)
+          .slice(0, (attrs.limit as number | undefined) ?? 10) as unknown as Json,
+      };
     },
 
     // Pairing
