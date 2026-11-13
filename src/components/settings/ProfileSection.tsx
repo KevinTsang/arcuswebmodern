@@ -9,6 +9,9 @@ import { formatServiceLevel } from './settingsHelper';
 import { useOpenContactInfoPanel } from './useOpenContactInfoPanel';
 import ChangePasswordPanel from './ChangePasswordPanel';
 import ChangePinPanel from './ChangePinPanel';
+import EmailCard from './EmailCard';
+import SecurityQuestionsCard from './SecurityQuestionsCard';
+import DeleteAccountPanel from './DeleteAccountPanel';
 
 export default function ProfileSection() {
   const person = useAppSelector((s) => s.auth.person);
@@ -22,7 +25,6 @@ export default function ProfileSection() {
 
   const firstName = person[Person.ATTR_FIRSTNAME] ?? '';
   const lastName = person[Person.ATTR_LASTNAME] ?? '';
-  const email = person[Person.ATTR_EMAIL] ?? '';
   const phone = person[Person.ATTR_MOBILENUMBER] ?? '';
   const serviceLevel = place ? formatServiceLevel(place[Place.ATTR_SERVICELEVEL]) : '—';
 
@@ -40,9 +42,10 @@ export default function ProfileSection() {
         }
       >
         <InfoRow label="Name" value={`${firstName} ${lastName}`.trim() || '—'} />
-        <InfoRow label="Email" value={email || '—'} />
         <InfoRow label="Phone" value={phone || '—'} />
       </InfoCard>
+
+      <EmailCard />
 
       <InfoCard
         title="Password"
@@ -72,8 +75,24 @@ export default function ProfileSection() {
         <InfoRow label="PIN Code" value="••••" />
       </InfoCard>
 
+      <SecurityQuestionsCard />
+
       <InfoCard title="Service Plan">
         <InfoRow label="Current Plan" value={serviceLevel} />
+      </InfoCard>
+
+      <InfoCard
+        title="Delete Account"
+        action={
+          <button
+            onClick={() => openRight(<DeleteAccountPanel />, { title: 'Delete My Arcus Account', key: 'delete-account' })}
+            className="text-sm text-cardinal hover:underline"
+          >
+            Delete
+          </button>
+        }
+      >
+        <p className="text-sm text-grouse">Permanently delete your Arcus login and personal information.</p>
       </InfoCard>
     </div>
   );

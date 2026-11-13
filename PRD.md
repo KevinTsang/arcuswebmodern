@@ -418,10 +418,10 @@ None.
 | Phone editing | Yes | Yes | **Done** |
 | Email display | Yes | Yes | **Done** |
 | Password change | Yes | Yes | **Done** |
-| Email management (primary/secondary) | Yes | No | **Missing** |
-| Phone verification | Yes | No | **Missing** |
-| Security questions | Yes | No | **Missing** |
-| Account deletion | Yes | No | **Missing** |
+| Email management (primary/secondary) | Yes (change email) | Yes (change email, verification status, resend verification email) | **Partial** — the platform has no secondary email |
+| Phone verification | No | No | **Missing** — no platform API |
+| Security questions | Yes | Yes (list, add, edit up to 3) | **Done** |
+| Account deletion | Yes | Yes (owner deletes the account; others delete their login) | **Done** |
 
 ### 17.2 Billing & Subscription
 
@@ -448,7 +448,10 @@ None.
 - ~~**Bug:** Saving Profile → Edit Contact Info could blank the user's first and last name.~~ **DONE.** The form was seeded from `auth.person` (often just the session payload, with no names) and always wrote all three fields. `ContactInfoPanel` now loads the person with `base:GetAttributes` and stays disabled until that succeeds (error toast + retry on failure; a sign-in-again message with no session). It sends only the fields that changed, trimmed, and checks only those: names can't be blanked, and a changed phone must be a US number (phone characters only, 10 digits or 11 starting with 1, via `useFormValidation`'s new `phoneNumber` rule). Phones are sent as `(555) 123-4567`, the format the platform stores. Errors show after Save and follow typing, not blur. The Profile card refreshes after a save once #13 (`auth.person` follows the person's `base:ValueChange`) is merged.
 - Billing and subscription management is entirely absent.
 - Notification preferences and call tree management.
-- Account-level features (email management, phone verification, security questions, account deletion).
+- ~~Account-level features (email management, phone verification, security questions, account deletion).~~ **Partial.** Profile now has an **Email** card (address, verified/not verified from `person:emailVerified`, *Send verification email* via `person:SendVerificationEmail`, and *Change* → `ChangeEmailPanel`, which saves `person:email` with `base:SetAttributes` after checking it with `EMAIL_RULE` and the new `confirmEmailRule`), a **Security Questions** card (questions from the `security_question` i18n bundle, answers from `person:GetSecurityAnswers`; add/edit up to three, saved as a full set with `person:SetSecurityAnswers`, answers checked with the new `SECURITY_ANSWER_RULE`), and a **Delete Account** card (type DELETE, confirm, then `account:Delete { deleteOwnerLogin: true }` on the account the person owns, or `person:DeleteLogin` if they own none; signs out after). Email moved out of the Contact Information card. Still open:
+  - Secondary email: the platform has one email per person (`person:email`), so there is nothing to manage. Needs a platform change and a product decision.
+  - Phone verification: the platform has no SMS/phone verification command, and the legacy web client has none. Needs a platform API.
+  - Verifying an email from the emailed link (`person:VerifyEmail` with the token) has no page yet. The legacy web client didn't have one either; the link's target is set by the platform's email templates.
 
 ---
 
@@ -654,7 +657,7 @@ These are commonly used features that users will expect:
 9. **Hub WiFi configuration** — WiFi SSID/password setup, network scanning.
 10. **Irrigation scheduling & zone control** — Per-zone start/stop, schedule modes (even/odd/interval).
 11. **Rule scheduling** — Enable/disable rules on time-based schedules. (Scene scheduling is done.)
-12. **Account management** — Account deletion, email management, security questions.
+12. **Account management** — Account deletion, email management, security questions. **Partial** — email change/verification, security questions and account deletion are done; secondary email and phone verification need platform APIs (see §17 Gaps).
 
 ### Tier 3 — Completeness Gaps (Niche Device Types & Polish)
 

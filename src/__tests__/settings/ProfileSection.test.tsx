@@ -14,6 +14,17 @@ jest.mock('@/components/settings/useOpenContactInfoPanel', () => ({
   useOpenContactInfoPanel: () => mockOpenContactInfo,
 }));
 
+// The account cards load from the platform; they have their own tests.
+jest.mock('@/components/settings/EmailCard', () => ({
+  __esModule: true,
+  default: () => <div data-testid="email-card" />,
+}));
+
+jest.mock('@/components/settings/SecurityQuestionsCard', () => ({
+  __esModule: true,
+  default: () => <div data-testid="security-questions-card" />,
+}));
+
 let mockPerson: PersonEntity | null = null;
 let mockAccount: AccountData | null = null;
 let mockPlace: PlaceData | null = null;
@@ -42,6 +53,11 @@ beforeEach(() => {
 });
 
 describe('ProfileSection', () => {
+  it('matches snapshot', () => {
+    const { asFragment } = render(<ProfileSection />);
+    expect(asFragment()).toMatchSnapshot();
+  });
+
   it('shows loading when no person', () => {
     mockPerson = null;
     render(<ProfileSection />);
@@ -52,8 +68,25 @@ describe('ProfileSection', () => {
     render(<ProfileSection />);
     expect(screen.getByText('Contact Information')).toBeInTheDocument();
     expect(screen.getByText('John Doe')).toBeInTheDocument();
-    expect(screen.getByText('john@test.com')).toBeInTheDocument();
     expect(screen.getByText('555-1234')).toBeInTheDocument();
+  });
+
+  it('shows the email in its own card, not under contact information', () => {
+    render(<ProfileSection />);
+    expect(screen.queryByText('john@test.com')).not.toBeInTheDocument();
+    expect(screen.getByTestId('email-card')).toBeInTheDocument();
+  });
+
+  it('shows the security questions card', () => {
+    render(<ProfileSection />);
+    expect(screen.getByTestId('security-questions-card')).toBeInTheDocument();
+  });
+
+  it('opens DeleteAccountPanel from the Delete Account card', () => {
+    render(<ProfileSection />);
+    expect(screen.getByText('Permanently delete your Arcus login and personal information.')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Delete' }));
+    expect(mockOpenRight).toHaveBeenCalledWith(expect.anything(), { title: 'Delete My Arcus Account', key: 'delete-account' });
   });
 
   it('shows password section', () => {

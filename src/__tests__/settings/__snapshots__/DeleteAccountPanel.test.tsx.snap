@@ -1,0 +1,48 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`DeleteAccountPanel matches snapshot 1`] = `
+<DocumentFragment>
+  <div
+    class="p-4 space-y-4"
+  >
+    <p
+      class="text-sm text-coot"
+      data-testid="delete-account-warning"
+    >
+      Deleting this account will erase your Arcus account, email address and personal information from the Arcus Hub and the Arcus servers. Any other places accessed through this account will also be removed, and any billing plans will be cancelled.
+    </p>
+    <div>
+      <label
+        class="block text-sm text-grouse mb-1"
+        for="delete-account-word"
+      >
+        Type DELETE to continue
+      </label>
+      <input
+        autocomplete="off"
+        class="w-full border border-heron rounded-[var(--border-radius-base)] px-3 py-2 text-sm text-swift focus:outline-none focus:border-peacock disabled:opacity-50"
+        data-testid="field-type-delete-to-continue"
+        id="delete-account-word"
+        type="text"
+        value=""
+      />
+    </div>
+    <div
+      class="flex gap-2 pt-2"
+    >
+      <button
+        class="px-4 py-2 border border-cardinal text-cardinal rounded-[var(--border-radius-base)] text-sm font-medium hover:bg-cardinal/10 disabled:opacity-50"
+        data-testid="delete-account-submit"
+        disabled=""
+      >
+        Continue
+      </button>
+      <button
+        class="px-4 py-2 border border-heron rounded-[var(--border-radius-base)] text-sm text-coot hover:bg-pigeon"
+      >
+        Cancel
+      </button>
+    </div>
+  </div>
+</DocumentFragment>
+`;
