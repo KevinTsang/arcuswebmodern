@@ -1,0 +1,20 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`HubWifiSetupPrompt matches snapshot 1`] = `
+<DocumentFragment>
+  <p
+    class="text-sm text-grouse mb-4"
+    data-testid="hub-wifi-setup-prompt"
+  >
+    To stay connected to the internet without an Ethernet cable, consider 
+    <button
+      class="text-peacock hover:underline"
+      data-testid="hub-wifi-setup-link"
+      type="button"
+    >
+      connecting the Hub to your Wi-Fi network
+    </button>
+    .
+  </p>
+</DocumentFragment>
+`;

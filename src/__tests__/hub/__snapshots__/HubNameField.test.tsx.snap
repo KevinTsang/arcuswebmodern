@@ -1,0 +1,38 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`HubNameField matches snapshot 1`] = `
+<DocumentFragment>
+  <form
+    class="space-y-2"
+    data-testid="hub-name-form"
+  >
+    <label
+      class="block text-sm font-medium text-swift"
+      for="hub-name-input"
+    >
+      Hub Name
+    </label>
+    <div
+      class="flex gap-2"
+    >
+      <input
+        class="flex-1 min-w-0 px-3 py-2 text-sm text-swift bg-crane border border-heron rounded-[var(--border-radius-base)] focus:outline-none focus:border-peacock"
+        data-testid="hub-name-input"
+        id="hub-name-input"
+        maxlength="254"
+        placeholder="Hub Name"
+        type="text"
+        value="Home Hub"
+      />
+      <button
+        class="px-4 py-2 text-sm bg-peacock text-crane rounded-[var(--border-radius-base)] hover:opacity-90 disabled:opacity-50"
+        data-testid="hub-name-save"
+        disabled=""
+        type="submit"
+      >
+        Save
+      </button>
+    </div>
+  </form>
+</DocumentFragment>
+`;

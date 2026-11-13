@@ -14,7 +14,7 @@
  */
 
 import {
-  Account, AlarmIncident, AlarmSubsystem, Base, Device, Hub, HubZwave, PairingDevice,
+  Account, AlarmIncident, AlarmSubsystem, Base, Device, Hub, HubNetwork, HubWiFi, HubZwave, PairingDevice,
   PairingSubsystem, Person, Place, Rule, RuleTemplate, Scene, SceneTemplate, Scheduler,
   SecuritySubsystem,
 } from '../../../packages/arcus-core/src/capabilities/capabilities';
@@ -26,6 +26,16 @@ import {
 } from './types';
 
 type AppWindow = Window & typeof globalThis;
+
+/** What a hub Wi-Fi scan finds (hubwifi:WiFiScanResults entries). */
+export const HUB_WIFI_SCAN_RESULTS: Json[] = [
+  { ssid: 'NeighborNet', bssid: '00:11:22:33:44:01', security: ['WPA2-PSK'], signal: 35 },
+  { ssid: 'HomeNet', bssid: '00:11:22:33:44:02', security: ['WPA-PSK', 'WPA2-PSK'], signal: 92 },
+  { ssid: 'CoffeeShop', bssid: '00:11:22:33:44:03', security: ['None'], signal: 55 },
+];
+
+/** The password the fake hub rejects with BAD_PASSWD. */
+export const HUB_WIFI_BAD_PASSWORD = 'wrong-password';
 
 const WS_CONNECTING = 0;
 const WS_OPEN = 1;
@@ -881,6 +891,33 @@ export class MockPlatform {
     [HubZwave.CMD_HEAL]: ({ destination }) => {
       this.mustGet(destination);
       return {};
+    },
+    // Hub Wi-Fi: results and connect outcomes arrive as events, after the reply.
+    [HubWiFi.CMD_WIFISTARTSCAN]: ({ destination }) => {
+      this.mustGet(destination);
+      this.later(100, () => this.emit(destination, HubWiFi.EVENT_WIFISCANRESULTS, { scanResults: HUB_WIFI_SCAN_RESULTS }));
+      return {};
+    },
+    [HubWiFi.CMD_WIFIENDSCAN]: ({ destination }) => {
+      this.mustGet(destination);
+      return {};
+    },
+    [HubWiFi.CMD_WIFICONNECT]: ({ destination, attrs }) => {
+      this.mustGet(destination);
+      this.later(100, () => {
+        if (attrs.key === HUB_WIFI_BAD_PASSWORD) {
+          this.emit(destination, HubWiFi.EVENT_WIFICONNECTRESULT, { status: 'BAD_PASSWD' });
+          return;
+        }
+        // The hub stays on Ethernet until its cable is unplugged.
+        this.updateEntity(destination, {
+          [HubWiFi.ATTR_WIFISSID]: attrs.ssid as string,
+          [HubWiFi.ATTR_WIFISECURITY]: attrs.security as string,
+          [HubNetwork.ATTR_TYPE]: HubNetwork.TYPE_ETH,
+        });
+        this.emit(destination, HubWiFi.EVENT_WIFICONNECTRESULT, { status: 'OK' });
+      });
+      return { status: 'CONNECTING' };
     },
     [Hub.CMD_UNPAIRINGREQUEST]: ({ destination, attrs }) => {
       const hub = this.mustGet(destination);

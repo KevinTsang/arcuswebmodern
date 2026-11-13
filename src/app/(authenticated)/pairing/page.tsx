@@ -369,7 +369,7 @@ export default function PairingPage() {
           try {
             const hubAddr = hub[Base.ATTR_ADDRESS] as string;
             await Bridge.request(Base.CMD_SETATTRIBUTES, hubAddr, {
-              [Device.ATTR_NAME]: pairing.deviceName.trim(),
+              [Hub.ATTR_NAME]: pairing.deviceName.trim(),
             });
           } catch {
             dispatch(addNotification({ type: 'error', message: 'Failed to set hub name.' }));
