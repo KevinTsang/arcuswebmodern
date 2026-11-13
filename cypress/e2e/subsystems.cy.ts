@@ -6,7 +6,7 @@
 import {
   Base, CareSubsystem, Contact, DoorLock, DoorsNLocksSubsystem, MotorizedDoor, PresenceSubsystem, Valve,
 } from '../../packages/arcus-core/src/capabilities/capabilities';
-import { DEVICE, addr } from '../support/platform/fixtures';
+import { DEVICE, DEVICE_NAME, addr } from '../support/platform/fixtures';
 import { tid } from '../support/selectors';
 
 /** Subsystem views render device panels directly (no list row wrapper). */
@@ -208,7 +208,9 @@ describe('Care', () => {
     tid('care-behavior-status-morning-activity').should('have.text', 'Active');
     tid('care-behavior-status-night-wandering').should('have.text', 'Disabled');
     tid('care-device-count').should('have.text', '1 care device monitored');
-    tid('care-silent').should('not.exist');
+    tid('care-mode').should('have.attr', 'data-mode', CareSubsystem.ALARMMODE_ON);
+    tid('care-mode-summary').should('have.text', 'On — 1 of 2 behaviors active.');
+    tid('care-silent-toggle').should('have.attr', 'aria-checked', 'false');
 
     tid('care-tab-behaviors').click();
     tid('care-behavior-detail-morning-activity')
@@ -229,13 +231,80 @@ describe('Care', () => {
     });
     tid('care-state').should('have.text', 'CARE ALERT').and('have.attr', 'data-alert', 'true');
     tid('care-summary').should('have.text', 'No activity detected this morning');
-    tid('care-silent').should('be.visible');
+    tid('care-silent-toggle').should('have.attr', 'aria-checked', 'true');
 
     tid('care-clear').click();
     cy.expectRequest('subcare:Clear', (r) => r.destination === addr.subsystem('subcare'));
     cy.toast('Care alert cleared');
     tid('care-state').should('have.text', 'All Clear');
     tid('care-clear').should('not.exist');
+  });
+
+  it('turns the care alarm off (VISIT) and back on', () => {
+    cy.signIn({ path: '/services/care/status' });
+    tid('care-mode-on').should('be.disabled');
+    tid('care-mode-off').click();
+    cy.expectRequestAttrs(Base.CMD_SETATTRIBUTES, { [CareSubsystem.ATTR_ALARMMODE]: CareSubsystem.ALARMMODE_VISIT });
+    tid('care-mode').should('have.attr', 'data-mode', CareSubsystem.ALARMMODE_VISIT);
+    tid('care-summary').should('have.text', 'Care alarm is off');
+
+    tid('care-mode-on').click();
+    cy.expectRequestAttrs(Base.CMD_SETATTRIBUTES, { [CareSubsystem.ATTR_ALARMMODE]: CareSubsystem.ALARMMODE_ON });
+    tid('care-mode').should('have.attr', 'data-mode', CareSubsystem.ALARMMODE_ON);
+  });
+
+  it('shows a toast when the mode change fails', () => {
+    cy.signIn({ path: '/services/care/status' });
+    cy.platform().invoke('failRequest', Base.CMD_SETATTRIBUTES);
+    tid('care-mode-off').click();
+    cy.toast('Failed to change care alarm mode');
+    tid('care-mode').should('have.attr', 'data-mode', CareSubsystem.ALARMMODE_ON);
+  });
+
+  it('toggles the silent alarm', () => {
+    cy.signIn({ path: '/services/care/status' });
+    tid('care-silent-toggle').click();
+    cy.expectRequestAttrs(Base.CMD_SETATTRIBUTES, { [CareSubsystem.ATTR_SILENT]: true });
+    tid('care-silent-toggle').should('have.attr', 'aria-checked', 'true');
+  });
+
+  it('shows care device activity and filters by device', () => {
+    cy.signIn({
+      path: '/services/care/status',
+      customize: (p) => {
+        // A care device event from a minute ago, so it falls on today whatever the run time.
+        p.data.history.unshift({
+          timestamp: Date.now() - 60_000,
+          subjectName: DEVICE_NAME.motion,
+          subjectAddress: DEVICE.motion,
+          longMessage: 'Hallway Motion detected no motion.',
+        });
+      },
+    });
+    tid('care-tab-activity').click();
+    cy.expectRequest(CareSubsystem.CMD_LISTDETAILEDACTIVITY, (r) => r.destination === addr.subsystem('subcare'));
+    tid('history-entry-0').should('contain', 'Hallway Motion detected no motion.');
+    // Only care devices: the lock and lamp history entries are not listed.
+    cy.get('[data-testid^="history-entry-"]').each(($e) => expect($e.text()).to.contain('Hallway Motion'));
+
+    tid('care-activity-device').select(DEVICE.motion);
+    cy.expectRequest(CareSubsystem.CMD_LISTDETAILEDACTIVITY, (r) =>
+      Array.isArray(r.attributes.devices) && r.attributes.devices[0] === DEVICE.motion);
+    tid('history-entry-0').should('contain', 'Hallway Motion detected no motion.');
+  });
+
+  it('chooses which devices the care service monitors', () => {
+    cy.signIn({ path: '/services/care/status' });
+    tid('care-tab-devices').click();
+    tid(`care-device-${DEVICE.motion}`).should('have.attr', 'data-selected', 'true');
+    tid(`care-device-${DEVICE.contact}`).should('have.attr', 'data-selected', 'false');
+
+    tid(`care-device-toggle-${DEVICE.contact}`).check();
+    cy.expectRequestAttrs(Base.CMD_SETATTRIBUTES, {
+      [CareSubsystem.ATTR_CAREDEVICES]: [DEVICE.motion, DEVICE.contact],
+    });
+    tid(`care-device-${DEVICE.contact}`).should('have.attr', 'data-selected', 'true');
+    tid('care-devices-summary').should('contain', '2 of 2 devices monitored.');
   });
 
   it('reflects the alert on the dashboard card', () => {

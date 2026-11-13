@@ -1,0 +1,48 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`CareAlarmMode matches snapshot 1`] = `
+<DocumentFragment>
+  <div
+    class="flex items-center justify-between gap-4 rounded-[var(--border-radius-base)] border border-heron p-4"
+    data-mode="ON"
+    data-testid="care-mode"
+  >
+    <div>
+      <h3
+        class="text-sm font-medium text-swift"
+      >
+        Care Alarm
+      </h3>
+      <p
+        class="text-xs text-grouse mt-0.5"
+        data-testid="care-mode-summary"
+      >
+        On — 1 of 2 behaviors active.
+      </p>
+    </div>
+    <div
+      aria-label="Care alarm mode"
+      class="flex gap-1 bg-pigeon rounded-[var(--border-radius-base)] p-1"
+      role="group"
+    >
+      <button
+        aria-pressed="true"
+        class="px-4 py-1.5 rounded text-sm font-medium transition-colors disabled:cursor-not-allowed bg-crane text-swift shadow-sm"
+        data-testid="care-mode-on"
+        disabled=""
+        type="button"
+      >
+        On
+      </button>
+      <button
+        aria-pressed="false"
+        class="px-4 py-1.5 rounded text-sm font-medium transition-colors disabled:cursor-not-allowed text-grouse hover:text-coot disabled:opacity-50"
+        data-testid="care-mode-off"
+        type="button"
+      >
+        Off
+      </button>
+    </div>
+  </div>
+</DocumentFragment>
+`;

@@ -1,0 +1,295 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`CareActivity edge cases skips loading and explains when no care devices are selected 1`] = `
+<DocumentFragment>
+  <div
+    class="space-y-4"
+  >
+    <div
+      class="flex flex-wrap items-end gap-4"
+    >
+      <label
+        class="text-xs text-grouse"
+      >
+        <span
+          class="block mb-1"
+        >
+          Show activity from
+        </span>
+        <select
+          class="text-sm border border-heron rounded px-2 py-1 bg-crane text-swift"
+          data-testid="care-activity-day"
+        >
+          <option
+            value="0"
+          >
+            Today
+          </option>
+          <option
+            value="1"
+          >
+            Yesterday
+          </option>
+          <option
+            value="2"
+          >
+            Tue, Jan 13
+          </option>
+          <option
+            value="3"
+          >
+            Mon, Jan 12
+          </option>
+          <option
+            value="4"
+          >
+            Sun, Jan 11
+          </option>
+          <option
+            value="5"
+          >
+            Sat, Jan 10
+          </option>
+          <option
+            value="6"
+          >
+            Fri, Jan 9
+          </option>
+          <option
+            value="7"
+          >
+            Thu, Jan 8
+          </option>
+          <option
+            value="8"
+          >
+            Wed, Jan 7
+          </option>
+          <option
+            value="9"
+          >
+            Tue, Jan 6
+          </option>
+          <option
+            value="10"
+          >
+            Mon, Jan 5
+          </option>
+          <option
+            value="11"
+          >
+            Sun, Jan 4
+          </option>
+          <option
+            value="12"
+          >
+            Sat, Jan 3
+          </option>
+          <option
+            value="13"
+          >
+            Fri, Jan 2
+          </option>
+        </select>
+      </label>
+      <label
+        class="text-xs text-grouse"
+      >
+        <span
+          class="block mb-1"
+        >
+          Device
+        </span>
+        <select
+          class="text-sm border border-heron rounded px-2 py-1 bg-crane text-swift"
+          data-testid="care-activity-device"
+        >
+          <option
+            value=""
+          >
+            All care devices
+          </option>
+        </select>
+      </label>
+      <button
+        class="ml-auto text-sm text-peacock hover:opacity-80"
+        data-testid="care-activity-refresh"
+        type="button"
+      >
+        Refresh
+      </button>
+    </div>
+    <p
+      class="text-sm text-grouse py-8 text-center"
+      data-testid="care-activity-no-devices"
+    >
+      No care devices selected. Choose devices on the Devices tab to see their activity.
+    </p>
+  </div>
+</DocumentFragment>
+`;
+
+exports[`CareActivity matches snapshot 1`] = `
+<DocumentFragment>
+  <div
+    class="space-y-4"
+  >
+    <div
+      class="flex flex-wrap items-end gap-4"
+    >
+      <label
+        class="text-xs text-grouse"
+      >
+        <span
+          class="block mb-1"
+        >
+          Show activity from
+        </span>
+        <select
+          class="text-sm border border-heron rounded px-2 py-1 bg-crane text-swift"
+          data-testid="care-activity-day"
+        >
+          <option
+            value="0"
+          >
+            Today
+          </option>
+          <option
+            value="1"
+          >
+            Yesterday
+          </option>
+          <option
+            value="2"
+          >
+            Tue, Jan 13
+          </option>
+          <option
+            value="3"
+          >
+            Mon, Jan 12
+          </option>
+          <option
+            value="4"
+          >
+            Sun, Jan 11
+          </option>
+          <option
+            value="5"
+          >
+            Sat, Jan 10
+          </option>
+          <option
+            value="6"
+          >
+            Fri, Jan 9
+          </option>
+          <option
+            value="7"
+          >
+            Thu, Jan 8
+          </option>
+          <option
+            value="8"
+          >
+            Wed, Jan 7
+          </option>
+          <option
+            value="9"
+          >
+            Tue, Jan 6
+          </option>
+          <option
+            value="10"
+          >
+            Mon, Jan 5
+          </option>
+          <option
+            value="11"
+          >
+            Sun, Jan 4
+          </option>
+          <option
+            value="12"
+          >
+            Sat, Jan 3
+          </option>
+          <option
+            value="13"
+          >
+            Fri, Jan 2
+          </option>
+        </select>
+      </label>
+      <label
+        class="text-xs text-grouse"
+      >
+        <span
+          class="block mb-1"
+        >
+          Device
+        </span>
+        <select
+          class="text-sm border border-heron rounded px-2 py-1 bg-crane text-swift"
+          data-testid="care-activity-device"
+        >
+          <option
+            value=""
+          >
+            All care devices
+          </option>
+          <option
+            value="DRIV:dev:motion"
+          >
+            Hallway Motion
+          </option>
+          <option
+            value="DRIV:dev:door"
+          >
+            Back Door
+          </option>
+        </select>
+      </label>
+      <button
+        class="ml-auto text-sm text-peacock hover:opacity-80"
+        data-testid="care-activity-refresh"
+        type="button"
+      >
+        Refresh
+      </button>
+    </div>
+    <div>
+      <h3
+        class="text-sm font-semibold text-swift mb-2"
+        data-testid="history-date-0"
+      >
+        Thursday, January 15
+      </h3>
+      <div
+        class="flex gap-3 py-2 border-b border-pigeon"
+        data-testid="history-entry-0"
+      >
+        <span
+          class="text-xs text-grouse w-16 flex-shrink-0 pt-0.5"
+        >
+          9:00 AM
+        </span>
+        <div
+          class="flex-1 min-w-0"
+        >
+          <p
+            class="text-sm text-swift"
+          >
+            Hallway Motion
+          </p>
+          <p
+            class="text-xs text-grouse mt-0.5"
+          >
+            Hallway Motion detected motion.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</DocumentFragment>
+`;

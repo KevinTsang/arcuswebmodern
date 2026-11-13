@@ -11,6 +11,7 @@ export function useCareSubsystem() {
     const alarmMode = (sub?.[CareSubsystem.ATTR_ALARMMODE] as string) ?? CareSubsystem.ALARMMODE_ON;
     const behaviors = (sub?.[CareSubsystem.ATTR_BEHAVIORS] as CareBehavior[]) ?? [];
     const careDevices = (sub?.[CareSubsystem.ATTR_CAREDEVICES] as string[]) ?? [];
+    const careCapableDevices = (sub?.[CareSubsystem.ATTR_CARECAPABLEDEVICES] as string[]) ?? [];
     const callTree = (sub?.[CareSubsystem.ATTR_CALLTREE] as CareCallEntry[]) ?? [];
     const lastAlertCause = sub?.[CareSubsystem.ATTR_LASTALERTCAUSE] as string | undefined;
     const silent = (sub?.[CareSubsystem.ATTR_SILENT] as boolean) ?? false;
@@ -21,6 +22,7 @@ export function useCareSubsystem() {
       alarmMode,
       behaviors,
       careDevices,
+      careCapableDevices,
       callTree,
       lastAlertCause,
       silent,

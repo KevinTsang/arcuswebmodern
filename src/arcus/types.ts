@@ -81,6 +81,9 @@ export interface ListHistoryEntriesResponse {
   nextToken?: string;
 }
 
+/** Response of `subcare:ListDetailedActivity`: care device history, newest first. */
+export type ListDetailedActivityResponse = ListHistoryEntriesResponse;
+
 export const HUB_REGISTRATION_ERRORS = {
   ALREADY_REGISTERED: 'error.register.alreadyregistered',
   ORPHANED_HUB: 'error.register.orphanedhub',

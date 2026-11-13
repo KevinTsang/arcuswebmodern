@@ -34,6 +34,7 @@ describe('useCareSubsystem', () => {
       expect(result.current.alarmMode).toBe(CareSubsystem.ALARMMODE_ON);
       expect(result.current.behaviors).toEqual([]);
       expect(result.current.careDevices).toEqual([]);
+      expect(result.current.careCapableDevices).toEqual([]);
       expect(result.current.callTree).toEqual([]);
       expect(result.current.lastAlertCause).toBeUndefined();
       expect(result.current.silent).toBe(false);
@@ -122,6 +123,27 @@ describe('useCareSubsystem', () => {
       const { result } = renderHook(() => useCareSubsystem());
 
       expect(result.current.careDevices).toEqual([]);
+    });
+  });
+
+  describe('careCapableDevices', () => {
+    it('returns careCapableDevices address list from the subsystem', () => {
+      const capable = ['DRIV:dev:device1', 'DRIV:dev:device3'];
+      mockUseSubsystem.mockReturnValue(makeSubsystem(CARE_ADDR, {
+        [CareSubsystem.ATTR_CARECAPABLEDEVICES]: capable,
+      }));
+
+      const { result } = renderHook(() => useCareSubsystem());
+
+      expect(result.current.careCapableDevices).toEqual(capable);
+    });
+
+    it('defaults careCapableDevices to empty array when absent', () => {
+      mockUseSubsystem.mockReturnValue(makeSubsystem(CARE_ADDR));
+
+      const { result } = renderHook(() => useCareSubsystem());
+
+      expect(result.current.careCapableDevices).toEqual([]);
     });
   });
 

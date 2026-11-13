@@ -3,8 +3,9 @@
 /**
  * CareView — care subsystem with behaviors and activity.
  *
- * Replaces src/components/subsystem/care/. Shows care behaviors,
- * alert state, and care device status.
+ * Replaces src/components/subsystem/care/. Shows alert state, the care
+ * alarm mode and silent setting, the activity timeline, behaviors and the
+ * devices the care service watches.
  */
 
 import { useState, useCallback } from 'react';
@@ -14,8 +15,19 @@ import { useCareSubsystem } from '@/hooks/useCareSubsystem';
 import { useAppDispatch } from '@/store/hooks';
 import { addNotification } from '@/store/slices/uiSlice';
 import { testIdSlug } from '@/lib/testId';
+import { CareAlarmMode } from './CareAlarmMode';
+import { CareSilentToggle } from './CareSilentToggle';
+import { CareActivity } from './CareActivity';
+import { CareDevices } from './CareDevices';
 
-type CareViewTab = 'status' | 'behaviors';
+type CareViewTab = 'status' | 'activity' | 'behaviors' | 'devices';
+
+const TABS: Array<{ id: CareViewTab; label: string }> = [
+  { id: 'status', label: 'Status' },
+  { id: 'activity', label: 'Activity' },
+  { id: 'behaviors', label: 'Behaviors' },
+  { id: 'devices', label: 'Devices' },
+];
 
 export function CareView() {
   const [tab, setTab] = useState<CareViewTab>('status');
@@ -23,27 +35,24 @@ export function CareView() {
   return (
     <div>
       <div className="flex gap-1 bg-pigeon rounded-[var(--border-radius-base)] p-1 mb-6 w-fit">
-        <button
-          onClick={() => setTab('status')}
-          data-testid="care-tab-status"
-          className={`px-4 py-1.5 rounded text-sm font-medium transition-colors ${
-            tab === 'status' ? 'bg-crane text-swift shadow-sm' : 'text-grouse hover:text-coot'
-          }`}
-        >
-          Status
-        </button>
-        <button
-          onClick={() => setTab('behaviors')}
-          data-testid="care-tab-behaviors"
-          className={`px-4 py-1.5 rounded text-sm font-medium transition-colors ${
-            tab === 'behaviors' ? 'bg-crane text-swift shadow-sm' : 'text-grouse hover:text-coot'
-          }`}
-        >
-          Behaviors
-        </button>
+        {TABS.map(({ id, label }) => (
+          <button
+            key={id}
+            onClick={() => setTab(id)}
+            data-testid={`care-tab-${id}`}
+            className={`px-4 py-1.5 rounded text-sm font-medium transition-colors ${
+              tab === id ? 'bg-crane text-swift shadow-sm' : 'text-grouse hover:text-coot'
+            }`}
+          >
+            {label}
+          </button>
+        ))}
       </div>
 
-      {tab === 'status' ? <CareStatus /> : <CareBehaviors />}
+      {tab === 'status' && <CareStatus />}
+      {tab === 'activity' && <CareActivity />}
+      {tab === 'behaviors' && <CareBehaviors />}
+      {tab === 'devices' && <CareDevices />}
     </div>
   );
 }
@@ -58,7 +67,7 @@ function CareStatus() {
     if (!care.subsystem) return;
     const addr = care.subsystem[Base.ATTR_ADDRESS] as string;
     try {
-      await Bridge.request('subcare:Clear', addr, {});
+      await Bridge.request(CareSubsystem.CMD_CLEAR, addr, {});
       dispatch(addNotification({ type: 'success', message: 'Care alert cleared' }));
     } catch {
       dispatch(addNotification({ type: 'error', message: 'Failed to clear alert' }));
@@ -77,7 +86,7 @@ function CareStatus() {
         <p data-testid="care-summary" className="text-sm text-grouse">
           {isAlert && care.lastAlertCause
             ? care.lastAlertCause
-            : care.alarmMode === CareSubsystem.ALARMMODE_ON ? 'Care is active' : 'Care is monitoring'}
+            : care.alarmMode === CareSubsystem.ALARMMODE_VISIT ? 'Care alarm is off' : 'Care is active'}
         </p>
         {isAlert && (
           <button
@@ -89,6 +98,8 @@ function CareStatus() {
           </button>
         )}
       </div>
+
+      <CareAlarmMode />
 
       {/* Behaviors summary */}
       {care.behaviors.length > 0 && (
@@ -114,8 +125,9 @@ function CareStatus() {
       {/* Info */}
       <div className="text-sm text-grouse">
         <p data-testid="care-device-count">{care.careDevices.length} care device{care.careDevices.length !== 1 ? 's' : ''} monitored</p>
-        {care.silent && <p data-testid="care-silent" className="mt-1">Silent mode is on</p>}
       </div>
+
+      <CareSilentToggle />
     </div>
   );
 }
