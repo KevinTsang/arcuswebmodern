@@ -574,6 +574,7 @@ export const DeviceAdvanced = {
   ATTR_HUBLOCAL: 'devadv:hubLocal',
   ATTR_DEGRADED: 'devadv:degraded',
   ATTR_DEGRADEDCODE: 'devadv:degradedCode',
+  ATTR_PROTOCOLATTRS: 'devadv:protocolAttrs',
   DRIVERSTATE_CREATED: 'CREATED',
   DRIVERSTATE_PROVISIONING: 'PROVISIONING',
   DRIVERSTATE_ACTIVE: 'ACTIVE',
@@ -1349,7 +1350,23 @@ export const HubZwave = {
   CMD_REMOVEZOMBIE: 'hubzwave:RemoveZombie',
   CMD_ASSOCIATE: 'hubzwave:Associate',
   CMD_ASSIGNRETURNROUTES: 'hubzwave:AssignReturnRoutes',
+  CMD_SUBMITS2PIN: 'hubzwave:SubmitS2Pin',
+  CMD_CANCELS2PIN: 'hubzwave:CancelS2Pin',
   EVENT_HEALCOMPLETE: 'hubzwave:HealComplete',
+  EVENT_S2PINREQUIRED: 'hubzwave:S2PinRequired',
+  EVENT_S2PINFINISHED: 'hubzwave:S2PinFinished',
+} as const;
+
+/** Z-Wave protocol attributes (protocol/zwave.xml), found in devadv:protocolAttrs. */
+export const ZWaveProtocol = {
+  NAMESPACE: 'ZWAV',
+  ATTR_SECURITY: 'ZWAV:Security',
+  ATTR_SECURITYREQUESTED: 'ZWAV:SecurityRequested',
+  SECURITY_S2_ACCESS_CONTROL: 'S2_ACCESS_CONTROL',
+  SECURITY_S2_AUTHENTICATED: 'S2_AUTHENTICATED',
+  SECURITY_S2_UNAUTHENTICATED: 'S2_UNAUTHENTICATED',
+  SECURITY_S0: 'S0',
+  SECURITY_NONE: 'NONE',
 } as const;
 
 export const Identify = {
@@ -1703,6 +1720,8 @@ export const PairingSubsystem = {
   ATTR_SEARCHIDLETIMEOUT: 'subpairing:searchIdleTimeout',
   ATTR_SEARCHTIMEOUT: 'subpairing:searchTimeout',
   ATTR_PRODUCTPAIRINGMODE: 'subpairing:productPairingMode',
+  ATTR_S2PINREQUESTID: 'subpairing:s2PinRequestId',
+  ATTR_S2PINEXPIRES: 'subpairing:s2PinExpires',
   PAIRINGMODE_IDLE: 'IDLE',
   PAIRINGMODE_HUB: 'HUB',
   PAIRINGMODE_CLOUD: 'CLOUD',
@@ -1716,6 +1735,9 @@ export const PairingSubsystem = {
   CMD_STOPSEARCHING: 'subpairing:StopSearching',
   CMD_FACTORYRESET: 'subpairing:FactoryReset',
   CMD_GETKITINFORMATION: 'subpairing:GetKitInformation',
+  CMD_GETS2PINREQUEST: 'subpairing:GetS2PinRequest',
+  CMD_SUBMITS2PIN: 'subpairing:SubmitS2Pin',
+  CMD_CANCELS2PIN: 'subpairing:CancelS2Pin',
   EVENT_PAIRINGIDLETIMEOUT: 'subpairing:PairingIdleTimeout',
   EVENT_PAIRINGTIMEOUT: 'subpairing:PairingTimeout',
   EVENT_PAIRINGFAILED: 'subpairing:PairingFailed',

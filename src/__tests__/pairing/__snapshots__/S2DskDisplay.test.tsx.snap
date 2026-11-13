@@ -1,0 +1,121 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`S2DskDisplay matches snapshot 1`] = `
+<DocumentFragment>
+  <ol
+    aria-label="Device security key (DSK)"
+    class="grid grid-cols-4 gap-2 font-mono text-sm"
+    data-testid="s2-dsk"
+  >
+    <li
+      aria-label="Group 1: the PIN"
+      class="text-center py-1.5 border border-dashed border-peacock rounded-[var(--border-radius-base)] text-peacock"
+      data-testid="s2-dsk-group-1"
+    >
+      PIN
+    </li>
+    <li
+      class="text-center py-1.5 border rounded-[var(--border-radius-base)] text-swift border-heron bg-pigeon"
+      data-testid="s2-dsk-group-2"
+    >
+      35455
+    </li>
+    <li
+      class="text-center py-1.5 border rounded-[var(--border-radius-base)] text-swift border-heron bg-pigeon"
+      data-testid="s2-dsk-group-3"
+    >
+      41424
+    </li>
+    <li
+      class="text-center py-1.5 border rounded-[var(--border-radius-base)] text-swift border-heron bg-pigeon"
+      data-testid="s2-dsk-group-4"
+    >
+      34445
+    </li>
+    <li
+      class="text-center py-1.5 border rounded-[var(--border-radius-base)] text-swift border-heron bg-pigeon"
+      data-testid="s2-dsk-group-5"
+    >
+      31323
+    </li>
+    <li
+      class="text-center py-1.5 border rounded-[var(--border-radius-base)] text-swift border-heron bg-pigeon"
+      data-testid="s2-dsk-group-6"
+    >
+      33435
+    </li>
+    <li
+      class="text-center py-1.5 border rounded-[var(--border-radius-base)] text-swift border-heron bg-pigeon"
+      data-testid="s2-dsk-group-7"
+    >
+      21222
+    </li>
+    <li
+      class="text-center py-1.5 border rounded-[var(--border-radius-base)] text-swift border-heron bg-pigeon"
+      data-testid="s2-dsk-group-8"
+    >
+      32425
+    </li>
+  </ol>
+</DocumentFragment>
+`;
+
+exports[`S2DskDisplay matches snapshot when matched 1`] = `
+<DocumentFragment>
+  <ol
+    aria-label="Device security key (DSK)"
+    class="grid grid-cols-4 gap-2 font-mono text-sm"
+    data-testid="s2-dsk"
+  >
+    <li
+      aria-label="Group 1: the PIN"
+      class="text-center py-1.5 border border-dashed border-peacock rounded-[var(--border-radius-base)] text-peacock"
+      data-testid="s2-dsk-group-1"
+    >
+      PIN
+    </li>
+    <li
+      class="text-center py-1.5 border rounded-[var(--border-radius-base)] text-swift border-lovebird bg-lovebird/10"
+      data-testid="s2-dsk-group-2"
+    >
+      35455
+    </li>
+    <li
+      class="text-center py-1.5 border rounded-[var(--border-radius-base)] text-swift border-lovebird bg-lovebird/10"
+      data-testid="s2-dsk-group-3"
+    >
+      41424
+    </li>
+    <li
+      class="text-center py-1.5 border rounded-[var(--border-radius-base)] text-swift border-lovebird bg-lovebird/10"
+      data-testid="s2-dsk-group-4"
+    >
+      34445
+    </li>
+    <li
+      class="text-center py-1.5 border rounded-[var(--border-radius-base)] text-swift border-lovebird bg-lovebird/10"
+      data-testid="s2-dsk-group-5"
+    >
+      31323
+    </li>
+    <li
+      class="text-center py-1.5 border rounded-[var(--border-radius-base)] text-swift border-lovebird bg-lovebird/10"
+      data-testid="s2-dsk-group-6"
+    >
+      33435
+    </li>
+    <li
+      class="text-center py-1.5 border rounded-[var(--border-radius-base)] text-swift border-lovebird bg-lovebird/10"
+      data-testid="s2-dsk-group-7"
+    >
+      21222
+    </li>
+    <li
+      class="text-center py-1.5 border rounded-[var(--border-radius-base)] text-swift border-lovebird bg-lovebird/10"
+      data-testid="s2-dsk-group-8"
+    >
+      32425
+    </li>
+  </ol>
+</DocumentFragment>
+`;

@@ -23,6 +23,7 @@ import {
   PlatformFailure,
   type ApiKeyFixture, type Attrs, type Handler, type HandlerContext, type InvitationFixture,
   type Json, type LoggedRequest, type PlatformData, type RequestEnvelope, type ResponseEnvelope,
+  type S2PinRequestFixture,
 } from './types';
 
 type AppWindow = Window & typeof globalThis;
@@ -153,6 +154,10 @@ export class MockPlatform {
   private failures = new Map<string, InjectedFailure>();
   private timers: ReturnType<typeof setTimeout>[] = [];
   private counter = 0;
+  /** The Z-Wave S2 PIN request waiting for an answer (see `requestS2Pin`). */
+  s2Request: S2PinRequestFixture | null = null;
+  /** PINs answered with `SubmitS2Pin`, in order. */
+  s2Pins: string[] = [];
 
   /** Restore pristine state; called before every test. */
   reset(): void {
@@ -168,6 +173,8 @@ export class MockPlatform {
     this.overrides.clear();
     this.failures.clear();
     this.counter = 0;
+    this.s2Request = null;
+    this.s2Pins = [];
   }
 
   // ── Browser plumbing ────────────────────────────────────────────────
@@ -304,6 +311,50 @@ export class MockPlatform {
   /** Run `fn` after `ms` milliseconds; cancelled by `reset()`. */
   later(ms: number, fn: () => void): void {
     this.timers.push(setTimeout(fn, ms));
+  }
+
+  // ── Z-Wave S2 PIN entry ─────────────────────────────────────────────
+
+  /**
+   * Simulate a joining Z-Wave device asking for its S2 PIN: the pairing
+   * subsystem stores the hub's request and sets `s2PinRequestId` and
+   * `s2PinExpires`. `pin` is the PIN printed on the device; a submitted PIN
+   * that doesn't equal it ends with `PairingFailed` `zwave.s2.pin.failed`.
+   */
+  requestS2Pin(options: { dsk?: string; pin?: string; timeoutMs?: number } = {}): string {
+    const requestId = this.nextId('s2req');
+    const expires = Date.now() + (options.timeoutMs ?? 195000);
+    this.s2Request = {
+      requestId,
+      dsk: options.dsk ?? '00000-35455-41424-34445-31323-33435-21222-32425',
+      pin: options.pin ?? '51525',
+      expires,
+    };
+    this.updateEntity(this.pairingSubsystemAddress(), {
+      [PairingSubsystem.ATTR_S2PINREQUESTID]: requestId,
+      [PairingSubsystem.ATTR_S2PINEXPIRES]: expires,
+    });
+    return requestId;
+  }
+
+  /** End the S2 request: clear the attributes and, with a code, broadcast `PairingFailed`. */
+  endS2Request(failureCode?: string): void {
+    this.s2Request = null;
+    this.updateEntity(this.pairingSubsystemAddress(), {
+      [PairingSubsystem.ATTR_S2PINREQUESTID]: '',
+      [PairingSubsystem.ATTR_S2PINEXPIRES]: 0,
+    });
+    if (failureCode) {
+      this.emit(this.pairingSubsystemAddress(), PairingSubsystem.EVENT_PAIRINGFAILED, { code: failureCode });
+    }
+  }
+
+  private waitingS2Request(requestId: string | undefined): S2PinRequestFixture {
+    const request = this.s2Request;
+    if (!request || request.requestId !== requestId || Date.now() > request.expires) {
+      throw new PlatformFailure('request.state.invalid', 'No S2 PIN request is waiting');
+    }
+    return request;
   }
 
   // ── Entity store ────────────────────────────────────────────────────
@@ -990,6 +1041,33 @@ export class MockPlatform {
       return {};
     },
     [PairingSubsystem.CMD_GETKITINFORMATION]: () => ({ kitInfo: this.data.kitInfo as unknown as Json }),
+    // Z-Wave S2 PIN entry (arcusplatform docs/zwave-s2-pin-pairing.md).
+    [PairingSubsystem.CMD_GETS2PINREQUEST]: () => {
+      const request = this.s2Request;
+      if (!request) throw new PlatformFailure('request.state.invalid', 'No S2 PIN request is waiting');
+      return { requestId: request.requestId, dsk: request.dsk, expires: request.expires };
+    },
+    [PairingSubsystem.CMD_SUBMITS2PIN]: ({ attrs }) => {
+      const request = this.waitingS2Request(attrs.requestId as string | undefined);
+      const pin = attrs.pin as string;
+      if (typeof pin !== 'string' || !/^\d{5}$/.test(pin) || Number(pin) > 65535) {
+        throw new PlatformFailure('request.param.invalid', 'Invalid PIN');
+      }
+      this.s2Pins.push(pin);
+      // The ID clears as soon as the PIN goes to the hub; the outcome follows.
+      this.endS2Request();
+      if (pin !== request.pin) {
+        this.later(300, () => this.emit(this.pairingSubsystemAddress(), PairingSubsystem.EVENT_PAIRINGFAILED, {
+          code: 'zwave.s2.pin.failed',
+        }));
+      }
+      return {};
+    },
+    [PairingSubsystem.CMD_CANCELS2PIN]: ({ attrs }) => {
+      this.waitingS2Request(attrs.requestId as string | undefined);
+      this.endS2Request();
+      return {};
+    },
     [PairingDevice.CMD_CUSTOMIZE]: ({ destination }) => {
       this.mustGet(destination);
       return {};

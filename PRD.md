@@ -128,12 +128,12 @@ arcusplatform, under "What a client must do".
 
 | Feature | Legacy | Modern | Status |
 |---------|--------|--------|--------|
-| Opt in to S2 PIN entry (`s2PinEntry: true` on `subpairing:StartPairing` and `subpairing:Search`) | No | No | **Missing** |
-| S2 PIN prompt: on `subpairing:s2PinRequestId`, call `GetS2PinRequest`, show DSK groups 2–8 to check against the label, take the 5-digit PIN, count down to `expires` | No | No | **Missing** |
-| Submit / decline (`SubmitS2Pin` once, `CancelS2Pin` on DSK mismatch or give-up; retry only on `request.param.invalid`) | No | No | **Missing** |
-| Scan the device's Z-Wave QR code with the browser camera to fill the PIN and check the DSK automatically | No | No | **Missing** |
-| Show S2 failures (`subpairing:PairingFailed` `zwave.s2.pin.timeout` / `zwave.s2.pin.failed`) with "exclude or factory reset and pair again" guidance | No | No | **Missing** |
-| Show the granted vs requested security class (`ZWAV:Security` / `ZWAV:SecurityRequested` in `devadv:protocolAttrs`) on device details, and flag devices that joined with less than they asked for | No | No | **Missing** |
+| Opt in to S2 PIN entry (`s2PinEntry: true` on `subpairing:StartPairing` and `subpairing:Search`) | No | Yes | **Done** |
+| S2 PIN prompt: on `subpairing:s2PinRequestId`, call `GetS2PinRequest`, show DSK groups 2–8 to check against the label, take the 5-digit PIN, count down to `expires` | No | Yes | **Done** |
+| Submit / decline (`SubmitS2Pin` once, `CancelS2Pin` on DSK mismatch or give-up; retry only on `request.param.invalid`) | No | Yes | **Done** |
+| Scan the device's Z-Wave QR code with the browser camera to fill the PIN and check the DSK automatically | No | Yes | **Done** |
+| Show S2 failures (`subpairing:PairingFailed` `zwave.s2.pin.timeout` / `zwave.s2.pin.failed`) with "exclude or factory reset and pair again" guidance | No | Yes | **Done** |
+| Show the granted vs requested security class (`ZWAV:Security` / `ZWAV:SecurityRequested` in `devadv:protocolAttrs`) on device details, and flag devices that joined with less than they asked for | No | Yes | **Done** |
 | SmartStart: add scanned QR codes to a provisioning list so devices join when powered on | No | No | **Missing** (blocked: no platform API yet) |
 
 ### Gaps
@@ -165,6 +165,46 @@ arcusplatform, under "What a client must do".
 - **Testing.** Mock `getUserMedia` and the decoder in unit tests. Extend the
   Cypress fake platform with `GetS2PinRequest` / `SubmitS2Pin` / `CancelS2Pin`
   and the `s2PinRequestId` value changes.
+
+### Implementation
+
+- **Opt-in.** The pairing page sends `s2PinEntry: true` on `StartPairing` and
+  `Search`.
+- **PIN prompt.** `S2PinPrompt` (mounted by the pairing page) watches
+  `subpairing:s2PinRequestId`, calls `GetS2PinRequest`, and shows DSK groups
+  2–8 (`S2DskDisplay`) with a countdown to `expires` (`useSecondsLeft`). It
+  checks the PIN (`00000`–`65535`) before sending, sends `SubmitS2Pin` once,
+  lets the user retry only on `request.param.invalid`, and treats any other
+  error as the spent attempt. It stays open until the `SubmitS2Pin` response
+  even though the ID clears first, and closes when the ID goes empty
+  otherwise. Declining asks for confirmation and sends `CancelS2Pin`. The DSK
+  and PIN live only in component state and are dropped on close.
+- **QR scan.** `QrScanner` opens the rear camera with `getUserMedia` and
+  decodes with `BarcodeDetector` where it reads QR codes, otherwise with
+  `jsqr` (loaded on demand) via `src/lib/qrDecoder.ts`. `src/lib/zwaveQr.ts`
+  is a pure, synchronous parser of the Z-Wave S2/SmartStart QR format,
+  following zwave-js `parseQRCodeString` (lead-in, version, SHA-1 checksum,
+  requested keys, DSK, TLV blocks), checked against the spec's example codes.
+  A matching DSK asks the user to confirm before sending group 1 as the PIN; a
+  mismatch warns and offers to decline. A denied or missing camera, or an
+  insecure origin, falls back to typing. Tracks stop on close, expiry and
+  unmount.
+- **Failures.** `S2PairingFailure` listens for `subpairing:PairingFailed` with
+  `zwave.s2.pin.timeout` / `zwave.s2.pin.failed` and explains how to exclude or
+  factory reset the device and pair it again.
+- **Security class.** The device details panel shows `ZWAV:Security` and
+  `ZWAV:SecurityRequested` from `devadv:protocolAttrs` and flags a device
+  granted less than it asked for (`src/lib/zwaveSecurity.ts`). A missing
+  `ZWAV:Security` is shown as Unknown.
+- **SmartStart.** Not built (no platform API). `parseZWaveQrCode` and
+  `QrScanner` are generic so a provisioning flow can reuse them.
+- **Tests.** Unit tests cover the parser (spec examples, checksums, TLVs, text
+  around the code), SHA-1, DSK/PIN helpers, decoder selection, the scanner
+  (mocked `getUserMedia` and decoder), the prompt and the device details. The
+  Cypress fake platform implements `GetS2PinRequest` / `SubmitS2Pin` /
+  `CancelS2Pin`, `requestS2Pin()` and `endS2Request()`; `pairing.cy.ts` covers
+  the typed PIN, a wrong PIN, declining and a timeout. The camera path is
+  unit-tested only.
 
 ---
 
@@ -801,10 +841,12 @@ These are commonly used features that users will expect:
       matching `RulePanel`'s deliberate save order.
     - The last full run (before these fixes) passed every other spec: 208 of
       212 tests, with 1 test skipped in `history.cy.ts` by design.
-30. **Next-generation Z-Wave (S2 + QR code pairing)** — S2 PIN entry during
-    pairing, camera QR-code scanning to fill the PIN and verify the DSK, and
-    granted security class display. See §3.5. Platform support is in
-    arcusplatform PR #502. SmartStart provisioning is blocked on a platform API.
+30. ~~**Next-generation Z-Wave (S2 + QR code pairing)**~~ — **DONE** except
+    SmartStart. S2 PIN entry during pairing, camera QR-code scanning to fill the
+    PIN and verify the DSK, S2 failure guidance, and granted vs requested
+    security class display. See §3.5. Platform support is in arcusplatform
+    PR #502. SmartStart provisioning is blocked on a platform API; the QR parser
+    (`src/lib/zwaveQr.ts`) and `QrScanner` are ready to reuse for it.
 
 ---
 

@@ -1,0 +1,69 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`S2PairingFailure matches snapshot for a timeout 1`] = `
+<DocumentFragment>
+  <div
+    class="mb-4 p-4 border border-cardinal bg-cardinal/5 rounded-[var(--border-radius-base)]"
+    data-code="zwave.s2.pin.timeout"
+    data-testid="s2-pairing-failure"
+    role="alert"
+  >
+    <h3
+      class="text-sm font-semibold text-swift mb-1"
+    >
+      The S2 PIN wasn’t entered in time
+    </h3>
+    <p
+      class="text-sm text-coot mb-2"
+    >
+      The Z-Wave device joined without S2 security because nobody entered its PIN before the time ran out.
+    </p>
+    <p
+      class="text-sm text-coot mb-3"
+    >
+      To secure it, exclude the device (Devices → Remove Z-Wave Device) or factory reset it, then pair it again and enter the PIN from its label.
+    </p>
+    <button
+      class="text-sm text-peacock hover:underline"
+      data-testid="s2-pairing-failure-dismiss"
+      type="button"
+    >
+      Dismiss
+    </button>
+  </div>
+</DocumentFragment>
+`;
+
+exports[`S2PairingFailure matches snapshot for a wrong PIN 1`] = `
+<DocumentFragment>
+  <div
+    class="mb-4 p-4 border border-cardinal bg-cardinal/5 rounded-[var(--border-radius-base)]"
+    data-code="zwave.s2.pin.failed"
+    data-testid="s2-pairing-failure"
+    role="alert"
+  >
+    <h3
+      class="text-sm font-semibold text-swift mb-1"
+    >
+      Secure pairing failed
+    </h3>
+    <p
+      class="text-sm text-coot mb-2"
+    >
+      The Z-Wave device joined without S2 security. This usually means the PIN was wrong.
+    </p>
+    <p
+      class="text-sm text-coot mb-3"
+    >
+      To secure it, exclude the device (Devices → Remove Z-Wave Device) or factory reset it, then pair it again and enter the PIN from its label.
+    </p>
+    <button
+      class="text-sm text-peacock hover:underline"
+      data-testid="s2-pairing-failure-dismiss"
+      type="button"
+    >
+      Dismiss
+    </button>
+  </div>
+</DocumentFragment>
+`;

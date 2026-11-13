@@ -236,3 +236,65 @@ describe('Kit activation', () => {
     cy.location('pathname').should('eq', '/devices');
   });
 });
+
+describe('Z-Wave S2 PIN entry (PRD §3.5)', () => {
+  const startSearching = () => {
+    cy.signIn({ path: '/product-catalog' });
+    product(PRODUCT.plug).click();
+    cy.expectRequestAttrs(PairingSubsystem.CMD_STARTPAIRING, { s2PinEntry: true });
+    tid('pairing-next').click();
+    tid('pairing-search').click();
+    cy.expectRequestAttrs(PairingSubsystem.CMD_SEARCH, { s2PinEntry: true });
+    tid('pairing-searching').should('exist');
+  };
+
+  it('shows the DSK and sends the typed PIN once', () => {
+    startSearching();
+    cy.platform().invoke('requestS2Pin').then((requestId) => {
+      tid('s2-pin-prompt').should('have.attr', 'data-phase', 'entry');
+      cy.expectRequest(PairingSubsystem.CMD_GETS2PINREQUEST, (r) => r.destination === PAIRING);
+      tid('s2-dsk-group-2').should('have.text', '35455');
+      tid('s2-dsk-group-8').should('have.text', '32425');
+      tid('s2-pin-countdown').invoke('text').should('match', /^3:\d\d$/);
+
+      tid('s2-pin-input').type('51525');
+      tid('s2-pin-submit').click();
+      cy.expectRequestAttrs(PairingSubsystem.CMD_SUBMITS2PIN, { requestId, pin: '51525' });
+    });
+    tid('s2-pin-prompt').should('not.exist');
+    cy.toast('PIN sent');
+    cy.platform().its('s2Pins').should('deep.equal', ['51525']);
+    tid('s2-pairing-failure').should('not.exist');
+  });
+
+  it('reports a wrong PIN with exclude-and-retry guidance', () => {
+    startSearching();
+    cy.platform().invoke('requestS2Pin', { pin: '51525' });
+    tid('s2-pin-input').type('11111');
+    tid('s2-pin-submit').click();
+    tid('s2-pin-prompt').should('not.exist');
+    tid('s2-pairing-failure').should('have.attr', 'data-code', 'zwave.s2.pin.failed')
+      .and('contain', 'exclude the device');
+    tid('s2-pairing-failure-dismiss').click();
+    tid('s2-pairing-failure').should('not.exist');
+  });
+
+  it('declines when the numbers do not match', () => {
+    startSearching();
+    cy.platform().invoke('requestS2Pin');
+    tid('s2-pin-decline').click();
+    tid('s2-pin-decline-confirm').click();
+    cy.expectRequest(PairingSubsystem.CMD_CANCELS2PIN);
+    tid('s2-pin-prompt').should('not.exist');
+    cy.platform().its('s2Pins').should('have.length', 0);
+  });
+
+  it('closes the prompt and explains a timeout when nobody answers', () => {
+    startSearching();
+    cy.platform().invoke('requestS2Pin');
+    tid('s2-pin-prompt').should('exist');
+    cy.platform().invoke('endS2Request', 'zwave.s2.pin.timeout');
+    tid('s2-pin-prompt').should('not.exist');
+    tid('s2-pairing-failure').should('have.attr', 'data-code', 'zwave.s2.pin.timeout');
+  });
+});

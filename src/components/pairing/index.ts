@@ -5,4 +5,6 @@ export { default as SearchingStage } from './SearchingStage';
 export { default as CustomizeStage } from './CustomizeStage';
 export { default as CompletedStage } from './CompletedStage';
 export { default as DeviceStateRow } from './DeviceStateRow';
+export { S2PinPrompt } from './S2PinPrompt';
+export { S2PairingFailure } from './S2PairingFailure';
 export type { PairingFlow, PairingStage, PairingStep } from './types';
