@@ -1,0 +1,95 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`ThermostatScheduleSetpoints matches snapshot in AUTO mode 1`] = `
+<DocumentFragment>
+  <div
+    data-testid="thermostat-schedule-setpoints"
+  >
+    <label
+      class="block text-sm font-medium text-swift mb-2"
+    >
+      Temperature Range
+    </label>
+    <p
+      class="text-xs text-grouse mb-2"
+      data-testid="thermostat-schedule-separation"
+    >
+      In this mode, heat and cool setpoints must stay at least 3° apart.
+    </p>
+    <div
+      class="space-y-2"
+    >
+      <div
+        class="flex items-center justify-between bg-pigeon/50 rounded-[var(--border-radius-base)] px-4 py-3"
+      >
+        <span
+          class="text-sm font-medium text-swift"
+        >
+          Heat To
+        </span>
+        <div
+          class="flex items-center gap-3"
+        >
+          <button
+            aria-label="Decrease Heat To"
+            class="w-8 h-8 rounded-full bg-crane border border-heron text-swift flex items-center justify-center hover:bg-pigeon disabled:opacity-40 text-lg"
+            data-testid="thermostat-schedule-heat-down"
+            type="button"
+          >
+            -
+          </button>
+          <span
+            class="text-xl font-medium w-12 text-center text-cardinal"
+            data-testid="thermostat-schedule-heat-value"
+          >
+            68°
+          </span>
+          <button
+            aria-label="Increase Heat To"
+            class="w-8 h-8 rounded-full bg-crane border border-heron text-swift flex items-center justify-center hover:bg-pigeon disabled:opacity-40 text-lg"
+            data-testid="thermostat-schedule-heat-up"
+            type="button"
+          >
+            +
+          </button>
+        </div>
+      </div>
+      <div
+        class="flex items-center justify-between bg-pigeon/50 rounded-[var(--border-radius-base)] px-4 py-3"
+      >
+        <span
+          class="text-sm font-medium text-swift"
+        >
+          Cool To
+        </span>
+        <div
+          class="flex items-center gap-3"
+        >
+          <button
+            aria-label="Decrease Cool To"
+            class="w-8 h-8 rounded-full bg-crane border border-heron text-swift flex items-center justify-center hover:bg-pigeon disabled:opacity-40 text-lg"
+            data-testid="thermostat-schedule-cool-down"
+            type="button"
+          >
+            -
+          </button>
+          <span
+            class="text-xl font-medium w-12 text-center text-peacock"
+            data-testid="thermostat-schedule-cool-value"
+          >
+            78°
+          </span>
+          <button
+            aria-label="Increase Cool To"
+            class="w-8 h-8 rounded-full bg-crane border border-heron text-swift flex items-center justify-center hover:bg-pigeon disabled:opacity-40 text-lg"
+            data-testid="thermostat-schedule-cool-up"
+            type="button"
+          >
+            +
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</DocumentFragment>
+`;

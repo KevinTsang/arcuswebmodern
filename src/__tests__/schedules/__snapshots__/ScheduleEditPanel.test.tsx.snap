@@ -1,0 +1,349 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`ScheduleEditPanel – schedule groups matches snapshot 1`] = `
+<DocumentFragment>
+  <div>
+    <p
+      class="text-sm text-grouse mb-4"
+      data-testid="schedule-target"
+    >
+      Hallway Thermostat
+    </p>
+    <div
+      class="flex gap-1 bg-pigeon rounded-[var(--border-radius-base)] p-1 mb-4 w-fit"
+    >
+      <button
+        aria-pressed="true"
+        class="px-3 py-1 rounded text-xs font-medium transition-colors disabled:opacity-50 bg-crane text-swift shadow-sm"
+        data-testid="schedule-group-heat"
+      >
+        Heat
+      </button>
+      <button
+        aria-pressed="false"
+        class="px-3 py-1 rounded text-xs font-medium transition-colors disabled:opacity-50 text-grouse hover:text-coot"
+        data-testid="schedule-group-cool"
+      >
+        Cool
+      </button>
+      <button
+        aria-pressed="false"
+        class="px-3 py-1 rounded text-xs font-medium transition-colors disabled:opacity-50 text-grouse hover:text-coot"
+        data-testid="schedule-group-auto"
+      >
+        Auto
+      </button>
+    </div>
+    <div
+      class="border border-heron rounded-[var(--border-radius-base)] overflow-hidden"
+    >
+      <div
+        class="grid grid-cols-[48px_repeat(7,1fr)] bg-pigeon/30 border-b border-heron"
+      >
+        <div
+          class="p-2 text-xs text-grouse"
+        />
+        <div
+          class="p-2 text-xs text-center font-medium text-swift"
+        >
+          Mon
+        </div>
+        <div
+          class="p-2 text-xs text-center font-medium text-swift"
+        >
+          Tue
+        </div>
+        <div
+          class="p-2 text-xs text-center font-medium text-swift"
+        >
+          Wed
+        </div>
+        <div
+          class="p-2 text-xs text-center font-medium text-swift"
+        >
+          Thu
+        </div>
+        <div
+          class="p-2 text-xs text-center font-medium text-swift"
+        >
+          Fri
+        </div>
+        <div
+          class="p-2 text-xs text-center font-medium text-swift"
+        >
+          Sat
+        </div>
+        <div
+          class="p-2 text-xs text-center font-medium text-swift"
+        >
+          Sun
+        </div>
+      </div>
+      <div
+        class="grid grid-cols-[48px_repeat(7,1fr)] relative"
+        style="height: 200px;"
+      >
+        <div
+          class="relative"
+        >
+          <div
+            class="absolute left-0 right-0 text-[10px] text-grouse px-1"
+            style="top: 0%;"
+          >
+            12 AM
+          </div>
+          <div
+            class="absolute left-0 right-0 text-[10px] text-grouse px-1"
+            style="top: 25%;"
+          >
+            6 AM
+          </div>
+          <div
+            class="absolute left-0 right-0 text-[10px] text-grouse px-1"
+            style="top: 50%;"
+          >
+            12 PM
+          </div>
+          <div
+            class="absolute left-0 right-0 text-[10px] text-grouse px-1"
+            style="top: 75%;"
+          >
+            6 PM
+          </div>
+        </div>
+        <div
+          class="relative border-l border-heron"
+        >
+          <div
+            class="absolute left-0 right-0 border-t border-heron/50"
+            style="top: 0%;"
+          />
+          <div
+            class="absolute left-0 right-0 border-t border-heron/50"
+            style="top: 25%;"
+          />
+          <div
+            class="absolute left-0 right-0 border-t border-heron/50"
+            style="top: 50%;"
+          />
+          <div
+            class="absolute left-0 right-0 border-t border-heron/50"
+            style="top: 75%;"
+          />
+          <button
+            class="absolute left-0.5 right-0.5 h-2 rounded-full cursor-pointer hover:opacity-80"
+            data-day="MON"
+            data-testid="schedule-event-cmd-late-mon"
+            data-time="22:00:00"
+            style="top: 91.66666666666666%; background-color: var(--color-cardinal);"
+            title="Hallway Thermostat: HEAT 2 at 22:00:00"
+          />
+          <button
+            class="absolute left-0.5 right-0.5 h-2 rounded-full cursor-pointer hover:opacity-80"
+            data-day="MON"
+            data-testid="schedule-event-cmd-early-mon"
+            data-time="06:30:00"
+            style="top: 27.083333333333332%; background-color: var(--color-cardinal);"
+            title="Hallway Thermostat: HEAT - at 06:30:00"
+          />
+        </div>
+        <div
+          class="relative border-l border-heron"
+        >
+          <div
+            class="absolute left-0 right-0 border-t border-heron/50"
+            style="top: 0%;"
+          />
+          <div
+            class="absolute left-0 right-0 border-t border-heron/50"
+            style="top: 25%;"
+          />
+          <div
+            class="absolute left-0 right-0 border-t border-heron/50"
+            style="top: 50%;"
+          />
+          <div
+            class="absolute left-0 right-0 border-t border-heron/50"
+            style="top: 75%;"
+          />
+        </div>
+        <div
+          class="relative border-l border-heron"
+        >
+          <div
+            class="absolute left-0 right-0 border-t border-heron/50"
+            style="top: 0%;"
+          />
+          <div
+            class="absolute left-0 right-0 border-t border-heron/50"
+            style="top: 25%;"
+          />
+          <div
+            class="absolute left-0 right-0 border-t border-heron/50"
+            style="top: 50%;"
+          />
+          <div
+            class="absolute left-0 right-0 border-t border-heron/50"
+            style="top: 75%;"
+          />
+          <button
+            class="absolute left-0.5 right-0.5 h-2 rounded-full cursor-pointer hover:opacity-80"
+            data-day="WED"
+            data-testid="schedule-event-cmd-late-wed"
+            data-time="22:00:00"
+            style="top: 91.66666666666666%; background-color: var(--color-cardinal);"
+            title="Hallway Thermostat: HEAT 2 at 22:00:00"
+          />
+        </div>
+        <div
+          class="relative border-l border-heron"
+        >
+          <div
+            class="absolute left-0 right-0 border-t border-heron/50"
+            style="top: 0%;"
+          />
+          <div
+            class="absolute left-0 right-0 border-t border-heron/50"
+            style="top: 25%;"
+          />
+          <div
+            class="absolute left-0 right-0 border-t border-heron/50"
+            style="top: 50%;"
+          />
+          <div
+            class="absolute left-0 right-0 border-t border-heron/50"
+            style="top: 75%;"
+          />
+        </div>
+        <div
+          class="relative border-l border-heron"
+        >
+          <div
+            class="absolute left-0 right-0 border-t border-heron/50"
+            style="top: 0%;"
+          />
+          <div
+            class="absolute left-0 right-0 border-t border-heron/50"
+            style="top: 25%;"
+          />
+          <div
+            class="absolute left-0 right-0 border-t border-heron/50"
+            style="top: 50%;"
+          />
+          <div
+            class="absolute left-0 right-0 border-t border-heron/50"
+            style="top: 75%;"
+          />
+        </div>
+        <div
+          class="relative border-l border-heron"
+        >
+          <div
+            class="absolute left-0 right-0 border-t border-heron/50"
+            style="top: 0%;"
+          />
+          <div
+            class="absolute left-0 right-0 border-t border-heron/50"
+            style="top: 25%;"
+          />
+          <div
+            class="absolute left-0 right-0 border-t border-heron/50"
+            style="top: 50%;"
+          />
+          <div
+            class="absolute left-0 right-0 border-t border-heron/50"
+            style="top: 75%;"
+          />
+        </div>
+        <div
+          class="relative border-l border-heron"
+        >
+          <div
+            class="absolute left-0 right-0 border-t border-heron/50"
+            style="top: 0%;"
+          />
+          <div
+            class="absolute left-0 right-0 border-t border-heron/50"
+            style="top: 25%;"
+          />
+          <div
+            class="absolute left-0 right-0 border-t border-heron/50"
+            style="top: 50%;"
+          />
+          <div
+            class="absolute left-0 right-0 border-t border-heron/50"
+            style="top: 75%;"
+          />
+          <button
+            class="absolute left-0.5 right-0.5 h-2 rounded-full cursor-pointer hover:opacity-80"
+            data-day="SUN"
+            data-testid="schedule-event-cmd-early-sun"
+            data-time="06:30:00"
+            style="top: 27.083333333333332%; background-color: var(--color-cardinal);"
+            title="Hallway Thermostat: HEAT - at 06:30:00"
+          />
+        </div>
+      </div>
+    </div>
+    <div
+      class="mt-4 flex gap-2"
+    >
+      <button
+        class="flex-1 py-2 bg-peacock text-crane rounded-[var(--border-radius-base)] text-sm font-medium hover:bg-peacock/90"
+        data-testid="schedule-add-event"
+      >
+        Add Event
+      </button>
+    </div>
+    <ul
+      class="mt-4 divide-y divide-heron border border-heron rounded-[var(--border-radius-base)]"
+      data-testid="schedule-event-list"
+    >
+      <li>
+        <button
+          class="w-full flex items-center justify-between gap-3 px-3 py-2 text-left hover:bg-pigeon/50"
+          data-testid="schedule-event-row-cmd-early"
+        >
+          <span
+            class="text-sm text-swift"
+          >
+            6:30 AM
+          </span>
+          <span
+            class="flex-1 text-xs text-grouse truncate"
+          >
+            Mon, Sun
+          </span>
+          <span
+            class="text-sm font-medium text-coot"
+          >
+            HEAT -
+          </span>
+        </button>
+      </li>
+      <li>
+        <button
+          class="w-full flex items-center justify-between gap-3 px-3 py-2 text-left hover:bg-pigeon/50"
+          data-testid="schedule-event-row-cmd-late"
+        >
+          <span
+            class="text-sm text-swift"
+          >
+            10:00 PM
+          </span>
+          <span
+            class="flex-1 text-xs text-grouse truncate"
+          >
+            Mon, Wed
+          </span>
+          <span
+            class="text-sm font-medium text-coot"
+          >
+            HEAT 2
+          </span>
+        </button>
+      </li>
+    </ul>
+  </div>
+</DocumentFragment>
+`;
