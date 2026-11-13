@@ -1,0 +1,38 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`AlarmCallTreeCard matches snapshot 1`] = `
+<DocumentFragment>
+  <div
+    class="border border-heron rounded-[var(--border-radius-base)] overflow-hidden"
+    data-testid="info-card-alarm-call-tree"
+  >
+    <div
+      class="flex items-center justify-between px-4 py-3 bg-pigeon/30"
+    >
+      <h3
+        class="text-sm font-medium text-swift"
+      >
+        Alarm Call Tree
+      </h3>
+      <span
+        data-testid="info-card-alarm-call-tree-action"
+      >
+        <a
+          class="text-sm text-peacock hover:underline"
+          data-testid="alarm-call-tree-link"
+          href="/services/alarms/settings"
+        >
+          Alarm settings
+        </a>
+      </span>
+    </div>
+    <div
+      class="px-4 py-3 space-y-2"
+    >
+      <div
+        data-testid="alarm-notification-list"
+      />
+    </div>
+  </div>
+</DocumentFragment>
+`;

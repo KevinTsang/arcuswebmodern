@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * Settings page — three tabs: Profile, People & Places, Invitation Code.
+ * Settings page — tabs: Profile, Notifications, People & Places, Invitation Code.
  *
  * All section and panel components are in src/components/settings/.
  */
@@ -10,14 +10,16 @@ import { useState } from 'react';
 import ProfileSection from '@/components/settings/ProfileSection';
 import PeoplePlacesSection from '@/components/settings/PeoplePlacesSection';
 import InvitationSection from '@/components/settings/InvitationSection';
+import { NotificationsSection } from '@/components/settings/NotificationsSection';
 
-type SettingsSection = 'profile' | 'people-places' | 'invitation';
+type SettingsSection = 'profile' | 'notifications' | 'people-places' | 'invitation';
 
 export default function SettingsPage() {
   const [section, setSection] = useState<SettingsSection>('profile');
 
   const sections: { key: SettingsSection; label: string; icon: string }[] = [
     { key: 'profile', label: 'Profile', icon: 'icon-app-user-1' },
+    { key: 'notifications', label: 'Notifications', icon: 'icon-app-notification-1' },
     { key: 'people-places', label: 'People & Places', icon: 'icon-app-family-1' },
     { key: 'invitation', label: 'Invitation Code', icon: 'icon-app-envelope-1' },
   ];
@@ -51,6 +53,7 @@ export default function SettingsPage() {
 
       {/* Section content */}
       {section === 'profile' && <ProfileSection />}
+      {section === 'notifications' && <NotificationsSection />}
       {section === 'people-places' && <PeoplePlacesSection />}
       {section === 'invitation' && <InvitationSection />}
     </div>
