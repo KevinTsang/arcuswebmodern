@@ -2,7 +2,7 @@ import { renderHook } from '@testing-library/react';
 import { SecuritySubsystem, AlarmSubsystem, SecurityAlarmMode } from '@arcus/core';
 import { useAlarmSubsystem } from '@/hooks/useAlarmSubsystem';
 import type { SubsystemEntity } from '@/store/entityTypes';
-import type { AlarmCallEntry } from '@/store/entityTypes';
+import type { CallTreeEntry } from '@/store/entityTypes';
 
 // ── Mocks ─────────────────────────────────────────────────────────────
 
@@ -160,7 +160,7 @@ describe('useAlarmSubsystem', () => {
 
   describe('callTree from alarm subsystem', () => {
     it('returns callTree from the alarm subsystem', () => {
-      const callTree: AlarmCallEntry[] = [
+      const callTree: CallTreeEntry[] = [
         { person: 'SERV:person:person1', enabled: true },
         { person: 'SERV:person:person2', enabled: false },
       ];

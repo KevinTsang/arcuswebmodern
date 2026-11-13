@@ -1,7 +1,7 @@
 import { renderHook } from '@testing-library/react';
 import { CareSubsystem } from '@arcus/core';
 import { useCareSubsystem } from '@/hooks/useCareSubsystem';
-import type { SubsystemEntity, CareBehavior, CareCallEntry } from '@/store/entityTypes';
+import type { SubsystemEntity, CareBehavior, CallTreeEntry } from '@/store/entityTypes';
 import { makeSubsystem } from '../helpers/factories';
 
 // ── Mocks ─────────────────────────────────────────────────────────────
@@ -127,7 +127,7 @@ describe('useCareSubsystem', () => {
 
   describe('callTree', () => {
     it('returns callTree from the subsystem', () => {
-      const callTree: CareCallEntry[] = [
+      const callTree: CallTreeEntry[] = [
         { person: 'SERV:person:person1', enabled: true },
         { person: 'SERV:person:person2', enabled: false },
       ];

@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { SecuritySubsystem, AlarmSubsystem, SecurityAlarmMode } from '@arcus/core';
 import { useSubsystem } from './useSubsystem';
-import type { AlarmCallEntry } from '@/store/entityTypes';
+import type { CallTreeEntry } from '@/store/entityTypes';
 
 export function useAlarmSubsystem() {
   const security = useSubsystem('subsecurity');
@@ -15,7 +15,7 @@ export function useAlarmSubsystem() {
     const securityDevices = (security?.[SecuritySubsystem.ATTR_SECURITYDEVICES] as string[]) ?? [];
     const triggeredDevices = (security?.[SecuritySubsystem.ATTR_TRIGGEREDDEVICES] as string[]) ?? [];
     const offlineDevices = (security?.[SecuritySubsystem.ATTR_OFFLINEDEVICES] as string[]) ?? [];
-    const callTree = (alarm?.[AlarmSubsystem.ATTR_CALLTREE] as AlarmCallEntry[]) ?? [];
+    const callTree = (alarm?.[AlarmSubsystem.ATTR_CALLTREE] as CallTreeEntry[]) ?? [];
     const fanShutoffOnSmoke = (alarm?.[AlarmSubsystem.ATTR_FANSHUTOFFONSMOKE] as boolean) ?? false;
     const fanShutoffOnCO = (alarm?.[AlarmSubsystem.ATTR_FANSHUTOFFONCO] as boolean) ?? false;
 

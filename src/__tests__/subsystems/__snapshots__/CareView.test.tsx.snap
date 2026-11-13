@@ -1,0 +1,60 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`CareView tabs matches snapshot 1`] = `
+<DocumentFragment>
+  <div>
+    <div
+      class="flex gap-1 bg-pigeon rounded-[var(--border-radius-base)] p-1 mb-6 w-fit"
+    >
+      <button
+        class="px-4 py-1.5 rounded-[var(--border-radius-base)] text-sm font-medium transition-colors bg-crane text-swift shadow-sm"
+        data-testid="care-tab-status"
+      >
+        Status
+      </button>
+      <button
+        class="px-4 py-1.5 rounded-[var(--border-radius-base)] text-sm font-medium transition-colors text-grouse hover:text-coot"
+        data-testid="care-tab-behaviors"
+      >
+        Behaviors
+      </button>
+      <button
+        class="px-4 py-1.5 rounded-[var(--border-radius-base)] text-sm font-medium transition-colors text-grouse hover:text-coot"
+        data-testid="care-tab-notifications"
+      >
+        Notifications
+      </button>
+    </div>
+    <div
+      class="space-y-6"
+    >
+      <div
+        class="rounded-[var(--border-radius-base)] p-6 text-center bg-pigeon/50"
+      >
+        <div
+          class="text-xl font-bold mb-1 text-honeycreeper"
+          data-alert="false"
+          data-testid="care-state"
+        >
+          All Clear
+        </div>
+        <p
+          class="text-sm text-grouse"
+          data-testid="care-summary"
+        >
+          Care is active
+        </p>
+      </div>
+      <div
+        class="text-sm text-grouse"
+      >
+        <p
+          data-testid="care-device-count"
+        >
+          0 care devices monitored
+        </p>
+      </div>
+    </div>
+  </div>
+</DocumentFragment>
+`;
