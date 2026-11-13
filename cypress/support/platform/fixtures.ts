@@ -12,11 +12,12 @@
 import {
   Account, Alarm, AlarmSubsystem, Base, CamerasSubsystem, CareSubsystem, ClimateSubsystem, Contact,
   Device, DeviceAdvanced, DeviceConnection, DevicePower, Dimmer, DoorLock, DoorsNLocksSubsystem,
-  Hub, HubAdvanced, HubConnection, HubZwave, IrrigationController, LawnNGardenSubsystem, LeakH2O,
+  Hub, HubAdvanced, HubConnection, HubZwave, IrrigationController, IrrigationZone, LawnNGardenSubsystem, LeakH2O,
   LightsNSwitchesSubsystem, Motion, MotorizedDoor, PairingSubsystem, Person, Place, PresenceSubsystem, Product,
   RelativeHumidity, Rule, RuleTemplate, SafetySubsystem, Scene, Scheduler, SecurityAlarmMode,
   SecuritySubsystem, Subsystem, Switch, Temperature, Thermostat, Valve, WaterSubsystem,
 } from '../../../packages/arcus-core/src/capabilities/capabilities';
+import { IrrigationScheduleMode } from '../../../packages/arcus-core/src/capabilities/irrigation';
 import type { Attrs, HistoryEntryFixture, PlatformData } from './types';
 
 // ── Ids & addresses ───────────────────────────────────────────────────
@@ -75,6 +76,11 @@ export const DEVICE_NAME = {
   sprinkler: 'Backyard Sprinklers',
   motion: 'Hallway Motion',
   relay: 'Garage Relay',
+};
+
+/** Irrigation schedule event ids on the sprinkler controller. */
+export const IRRIGATION_EVENT = {
+  weekly: 'irrevent-weekly',
 };
 
 export const SCENE = {
@@ -204,9 +210,18 @@ export function createFixture(): PlatformData {
     device('valve', DEVICE_NAME.valve, 'WaterValve', ['valv'], {
       [Valve.ATTR_VALVESTATE]: Valve.VALVESTATE_OPEN,
     }),
-    device('sprinkler', DEVICE_NAME.sprinkler, 'Irrigation', ['irrcont'], {
+    device('sprinkler', DEVICE_NAME.sprinkler, 'Irrigation', ['irrcont', 'irrsched', 'irr'], {
       [IrrigationController.ATTR_CONTROLLERSTATE]: IrrigationController.CONTROLLERSTATE_NOT_WATERING,
       [IrrigationController.ATTR_NUMZONES]: 4,
+      [IrrigationController.ATTR_BUDGET]: 100,
+      ...['Front Lawn', 'Back Lawn', 'Garden', 'Side Yard'].reduce<Attrs>((zones, name, i) => ({
+        ...zones,
+        [`${IrrigationZone.ATTR_ZONENUM}:z${i + 1}`]: i + 1,
+        [`${IrrigationZone.ATTR_ZONENAME}:z${i + 1}`]: name,
+        [`${IrrigationZone.ATTR_ZONESTATE}:z${i + 1}`]: IrrigationZone.ZONESTATE_NOT_WATERING,
+        [`${IrrigationZone.ATTR_DEFAULTDURATION}:z${i + 1}`]: 10,
+        [`${IrrigationZone.ATTR_WATERINGDURATION}:z${i + 1}`]: 0,
+      }), {}),
     }),
     device('motion', DEVICE_NAME.motion, 'Motion', ['mot', 'temp'], {
       [Motion.ATTR_MOTION]: 'NONE',
@@ -293,6 +308,31 @@ export function createFixture(): PlatformData {
         },
       },
       [LawnNGardenSubsystem.ATTR_NEXTEVENT]: { zoneName: 'Front Lawn', startTime: minutesAgo(-60), duration: 15 },
+      // Manual watering, with one weekly event ready to switch to.
+      [LawnNGardenSubsystem.ATTR_SCHEDULESTATUS]: {
+        [DEVICE.sprinkler]: { controller: DEVICE.sprinkler, mode: IrrigationScheduleMode.WEEKLY, enabled: false },
+      },
+      [LawnNGardenSubsystem.ATTR_WEEKLYSCHEDULES]: {
+        [DEVICE.sprinkler]: {
+          controller: DEVICE.sprinkler,
+          type: IrrigationScheduleMode.WEEKLY,
+          status: 'APPLIED',
+          events: [{
+            eventId: IRRIGATION_EVENT.weekly,
+            type: IrrigationScheduleMode.WEEKLY,
+            status: 'APPLIED',
+            timeOfDay: '06:00:00',
+            days: ['MON', 'THU'],
+            events: [
+              { controller: DEVICE.sprinkler, zone: 'z1', duration: 10, status: 'APPLIED' },
+              { controller: DEVICE.sprinkler, zone: 'z2', duration: 15, status: 'APPLIED' },
+            ],
+          }],
+        },
+      },
+      [LawnNGardenSubsystem.ATTR_EVENSCHEDULES]: {},
+      [LawnNGardenSubsystem.ATTR_ODDSCHEDULES]: {},
+      [LawnNGardenSubsystem.ATTR_INTERVALSCHEDULES]: {},
     }),
     subsystem('subcameras', {
       [CamerasSubsystem.ATTR_CAMERAS]: [],

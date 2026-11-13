@@ -1,0 +1,84 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`SkipWateringPanel matches snapshot 1`] = `
+<DocumentFragment>
+  <form
+    class="space-y-4"
+    data-testid="skip-watering-panel"
+  >
+    <p
+      class="text-sm text-grouse"
+    >
+      Backyard Sprinklers
+    </p>
+    <p
+      class="text-sm font-medium text-swift"
+    >
+      Skip irrigation for
+    </p>
+    <fieldset
+      class="space-y-2"
+    >
+      <label
+        class="flex items-center gap-2 text-sm text-swift"
+      >
+        <input
+          data-testid="skip-watering-12"
+          name="skip-hours"
+          type="radio"
+        />
+        12 Hours
+      </label>
+      <label
+        class="flex items-center gap-2 text-sm text-swift"
+      >
+        <input
+          checked=""
+          data-testid="skip-watering-24"
+          name="skip-hours"
+          type="radio"
+        />
+        24 Hours
+      </label>
+      <label
+        class="flex items-center gap-2 text-sm text-swift"
+      >
+        <input
+          data-testid="skip-watering-48"
+          name="skip-hours"
+          type="radio"
+        />
+        48 Hours
+      </label>
+      <label
+        class="flex items-center gap-2 text-sm text-swift"
+      >
+        <input
+          data-testid="skip-watering-72"
+          name="skip-hours"
+          type="radio"
+        />
+        72 Hours
+      </label>
+    </fieldset>
+    <div
+      class="flex gap-2"
+    >
+      <button
+        class="px-4 py-2 text-sm font-medium bg-peacock text-crane rounded-[var(--border-radius-base)] disabled:opacity-50"
+        data-testid="skip-watering-save"
+        type="submit"
+      >
+        Skip
+      </button>
+      <button
+        class="px-4 py-2 text-sm text-coot bg-pigeon rounded-[var(--border-radius-base)] hover:bg-heron"
+        data-testid="skip-watering-cancel"
+        type="button"
+      >
+        Cancel
+      </button>
+    </div>
+  </form>
+</DocumentFragment>
+`;

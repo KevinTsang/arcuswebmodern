@@ -78,7 +78,7 @@ None.
 | Water heaters | Mode control, temperature | None | **Missing** |
 | Water softeners | Salt level, recharge time, settings | None | **Missing** |
 | Shades / blinds | Position, tilt | Config references action but no component | **Missing** |
-| Irrigation controllers | Zone-by-zone control, schedules, modes | Zone list display only | **Partial** |
+| Irrigation controllers | Zone-by-zone control, schedules, modes | Water Now / Stop / Skip, per-zone start/stop, watering mode, water saver, schedule editor | **Done** |
 | Cameras (live) | HLS streaming, PTZ, recording, clips | Device panel with status only | **Partial** |
 | Keypads | Button function assignment | None | **Missing** |
 | Pet doors | Open/close control, access settings | None | **Missing** |
@@ -176,7 +176,7 @@ None.
 | Weekly recurring (day-of-week selection) | Yes | Yes | **Done** |
 | Device scheduling | Yes | Yes | **Done** |
 | Thermostat schedule programs | Yes (full HVAC calendar) | No | **Missing** |
-| Irrigation scheduling (even/odd/interval modes) | Yes | No | **Missing** |
+| Irrigation scheduling (even/odd/interval modes) | Yes | Yes (weekly/interval/even/odd) | **Done** |
 | Scene scheduling | Yes | Yes | **Done** |
 | Rule enable/disable scheduling | Yes | No | **Missing** |
 | Timezone conversion (place vs device) | Yes | No | **Missing** |
@@ -184,7 +184,7 @@ None.
 ### Gaps
 
 - Thermostat schedule management (temperature programs).
-- Irrigation schedule management (zone durations, watering modes).
+- ~~Irrigation schedule management (zone durations, watering modes).~~ **DONE.** See §12.
 - Rule scheduling (enable/disable rules on a time-based schedule).
 - Timezone-aware scheduling.
 
@@ -311,20 +311,21 @@ None.
 | Feature | Legacy | Modern | Status |
 |---------|--------|--------|--------|
 | Irrigation controller status | Yes | Yes | **Done** |
-| Zone list display | Yes | Yes (basic) | **Partial** |
-| Individual zone control (start/stop/duration) | Yes | No | **Missing** |
-| Irrigation schedule management | Yes (even/odd/interval/weekly modes) | No | **Missing** |
-| Water saver modes | Yes | No | **Missing** |
-| Seasonal adjustments | Yes | No | **Missing** |
+| Zone list display | Yes | Yes (name, watering state, duration) | **Done** |
+| Individual zone control (start/stop/duration) | Yes | Yes | **Done** |
+| Irrigation schedule management | Yes (even/odd/interval/weekly modes) | Yes | **Done** |
+| Water saver modes | Yes | Yes | **Done** |
+| Seasonal adjustments | Yes | Yes (via water saver %) | **Done** |
 
 ### Gaps
 
-- Individual zone controls.
-- Irrigation scheduling with all modes (even, odd, interval, weekly).
-- Water saver and seasonal adjustment features.
+- ~~Individual zone controls.~~ **DONE.** Each controller on the Lawn & Garden page lists its zones (from `irr:*:zN` instance attributes) with a duration picker and Start (`irrcont:WaterNowV2`) or Stop (`irrcont:CancelV2`). The device row action (`irrigation-nowStopSkip`) adds Water Now (zone + duration panel), Stop (single-zone controllers stop at once; multi-zone ones ask current zone vs. all via `sublawnngarden:StopWatering`), Skip 12/24/48/72 h (`sublawnngarden:Skip`) and Cancel Skip, as in the legacy client.
+- ~~Irrigation scheduling with all modes (even, odd, interval, weekly).~~ **DONE.** The Watering Schedule panel (Schedule link on the controller, or Edit Schedule in its configuration) has a tab per mode listing its events, with an editor for zones, their order and durations, start time and — for weekly — days (`CreateWeeklyEvent`/`UpdateWeeklyEvent`/`RemoveWeeklyEvent`, `CreateScheduleEvent`/`UpdateScheduleEvent`/`RemoveScheduleEvent`). Interval mode sets "water every N days" (`ConfigureIntervalSchedule`). The Watering Mode configurator switches the followed mode (`SwitchScheduleMode` + `EnableScheduling`) or turns scheduling off (`DisableScheduling`); modes with no events can't be chosen, and deleting the last event of the followed mode falls back to manual. The platform's overlapping-start-time error gets its own message.
+- ~~Water saver and seasonal adjustment features.~~ **DONE.** The Water Saver configurator sets `irrcont:budget` from 0–100 % in 10 % steps, the legacy client's seasonal adjustment (e.g. 50 % in the fall halves every scheduled duration). Hidden for the Orbit hose timer (product `deda9d`), as in legacy. Budgets above 100 % (which the platform allows) are not offered, matching legacy.
+- **Remaining:** zone settings (renaming zones and editing their default duration, legacy `lawn-garden/controller-editor`) are not built. Event times are sent and shown as entered, without the legacy device-to-place timezone conversion (see §6 "Timezone conversion").
 - ~~**Bug:** The Lawn & Garden card on the home screen shows an "undefined" watering device.~~ **DONE.** `sublawnngarden:zonesWatering` is a map keyed by controller address, not an array; `useLawnGardenSubsystem` now converts it with `Object.values(...)` so the watering count renders correctly (was `undefined` because the map has no `.length`).
 - ~~**Bug:** Clicking the Lawn & Garden subsystem navigates to the Alarms page instead of the Lawn & Garden section.~~ **DONE.** The Services page is now a path-based route matching arcusweb — `/services/<subsystem>/<action>` (e.g. `/services/lawn-garden/status`) via an optional catch-all `[[...slug]]`. Previously it read no route info and always defaulted to the first subsystem (Alarms). Home dashboard cards, the sidebar, and the incident redirect all use the `/services/<slug>/status` form; the alarm view's status/settings tabs are route-driven.
-- **Testing:** Create a mock irrigation controller so zone control, scheduling, and the fixes above can be exercised without physical hardware.
+- ~~**Testing:** Create a mock irrigation controller so zone control, scheduling, and the fixes above can be exercised without physical hardware.~~ **DONE.** The Cypress fake platform's sprinkler has four named zones, a weekly event and handlers for the irrigation controller and lawn & garden commands; `subsystems.cy.ts` covers zone start/stop, Water Now/Stop, skip, mode switching, water saver and creating/editing/deleting events.
 
 ---
 
@@ -652,7 +653,7 @@ These are commonly used features that users will expect:
 7. **Lock access management** — PIN assignment per person, temporary PINs with expiry.
 8. **Hub firmware updates** — Firmware version display and update workflow.
 9. **Hub WiFi configuration** — WiFi SSID/password setup, network scanning.
-10. **Irrigation scheduling & zone control** — Per-zone start/stop, schedule modes (even/odd/interval).
+10. ~~**Irrigation scheduling & zone control**~~ — **DONE.** Per-zone start/stop, Water Now/Stop/Skip, schedule modes (weekly/interval/even/odd) with event editor, water saver / seasonal adjustment. Zone rename/default-duration settings remain (§12).
 11. **Rule scheduling** — Enable/disable rules on time-based schedules. (Scene scheduling is done.)
 12. **Account management** — Account deletion, email management, security questions.
 

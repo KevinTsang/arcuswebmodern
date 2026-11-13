@@ -1,0 +1,667 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`IrrigationEventEditor snapshots matches snapshot for a new weekly event 1`] = `
+<DocumentFragment>
+  <form
+    class="space-y-4"
+    data-testid="irrigation-event-editor"
+  >
+    <div>
+      <p
+        class="text-sm font-medium text-swift"
+      >
+        Select Zones and Adjust Durations
+      </p>
+      <p
+        class="text-xs text-grouse"
+      >
+        Add more events if you want to water the same zones multiple times a day.
+      </p>
+    </div>
+    <label
+      class="flex items-center gap-2 text-sm text-swift"
+    >
+      <input
+        data-testid="irrigation-event-select-all"
+        type="checkbox"
+      />
+      Select All
+    </label>
+    <ul
+      class="space-y-2"
+    >
+      <li
+        class="flex items-center gap-2"
+        data-selected="false"
+        data-testid="irrigation-event-zone-z1"
+      >
+        <label
+          class="flex flex-1 items-center gap-2 text-sm text-grouse"
+        >
+          <input
+            data-testid="irrigation-event-zone-toggle-z1"
+            type="checkbox"
+          />
+          Front
+        </label>
+      </li>
+      <li
+        class="flex items-center gap-2"
+        data-selected="false"
+        data-testid="irrigation-event-zone-z2"
+      >
+        <label
+          class="flex flex-1 items-center gap-2 text-sm text-grouse"
+        >
+          <input
+            data-testid="irrigation-event-zone-toggle-z2"
+            type="checkbox"
+          />
+          Back
+        </label>
+      </li>
+      <li
+        class="flex items-center gap-2"
+        data-selected="false"
+        data-testid="irrigation-event-zone-z3"
+      >
+        <label
+          class="flex flex-1 items-center gap-2 text-sm text-grouse"
+        >
+          <input
+            data-testid="irrigation-event-zone-toggle-z3"
+            type="checkbox"
+          />
+          Side
+        </label>
+      </li>
+    </ul>
+    <p
+      class="text-xs text-cardinal"
+      data-testid="irrigation-event-zones-error"
+    >
+      At least one zone must be selected.
+    </p>
+    <label
+      class="block"
+    >
+      <span
+        class="text-sm font-medium text-swift"
+      >
+        Start Time
+      </span>
+      <input
+        class="mt-1 block border border-heron rounded-[var(--border-radius-base)] bg-crane px-2 py-1 text-sm text-swift"
+        data-testid="irrigation-event-time"
+        type="time"
+        value="07:00"
+      />
+    </label>
+    <div>
+      <p
+        class="text-sm font-medium text-swift mb-1"
+      >
+        Repeat On
+      </p>
+      <div
+        class="flex flex-wrap gap-1"
+      >
+        <button
+          aria-pressed="false"
+          class="px-2 py-1 text-xs rounded-[var(--border-radius-base)] bg-pigeon text-coot hover:bg-heron"
+          data-testid="irrigation-event-day-MON"
+          type="button"
+        >
+          Mon
+        </button>
+        <button
+          aria-pressed="false"
+          class="px-2 py-1 text-xs rounded-[var(--border-radius-base)] bg-pigeon text-coot hover:bg-heron"
+          data-testid="irrigation-event-day-TUE"
+          type="button"
+        >
+          Tue
+        </button>
+        <button
+          aria-pressed="false"
+          class="px-2 py-1 text-xs rounded-[var(--border-radius-base)] bg-pigeon text-coot hover:bg-heron"
+          data-testid="irrigation-event-day-WED"
+          type="button"
+        >
+          Wed
+        </button>
+        <button
+          aria-pressed="false"
+          class="px-2 py-1 text-xs rounded-[var(--border-radius-base)] bg-pigeon text-coot hover:bg-heron"
+          data-testid="irrigation-event-day-THU"
+          type="button"
+        >
+          Thu
+        </button>
+        <button
+          aria-pressed="false"
+          class="px-2 py-1 text-xs rounded-[var(--border-radius-base)] bg-pigeon text-coot hover:bg-heron"
+          data-testid="irrigation-event-day-FRI"
+          type="button"
+        >
+          Fri
+        </button>
+        <button
+          aria-pressed="false"
+          class="px-2 py-1 text-xs rounded-[var(--border-radius-base)] bg-pigeon text-coot hover:bg-heron"
+          data-testid="irrigation-event-day-SAT"
+          type="button"
+        >
+          Sat
+        </button>
+        <button
+          aria-pressed="false"
+          class="px-2 py-1 text-xs rounded-[var(--border-radius-base)] bg-pigeon text-coot hover:bg-heron"
+          data-testid="irrigation-event-day-SUN"
+          type="button"
+        >
+          Sun
+        </button>
+      </div>
+      <p
+        class="text-xs text-cardinal mt-1"
+        data-testid="irrigation-event-days-error"
+      >
+        At least one day must be selected.
+      </p>
+    </div>
+    <div
+      class="flex items-center gap-2"
+    >
+      <button
+        class="px-4 py-2 text-sm font-medium bg-peacock text-crane rounded-[var(--border-radius-base)] disabled:opacity-50"
+        data-testid="irrigation-event-save"
+        disabled=""
+        type="submit"
+      >
+        Save
+      </button>
+      <button
+        class="px-4 py-2 text-sm text-coot bg-pigeon rounded-[var(--border-radius-base)] hover:bg-heron"
+        data-testid="irrigation-event-cancel"
+        type="button"
+      >
+        Cancel
+      </button>
+    </div>
+  </form>
+</DocumentFragment>
+`;
+
+exports[`IrrigationEventEditor snapshots matches snapshot when editing a weekly event 1`] = `
+<DocumentFragment>
+  <form
+    class="space-y-4"
+    data-testid="irrigation-event-editor"
+  >
+    <div>
+      <p
+        class="text-sm font-medium text-swift"
+      >
+        Select Zones and Adjust Durations
+      </p>
+      <p
+        class="text-xs text-grouse"
+      >
+        Add more events if you want to water the same zones multiple times a day.
+      </p>
+    </div>
+    <label
+      class="flex items-center gap-2 text-sm text-swift"
+    >
+      <input
+        data-testid="irrigation-event-select-all"
+        type="checkbox"
+      />
+      Select All
+    </label>
+    <ul
+      class="space-y-2"
+    >
+      <li
+        class="flex items-center gap-2"
+        data-selected="true"
+        data-testid="irrigation-event-zone-z2"
+      >
+        <label
+          class="flex flex-1 items-center gap-2 text-sm text-swift min-w-0"
+        >
+          <input
+            checked=""
+            data-testid="irrigation-event-zone-toggle-z2"
+            type="checkbox"
+          />
+          <span
+            class="truncate"
+          >
+            Back
+          </span>
+        </label>
+        <select
+          aria-label="Duration for Back"
+          class="border border-heron rounded-[var(--border-radius-base)] bg-crane px-2 py-1 text-sm text-swift"
+          data-testid="irrigation-event-zone-duration-z2"
+        >
+          <option
+            value="1"
+          >
+            1 min
+          </option>
+          <option
+            value="2"
+          >
+            2 min
+          </option>
+          <option
+            value="3"
+          >
+            3 min
+          </option>
+          <option
+            value="4"
+          >
+            4 min
+          </option>
+          <option
+            value="5"
+          >
+            5 min
+          </option>
+          <option
+            value="6"
+          >
+            6 min
+          </option>
+          <option
+            value="7"
+          >
+            7 min
+          </option>
+          <option
+            value="8"
+          >
+            8 min
+          </option>
+          <option
+            value="9"
+          >
+            9 min
+          </option>
+          <option
+            value="10"
+          >
+            10 min
+          </option>
+          <option
+            value="11"
+          >
+            11 min
+          </option>
+          <option
+            value="12"
+          >
+            12 min
+          </option>
+          <option
+            value="13"
+          >
+            13 min
+          </option>
+          <option
+            value="14"
+          >
+            14 min
+          </option>
+          <option
+            value="15"
+          >
+            15 min
+          </option>
+          <option
+            value="20"
+          >
+            20 min
+          </option>
+          <option
+            value="25"
+          >
+            25 min
+          </option>
+          <option
+            value="30"
+          >
+            30 min
+          </option>
+          <option
+            value="45"
+          >
+            45 min
+          </option>
+          <option
+            value="60"
+          >
+            1 hr
+          </option>
+          <option
+            value="120"
+          >
+            2 hrs
+          </option>
+          <option
+            value="180"
+          >
+            3 hrs
+          </option>
+          <option
+            value="240"
+          >
+            4 hrs
+          </option>
+        </select>
+        <button
+          aria-label="Move Back earlier"
+          class="px-1 text-coot disabled:opacity-30"
+          data-testid="irrigation-event-zone-up-z2"
+          disabled=""
+          type="button"
+        >
+          ▲
+        </button>
+        <button
+          aria-label="Move Back later"
+          class="px-1 text-coot disabled:opacity-30"
+          data-testid="irrigation-event-zone-down-z2"
+          type="button"
+        >
+          ▼
+        </button>
+      </li>
+      <li
+        class="flex items-center gap-2"
+        data-selected="true"
+        data-testid="irrigation-event-zone-z1"
+      >
+        <label
+          class="flex flex-1 items-center gap-2 text-sm text-swift min-w-0"
+        >
+          <input
+            checked=""
+            data-testid="irrigation-event-zone-toggle-z1"
+            type="checkbox"
+          />
+          <span
+            class="truncate"
+          >
+            Front
+          </span>
+        </label>
+        <select
+          aria-label="Duration for Front"
+          class="border border-heron rounded-[var(--border-radius-base)] bg-crane px-2 py-1 text-sm text-swift"
+          data-testid="irrigation-event-zone-duration-z1"
+        >
+          <option
+            value="1"
+          >
+            1 min
+          </option>
+          <option
+            value="2"
+          >
+            2 min
+          </option>
+          <option
+            value="3"
+          >
+            3 min
+          </option>
+          <option
+            value="4"
+          >
+            4 min
+          </option>
+          <option
+            value="5"
+          >
+            5 min
+          </option>
+          <option
+            value="6"
+          >
+            6 min
+          </option>
+          <option
+            value="7"
+          >
+            7 min
+          </option>
+          <option
+            value="8"
+          >
+            8 min
+          </option>
+          <option
+            value="9"
+          >
+            9 min
+          </option>
+          <option
+            value="10"
+          >
+            10 min
+          </option>
+          <option
+            value="11"
+          >
+            11 min
+          </option>
+          <option
+            value="12"
+          >
+            12 min
+          </option>
+          <option
+            value="13"
+          >
+            13 min
+          </option>
+          <option
+            value="14"
+          >
+            14 min
+          </option>
+          <option
+            value="15"
+          >
+            15 min
+          </option>
+          <option
+            value="20"
+          >
+            20 min
+          </option>
+          <option
+            value="25"
+          >
+            25 min
+          </option>
+          <option
+            value="30"
+          >
+            30 min
+          </option>
+          <option
+            value="45"
+          >
+            45 min
+          </option>
+          <option
+            value="60"
+          >
+            1 hr
+          </option>
+          <option
+            value="120"
+          >
+            2 hrs
+          </option>
+          <option
+            value="180"
+          >
+            3 hrs
+          </option>
+          <option
+            value="240"
+          >
+            4 hrs
+          </option>
+        </select>
+        <button
+          aria-label="Move Front earlier"
+          class="px-1 text-coot disabled:opacity-30"
+          data-testid="irrigation-event-zone-up-z1"
+          type="button"
+        >
+          ▲
+        </button>
+        <button
+          aria-label="Move Front later"
+          class="px-1 text-coot disabled:opacity-30"
+          data-testid="irrigation-event-zone-down-z1"
+          disabled=""
+          type="button"
+        >
+          ▼
+        </button>
+      </li>
+      <li
+        class="flex items-center gap-2"
+        data-selected="false"
+        data-testid="irrigation-event-zone-z3"
+      >
+        <label
+          class="flex flex-1 items-center gap-2 text-sm text-grouse"
+        >
+          <input
+            data-testid="irrigation-event-zone-toggle-z3"
+            type="checkbox"
+          />
+          Side
+        </label>
+      </li>
+    </ul>
+    <label
+      class="block"
+    >
+      <span
+        class="text-sm font-medium text-swift"
+      >
+        Start Time
+      </span>
+      <input
+        class="mt-1 block border border-heron rounded-[var(--border-radius-base)] bg-crane px-2 py-1 text-sm text-swift"
+        data-testid="irrigation-event-time"
+        type="time"
+        value="06:30"
+      />
+    </label>
+    <div>
+      <p
+        class="text-sm font-medium text-swift mb-1"
+      >
+        Repeat On
+      </p>
+      <div
+        class="flex flex-wrap gap-1"
+      >
+        <button
+          aria-pressed="true"
+          class="px-2 py-1 text-xs rounded-[var(--border-radius-base)] bg-peacock text-crane"
+          data-testid="irrigation-event-day-MON"
+          type="button"
+        >
+          Mon
+        </button>
+        <button
+          aria-pressed="false"
+          class="px-2 py-1 text-xs rounded-[var(--border-radius-base)] bg-pigeon text-coot hover:bg-heron"
+          data-testid="irrigation-event-day-TUE"
+          type="button"
+        >
+          Tue
+        </button>
+        <button
+          aria-pressed="true"
+          class="px-2 py-1 text-xs rounded-[var(--border-radius-base)] bg-peacock text-crane"
+          data-testid="irrigation-event-day-WED"
+          type="button"
+        >
+          Wed
+        </button>
+        <button
+          aria-pressed="false"
+          class="px-2 py-1 text-xs rounded-[var(--border-radius-base)] bg-pigeon text-coot hover:bg-heron"
+          data-testid="irrigation-event-day-THU"
+          type="button"
+        >
+          Thu
+        </button>
+        <button
+          aria-pressed="false"
+          class="px-2 py-1 text-xs rounded-[var(--border-radius-base)] bg-pigeon text-coot hover:bg-heron"
+          data-testid="irrigation-event-day-FRI"
+          type="button"
+        >
+          Fri
+        </button>
+        <button
+          aria-pressed="false"
+          class="px-2 py-1 text-xs rounded-[var(--border-radius-base)] bg-pigeon text-coot hover:bg-heron"
+          data-testid="irrigation-event-day-SAT"
+          type="button"
+        >
+          Sat
+        </button>
+        <button
+          aria-pressed="false"
+          class="px-2 py-1 text-xs rounded-[var(--border-radius-base)] bg-pigeon text-coot hover:bg-heron"
+          data-testid="irrigation-event-day-SUN"
+          type="button"
+        >
+          Sun
+        </button>
+      </div>
+    </div>
+    <div
+      class="flex items-center gap-2"
+    >
+      <button
+        class="px-4 py-2 text-sm font-medium bg-peacock text-crane rounded-[var(--border-radius-base)] disabled:opacity-50"
+        data-testid="irrigation-event-save"
+        type="submit"
+      >
+        Save
+      </button>
+      <button
+        class="px-4 py-2 text-sm text-coot bg-pigeon rounded-[var(--border-radius-base)] hover:bg-heron"
+        data-testid="irrigation-event-cancel"
+        type="button"
+      >
+        Cancel
+      </button>
+      <button
+        class="ml-auto px-3 py-2 text-sm text-cardinal hover:underline"
+        data-testid="irrigation-event-delete"
+        type="button"
+      >
+        Delete Event
+      </button>
+    </div>
+  </form>
+</DocumentFragment>
+`;

@@ -1,0 +1,151 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`IrrigationModeConfigurator snapshots matches snapshot 1`] = `
+<DocumentFragment>
+  <div
+    data-testid="irrigation-mode"
+  >
+    <div
+      class="flex items-center justify-between mb-2"
+    >
+      <p
+        class="text-sm font-medium text-swift"
+      >
+        Watering Mode
+      </p>
+      <button
+        class="text-xs text-peacock hover:underline"
+        data-testid="irrigation-edit-schedule"
+        type="button"
+      >
+        Edit Schedule
+      </button>
+    </div>
+    <div>
+      <label
+        class="flex items-start gap-2 py-1 cursor-pointer"
+      >
+        <input
+          checked=""
+          class="mt-1"
+          data-testid="irrigation-mode-weekly"
+          name="irrigation-mode-DRIV:dev:sprinkler"
+          type="radio"
+        />
+        <span>
+          <span
+            class="block text-sm text-swift"
+          >
+            Weekly
+          </span>
+          <span
+            class="block text-xs text-grouse"
+          >
+            Each day can have a different schedule.
+          </span>
+        </span>
+      </label>
+      <label
+        class="flex items-start gap-2 py-1 cursor-pointer"
+      >
+        <input
+          class="mt-1"
+          data-testid="irrigation-mode-even"
+          name="irrigation-mode-DRIV:dev:sprinkler"
+          type="radio"
+        />
+        <span>
+          <span
+            class="block text-sm text-swift"
+          >
+            Even Days
+          </span>
+          <span
+            class="block text-xs text-grouse"
+          >
+            Only water on even days of the month.
+          </span>
+        </span>
+      </label>
+      <label
+        class="flex items-start gap-2 py-1 cursor-pointer"
+      >
+        <input
+          class="mt-1"
+          data-testid="irrigation-mode-manual"
+          name="irrigation-mode-DRIV:dev:sprinkler"
+          type="radio"
+        />
+        <span>
+          <span
+            class="block text-sm text-swift"
+          >
+            Manual
+          </span>
+          <span
+            class="block text-xs text-grouse"
+          >
+            No watering schedule. Initiate watering manually.
+          </span>
+        </span>
+      </label>
+    </div>
+    <div
+      class="mt-3"
+    >
+      <p
+        class="text-xs text-grouse mb-1"
+        data-testid="irrigation-mode-needs-events"
+      >
+        Add at least one scheduling event to enable the following mode(s).
+      </p>
+      <label
+        class="flex items-start gap-2 py-1 opacity-50 cursor-not-allowed"
+      >
+        <input
+          class="mt-1"
+          data-testid="irrigation-mode-interval"
+          disabled=""
+          name="irrigation-mode-DRIV:dev:sprinkler"
+          type="radio"
+        />
+        <span>
+          <span
+            class="block text-sm text-swift"
+          >
+            Interval
+          </span>
+          <span
+            class="block text-xs text-grouse"
+          >
+            Set a custom length of time between waterings.
+          </span>
+        </span>
+      </label>
+      <label
+        class="flex items-start gap-2 py-1 opacity-50 cursor-not-allowed"
+      >
+        <input
+          class="mt-1"
+          data-testid="irrigation-mode-odd"
+          disabled=""
+          name="irrigation-mode-DRIV:dev:sprinkler"
+          type="radio"
+        />
+        <span>
+          <span
+            class="block text-sm text-swift"
+          >
+            Odd Days
+          </span>
+          <span
+            class="block text-xs text-grouse"
+          >
+            Only water on odd days of the month.
+          </span>
+        </span>
+      </label>
+    </div>
+  </div>
+</DocumentFragment>
+`;

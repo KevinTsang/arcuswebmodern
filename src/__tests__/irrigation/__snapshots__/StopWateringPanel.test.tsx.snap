@@ -1,0 +1,64 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`StopWateringPanel matches snapshot 1`] = `
+<DocumentFragment>
+  <form
+    class="space-y-4"
+    data-testid="stop-watering-panel"
+  >
+    <p
+      class="text-sm text-grouse"
+    >
+      Backyard Sprinklers
+    </p>
+    <p
+      class="text-sm text-swift"
+    >
+      Do you want to stop watering the current zone only, or all zones in this event?
+    </p>
+    <fieldset
+      class="space-y-2"
+    >
+      <label
+        class="flex items-center gap-2 text-sm text-swift"
+      >
+        <input
+          data-testid="stop-watering-current"
+          name="stop-watering"
+          type="radio"
+        />
+        Current Zone Only
+      </label>
+      <label
+        class="flex items-center gap-2 text-sm text-swift"
+      >
+        <input
+          checked=""
+          data-testid="stop-watering-all"
+          name="stop-watering"
+          type="radio"
+        />
+        All Zones
+      </label>
+    </fieldset>
+    <div
+      class="flex gap-2"
+    >
+      <button
+        class="px-4 py-2 text-sm font-medium bg-peacock text-crane rounded-[var(--border-radius-base)] disabled:opacity-50"
+        data-testid="stop-watering-save"
+        type="submit"
+      >
+        Stop Watering
+      </button>
+      <button
+        class="px-4 py-2 text-sm text-coot bg-pigeon rounded-[var(--border-radius-base)] hover:bg-heron"
+        data-testid="stop-watering-cancel"
+        type="button"
+      >
+        Cancel
+      </button>
+    </div>
+  </form>
+</DocumentFragment>
+`;

@@ -1,0 +1,310 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`IrrigationZoneList matches snapshot 1`] = `
+<DocumentFragment>
+  <ul
+    data-testid="irrigation-zones-DRIV:dev:sprinkler"
+  >
+    <li
+      class="flex items-center gap-3 py-2 border-b border-heron last:border-b-0"
+      data-state="idle"
+      data-testid="irrigation-zone-DRIV:dev:sprinkler-z1"
+    >
+      <div
+        class="flex-1 min-w-0"
+      >
+        <p
+          class="text-sm text-swift truncate"
+          data-testid="irrigation-zone-name-DRIV:dev:sprinkler-z1"
+        >
+          Front Lawn
+        </p>
+        <p
+          class="text-xs text-grouse"
+          data-testid="irrigation-zone-status-DRIV:dev:sprinkler-z1"
+        >
+          Idle
+        </p>
+      </div>
+      <select
+        aria-label="Duration for Front Lawn"
+        class="border border-heron rounded-[var(--border-radius-base)] bg-crane px-2 py-1 text-xs text-swift"
+        data-testid="irrigation-zone-duration-DRIV:dev:sprinkler-z1"
+      >
+        <option
+          value="1"
+        >
+          1 min
+        </option>
+        <option
+          value="2"
+        >
+          2 min
+        </option>
+        <option
+          value="3"
+        >
+          3 min
+        </option>
+        <option
+          value="4"
+        >
+          4 min
+        </option>
+        <option
+          value="5"
+        >
+          5 min
+        </option>
+        <option
+          value="6"
+        >
+          6 min
+        </option>
+        <option
+          value="7"
+        >
+          7 min
+        </option>
+        <option
+          value="8"
+        >
+          8 min
+        </option>
+        <option
+          value="9"
+        >
+          9 min
+        </option>
+        <option
+          value="10"
+        >
+          10 min
+        </option>
+        <option
+          value="11"
+        >
+          11 min
+        </option>
+        <option
+          value="12"
+        >
+          12 min
+        </option>
+        <option
+          value="13"
+        >
+          13 min
+        </option>
+        <option
+          value="14"
+        >
+          14 min
+        </option>
+        <option
+          value="15"
+        >
+          15 min
+        </option>
+        <option
+          value="20"
+        >
+          20 min
+        </option>
+        <option
+          value="25"
+        >
+          25 min
+        </option>
+        <option
+          value="30"
+        >
+          30 min
+        </option>
+        <option
+          value="45"
+        >
+          45 min
+        </option>
+        <option
+          value="60"
+        >
+          1 hr
+        </option>
+        <option
+          value="120"
+        >
+          2 hrs
+        </option>
+        <option
+          value="180"
+        >
+          3 hrs
+        </option>
+        <option
+          value="240"
+        >
+          4 hrs
+        </option>
+      </select>
+      <button
+        class="px-3 py-1 text-xs font-medium bg-pigeon text-coot hover:bg-heron rounded-[var(--border-radius-base)] disabled:opacity-50"
+        data-testid="irrigation-zone-start-DRIV:dev:sprinkler-z1"
+        type="button"
+      >
+        Start
+      </button>
+    </li>
+    <li
+      class="flex items-center gap-3 py-2 border-b border-heron last:border-b-0"
+      data-state="idle"
+      data-testid="irrigation-zone-DRIV:dev:sprinkler-z2"
+    >
+      <div
+        class="flex-1 min-w-0"
+      >
+        <p
+          class="text-sm text-swift truncate"
+          data-testid="irrigation-zone-name-DRIV:dev:sprinkler-z2"
+        >
+          Back Lawn
+        </p>
+        <p
+          class="text-xs text-grouse"
+          data-testid="irrigation-zone-status-DRIV:dev:sprinkler-z2"
+        >
+          Idle
+        </p>
+      </div>
+      <select
+        aria-label="Duration for Back Lawn"
+        class="border border-heron rounded-[var(--border-radius-base)] bg-crane px-2 py-1 text-xs text-swift"
+        data-testid="irrigation-zone-duration-DRIV:dev:sprinkler-z2"
+      >
+        <option
+          value="1"
+        >
+          1 min
+        </option>
+        <option
+          value="2"
+        >
+          2 min
+        </option>
+        <option
+          value="3"
+        >
+          3 min
+        </option>
+        <option
+          value="4"
+        >
+          4 min
+        </option>
+        <option
+          value="5"
+        >
+          5 min
+        </option>
+        <option
+          value="6"
+        >
+          6 min
+        </option>
+        <option
+          value="7"
+        >
+          7 min
+        </option>
+        <option
+          value="8"
+        >
+          8 min
+        </option>
+        <option
+          value="9"
+        >
+          9 min
+        </option>
+        <option
+          value="10"
+        >
+          10 min
+        </option>
+        <option
+          value="11"
+        >
+          11 min
+        </option>
+        <option
+          value="12"
+        >
+          12 min
+        </option>
+        <option
+          value="13"
+        >
+          13 min
+        </option>
+        <option
+          value="14"
+        >
+          14 min
+        </option>
+        <option
+          value="15"
+        >
+          15 min
+        </option>
+        <option
+          value="20"
+        >
+          20 min
+        </option>
+        <option
+          value="25"
+        >
+          25 min
+        </option>
+        <option
+          value="30"
+        >
+          30 min
+        </option>
+        <option
+          value="45"
+        >
+          45 min
+        </option>
+        <option
+          value="60"
+        >
+          1 hr
+        </option>
+        <option
+          value="120"
+        >
+          2 hrs
+        </option>
+        <option
+          value="180"
+        >
+          3 hrs
+        </option>
+        <option
+          value="240"
+        >
+          4 hrs
+        </option>
+      </select>
+      <button
+        class="px-3 py-1 text-xs font-medium bg-pigeon text-coot hover:bg-heron rounded-[var(--border-radius-base)] disabled:opacity-50"
+        data-testid="irrigation-zone-start-DRIV:dev:sprinkler-z2"
+        type="button"
+      >
+        Start
+      </button>
+    </li>
+  </ul>
+</DocumentFragment>
+`;

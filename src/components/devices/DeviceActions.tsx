@@ -7,6 +7,7 @@ import OpenCloseDoor from './OpenCloseDoor';
 import OpenCloseValve from './OpenCloseValve';
 import ThermostatControl from './ThermostatControl';
 import MultiToggle from './MultiToggle';
+import { IrrigationActions } from '@/components/irrigation/IrrigationActions';
 
 interface DeviceActionsProps {
   address: string;
@@ -28,6 +29,8 @@ function DeviceActionsInner({ address, action }: DeviceActionsProps) {
       return <ThermostatControl address={address} />;
     case 'multi-toggle':
       return <MultiToggle address={address} />;
+    case 'irrigation-nowStopSkip':
+      return <IrrigationActions address={address} />;
     default:
       return null;
   }

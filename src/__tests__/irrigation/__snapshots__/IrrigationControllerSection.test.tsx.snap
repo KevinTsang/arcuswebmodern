@@ -1,0 +1,43 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`IrrigationControllerSection matches snapshot 1`] = `
+<DocumentFragment>
+  <section
+    class="mb-6"
+    data-testid="irrigation-controller-DRIV:dev:sprinkler"
+  >
+    <div
+      data-testid="device-panel-DRIV:dev:sprinkler"
+    />
+    <div
+      class="flex items-center justify-between gap-2 px-2 py-2"
+    >
+      <p
+        class="text-xs text-coot"
+        data-testid="irrigation-schedule-status-DRIV:dev:sprinkler"
+      >
+        Manual watering (no schedule)
+      </p>
+      <button
+        class="text-xs text-peacock hover:underline"
+        data-testid="irrigation-open-schedule-DRIV:dev:sprinkler"
+        type="button"
+      >
+        Schedule
+      </button>
+    </div>
+    <div
+      class="px-2"
+    >
+      <h4
+        class="text-xs font-medium text-grouse uppercase tracking-wide mb-1"
+      >
+        Zones
+      </h4>
+      <ul
+        data-testid="zone-list-stub-DRIV:dev:sprinkler"
+      />
+    </div>
+  </section>
+</DocumentFragment>
+`;

@@ -1,0 +1,55 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`IrrigationIntervalSelect matches snapshot 1`] = `
+<DocumentFragment>
+  <label
+    class="block"
+  >
+    <span
+      class="text-sm font-medium text-swift"
+    >
+      Water Every
+    </span>
+    <select
+      class="mt-1 w-full border border-heron rounded-[var(--border-radius-base)] bg-crane px-3 py-2 text-sm text-swift"
+      data-testid="irrigation-interval-days"
+    >
+      <option
+        value="1"
+      >
+        1 Day
+      </option>
+      <option
+        value="2"
+      >
+        2 Days
+      </option>
+      <option
+        value="3"
+      >
+        3 Days
+      </option>
+      <option
+        value="4"
+      >
+        4 Days
+      </option>
+      <option
+        value="5"
+      >
+        5 Days
+      </option>
+      <option
+        value="6"
+      >
+        6 Days
+      </option>
+      <option
+        value="7"
+      >
+        7 Days
+      </option>
+    </select>
+  </label>
+</DocumentFragment>
+`;

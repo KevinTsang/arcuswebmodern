@@ -1,0 +1,187 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`WaterNowPanel matches snapshot 1`] = `
+<DocumentFragment>
+  <form
+    class="space-y-4"
+    data-testid="water-now-panel"
+  >
+    <p
+      class="text-sm text-grouse"
+    >
+      Backyard Sprinklers
+    </p>
+    <label
+      class="block"
+    >
+      <span
+        class="text-sm font-medium text-swift"
+      >
+        Zone
+      </span>
+      <select
+        class="mt-1 w-full border border-heron rounded-[var(--border-radius-base)] bg-crane px-3 py-2 text-sm text-swift"
+        data-testid="water-now-zone"
+      >
+        <option
+          value="z1"
+        >
+          Front Lawn
+        </option>
+        <option
+          value="z2"
+        >
+          Back Lawn
+        </option>
+      </select>
+    </label>
+    <label
+      class="block"
+    >
+      <span
+        class="text-sm font-medium text-swift"
+      >
+        Duration
+      </span>
+      <select
+        class="mt-1 w-full border border-heron rounded-[var(--border-radius-base)] bg-crane px-3 py-2 text-sm text-swift"
+        data-testid="water-now-duration"
+      >
+        <option
+          value="1"
+        >
+          1 min
+        </option>
+        <option
+          value="2"
+        >
+          2 min
+        </option>
+        <option
+          value="3"
+        >
+          3 min
+        </option>
+        <option
+          value="4"
+        >
+          4 min
+        </option>
+        <option
+          value="5"
+        >
+          5 min
+        </option>
+        <option
+          value="6"
+        >
+          6 min
+        </option>
+        <option
+          value="7"
+        >
+          7 min
+        </option>
+        <option
+          value="8"
+        >
+          8 min
+        </option>
+        <option
+          value="9"
+        >
+          9 min
+        </option>
+        <option
+          value="10"
+        >
+          10 min
+        </option>
+        <option
+          value="11"
+        >
+          11 min
+        </option>
+        <option
+          value="12"
+        >
+          12 min
+        </option>
+        <option
+          value="13"
+        >
+          13 min
+        </option>
+        <option
+          value="14"
+        >
+          14 min
+        </option>
+        <option
+          value="15"
+        >
+          15 min
+        </option>
+        <option
+          value="20"
+        >
+          20 min
+        </option>
+        <option
+          value="25"
+        >
+          25 min
+        </option>
+        <option
+          value="30"
+        >
+          30 min
+        </option>
+        <option
+          value="45"
+        >
+          45 min
+        </option>
+        <option
+          value="60"
+        >
+          1 hr
+        </option>
+        <option
+          value="120"
+        >
+          2 hrs
+        </option>
+        <option
+          value="180"
+        >
+          3 hrs
+        </option>
+        <option
+          value="240"
+        >
+          4 hrs
+        </option>
+      </select>
+    </label>
+    <div
+      class="flex gap-2"
+    >
+      <button
+        class="px-4 py-2 text-sm font-medium bg-peacock text-crane rounded-[var(--border-radius-base)] disabled:opacity-50"
+        data-testid="water-now-save"
+        type="submit"
+      >
+        Water Now
+      </button>
+      <button
+        class="px-4 py-2 text-sm text-coot bg-pigeon rounded-[var(--border-radius-base)] hover:bg-heron"
+        data-testid="water-now-cancel"
+        type="button"
+      >
+        Cancel
+      </button>
+    </div>
+  </form>
+</DocumentFragment>
+`;
