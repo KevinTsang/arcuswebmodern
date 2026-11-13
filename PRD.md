@@ -119,6 +119,53 @@ None.
 | Fullscreen mode | Yes (cross-browser) | No | **Missing** |
 | Preview image / thumbnail | Yes | No | **Missing** |
 
+### 3.5 Next-Generation Z-Wave (S2 Security & QR Code Pairing)
+
+Modern-only: the legacy client never supported Z-Wave S2. The platform side
+landed in arcusplatform PR #502 ("Let clients enter the S2 PIN when pairing a
+Z-Wave device"). Its client contract is `docs/zwave-s2-pin-pairing.md` in
+arcusplatform, under "What a client must do".
+
+| Feature | Legacy | Modern | Status |
+|---------|--------|--------|--------|
+| Opt in to S2 PIN entry (`s2PinEntry: true` on `subpairing:StartPairing` and `subpairing:Search`) | No | No | **Missing** |
+| S2 PIN prompt: on `subpairing:s2PinRequestId`, call `GetS2PinRequest`, show DSK groups 2–8 to check against the label, take the 5-digit PIN, count down to `expires` | No | No | **Missing** |
+| Submit / decline (`SubmitS2Pin` once, `CancelS2Pin` on DSK mismatch or give-up; retry only on `request.param.invalid`) | No | No | **Missing** |
+| Scan the device's Z-Wave QR code with the browser camera to fill the PIN and check the DSK automatically | No | No | **Missing** |
+| Show S2 failures (`subpairing:PairingFailed` `zwave.s2.pin.timeout` / `zwave.s2.pin.failed`) with "exclude or factory reset and pair again" guidance | No | No | **Missing** |
+| Show the granted vs requested security class (`ZWAV:Security` / `ZWAV:SecurityRequested` in `devadv:protocolAttrs`) on device details, and flag devices that joined with less than they asked for | No | No | **Missing** |
+| SmartStart: add scanned QR codes to a provisioning list so devices join when powered on | No | No | **Missing** (blocked: no platform API yet) |
+
+### Gaps
+
+- **S2 PIN entry.** The pairing flow must opt in with `s2PinEntry`. Without it
+  the hub never grants S2 Authenticated or Access Control, and those devices
+  fall back to S2 Unauthenticated or S0. When `s2PinRequestId` turns non-empty,
+  open a prompt with the DSK and a countdown to `s2PinExpires` (about 195 s).
+  The prompt closes when the ID goes empty again. There is only one attempt: a
+  wrong well-formed PIN uses it up, and the device then has to be excluded and
+  paired again.
+- **QR code scanning.** The Z-Wave QR label is a numeric string. It starts with
+  `90`, and its DSK field gives all eight groups. Add a "Scan QR code" option to
+  the PIN prompt that uses `navigator.mediaDevices.getUserMedia` (rear camera,
+  `facingMode: 'environment'`). Decode with a maintained library, or with
+  `BarcodeDetector` where the browser has it. Parse the DSK from the code,
+  compare groups 2–8 with the DSK the hub reported, and submit group 1 as the
+  PIN only when they match. If they don't match, warn the user and offer
+  `CancelS2Pin`. Handle a denied or missing camera (and plain-HTTP origins,
+  where `getUserMedia` is unavailable) by falling back to typing the PIN. Stop
+  the camera stream when the prompt closes or the request expires.
+- **Security visibility.** Show the granted S2/S0 class on the device's
+  advanced info, so you can find devices that joined with less than they asked
+  for.
+- **SmartStart (follow-up).** Scanning a QR code *before* inclusion, so the hub
+  adds the device as soon as it is powered, needs a provisioning-list API on the
+  platform (hubzwave or subpairing). It isn't in arcusplatform yet, so build the
+  QR scanner and parser so a provisioning flow can reuse them later.
+- **Testing.** Mock `getUserMedia` and the decoder in unit tests. Extend the
+  Cypress fake platform with `GetS2PinRequest` / `SubmitS2Pin` / `CancelS2Pin`
+  and the `s2PinRequestId` value changes.
+
 ---
 
 ## 4. Scenes
@@ -754,6 +801,10 @@ These are commonly used features that users will expect:
       matching `RulePanel`'s deliberate save order.
     - The last full run (before these fixes) passed every other spec: 208 of
       212 tests, with 1 test skipped in `history.cy.ts` by design.
+30. **Next-generation Z-Wave (S2 + QR code pairing)** — S2 PIN entry during
+    pairing, camera QR-code scanning to fill the PIN and verify the DSK, and
+    granted security class display. See §3.5. Platform support is in
+    arcusplatform PR #502. SmartStart provisioning is blocked on a platform API.
 
 ---
 
