@@ -1,10 +1,21 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import Bridge from '@arcus/core/bridge';
-import { Place } from '@arcus/core';
+import { Device, Place } from '@arcus/core';
+import { useAppDispatch } from '@/store/hooks';
+import { addNotification } from '@/store/slices/uiSlice';
 import type { HistoryEntry } from './HistoryList';
 import type { ListHistoryEntriesResponse } from '@/arcus/types';
 
 const PAGE_SIZE = 20;
+
+/**
+ * History is listed on the subject itself, as in the legacy client: a device
+ * address (`DRIV:dev:<id>`) takes `dev:ListHistoryEntries`, anything else the
+ * place command. The platform rejects `place:ListHistoryEntries` on a device.
+ */
+export function historyCommandFor(address: string): string {
+  return address.split(':')[1] === 'dev' ? Device.CMD_LISTHISTORYENTRIES : Place.CMD_LISTHISTORYENTRIES;
+}
 
 interface UseHistoryFetchResult {
   entries: HistoryEntry[];
@@ -20,6 +31,7 @@ export default function useHistoryFetch(address: string): UseHistoryFetchResult 
   const [hasMore, setHasMore] = useState(true);
   const nextTokenRef = useRef<string | undefined>(undefined);
   const loadingRef = useRef(false);
+  const dispatch = useAppDispatch();
 
   const fetchPage = useCallback(
     async (token?: string, append = false) => {
@@ -27,7 +39,7 @@ export default function useHistoryFetch(address: string): UseHistoryFetchResult 
       loadingRef.current = true;
       setLoading(true);
       try {
-        const result = await Bridge.request<ListHistoryEntriesResponse>(Place.CMD_LISTHISTORYENTRIES, address, {
+        const result = await Bridge.request<ListHistoryEntriesResponse>(historyCommandFor(address), address, {
           limit: PAGE_SIZE,
           token,
         });
@@ -43,11 +55,12 @@ export default function useHistoryFetch(address: string): UseHistoryFetchResult 
         setHasMore(newEntries.length > 0 && !!newToken);
       } catch {
         setHasMore(false);
+        dispatch(addNotification({ type: 'error', message: 'Failed to load history' }));
       }
       loadingRef.current = false;
       setLoading(false);
     },
-    [address],
+    [address, dispatch],
   );
 
   // Reset and fetch when address changes

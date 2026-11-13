@@ -1,12 +1,17 @@
 import { renderHook, act, waitFor } from '@testing-library/react';
-import { Place } from '@arcus/core';
-import useHistoryFetch from '@/components/history/useHistoryFetch';
+import { Device, Place } from '@arcus/core';
+import useHistoryFetch, { historyCommandFor } from '@/components/history/useHistoryFetch';
 import Bridge from '@arcus/core/bridge';
 import type { ListHistoryEntriesResponse } from '@/arcus/types';
 
 jest.mock('@arcus/core/bridge', () => ({
   __esModule: true,
   default: { request: jest.fn() },
+}));
+
+const mockDispatch = jest.fn();
+jest.mock('@/store/hooks', () => ({
+  useAppDispatch: () => mockDispatch,
 }));
 
 const mockRequest = Bridge.request as jest.Mock;
@@ -159,7 +164,7 @@ describe('useHistoryFetch – address change', () => {
     await waitFor(() => expect(result.current.loading).toBe(false));
 
     expect(result.current.entries).toEqual(deviceEntries);
-    expect(mockRequest).toHaveBeenCalledWith(Place.CMD_LISTHISTORYENTRIES, 'DRIV:dev:dev-1', {
+    expect(mockRequest).toHaveBeenCalledWith(Device.CMD_LISTHISTORYENTRIES, 'DRIV:dev:dev-1', {
       limit: 20,
       token: undefined,
     });
@@ -175,6 +180,17 @@ describe('useHistoryFetch – error handling', () => {
 
     expect(result.current.hasMore).toBe(false);
     expect(result.current.entries).toEqual([]);
+    expect(mockDispatch).toHaveBeenCalledWith(
+      expect.objectContaining({ payload: { type: 'error', message: 'Failed to load history' } }),
+    );
+  });
+
+  it('does not notify on success', async () => {
+    mockRequest.mockResolvedValue({ results: page1 });
+    const { result } = renderHook(() => useHistoryFetch('SERV:place:place-1'));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    expect(mockDispatch).not.toHaveBeenCalled();
   });
 
   it('handles missing results gracefully', async () => {
@@ -185,5 +201,87 @@ describe('useHistoryFetch – error handling', () => {
 
     expect(result.current.entries).toEqual([]);
     expect(result.current.hasMore).toBe(false);
+  });
+});
+
+describe('useHistoryFetch – device history', () => {
+  it('lists device history with the device command', async () => {
+    mockRequest.mockResolvedValue({ results: page1, nextToken: 'token-2' });
+    const { result } = renderHook(() => useHistoryFetch('DRIV:dev:dev-1'));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    expect(mockRequest).toHaveBeenCalledWith(Device.CMD_LISTHISTORYENTRIES, 'DRIV:dev:dev-1', {
+      limit: 20,
+      token: undefined,
+    });
+    expect(mockRequest).not.toHaveBeenCalledWith(Place.CMD_LISTHISTORYENTRIES, expect.anything(), expect.anything());
+  });
+
+  it('pages device history with the device command', async () => {
+    mockRequest
+      .mockResolvedValueOnce({ results: page1, nextToken: 'token-2' })
+      .mockResolvedValueOnce({ results: page2, nextToken: undefined });
+    const { result } = renderHook(() => useHistoryFetch('DRIV:dev:dev-1'));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    await act(async () => result.current.loadMore());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    expect(mockRequest).toHaveBeenLastCalledWith(Device.CMD_LISTHISTORYENTRIES, 'DRIV:dev:dev-1', {
+      limit: 20,
+      token: 'token-2',
+    });
+    expect(result.current.entries).toEqual([...page1, ...page2]);
+  });
+
+  it('goes back to the place command when the filter is cleared', async () => {
+    mockRequest.mockResolvedValue({ results: page1, nextToken: undefined });
+    const { result, rerender } = renderHook(
+      ({ addr }) => useHistoryFetch(addr),
+      { initialProps: { addr: 'DRIV:dev:dev-1' } },
+    );
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    rerender({ addr: 'SERV:place:place-1' });
+    await waitFor(() => expect(mockRequest).toHaveBeenCalledTimes(2));
+
+    expect(mockRequest).toHaveBeenLastCalledWith(Place.CMD_LISTHISTORYENTRIES, 'SERV:place:place-1', {
+      limit: 20,
+      token: undefined,
+    });
+  });
+
+  it('keeps an empty result for a device with no history', async () => {
+    mockRequest.mockResolvedValue({ results: [] });
+    const { result } = renderHook(() => useHistoryFetch('DRIV:dev:dev-1'));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    expect(result.current.entries).toEqual([]);
+    expect(result.current.hasMore).toBe(false);
+  });
+
+  it('stops paging when device history fails', async () => {
+    mockRequest.mockRejectedValue(new Error('error.unsupported'));
+    const { result } = renderHook(() => useHistoryFetch('DRIV:dev:dev-1'));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    expect(result.current.entries).toEqual([]);
+    expect(result.current.hasMore).toBe(false);
+    expect(mockDispatch).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('historyCommandFor', () => {
+  it('uses the device command for device addresses', () => {
+    expect(historyCommandFor('DRIV:dev:abc-123')).toBe(Device.CMD_LISTHISTORYENTRIES);
+  });
+
+  it('uses the place command for place addresses', () => {
+    expect(historyCommandFor('SERV:place:place-1')).toBe(Place.CMD_LISTHISTORYENTRIES);
+  });
+
+  it('falls back to the place command for malformed addresses', () => {
+    expect(historyCommandFor('')).toBe(Place.CMD_LISTHISTORYENTRIES);
+    expect(historyCommandFor('dev')).toBe(Place.CMD_LISTHISTORYENTRIES);
   });
 });
