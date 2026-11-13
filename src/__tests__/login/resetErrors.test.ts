@@ -3,10 +3,15 @@ import { resetErrorMessage } from '@/components/login/resetErrors';
 describe('resetErrorMessage', () => {
   it.each([
     ['person.reset.token_failed', 'That code is invalid or has expired. Check the code, or request a new one.'],
-    ['person.not_found', 'We couldn’t find an account with that email address.'],
     ['person.reset.failed', 'Your password could not be reset. Please try again.'],
   ])('maps %s to a readable message', (code, message) => {
     expect(resetErrorMessage({ code, message: 'raw platform text' })).toBe(message);
+  });
+
+  it('does not reveal whether an account exists: an unknown email reads like a bad code', () => {
+    expect(resetErrorMessage({ code: 'person.not_found', message: 'Unable to locate record for person' })).toBe(
+      resetErrorMessage({ code: 'person.reset.token_failed' }),
+    );
   });
 
   it('falls back to a generic message for unknown codes, plain errors and missing errors', () => {

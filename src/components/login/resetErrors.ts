@@ -6,10 +6,17 @@ interface PlatformError {
   message?: string;
 }
 
-/** What `person:ResetPassword` can reject with (arcusplatform `personservice.xml`). */
+const INVALID_CODE = 'That code is invalid or has expired. Check the code, or request a new one.';
+
+/**
+ * What `person:ResetPassword` can reject with (arcusplatform `personservice.xml`).
+ *
+ * `person.not_found` reads the same as a bad code on purpose: saying no account exists would let
+ * anyone check whether an email is registered. The platform's send-code step hides this too.
+ */
 const RESET_ERROR_MESSAGES: Record<string, string> = {
-  'person.reset.token_failed': 'That code is invalid or has expired. Check the code, or request a new one.',
-  'person.not_found': 'We couldn’t find an account with that email address.',
+  'person.reset.token_failed': INVALID_CODE,
+  'person.not_found': INVALID_CODE,
   'person.reset.failed': 'Your password could not be reset. Please try again.',
 };
 
