@@ -12,8 +12,6 @@ export function useCareSubsystem() {
     const behaviors = (sub?.[CareSubsystem.ATTR_BEHAVIORS] as CareBehavior[]) ?? [];
     const careDevices = (sub?.[CareSubsystem.ATTR_CAREDEVICES] as string[]) ?? [];
     const callTree = (sub?.[CareSubsystem.ATTR_CALLTREE] as CallTreeEntry[]) ?? [];
-    // The platform says false on BASIC (owner only) and true on PREMIUM; treat a missing value as true.
-    const callTreeEnabled = (sub?.[CareSubsystem.ATTR_CALLTREEENABLED] as boolean | undefined) ?? true;
     const lastAlertCause = sub?.[CareSubsystem.ATTR_LASTALERTCAUSE] as string | undefined;
     const silent = (sub?.[CareSubsystem.ATTR_SILENT] as boolean) ?? false;
 
@@ -24,7 +22,6 @@ export function useCareSubsystem() {
       behaviors,
       careDevices,
       callTree,
-      callTreeEnabled,
       lastAlertCause,
       silent,
     };

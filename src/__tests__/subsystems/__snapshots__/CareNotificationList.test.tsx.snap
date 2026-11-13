@@ -245,23 +245,3 @@ exports[`CareNotificationList matches snapshot for empty state 1`] = `
   </div>
 </DocumentFragment>
 `;
-
-exports[`CareNotificationList matches snapshot when the call tree is off 1`] = `
-<DocumentFragment>
-  <div
-    data-testid="care-notification-list"
-  >
-    <h3
-      class="text-base font-medium text-swift mb-2"
-    >
-      Notification List
-    </h3>
-    <p
-      class="text-sm text-grouse"
-      data-testid="care-calltree-owner-only"
-    >
-      On your current plan, only the account owner is notified when a care alarm is triggered. Upgrade to Premium to notify other people in an order you choose.
-    </p>
-  </div>
-</DocumentFragment>
-`;

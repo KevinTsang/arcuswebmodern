@@ -36,7 +36,6 @@ jest.mock('@/store/hooks', () => ({
 
 interface MockCare {
   callTree: CallTreeEntry[];
-  callTreeEnabled: boolean;
   subsystem?: { [key: string]: string };
 }
 
@@ -55,7 +54,6 @@ jest.mock('@/hooks/useCareSubsystem', () => ({
 function resetCare(overrides?: Partial<MockCare>) {
   mockCare = {
     callTree: defaultCallTree.map((e) => ({ ...e })),
-    callTreeEnabled: true,
     subsystem: { [Base.ATTR_ADDRESS]: CARE_ADDR },
     ...overrides,
   };
@@ -114,21 +112,6 @@ describe('CareNotificationList', () => {
     resetCare({ callTree: [{ person: 'SERV:person:missing', enabled: true }] });
     render(<CareNotificationList />);
     expect(screen.getByText('Someone no longer at this place')).toBeInTheDocument();
-  });
-
-  it('shows that only the owner is notified when the call tree is off (BASIC)', () => {
-    resetCare({ callTreeEnabled: false });
-    render(<CareNotificationList />);
-    expect(screen.getByTestId('care-calltree-owner-only')).toHaveTextContent(
-      'only the account owner is notified when a care alarm is triggered',
-    );
-    expect(screen.queryByRole('switch')).not.toBeInTheDocument();
-  });
-
-  it('matches snapshot when the call tree is off', () => {
-    resetCare({ callTreeEnabled: false });
-    const { asFragment } = render(<CareNotificationList />);
-    expect(asFragment()).toMatchSnapshot();
   });
 
   it('does not lock anyone or limit how many people are enabled', () => {
