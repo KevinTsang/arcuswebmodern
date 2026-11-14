@@ -6,13 +6,22 @@
  * When groups 2–8 of the scanned DSK match the hub's, the user confirms
  * sending group 1 as the PIN. When they don't, the code belongs to another
  * device (or someone else's device is joining), so the user is warned and
- * offered to decline.
+ * offered to decline. A code for a Long Range-only device can't belong to a
+ * device joining this way (Long Range needs SmartStart), so that's explained
+ * instead of the mismatch warning.
  */
+
+import { securityClassLabel } from '@/lib/zwaveSecurity';
+import type { ZWaveSecurityClass } from '@/lib/zwaveQr';
 
 interface S2QrResultProps {
   matched: boolean;
   /** DSK group 1 from the code. */
   pin: string;
+  /** The security classes the code says the device asks for. */
+  requestedSecurityClasses: ZWaveSecurityClass[];
+  /** The code is for a device that supports only Z-Wave Long Range. */
+  longRangeOnly: boolean;
   onSubmit: () => void;
   onDecline: () => void;
   onScanAgain: () => void;
@@ -23,11 +32,18 @@ const primary = 'flex-1 py-2 rounded-[var(--border-radius-base)] text-sm font-me
 const destructive = 'flex-1 py-2 rounded-[var(--border-radius-base)] text-sm font-medium bg-cardinal text-crane hover:bg-cardinal/90';
 const secondary = 'flex-1 py-2 border border-heron rounded-[var(--border-radius-base)] text-sm text-coot hover:bg-pigeon';
 
-export function S2QrResult({ matched, pin, onSubmit, onDecline, onScanAgain, onManual }: S2QrResultProps) {
+export function S2QrResult({
+  matched, pin, requestedSecurityClasses, longRangeOnly, onSubmit, onDecline, onScanAgain, onManual,
+}: S2QrResultProps) {
   if (matched) {
     return (
       <div data-testid="s2-qr-match">
         <p className="text-sm text-swift mb-1">The QR code matches the device that is joining.</p>
+        {requestedSecurityClasses.length > 0 && (
+          <p data-testid="s2-qr-requested" className="text-sm text-coot mb-1">
+            It asks for: {requestedSecurityClasses.map(securityClassLabel).join(', ')}.
+          </p>
+        )}
         <p className="text-sm text-coot mb-4">
           Send PIN <span data-testid="s2-qr-pin" className="font-mono text-swift">{pin}</span> to the hub?
         </p>
@@ -37,6 +53,26 @@ export function S2QrResult({ matched, pin, onSubmit, onDecline, onScanAgain, onM
           </button>
           <button type="button" data-testid="s2-qr-back" onClick={onManual} className={secondary}>
             Back
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (longRangeOnly) {
+    return (
+      <div data-testid="s2-qr-long-range">
+        <p role="status" className="text-sm text-swift p-3 mb-4 border border-heron bg-pigeon rounded-[var(--border-radius-base)]">
+          This QR code is for a Z-Wave Long Range device. Long Range devices can only be added with
+          SmartStart, which isn&apos;t available yet, so it isn&apos;t the device joining now. Scan the code
+          of the device you&apos;re pairing, or enter its PIN by hand.
+        </p>
+        <div className="flex gap-2">
+          <button type="button" data-testid="s2-qr-scan-again" onClick={onScanAgain} className={secondary}>
+            Scan again
+          </button>
+          <button type="button" data-testid="s2-qr-manual" onClick={onManual} className={secondary}>
+            Enter the PIN by hand
           </button>
         </div>
       </div>

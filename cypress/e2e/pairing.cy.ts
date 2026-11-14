@@ -248,6 +248,24 @@ describe('Z-Wave S2 PIN entry (PRD §3.5)', () => {
     tid('pairing-searching').should('exist');
   };
 
+  it('pairs a Z-Wave device without the S2 PIN when asked', () => {
+    cy.signIn({ path: '/product-catalog' });
+    product(PRODUCT.lock).click();
+    cy.expectRequestAttrs(PairingSubsystem.CMD_STARTPAIRING, { s2PinEntry: true });
+    tid('s2-pin-entry-skip').should('not.be.checked').check();
+    tid('pairing-next').click();
+    tid('pairing-search').click();
+    cy.expectRequestAttrs(PairingSubsystem.CMD_SEARCH, { s2PinEntry: false });
+    tid('pairing-searching').should('exist');
+  });
+
+  it('does not offer pairing without the PIN for other protocols', () => {
+    cy.signIn({ path: '/product-catalog' });
+    product(PRODUCT.plug).click();
+    tid('pairing-next').should('exist');
+    tid('s2-pin-entry-skip').should('not.exist');
+  });
+
   it('shows the DSK and sends the typed PIN once', () => {
     startSearching();
     cy.platform().invoke('requestS2Pin').then((requestId) => {

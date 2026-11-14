@@ -4,6 +4,7 @@ import {
   QR_VERSION_S2,
   QR_VERSION_SMARTSTART,
   ZWaveQrError,
+  isLongRangeOnly,
   parseZWaveQrCode,
   tryParseZWaveQrCode,
 } from '@/lib/zwaveQr';
@@ -226,5 +227,22 @@ describe('tryParseZWaveQrCode', () => {
 
   it('returns null for text that is not a Z-Wave code', () => {
     expect(tryParseZWaveQrCode('https://example.com')).toBeNull();
+  });
+});
+
+describe('isLongRangeOnly', () => {
+  const withProtocols = (digits: string) => parseZWaveQrCode(buildCode({ blocks: PRODUCT_TYPE + PRODUCT_ID + tlv(4, digits) }));
+
+  it('is true when the code lists only Long Range', () => {
+    expect(isLongRangeOnly(withProtocols('00002'))).toBe(true);
+  });
+
+  it('is false when the code also lists classic Z-Wave', () => {
+    expect(isLongRangeOnly(withProtocols('03'))).toBe(false);
+    expect(isLongRangeOnly(withProtocols('001'))).toBe(false);
+  });
+
+  it('is false when the code lists no protocols', () => {
+    expect(isLongRangeOnly(parseZWaveQrCode(buildCode({ blocks: PRODUCT_TYPE + PRODUCT_ID })))).toBe(false);
   });
 });

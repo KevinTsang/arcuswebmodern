@@ -299,3 +299,11 @@ export function tryParseZWaveQrCode(text: string): ZWaveQrCode | null {
     throw e;
   }
 }
+
+/**
+ * True when the code says the device supports only Z-Wave Long Range. Long Range devices can only
+ * be added with SmartStart, so such a device can't be the one joining a classic inclusion.
+ */
+export function isLongRangeOnly(code: ZWaveQrCode): boolean {
+  return !!code.supportedProtocols && code.supportedProtocols.length > 0 && !code.supportedProtocols.includes('ZWAVE');
+}

@@ -38,7 +38,18 @@ export interface ZWaveSecurityInfo {
   requested: string | null;
   /** True when the device was granted less than it asked for. */
   downgraded: boolean;
+  /**
+   * True when a device that asked for an S2 class ended up with S0 or no security. zwave-js
+   * treats this (`S0Downgrade`) as a possible downgrade attack that must always be shown.
+   */
+  s0Downgrade: boolean;
 }
+
+const S2_CLASSES: ReadonlySet<string> = new Set([
+  ZWaveProtocol.SECURITY_S2_UNAUTHENTICATED,
+  ZWaveProtocol.SECURITY_S2_AUTHENTICATED,
+  ZWaveProtocol.SECURITY_S2_ACCESS_CONTROL,
+]);
 
 /** Display name for a security class value. Unknown values are shown as sent. */
 export function securityClassLabel(value: string): string {
@@ -53,5 +64,7 @@ export function zwaveSecurityInfo(attrs: ProtocolAttrs | null | undefined): ZWav
   const grantedRank = granted != null ? RANK[granted] : undefined;
   const requestedRank = requested != null ? RANK[requested] : undefined;
   const downgraded = grantedRank !== undefined && requestedRank !== undefined && requestedRank > grantedRank;
-  return { granted, requested, downgraded };
+  const s0Downgrade = downgraded && requested != null && S2_CLASSES.has(requested)
+    && (granted === ZWaveProtocol.SECURITY_S0 || granted === ZWaveProtocol.SECURITY_NONE);
+  return { granted, requested, downgraded, s0Downgrade };
 }

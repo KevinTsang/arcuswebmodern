@@ -28,7 +28,7 @@ import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { addNotification } from '@/store/slices/uiSlice';
 import { useSecondsLeft } from '@/hooks/useSecondsLeft';
 import { cameraUnavailableReason } from '@/lib/qrDecoder';
-import { tryParseZWaveQrCode } from '@/lib/zwaveQr';
+import { isLongRangeOnly, tryParseZWaveQrCode } from '@/lib/zwaveQr';
 import type { ZWaveQrCode } from '@/lib/zwaveQr';
 import {
   S2_PIN_INVALID_ERROR,
@@ -58,6 +58,9 @@ type Phase =
 
 /** Phases in which the user can still answer before `expires`. */
 const ANSWERABLE: ReadonlySet<Phase> = new Set<Phase>(['entry', 'confirmDecline', 'scanning', 'qrResult']);
+
+/** When the countdown turns red and a warning appears. */
+const LOW_TIME_SECONDS = 30;
 
 const INVALID_PIN = 'Enter the five-digit PIN, from 00000 to 65535.';
 const NOT_ZWAVE_QR = "That isn't a Z-Wave QR code. Look for the code next to the DSK on the device or its box.";
@@ -201,7 +204,7 @@ export function S2PinPrompt({ pairingSubsystem }: S2PinPromptProps) {
       if (openIdRef.current !== req.requestId) return;
       dispatch(addNotification({
         type: 'info',
-        message: 'Secure pairing declined. Factory reset the device before pairing it again.',
+        message: 'Secure pairing declined, so the device will join without S2 security. To secure it, exclude or factory reset it and pair it again.',
       }));
       close();
     } catch (e) {
@@ -275,12 +278,19 @@ export function S2PinPrompt({ pairingSubsystem }: S2PinPromptProps) {
             <span
               data-testid="s2-pin-countdown"
               aria-label={`${secondsLeft} seconds left`}
-              className={`font-mono text-sm ${secondsLeft <= 30 ? 'text-cardinal' : 'text-coot'}`}
+              className={`font-mono text-sm ${secondsLeft <= LOW_TIME_SECONDS ? 'text-cardinal' : 'text-coot'}`}
             >
               {formatCountdown(secondsLeft)}
             </span>
           )}
         </div>
+
+        {!expired && secondsLeft != null && secondsLeft <= LOW_TIME_SECONDS && ANSWERABLE.has(phase) && (
+          <p data-testid="s2-pin-low-time" role="status" className="text-sm text-cardinal mb-3">
+            Less than {LOW_TIME_SECONDS} seconds left. If time runs out, the device joins without S2
+            security and has to be paired again.
+          </p>
+        )}
 
         {phase === 'loading' && (
           <p data-testid="s2-pin-loading" className="text-sm text-grouse">Loading the device&apos;s security key…</p>
@@ -347,6 +357,8 @@ export function S2PinPrompt({ pairingSubsystem }: S2PinPromptProps) {
           <S2QrResult
             matched={scanMatched}
             pin={scanned.pin}
+            requestedSecurityClasses={scanned.requestedSecurityClasses}
+            longRangeOnly={isLongRangeOnly(scanned)}
             onSubmit={handleSubmitScanned}
             onDecline={handleDecline}
             onScanAgain={startScan}

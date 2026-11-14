@@ -1,7 +1,11 @@
 import { fireEvent, render, screen } from '@testing-library/react';
+import { ZWaveProtocol } from '@arcus/core';
 import { S2QrResult } from '@/components/pairing/S2QrResult';
+import type { ZWaveSecurityClass } from '@/lib/zwaveQr';
 
 const handlers = {
+  requestedSecurityClasses: [] as ZWaveSecurityClass[],
+  longRangeOnly: false,
   onSubmit: jest.fn(),
   onDecline: jest.fn(),
   onScanAgain: jest.fn(),
@@ -59,5 +63,46 @@ describe('S2QrResult – different device', () => {
     expect(handlers.onDecline).toHaveBeenCalled();
     expect(handlers.onScanAgain).toHaveBeenCalled();
     expect(handlers.onManual).toHaveBeenCalled();
+  });
+});
+
+describe('S2QrResult – what the code says', () => {
+  it('lists the security classes the device asks for', () => {
+    render(
+      <S2QrResult
+        {...handlers}
+        matched
+        pin="51525"
+        requestedSecurityClasses={[ZWaveProtocol.SECURITY_S2_ACCESS_CONTROL, ZWaveProtocol.SECURITY_S0]}
+      />,
+    );
+    expect(screen.getByTestId('s2-qr-requested')).toHaveTextContent('It asks for: S2 Access Control, S0 (legacy).');
+  });
+
+  it('leaves the list out when the code requests nothing', () => {
+    render(<S2QrResult matched pin="51525" {...handlers} />);
+    expect(screen.queryByTestId('s2-qr-requested')).not.toBeInTheDocument();
+  });
+
+  it('explains a Long Range-only code instead of warning about a different device', () => {
+    render(<S2QrResult {...handlers} matched={false} pin="51525" longRangeOnly />);
+    expect(screen.getByTestId('s2-qr-long-range')).toHaveTextContent('can only be added with SmartStart');
+    expect(screen.queryByTestId('s2-qr-mismatch')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('s2-qr-decline')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('s2-qr-scan-again'));
+    expect(handlers.onScanAgain).toHaveBeenCalled();
+    fireEvent.click(screen.getByTestId('s2-qr-manual'));
+    expect(handlers.onManual).toHaveBeenCalled();
+  });
+
+  it('matches snapshot for a Long Range-only code', () => {
+    const { asFragment } = render(<S2QrResult {...handlers} matched={false} pin="51525" longRangeOnly />);
+    expect(asFragment()).toMatchSnapshot();
+  });
+
+  it('still offers to send the PIN when a Long Range-capable code matches', () => {
+    render(<S2QrResult {...handlers} matched pin="51525" longRangeOnly />);
+    expect(screen.getByTestId('s2-qr-submit')).toBeInTheDocument();
   });
 });

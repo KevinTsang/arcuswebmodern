@@ -573,6 +573,7 @@ export function createFixture(): PlatformData {
       [Product.ATTR_CANSEARCH]: true,
       [Product.ATTR_CATEGORIES]: ['Doors & Locks'],
       [Product.ATTR_SHORTNAME]: 'Deadbolt',
+      [Product.ATTR_PROTOFAMILY]: 'Z-Wave',
     },
     {
       [Base.ATTR_ADDRESS]: `SERV:product:${PRODUCT.camera}`,

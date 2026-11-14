@@ -34,7 +34,7 @@ export function S2PairingFailure({ pairingSubsystem }: S2PairingFailureProps) {
       <p className="text-sm text-coot mb-2">
         {timedOut
           ? 'The Z-Wave device joined without S2 security because nobody entered its PIN before the time ran out.'
-          : 'The Z-Wave device joined without S2 security. This usually means the PIN was wrong.'}
+          : 'The Z-Wave device joined without S2 security. The PIN may have been wrong, or the device or hub stopped the secure key exchange.'}
       </p>
       <p className="text-sm text-coot mb-3">
         To secure it, exclude the device (Devices &rarr; Remove Z-Wave Device) or factory reset it,

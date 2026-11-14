@@ -231,14 +231,44 @@ describe('DeviceDetailPanel – Z-Wave security class', () => {
     expect(asFragment()).toMatchSnapshot();
   });
 
-  it('shows granted and requested classes and flags the shortfall', () => {
+  it('shows granted and requested classes and flags a shortfall within S2', () => {
+    renderZWave({
+      [ZWaveProtocol.ATTR_SECURITY]: ZWaveProtocol.SECURITY_S2_UNAUTHENTICATED,
+      [ZWaveProtocol.ATTR_SECURITYREQUESTED]: ZWaveProtocol.SECURITY_S2_AUTHENTICATED,
+    });
+    expect(screen.getByTestId('device-detail-security')).toHaveTextContent('S2 Unauthenticated');
+    expect(screen.getByTestId('device-detail-requested-security')).toHaveTextContent('S2 Authenticated');
+    expect(screen.getByTestId('device-security-downgraded')).toHaveTextContent(
+      'joined with S2 Unauthenticated instead of the S2 Authenticated it asked for',
+    );
+    expect(screen.queryByTestId('zwave-security-s0-downgrade')).not.toBeInTheDocument();
+  });
+
+  it('always warns when an S2 device ended up on S0', () => {
     renderZWave({
       [ZWaveProtocol.ATTR_SECURITY]: ZWaveProtocol.SECURITY_S0,
       [ZWaveProtocol.ATTR_SECURITYREQUESTED]: ZWaveProtocol.SECURITY_S2_AUTHENTICATED,
     });
-    expect(screen.getByTestId('device-detail-security')).toHaveTextContent('S0 (legacy)');
-    expect(screen.getByTestId('device-detail-requested-security')).toHaveTextContent('S2 Authenticated');
-    expect(screen.getByTestId('device-security-downgraded')).toHaveTextContent('less security than it asked for');
+    const warning = screen.getByTestId('zwave-security-s0-downgrade');
+    expect(warning).toHaveTextContent('Security downgraded to S0 (legacy)');
+    expect(warning).toHaveTextContent('supports S2 Authenticated but joined with S0 (legacy) only');
+    expect(screen.queryByTestId('device-security-downgraded')).not.toBeInTheDocument();
+  });
+
+  it('matches snapshot for an S0 downgrade', () => {
+    const { asFragment } = renderZWave({
+      [ZWaveProtocol.ATTR_SECURITY]: ZWaveProtocol.SECURITY_S0,
+      [ZWaveProtocol.ATTR_SECURITYREQUESTED]: ZWaveProtocol.SECURITY_S2_ACCESS_CONTROL,
+    });
+    expect(asFragment()).toMatchSnapshot();
+  });
+
+  it('does not show a confirmation in device details', () => {
+    renderZWave({
+      [ZWaveProtocol.ATTR_SECURITY]: ZWaveProtocol.SECURITY_S2_ACCESS_CONTROL,
+      [ZWaveProtocol.ATTR_SECURITYREQUESTED]: ZWaveProtocol.SECURITY_S2_ACCESS_CONTROL,
+    });
+    expect(screen.queryByTestId('zwave-security-confirmed')).not.toBeInTheDocument();
   });
 
   it('does not flag a device that got what it asked for', () => {

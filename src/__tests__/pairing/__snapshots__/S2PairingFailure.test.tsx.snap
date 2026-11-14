@@ -50,7 +50,7 @@ exports[`S2PairingFailure matches snapshot for a wrong PIN 1`] = `
     <p
       class="text-sm text-coot mb-2"
     >
-      The Z-Wave device joined without S2 security. This usually means the PIN was wrong.
+      The Z-Wave device joined without S2 security. The PIN may have been wrong, or the device or hub stopped the secure key exchange.
     </p>
     <p
       class="text-sm text-coot mb-3"

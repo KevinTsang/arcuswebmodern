@@ -8,3 +8,5 @@ export { default as DeviceStateRow } from './DeviceStateRow';
 export { S2PinPrompt } from './S2PinPrompt';
 export { S2PairingFailure } from './S2PairingFailure';
 export type { PairingFlow, PairingStage, PairingStep } from './types';
+export { S2PinEntryOption } from './S2PinEntryOption';
+export { PairedDeviceSecurity } from './PairedDeviceSecurity';

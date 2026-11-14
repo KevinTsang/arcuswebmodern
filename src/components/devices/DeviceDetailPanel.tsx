@@ -20,6 +20,7 @@ import { testIdSlug } from '@/lib/testId';
 import { securityClassLabel, zwaveSecurityInfo } from '@/lib/zwaveSecurity';
 import type { ProtocolAttrs } from '@/lib/zwaveSecurity';
 import { DeviceRemovalSection } from './removal/DeviceRemovalSection';
+import { ZWaveSecurityNotice } from './ZWaveSecurityNotice';
 
 interface DeviceDetailPanelProps {
   address: string;
@@ -121,17 +122,7 @@ export function DeviceDetailPanel({ address }: DeviceDetailPanelProps) {
         )}
       </dl>
 
-      {security?.downgraded && (
-        <p
-          role="alert"
-          data-testid="device-security-downgraded"
-          className="text-sm text-swift bg-pigeon border border-heron rounded-[var(--border-radius-base)] p-3 -mt-4 mb-8"
-        >
-          This device joined with less security than it asked for, usually because its S2 PIN
-          wasn&apos;t entered while pairing. Remove it and pair it again, entering the PIN when
-          asked, to give it full security.
-        </p>
-      )}
+      {security && <ZWaveSecurityNotice security={security} className="-mt-4 mb-8" />}
 
       {/* Removal section */}
       <hr className="border-heron mb-4" />

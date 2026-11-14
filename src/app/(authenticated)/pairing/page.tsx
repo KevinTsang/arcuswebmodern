@@ -50,6 +50,8 @@ import {
   CompletedStage,
   S2PinPrompt,
   S2PairingFailure,
+  S2PinEntryOption,
+  PairedDeviceSecurity,
 } from '@/components/pairing';
 import type { PairingFlow } from '@/components/pairing';
 import {
@@ -97,6 +99,8 @@ export default function PairingPage() {
   // Save & Finish, Go to Devices and Pair Another run one at a time.
   const busyRef = useRef(false);
   const [busy, setBusy] = useState(false);
+  /** "Pair without the S2 PIN": leaves s2PinEntry out of the next search. */
+  const [skipS2Pin, setSkipS2Pin] = useState(false);
 
   // Reset pairing state on mount/unmount
   useEffect(() => {
@@ -210,8 +214,9 @@ export default function PairingPage() {
       const scope: SearchScope = { productAddress, carriedOver: carriedOverRef.current ?? {} };
       await Bridge.request(PairingSubsystem.CMD_SEARCH, subAddr, {
         productAddress: productAddress ?? '',
-        // This page can show the DSK and take a Z-Wave S2 PIN (S2PinPrompt).
-        s2PinEntry: true,
+        // This page can show the DSK and take a Z-Wave S2 PIN (S2PinPrompt), unless the user
+        // chose to pair without it (S2PinEntryOption).
+        s2PinEntry: !skipS2Pin,
       });
       if (liveSubsystemRef.current !== subAddr) return;
 
@@ -259,7 +264,7 @@ export default function PairingPage() {
       dispatch(searchFailed());
       dispatch(addNotification({ type: 'error', message: 'Failed to search for devices.' }));
     }
-  }, [pairing.product, pairingSubAddr, dispatch, ensureFlow, stopPolling]);
+  }, [pairing.product, pairingSubAddr, skipS2Pin, dispatch, ensureFlow, stopPolling]);
 
   // ── Start Pairing (put hub in search mode) ─────────────────
 
@@ -455,6 +460,8 @@ export default function PairingPage() {
     router.push('/product-catalog');
   }, [pairing.activeDevice, dismissPairingDevice, router]);
 
+  const isZWaveProduct = String(pairing.product?.[Product.ATTR_PROTOFAMILY] ?? '').toLowerCase() === 'z-wave';
+  const activeDeviceAddress = pairing.activeDevice?.[PairingDevice.ATTR_DEVICEADDRESS] as string | undefined;
   const productName = pairing.product
     ? `${pairing.product[Product.ATTR_VENDOR] ?? ''} ${pairing.product[Product.ATTR_NAME] ?? ''}`.trim()
     : '';
@@ -489,6 +496,11 @@ export default function PairingPage() {
         <StageIndicator stage={pairing.stage} />
 
         {pairingSubAddr && !pairing.isHubPairing && <S2PairingFailure pairingSubsystem={pairingSubAddr} />}
+
+        {isZWaveProduct && !pairing.isHubPairing && (pairing.stage === 'steps'
+          || (pairing.stage === 'searching' && (pairing.searchTimedOut || pairing.searchFailed))) && (
+          <S2PinEntryOption skipPin={skipS2Pin} onChange={setSkipS2Pin} />
+        )}
 
         <div className="bg-crane border border-heron rounded-[var(--border-radius-lg)] p-6">
           {pairing.stage === 'steps' && (
@@ -542,6 +554,9 @@ export default function PairingPage() {
               onFinish={handleFinish}
               onPairAnother={handlePairAnother}
             />
+          )}
+          {pairing.stage === 'completed' && !pairing.isHubPairing && activeDeviceAddress && (
+            <PairedDeviceSecurity deviceAddress={activeDeviceAddress} />
           )}
         </div>
       </div>

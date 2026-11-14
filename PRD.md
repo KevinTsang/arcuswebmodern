@@ -134,6 +134,10 @@ arcusplatform, under "What a client must do".
 | Scan the device's Z-Wave QR code with the browser camera to fill the PIN and check the DSK automatically | No | Yes | **Done** |
 | Show S2 failures (`subpairing:PairingFailed` `zwave.s2.pin.timeout` / `zwave.s2.pin.failed`) with "exclude or factory reset and pair again" guidance | No | Yes | **Done** |
 | Show the granted vs requested security class (`ZWAV:Security` / `ZWAV:SecurityRequested` in `devadv:protocolAttrs`) on device details, and flag devices that joined with less than they asked for | No | Yes | **Done** |
+| Show the result when pairing finishes: confirm the granted class, or warn about a downgrade (always, prominently, for an S2 device that ended up on S0 or none) | No | Yes | **Done** |
+| "Pair without the S2 PIN" option for Z-Wave products (leaves out `s2PinEntry`; device joins S2 Unauthenticated or S0) | No | Yes | **Done** |
+| Grant security classes per device (user chooses from the requested classes) | No | No | **Missing** (needs a platform API; the hub grants every requested class) |
+| Force S0-only or unencrypted inclusion | No | No | **Missing** (needs a `hub:PairingRequest` option in arcusplatform) |
 | SmartStart: add scanned QR codes to a provisioning list so devices join when powered on | No | No | **Missing** (blocked: no platform API yet) |
 
 ### Gaps
@@ -198,6 +202,25 @@ arcusplatform, under "What a client must do".
   `ZWAV:Security` is shown as Unknown.
 - **SmartStart.** Not built (no platform API). `parseZWaveQrCode` and
   `QrScanner` are generic so a provisioning flow can reuse them.
+- **zwave-js S2 guide follow-ups.** Changes made after checking the zwave-js
+  "Security S2" guide:
+  - `PairedDeviceSecurity` on the completed screen confirms the granted class
+    or warns, so the user doesn't have to find a downgrade in device details.
+  - `ZWaveSecurityNotice` (device details and the completed screen) always
+    warns when an S2 device ended up on S0 or none (zwave-js `S0Downgrade`),
+    without assuming a missed PIN. Other downgrades name both classes.
+  - Failure and decline messages no longer assume a wrong PIN. The device or
+    hub can also stop the key exchange, and a decline says the device joined
+    without S2.
+  - `S2PinEntryOption` lets the user pair a Z-Wave product (`product:protoFamily`
+    "Z-Wave") without the PIN, for locks that fail S2. It's shown on the steps
+    screen and after a failed or timed-out search.
+  - The QR confirmation lists the requested security classes. A code for a
+    Long Range-only device is explained (Long Range needs SmartStart) instead
+    of the "different device" warning.
+  - The prompt warns in words in the last 30 seconds.
+  - Still open, both platform changes: per-device security class choice, and
+    S0-only or unencrypted inclusion.
 - **Tests.** Unit tests cover the parser (spec examples, checksums, TLVs, text
   around the code), SHA-1, DSK/PIN helpers, decoder selection, the scanner
   (mocked `getUserMedia` and decoder), the prompt and the device details. The

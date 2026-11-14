@@ -35,13 +35,13 @@ describe('S2PairingFailure', () => {
     expect(asFragment()).toMatchSnapshot();
   });
 
-  it('explains a wrong PIN and how to retry', () => {
+  it('explains that the PIN or the key exchange failed, and how to retry', () => {
     render(<S2PairingFailure pairingSubsystem={SUB} />);
     emitFailed(S2_PIN_FAILED);
     const alert = screen.getByRole('alert');
     expect(alert).toHaveAttribute('data-code', S2_PIN_FAILED);
     expect(alert).toHaveTextContent('Secure pairing failed');
-    expect(alert).toHaveTextContent('usually means the PIN was wrong');
+    expect(alert).toHaveTextContent('The PIN may have been wrong, or the device or hub stopped the secure key exchange');
     expect(alert).toHaveTextContent('exclude the device');
     expect(alert).toHaveTextContent('factory reset');
   });

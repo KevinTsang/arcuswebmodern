@@ -162,6 +162,25 @@ describe('S2PinPrompt – opening', () => {
     expect(screen.getByTestId('s2-pin-countdown')).toHaveTextContent('3:05');
   });
 
+  it('warns in words when less than 30 seconds are left', async () => {
+    await renderOpen();
+    expect(screen.queryByTestId('s2-pin-low-time')).not.toBeInTheDocument();
+
+    act(() => { jest.advanceTimersByTime(164_000); });
+    expect(screen.queryByTestId('s2-pin-low-time')).not.toBeInTheDocument();
+
+    act(() => { jest.advanceTimersByTime(2_000); });
+    expect(screen.getByTestId('s2-pin-low-time')).toHaveTextContent('Less than 30 seconds left');
+    expect(screen.getByTestId('s2-pin-countdown')).toHaveClass('text-cardinal');
+  });
+
+  it('replaces the low-time warning once time is up', async () => {
+    await renderOpen();
+    act(() => { jest.advanceTimersByTime(200_000); });
+    expect(screen.queryByTestId('s2-pin-low-time')).not.toBeInTheDocument();
+    expect(screen.getByTestId('s2-pin-expired')).toBeInTheDocument();
+  });
+
   it('reports a failure to read the request and stays closed', async () => {
     mockPlatform({ [PairingSubsystem.CMD_GETS2PINREQUEST]: () => Promise.reject(new Error('offline')) });
     setRequestId(REQUEST_ID);
@@ -322,7 +341,10 @@ describe('S2PinPrompt – declining', () => {
     expect(callsOf(PairingSubsystem.CMD_CANCELS2PIN)).toEqual([
       [PairingSubsystem.CMD_CANCELS2PIN, SUB, { requestId: REQUEST_ID }],
     ]);
-    expect(notifications()[0].payload.type).toBe('info');
+    expect(notifications()[0].payload).toEqual({
+      type: 'info',
+      message: 'Secure pairing declined, so the device will join without S2 security. To secure it, exclude or factory reset it and pair it again.',
+    });
     expect(callsOf(PairingSubsystem.CMD_SUBMITS2PIN)).toHaveLength(0);
   });
 
