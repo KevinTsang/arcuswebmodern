@@ -14,7 +14,7 @@
  */
 
 import {
-  Account, AlarmIncident, AlarmSubsystem, Base, Device, Hub, HubZwave, PairingDevice,
+  Account, AlarmIncident, AlarmSubsystem, Base, ClimateSubsystem, Device, Hub, HubZwave, PairingDevice,
   PairingSubsystem, Person, Place, Rule, RuleTemplate, Scene, SceneTemplate, Scheduler,
   SecuritySubsystem,
 } from '../../../packages/arcus-core/src/capabilities/capabilities';
@@ -921,6 +921,12 @@ export class MockPlatform {
       return {};
     },
 
+    // Climate
+    [ClimateSubsystem.CMD_ENABLESCHEDULER]: ({ destination, attrs }) =>
+      this.setThermostatScheduleEnabled(destination, attrs.thermostat as string, true),
+    [ClimateSubsystem.CMD_DISABLESCHEDULER]: ({ destination, attrs }) =>
+      this.setThermostatScheduleEnabled(destination, attrs.thermostat as string, false),
+
     // Care
     'subcare:Clear': ({ destination }) => {
       this.updateEntity(destination, { 'subcare:alarmState': 'READY' });
@@ -1059,6 +1065,13 @@ export class MockPlatform {
       return {};
     },
   };
+
+  private setThermostatScheduleEnabled(climate: string, thermostat: string, enabled: boolean): Attrs {
+    const schedules = { ...(this.mustGet(climate)[ClimateSubsystem.ATTR_THERMOSTATSCHEDULES] as Attrs) };
+    schedules[thermostat] = { ...(schedules[thermostat] as Attrs), thermostat, enabled };
+    this.updateEntity(climate, { [ClimateSubsystem.ATTR_THERMOSTATSCHEDULES]: schedules });
+    return {};
+  }
 
   private schedulerFor(target: string): Attrs {
     const scheduler = Object.values(this.data.entities)

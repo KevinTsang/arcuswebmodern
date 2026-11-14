@@ -97,7 +97,7 @@ None.
 | Min/max temperature enforcement (45-95 F) | Yes | No | **Missing** |
 | Minimum separation (3 F between heat/cool in auto) | Yes | No | **Missing** |
 | Fan mode control | Yes | No | **Missing** |
-| Thermostat schedule management | Yes (full calendar) | No | **Missing** |
+| Thermostat schedule management | Yes (full calendar) | Yes (per-mode HEAT/COOL/AUTO weekly programs, setpoint events, Follow Schedule) | **Done** |
 | Space heater mode | Yes | No | **Missing** |
 | Nest integration specifics | Yes | No | **Missing** |
 | Honeywell TCC integration specifics | Yes | No | **Missing** |
@@ -222,7 +222,7 @@ arcusplatform, under "What a client must do".
 | Sunrise / sunset offset scheduling | Yes | Yes | **Done** |
 | Weekly recurring (day-of-week selection) | Yes | Yes | **Done** |
 | Device scheduling | Yes | Yes | **Done** |
-| Thermostat schedule programs | Yes (full HVAC calendar) | No | **Missing** |
+| Thermostat schedule programs | Yes (full HVAC calendar) | Yes | **Done** |
 | Irrigation scheduling (even/odd/interval modes) | Yes | No | **Missing** |
 | Scene scheduling | Yes | Yes | **Done** |
 | Rule enable/disable scheduling | Yes | No | **Missing** |
@@ -230,7 +230,6 @@ arcusplatform, under "What a client must do".
 
 ### Gaps
 
-- Thermostat schedule management (temperature programs).
 - Irrigation schedule management (zone durations, watering modes).
 - Rule scheduling (enable/disable rules on a time-based schedule).
 - Timezone-aware scheduling.
@@ -298,13 +297,12 @@ None.
 | Thermostat controls (mode, setpoints) | Yes | Yes | **Done** |
 | Multiple thermostats | Yes | Yes | **Done** |
 | Temperature sensor list | Yes | Yes | **Done** |
-| Thermostat schedule management | Yes (full calendar) | No | **Missing** |
+| Thermostat schedule management | Yes (full calendar) | Yes | **Done** |
 | Fan mode control | Yes | No | **Missing** |
 | Space heater mode | Yes | No | **Missing** |
 
 ### Gaps
 
-- Thermostat scheduling (temperature programs by time/day).
 - Fan mode control.
 - Space heater mode support.
 
@@ -689,7 +687,7 @@ These are commonly used features that users will expect:
 
 1. **Camera streaming & recording** — Live HLS streaming, recording playback, clips browser, camera settings. This is the single largest gap.
 2. ~~**Alarm device participation & settings**~~ — **DONE.** Device participation (ON/PARTIAL/both/none), notification call tree (ordered, enable/disable, reorder), delay settings (exit/entrance per mode), silent alarm, arming sounds.
-3. **Thermostat scheduling** — Temperature programs by time-of-day and day-of-week.
+3. ~~**Thermostat scheduling**~~ — **DONE.** Climate view → "Edit Schedule" opens per-mode (Heat/Cool/Auto) weekly programs of setpoint events (`base:SetAttributes` on the thermostat's scheduler), with min/max/separation limits and Follow Schedule via `subclimate:EnableScheduler`/`DisableScheduler`. Times are still place-local (timezone conversion is tracked separately).
 4. **Notification call tree (Care)** — Ordered contact escalation for care events (alarm call tree is done).
 5. **Billing & subscription management** — Service plan display, payment methods, invoicing.
 

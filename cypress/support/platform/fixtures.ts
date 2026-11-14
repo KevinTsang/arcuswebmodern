@@ -101,6 +101,7 @@ export const RULE_NAME = {
 
 export const SCHEDULER = {
   goodNight: addr.scheduler('sched-goodnight'),
+  thermostat: addr.scheduler('sched-thermostat'),
 };
 
 export const PRODUCT = {
@@ -266,6 +267,9 @@ export function createFixture(): PlatformData {
       [ClimateSubsystem.ATTR_PRIMARYTEMPERATUREDEVICE]: DEVICE.thermostat,
       [ClimateSubsystem.ATTR_PRIMARYHUMIDITYDEVICE]: DEVICE.thermostat,
       [ClimateSubsystem.ATTR_THERMOSTATS]: [DEVICE.thermostat],
+      [ClimateSubsystem.ATTR_THERMOSTATSCHEDULES]: {
+        [DEVICE.thermostat]: { thermostat: DEVICE.thermostat, scheduler: SCHEDULER.thermostat, enabled: true },
+      },
     }),
     subsystem('subdoorsnlocks', {
       [DoorsNLocksSubsystem.ATTR_LOCKDEVICES]: [DEVICE.lock],
@@ -374,6 +378,24 @@ export function createFixture(): PlatformData {
           mode: 'ABSOLUTE',
           messageType: Scene.CMD_FIRE,
           attributes: {},
+        },
+      },
+    },
+    {
+      [Base.ATTR_ADDRESS]: SCHEDULER.thermostat,
+      [Base.ATTR_ID]: 'sched-thermostat',
+      [Base.ATTR_TYPE]: 'scheduler',
+      [Scheduler.ATTR_TARGET]: DEVICE.thermostat,
+      [Scheduler.ATTR_PLACEID]: PLACE_ID,
+      [Scheduler.ATTR_COMMANDS]: {
+        'therm-wake': {
+          id: 'therm-wake',
+          scheduleId: Thermostat.HVACMODE_HEAT,
+          time: '06:00:00',
+          days: ['MON', 'TUE', 'WED', 'THU', 'FRI'],
+          mode: 'ABSOLUTE',
+          messageType: Base.CMD_SETATTRIBUTES,
+          attributes: { [Thermostat.ATTR_HEATSETPOINT]: 21, [Thermostat.ATTR_COOLSETPOINT]: 25 },
         },
       },
     },

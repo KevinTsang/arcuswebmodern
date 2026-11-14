@@ -4,7 +4,8 @@
  */
 
 import {
-  Base, CareSubsystem, Contact, DoorLock, DoorsNLocksSubsystem, MotorizedDoor, PresenceSubsystem, Valve,
+  Base, CareSubsystem, ClimateSubsystem, Contact, DoorLock, DoorsNLocksSubsystem, MotorizedDoor,
+  PresenceSubsystem, Thermostat, Valve,
 } from '../../packages/arcus-core/src/capabilities/capabilities';
 import { DEVICE, addr } from '../support/platform/fixtures';
 import { tid } from '../support/selectors';
@@ -65,6 +66,83 @@ describe('Climate', () => {
     cy.expectRequest(Base.CMD_SETATTRIBUTES, (r) =>
       r.destination === DEVICE.thermostat && 'therm:heatsetpoint' in r.attributes);
     tid(`thermostat-heat-value-${DEVICE.thermostat}`).should('have.text', '67°');
+  });
+
+  describe('thermostat schedule', () => {
+    const openSchedule = () => {
+      cy.signIn({ path: '/services/climate/status' });
+      tid(`thermostat-schedule-status-${DEVICE.thermostat}`).should('have.text', 'On · 1 event');
+      tid(`thermostat-schedule-open-${DEVICE.thermostat}`).click();
+      tid('side-panel-right-title').should('have.text', 'Schedule');
+    };
+
+    it('shows the program for the current mode and adds a heat event', () => {
+      openSchedule();
+      tid('schedule-group-heat').should('have.attr', 'aria-pressed', 'true');
+      tid('schedule-event-row-therm-wake').should('contain.text', '6:00 AM').and('contain.text', 'Heat 70°');
+      cy.get('[data-testid^="schedule-event-therm-wake-"]').should('have.length', 5);
+
+      tid('schedule-add-event').click();
+      tid('thermostat-schedule-heat-value').should('have.text', '68°');
+      tid('thermostat-schedule-heat-up').click();
+      tid('thermostat-schedule-heat-value').should('have.text', '69°');
+      tid('schedule-hour').select('9');
+      tid('schedule-save').click();
+
+      cy.expectRequest('scheduler:ScheduleWeeklyCommand').then((r) => {
+        expect(r.attributes).to.deep.include({
+          target: DEVICE.thermostat,
+          schedule: Thermostat.HVACMODE_HEAT,
+          time: '21:00:00',
+          messageType: Base.CMD_SETATTRIBUTES,
+        });
+        const attrs = r.attributes.attributes as Record<string, number>;
+        expect(attrs[Thermostat.ATTR_HEATSETPOINT]).to.be.closeTo(20.56, 0.01);
+      });
+      cy.toast('Event created.');
+      cy.get('[data-testid^="schedule-event-row-"]').should('have.length', 2).last()
+        .should('contain.text', '9:00 PM').and('contain.text', 'Heat 69°');
+    });
+
+    it('keeps a separate program per mode', () => {
+      openSchedule();
+      tid('schedule-group-cool').click();
+      tid('schedule-empty').should('be.visible');
+      tid('schedule-add-event').click();
+      tid('schedule-group-heat').should('be.disabled');
+      tid('thermostat-schedule-cool-value').should('have.text', '77°');
+      tid('thermostat-schedule-heat-value').should('not.exist');
+      tid('schedule-cancel').click();
+
+      tid('schedule-group-auto').click();
+      tid('schedule-add-event').click();
+      tid('thermostat-schedule-separation').should('be.visible');
+      tid('thermostat-schedule-heat-value').should('have.text', '68°');
+      tid('thermostat-schedule-cool-value').should('have.text', '77°');
+    });
+
+    it('turns the schedule off and back on', () => {
+      openSchedule();
+      tid('thermostat-schedule-follow').should('have.attr', 'aria-checked', 'true').click();
+      cy.expectRequestAttrs(ClimateSubsystem.CMD_DISABLESCHEDULER, { thermostat: DEVICE.thermostat });
+      tid('thermostat-schedule-follow').should('have.attr', 'aria-checked', 'false');
+      tid('thermostat-schedule-off').should('be.visible');
+      tid(`thermostat-schedule-status-${DEVICE.thermostat}`).should('have.text', 'Off · 1 event');
+
+      tid('thermostat-schedule-follow').click();
+      cy.expectRequestAttrs(ClimateSubsystem.CMD_ENABLESCHEDULER, { thermostat: DEVICE.thermostat });
+      tid('thermostat-schedule-follow').should('have.attr', 'aria-checked', 'true');
+    });
+
+    it('explains a missing time zone when turning the schedule on fails', () => {
+      openSchedule();
+      tid('thermostat-schedule-follow').click();
+      tid('thermostat-schedule-follow').should('have.attr', 'aria-checked', 'false');
+      cy.platform().invoke('failRequest', ClimateSubsystem.CMD_ENABLESCHEDULER, 'timezone.notset');
+      tid('thermostat-schedule-follow').click();
+      cy.toast('Set a time zone for this place before turning on the schedule.');
+      tid('thermostat-schedule-follow').should('have.attr', 'aria-checked', 'false');
+    });
   });
 
   it('shows an empty state without climate devices', () => {

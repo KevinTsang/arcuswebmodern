@@ -1,0 +1,91 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`ClimateView matches snapshot 1`] = `
+<DocumentFragment>
+  <div
+    class="space-y-6"
+  >
+    <div
+      class="flex gap-4"
+    >
+      <div
+        class="flex-1 bg-pigeon/50 rounded-[var(--border-radius-base)] p-4 text-center"
+      >
+        <div
+          class="text-3xl font-light text-swift"
+          data-testid="climate-temperature"
+        >
+          72
+          <span
+            class="text-lg"
+          >
+            °F
+          </span>
+        </div>
+        <p
+          class="text-xs text-grouse mt-1"
+        >
+          Temperature
+        </p>
+      </div>
+      <div
+        class="flex-1 bg-pigeon/50 rounded-[var(--border-radius-base)] p-4 text-center"
+      >
+        <div
+          class="text-3xl font-light text-swift"
+          data-testid="climate-humidity"
+        >
+          41
+          <span
+            class="text-lg"
+          >
+            %
+          </span>
+        </div>
+        <p
+          class="text-xs text-grouse mt-1"
+        >
+          Humidity
+        </p>
+      </div>
+    </div>
+    <div
+      data-testid="climate-thermostats"
+    >
+      <h3
+        class="text-sm font-medium text-swift mb-3"
+      >
+        Thermostats
+      </h3>
+      <div>
+        <div
+          data-testid="device-panel-DRIV:dev:therm-1"
+        />
+        <div
+          data-testid="thermostat-schedule-button-DRIV:dev:therm-1"
+        />
+      </div>
+      <div>
+        <div
+          data-testid="device-panel-DRIV:dev:fan-1"
+        />
+      </div>
+    </div>
+    <div
+      data-testid="climate-sensors"
+    >
+      <h3
+        class="text-sm font-medium text-swift mb-3"
+      >
+        Temperature Sensors
+      </h3>
+      <div
+        data-testid="device-panel-DRIV:dev:sensor-1"
+      />
+      <div
+        data-testid="device-panel-DRIV:dev:sensor-2"
+      />
+    </div>
+  </div>
+</DocumentFragment>
+`;

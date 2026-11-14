@@ -12,13 +12,18 @@ import { useState, useCallback } from 'react';
 import { SchedulerService } from '@arcus/core/services';
 import { useAppDispatch } from '@/store/hooks';
 import { addNotification } from '@/store/slices/uiSlice';
+import type {
+  ScheduleAttributes,
+  ScheduleAttributeEditorRenderer,
+  ScheduleTimeMode,
+} from './types';
 
 const DAYS = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'] as const;
 const DAY_LABELS: Record<string, string> = {
   MON: 'Mon', TUE: 'Tue', WED: 'Wed', THU: 'Thu', FRI: 'Fri', SAT: 'Sat', SUN: 'Sun',
 };
 
-type TimeMode = 'ABSOLUTE' | 'SUNRISE' | 'SUNSET';
+type TimeMode = ScheduleTimeMode;
 
 export interface ScheduleEventData {
   id?: string;
@@ -28,7 +33,7 @@ export interface ScheduleEventData {
   offsetMinutes: number;
   scheduleId: string;
   messageType: string;
-  attributes: Record<string, unknown>;
+  attributes: ScheduleAttributes;
 }
 
 interface ScheduleEventEditorProps {
@@ -40,6 +45,10 @@ interface ScheduleEventEditorProps {
   onCancel?: () => void;
   onDelete?: () => void;
   attributeEditor?: React.ReactNode;
+  /** Target-specific controls that edit the event's attributes (e.g. thermostat setpoints). */
+  renderAttributeEditor?: ScheduleAttributeEditorRenderer;
+  /** Attributes a new event starts with. */
+  defaultAttributes?: ScheduleAttributes;
 }
 
 export function ScheduleEventEditor({
@@ -51,6 +60,8 @@ export function ScheduleEventEditor({
   onCancel,
   onDelete,
   attributeEditor,
+  renderAttributeEditor,
+  defaultAttributes,
 }: ScheduleEventEditorProps) {
   const dispatch = useAppDispatch();
   const isEditing = !!event?.id;
@@ -61,7 +72,9 @@ export function ScheduleEventEditor({
   const [selectedDays, setSelectedDays] = useState<Set<string>>(
     new Set(event?.days ?? ['MON', 'TUE', 'WED', 'THU', 'FRI']),
   );
-  const [attributes, setAttributes] = useState<Record<string, unknown>>(event?.attributes ?? {});
+  const [attributes, setAttributes] = useState<ScheduleAttributes>(
+    event?.attributes ?? defaultAttributes ?? {},
+  );
   const [saving, setSaving] = useState(false);
 
   // Parse time into hour/minute/ampm
@@ -253,6 +266,7 @@ export function ScheduleEventEditor({
 
       {/* Device-specific attributes */}
       {attributeEditor}
+      {renderAttributeEditor?.({ scheduleId, attributes, onChange: setAttributes })}
 
       {/* Actions */}
       <div className="flex gap-2 pt-2">
