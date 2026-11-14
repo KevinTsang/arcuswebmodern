@@ -5,6 +5,10 @@ import type { useFormValidation } from '@/hooks/useFormValidation';
 interface FormFieldProps {
   label: string;
   id: string;
+  /** The validation key for this field, when it differs from the input `id`. Defaults to `id`. */
+  name?: string;
+  /** Classes for the wrapping element, e.g. spacing. */
+  className?: string;
   value: string;
   onChange: (v: string) => void;
   type?: string;
@@ -15,15 +19,15 @@ interface FormFieldProps {
 }
 
 export default function FormField({
-  label, id, value, onChange, type = 'text', autoComplete,
+  label, id, name = id, className, value, onChange, type = 'text', autoComplete,
   form, allValues, inputMode,
 }: FormFieldProps) {
   const errors = form && allValues
-    ? form.visited[id] ? form.getFieldErrors(id) : []
+    ? form.visited[name] ? form.getFieldErrors(name) : []
     : [];
 
   return (
-    <div>
+    <div className={className}>
       <label htmlFor={id} className="block text-sm font-medium text-swift mb-1">
         {label}
       </label>
@@ -35,12 +39,12 @@ export default function FormField({
         value={value}
         onChange={(e) => {
           onChange(e.target.value);
-          form?.markChanged(id);
+          form?.markChanged(name);
         }}
         onBlur={() => {
-          form?.markVisited(id);
+          form?.markVisited(name);
           if (allValues) {
-            form?.validateSingle(id, value, allValues);
+            form?.validateSingle(name, value, allValues);
           }
         }}
         className="w-full px-3 py-2 border border-grouse rounded-[var(--border-radius-base)] text-sm focus:outline-none focus:border-peacock"

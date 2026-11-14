@@ -101,6 +101,27 @@ describe('useFormValidation', () => {
     });
   });
 
+  describe('exclusion', () => {
+    const excluded = { password: { exclusion: { within: ['Alex@Example.com'], message: 'not allowed' } } };
+
+    it('matches exactly by default', () => {
+      expect(validateFields(excluded, ['password'], { password: 'Alex@Example.com' })).toEqual({
+        password: ['not allowed'],
+      });
+      expect(validateFields(excluded, ['password'], { password: 'alex@example.com' })).toEqual({});
+    });
+
+    it('matches regardless of letter case with ignoreCase', () => {
+      const ignoreCase = {
+        password: { exclusion: { within: ['Alex@Example.com'], message: 'not allowed', ignoreCase: true } },
+      };
+      expect(validateFields(ignoreCase, ['password'], { password: 'alex@EXAMPLE.com' })).toEqual({
+        password: ['not allowed'],
+      });
+      expect(validateFields(ignoreCase, ['password'], { password: 'alex2@example.com' })).toEqual({});
+    });
+  });
+
   describe('validateFields', () => {
     it('returns the errors of the given fields only', () => {
       const values = { email: 'bad', password: 'short', confirmPassword: '' };
