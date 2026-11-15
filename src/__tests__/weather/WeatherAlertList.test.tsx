@@ -28,8 +28,6 @@ function makeRadio(overrides: Partial<WeatherRadioStatus> = {}): WeatherRadioSta
     playingState: 'PLAYING',
     currentAlert: 'TOR',
     lastAlertTime: 1000,
-    stationSelected: 1,
-    frequency: undefined,
     ...overrides,
   };
 }
@@ -74,6 +72,12 @@ describe('WeatherAlertList', () => {
     mockPlace = { [Place.ATTR_STATEPROV]: 'CA' };
     render(<WeatherAlertList radios={[makeRadio()]} />);
     expect(screen.getByTestId('weather-alert-location-DRIV:dev:r1')).toHaveTextContent('CA');
+  });
+
+  it('falls back to stateProv when place:state is empty', () => {
+    mockPlace = { [Place.ATTR_ADDRCOUNTY]: 'Travis', [Place.ATTR_STATE]: '', [Place.ATTR_STATEPROV]: 'TX' };
+    render(<WeatherAlertList radios={[makeRadio()]} />);
+    expect(screen.getByTestId('weather-alert-location-DRIV:dev:r1')).toHaveTextContent('Travis County, TX');
   });
 
   it('omits the location without place data', () => {

@@ -1,5 +1,6 @@
 import { renderHook } from '@testing-library/react';
-import { Device, WeatherRadio, WeatherSubsystem } from '@arcus/core';
+import { shallowEqual } from 'react-redux';
+import { Base, Device, WeatherRadio, WeatherSubsystem } from '@arcus/core';
 import { useWeatherSubsystem, toWeatherRadioStatus } from '@/hooks/useWeatherSubsystem';
 import type { SubsystemEntity, DeviceEntity } from '@/store/entityTypes';
 import { makeDevice, makeSubsystem } from '../helpers/factories';
@@ -13,13 +14,15 @@ jest.mock('@/hooks/useSubsystem', () => ({
   useSubsystem: (ns: string) => mockUseSubsystem(ns),
 }));
 
+const mockUseAppSelector = jest.fn();
+
 jest.mock('@/store/hooks', () => ({
-  useAppSelector: () => mockDevices,
+  useAppSelector: (...args: unknown[]) => mockUseAppSelector(...args),
 }));
 
-jest.mock('@/store/slices/devicesSlice', () => ({
-  selectAllDevices: jest.fn(),
-}));
+function storeState() {
+  return { devices: { entities: Object.fromEntries(mockDevices.map((d) => [d[Base.ATTR_ADDRESS], d])) } };
+}
 
 // ── Helpers ───────────────────────────────────────────────────────────
 
@@ -36,6 +39,7 @@ function radio(address: string, overrides: Partial<DeviceEntity> = {}): DeviceEn
 beforeEach(() => {
   jest.clearAllMocks();
   mockDevices = [];
+  mockUseAppSelector.mockImplementation((selector: (s: ReturnType<typeof storeState>) => unknown) => selector(storeState()));
 });
 
 // ── Tests ─────────────────────────────────────────────────────────────
@@ -57,7 +61,6 @@ describe('useWeatherSubsystem', () => {
       address: undefined,
       radios: [],
       alertingRadios: [],
-      alertActive: false,
       lastAlertTime: undefined,
     });
   });
@@ -74,7 +77,6 @@ describe('useWeatherSubsystem', () => {
 
     expect(result.current.address).toBe(SUB_ADDR);
     expect(result.current.radios.map((r) => r.address)).toEqual(['DRIV:dev:r1']);
-    expect(result.current.alertActive).toBe(false);
     expect(result.current.lastAlertTime).toBe(1234);
   });
 
@@ -92,8 +94,27 @@ describe('useWeatherSubsystem', () => {
 
     const { result } = renderHook(() => useWeatherSubsystem());
 
-    expect(result.current.alertActive).toBe(true);
     expect(result.current.alertingRadios.map((r) => r.address)).toEqual(['DRIV:dev:r1', 'DRIV:dev:r2']);
+  });
+
+  it('keeps the subsystem\'s order and skips radios not loaded yet', () => {
+    mockUseSubsystem.mockReturnValue(makeSubsystem(SUB_ADDR, {
+      [WeatherSubsystem.ATTR_WEATHERRADIOS]: ['DRIV:dev:r2', 'DRIV:dev:missing', 'DRIV:dev:r1'],
+    }));
+    mockDevices = [radio('DRIV:dev:r1'), radio('DRIV:dev:r2')];
+
+    const { result } = renderHook(() => useWeatherSubsystem());
+
+    expect(result.current.radios.map((r) => r.address)).toEqual(['DRIV:dev:r2', 'DRIV:dev:r1']);
+  });
+
+  it('compares the selected radios item by item, so other devices\' updates are ignored', () => {
+    mockUseSubsystem.mockReturnValue(makeSubsystem(SUB_ADDR, {
+      [WeatherSubsystem.ATTR_WEATHERRADIOS]: ['DRIV:dev:r1'],
+    }));
+    renderHook(() => useWeatherSubsystem());
+
+    expect(mockUseAppSelector).toHaveBeenCalledWith(expect.any(Function), shallowEqual);
   });
 
   it('leaves out hushed radios', () => {
@@ -116,8 +137,6 @@ describe('toWeatherRadioStatus', () => {
       [WeatherRadio.ATTR_PLAYINGSTATE]: WeatherRadio.PLAYINGSTATE_PLAYING,
       [WeatherRadio.ATTR_CURRENTALERT]: 'TOR',
       [WeatherRadio.ATTR_LASTALERTTIME]: 99,
-      [WeatherRadio.ATTR_STATIONSELECTED]: 3,
-      [WeatherRadio.ATTR_FREQUENCY]: '162.400',
     }));
 
     expect(status).toEqual({
@@ -127,8 +146,6 @@ describe('toWeatherRadioStatus', () => {
       playingState: WeatherRadio.PLAYINGSTATE_PLAYING,
       currentAlert: 'TOR',
       lastAlertTime: 99,
-      stationSelected: 3,
-      frequency: '162.400',
     });
   });
 

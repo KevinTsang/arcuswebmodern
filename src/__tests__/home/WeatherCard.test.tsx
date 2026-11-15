@@ -30,8 +30,6 @@ function makeRadio(address: string, overrides: Partial<WeatherRadioStatus> = {})
     playingState: WeatherRadio.PLAYINGSTATE_QUIET,
     currentAlert: 'NONE',
     lastAlertTime: undefined,
-    stationSelected: 1,
-    frequency: undefined,
     ...overrides,
   };
 }
@@ -42,7 +40,6 @@ function weather(radios: WeatherRadioStatus[], overrides: Partial<WeatherSubsyst
     address: 'SERV:subweather:place-1',
     radios,
     alertingRadios,
-    alertActive: alertingRadios.length > 0,
     lastAlertTime: undefined,
     ...overrides,
   };

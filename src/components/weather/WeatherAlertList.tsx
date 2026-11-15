@@ -11,7 +11,7 @@
 import { Place } from '@arcus/core';
 import { useAppSelector } from '@/store/hooks';
 import type { WeatherRadioStatus } from '@/hooks/useWeatherSubsystem';
-import { formatWeatherAlertTime, getWeatherAlertDescription } from '@/lib/weatherAlerts';
+import { formatWeatherAlertTime, getWeatherAlertDescription, placeStateCode } from '@/lib/weatherAlerts';
 
 interface WeatherAlertListProps {
   radios: WeatherRadioStatus[];
@@ -20,7 +20,7 @@ interface WeatherAlertListProps {
 export function WeatherAlertList({ radios }: WeatherAlertListProps) {
   const place = useAppSelector((s) => s.place.place);
   const county = place?.[Place.ATTR_ADDRCOUNTY] as string | undefined;
-  const state = (place?.[Place.ATTR_STATE] ?? place?.[Place.ATTR_STATEPROV]) as string | undefined;
+  const state = placeStateCode(place);
   const location = [county ? `${county} County` : null, state].filter(Boolean).join(', ');
 
   if (radios.length === 0) {

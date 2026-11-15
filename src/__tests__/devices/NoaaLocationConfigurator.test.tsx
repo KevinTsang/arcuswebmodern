@@ -142,19 +142,67 @@ describe('NoaaLocationConfigurator', () => {
     await waitFor(() => expect(screen.getByTestId('noaa-location-county')).not.toBeDisabled());
   });
 
-  it('shows an error when states fail to load', async () => {
+  it('shows an error and a retry when states fail to load', async () => {
     mockListSameStates.mockRejectedValueOnce(new Error('fail'));
     render(<NoaaLocationConfigurator address={ADDR} />);
 
     await waitFor(() => expect(mockDispatch).toHaveBeenCalledWith(error('Failed to load states')));
+    expect(screen.getByTestId('noaa-location-states-failed')).toBeInTheDocument();
+    expect(screen.queryByTestId('noaa-location-loading')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('noaa-location-states-retry'));
+    expect(await screen.findByTestId('noaa-location-state')).toHaveValue('TX');
+    expect(mockListSameStates).toHaveBeenCalledTimes(2);
   });
 
-  it('shows an error when counties fail to load', async () => {
+  it('shows an error and a retry when counties fail to load', async () => {
     mockListSameCounties.mockRejectedValueOnce(new Error('fail'));
     render(<NoaaLocationConfigurator address={ADDR} />);
 
     await waitFor(() => expect(mockDispatch).toHaveBeenCalledWith(error('Failed to load counties')));
     expect(screen.queryByTestId('noaa-location-county')).not.toBeInTheDocument();
+
+    fireEvent.click(await screen.findByTestId('noaa-location-counties-retry'));
+    expect(await screen.findByTestId('noaa-location-county')).toHaveValue('Travis');
+    expect(mockListSameCounties).toHaveBeenCalledTimes(2);
+  });
+
+  describe('a radio without a location', () => {
+    beforeEach(() => {
+      mockDevice = makeDevice(ADDR);
+    });
+
+    it('offers to save the county prefilled from the place', async () => {
+      render(<NoaaLocationConfigurator address={ADDR} />);
+      const save = await screen.findByTestId('noaa-location-save');
+      expect(save).toHaveTextContent('Save Travis County');
+
+      fireEvent.click(save);
+      await waitFor(() => expect(mockGetSameCode).toHaveBeenCalledWith('TX', 'Travis'));
+      expect(mockSetAttribute).toHaveBeenCalledWith(WeatherRadio.ATTR_LOCATION, '048029');
+    });
+
+    it('does not offer it once the radio has a location', async () => {
+      mockDevice = makeDevice(ADDR, { [WeatherRadio.ATTR_LOCATION]: '048453' });
+      render(<NoaaLocationConfigurator address={ADDR} />);
+      await screen.findByTestId('noaa-location-county');
+      expect(screen.queryByTestId('noaa-location-save')).not.toBeInTheDocument();
+    });
+
+    it('does not offer it when the prefilled county is not in the state\'s list', async () => {
+      mockPlace = { [Place.ATTR_STATE]: 'TX', [Place.ATTR_ADDRCOUNTY]: 'Nowhere' };
+      render(<NoaaLocationConfigurator address={ADDR} />);
+      await screen.findByTestId('noaa-location-county');
+      expect(screen.queryByTestId('noaa-location-save')).not.toBeInTheDocument();
+    });
+  });
+
+  it('falls back to place:stateProv when place:state is empty', async () => {
+    mockPlace = { [Place.ATTR_STATE]: '', [Place.ATTR_STATEPROV]: 'TX', [Place.ATTR_ADDRCOUNTY]: 'Travis' };
+    render(<NoaaLocationConfigurator address={ADDR} />);
+
+    expect(await screen.findByTestId('noaa-location-state')).toHaveValue('TX');
+    await waitFor(() => expect(mockListSameCounties).toHaveBeenCalledWith('TX'));
   });
 
   it('waits for a state choice when the place has no address', async () => {

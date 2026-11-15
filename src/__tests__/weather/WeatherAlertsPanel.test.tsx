@@ -49,8 +49,6 @@ function makeRadio(address: string): WeatherRadioStatus {
     playingState: 'PLAYING',
     currentAlert: 'TOR',
     lastAlertTime: 1,
-    stationSelected: 1,
-    frequency: undefined,
   };
 }
 
@@ -60,7 +58,6 @@ function weather(overrides: Partial<WeatherSubsystemState> = {}): WeatherSubsyst
     address: SUB_ADDR,
     radios,
     alertingRadios: radios,
-    alertActive: true,
     lastAlertTime: 1,
     ...overrides,
   };
@@ -119,7 +116,7 @@ describe('WeatherAlertsPanel', () => {
   });
 
   it('hides the snooze controls when nothing is alerting', () => {
-    mockWeather = weather({ alertingRadios: [], alertActive: false });
+    mockWeather = weather({ alertingRadios: [] });
     render(<WeatherAlertsPanel />);
     expect(screen.queryByTestId('weather-alerts-snooze')).not.toBeInTheDocument();
   });

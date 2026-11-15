@@ -1,10 +1,12 @@
 import {
   WEATHER_ALERTS,
-  NO_WEATHER_ALERT,
   formatWeatherAlertTime,
   getWeatherAlertDescription,
+  placeStateCode,
   sortAlertsByDescription,
 } from '@/lib/weatherAlerts';
+import { Place } from '@arcus/core';
+import type { PlaceData } from '@/store/entityTypes';
 
 describe('weatherAlerts', () => {
   describe('WEATHER_ALERTS', () => {
@@ -31,7 +33,7 @@ describe('weatherAlerts', () => {
     it('falls back to a generic label when there is no code', () => {
       expect(getWeatherAlertDescription(undefined)).toBe('Weather Alert');
       expect(getWeatherAlertDescription('')).toBe('Weather Alert');
-      expect(getWeatherAlertDescription(NO_WEATHER_ALERT)).toBe('Weather Alert');
+      expect(getWeatherAlertDescription('NONE')).toBe('Weather Alert');
     });
   });
 
@@ -56,6 +58,25 @@ describe('weatherAlerts', () => {
     it('handles a missing timestamp', () => {
       expect(formatWeatherAlertTime(undefined)).toBe('Unknown time');
       expect(formatWeatherAlertTime(0)).toBe('Unknown time');
+    });
+  });
+
+  describe('placeStateCode', () => {
+    const place = (attrs: Partial<PlaceData>) => attrs as PlaceData;
+
+    it('uses place:state', () => {
+      expect(placeStateCode(place({ [Place.ATTR_STATE]: 'TX', [Place.ATTR_STATEPROV]: 'CA' }))).toBe('TX');
+    });
+
+    it('falls back to place:stateProv when place:state is missing or empty', () => {
+      expect(placeStateCode(place({ [Place.ATTR_STATEPROV]: 'CA' }))).toBe('CA');
+      expect(placeStateCode(place({ [Place.ATTR_STATE]: '', [Place.ATTR_STATEPROV]: 'CA' }))).toBe('CA');
+    });
+
+    it('is empty without either, or without a place', () => {
+      expect(placeStateCode(place({}))).toBe('');
+      expect(placeStateCode(null)).toBe('');
+      expect(placeStateCode(undefined)).toBe('');
     });
   });
 });

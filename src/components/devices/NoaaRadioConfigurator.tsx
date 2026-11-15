@@ -9,9 +9,9 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import Bridge from '@arcus/core/bridge';
 import { WeatherRadio } from '@arcus/core';
 import { useDevice } from '@/hooks/useDeviceCapability';
+import { useDeviceActions } from '@/hooks/useDeviceActions';
 import { useAppDispatch } from '@/store/hooks';
 import { addNotification } from '@/store/slices/uiSlice';
 
@@ -30,7 +30,7 @@ interface ScanStationsResponse {
 }
 
 /** How long a station preview plays before the device stops it, in seconds. */
-export const PREVIEW_SECONDS = 10;
+const PREVIEW_SECONDS = 10;
 
 function signal(station: WeatherRadioStation): number {
   const value = typeof station.rssi === 'number' ? station.rssi : parseFloat(station.rssi);
@@ -39,9 +39,12 @@ function signal(station: WeatherRadioStation): number {
 
 export default function NoaaRadioConfigurator({ address }: { address: string }) {
   const device = useDevice(address);
+  const { sendCommand } = useDeviceActions(address);
   const dispatch = useAppDispatch();
   const [stations, setStations] = useState<WeatherRadioStation[]>([]);
+  /** A scan finished; false after a failed scan, so "no stations" isn't claimed. */
   const [scanned, setScanned] = useState(false);
+  const [scanFailed, setScanFailed] = useState(false);
   const [scanning, setScanning] = useState(false);
   const [previewing, setPreviewing] = useState<number | null>(null);
   const previewTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -60,49 +63,52 @@ export default function NoaaRadioConfigurator({ address }: { address: string }) 
 
   const handleScan = useCallback(async () => {
     setScanning(true);
+    setScanFailed(false);
     setStations([]);
     try {
-      const result = await Bridge.request<ScanStationsResponse>(WeatherRadio.CMD_SCANSTATIONS, address, {});
+      const result = (await sendCommand(WeatherRadio.CMD_SCANSTATIONS)) as ScanStationsResponse | undefined;
       const audible = (result?.stations ?? [])
         .filter((s) => signal(s) > 0)
         .sort((a, b) => signal(b) - signal(a));
       setStations(audible);
+      setScanned(true);
     } catch {
+      setScanned(false);
+      setScanFailed(true);
       dispatch(addNotification({ type: 'error', message: 'Failed to scan for weather radio stations' }));
     } finally {
       setScanning(false);
-      setScanned(true);
     }
-  }, [address, dispatch]);
+  }, [sendCommand, dispatch]);
 
   const handlePlay = useCallback(async (station: number) => {
     try {
-      await Bridge.request(WeatherRadio.CMD_PLAYSTATION, address, { station, time: PREVIEW_SECONDS });
+      await sendCommand(WeatherRadio.CMD_PLAYSTATION, { station, time: PREVIEW_SECONDS });
       clearPreviewTimer();
       setPreviewing(station);
       previewTimer.current = setTimeout(() => setPreviewing(null), PREVIEW_SECONDS * 1000);
     } catch {
       dispatch(addNotification({ type: 'error', message: 'Failed to play weather radio station' }));
     }
-  }, [address, clearPreviewTimer, dispatch]);
+  }, [sendCommand, clearPreviewTimer, dispatch]);
 
   const handleStop = useCallback(async () => {
     try {
-      await Bridge.request(WeatherRadio.CMD_STOPPLAYINGSTATION, address, {});
+      await sendCommand(WeatherRadio.CMD_STOPPLAYINGSTATION);
       clearPreviewTimer();
       setPreviewing(null);
     } catch {
       dispatch(addNotification({ type: 'error', message: 'Failed to stop weather radio' }));
     }
-  }, [address, clearPreviewTimer, dispatch]);
+  }, [sendCommand, clearPreviewTimer, dispatch]);
 
   const handleSelect = useCallback(async (station: number) => {
     try {
-      await Bridge.request(WeatherRadio.CMD_SELECTSTATION, address, { station });
+      await sendCommand(WeatherRadio.CMD_SELECTSTATION, { station });
     } catch {
       dispatch(addNotification({ type: 'error', message: 'Failed to select weather radio station' }));
     }
-  }, [address, dispatch]);
+  }, [sendCommand, dispatch]);
 
   return (
     <div data-testid="noaa-radio-configurator">
@@ -188,6 +194,12 @@ export default function NoaaRadioConfigurator({ address }: { address: string }) 
         </div>
       )}
 
+      {scanFailed && !scanning && (
+        <p data-testid="noaa-radio-scan-failed" role="alert" className="text-xs text-cardinal mb-3">
+          The scan didn&apos;t finish. Check that the radio is online, then scan again.
+        </p>
+      )}
+
       <button
         type="button"
         onClick={handleScan}
@@ -195,7 +207,7 @@ export default function NoaaRadioConfigurator({ address }: { address: string }) 
         data-testid="noaa-radio-scan"
         className="px-3 py-1.5 text-sm bg-peacock text-crane rounded-[var(--border-radius-base)] hover:opacity-90 transition-opacity disabled:opacity-50"
       >
-        {scanning ? 'Scanning…' : scanned ? 'Rescan' : 'Scan for Stations'}
+        {scanning ? 'Scanning…' : scanFailed ? 'Scan Again' : scanned ? 'Rescan' : 'Scan for Stations'}
       </button>
     </div>
   );

@@ -49,6 +49,10 @@ jest.mock('@/components/AlarmBanner', () => ({
   default: () => <div data-testid="alarm-banner" />,
 }));
 
+jest.mock('@/components/weather/WeatherAlertBanner', () => ({
+  WeatherAlertBanner: () => <div data-testid="weather-alert-banner" />,
+}));
+
 jest.mock('@/components/InvitationBanner', () => ({
   __esModule: true,
   default: () => <div data-testid="invitation-banner" />,
@@ -89,6 +93,7 @@ describe('AuthenticatedLayout – rendering', () => {
     renderLayout();
     expect(screen.getByTestId('header')).toBeInTheDocument();
     expect(screen.getByTestId('alarm-banner')).toBeInTheDocument();
+    expect(screen.getByTestId('weather-alert-banner')).toBeInTheDocument();
     expect(screen.getByTestId('invitation-banner')).toBeInTheDocument();
     expect(screen.getByTestId('page')).toBeInTheDocument();
   });

@@ -1,6 +1,9 @@
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { WeatherRadio } from '@arcus/core';
-import NoaaRadioConfigurator, { PREVIEW_SECONDS } from '@/components/devices/NoaaRadioConfigurator';
+import NoaaRadioConfigurator from '@/components/devices/NoaaRadioConfigurator';
+
+/** How long a station preview plays (NoaaRadioConfigurator's PREVIEW_SECONDS). */
+const PREVIEW_SECONDS = 10;
 import type { DeviceEntity } from '@/store/entityTypes';
 import { makeDevice } from '../helpers/factories';
 
@@ -127,6 +130,27 @@ describe('NoaaRadioConfigurator', () => {
 
       await waitFor(() => expect(mockDispatch).toHaveBeenCalledWith(error('Failed to scan for weather radio stations')));
       expect(screen.getByTestId('noaa-radio-scan')).not.toBeDisabled();
+    });
+
+    it('reports a failed scan as a failure, not as no stations in range', async () => {
+      mockBridgeRequest.mockRejectedValueOnce(new Error('offline'));
+      render(<NoaaRadioConfigurator address={ADDR} />);
+      fireEvent.click(screen.getByTestId('noaa-radio-scan'));
+
+      expect(await screen.findByTestId('noaa-radio-scan-failed')).toHaveTextContent('Check that the radio is online');
+      expect(screen.queryByTestId('noaa-radio-weak-signal')).not.toBeInTheDocument();
+      expect(screen.getByTestId('noaa-radio-scan')).toHaveTextContent('Scan Again');
+    });
+
+    it('clears the failure when a later scan succeeds', async () => {
+      mockBridgeRequest.mockRejectedValueOnce(new Error('offline'));
+      render(<NoaaRadioConfigurator address={ADDR} />);
+      fireEvent.click(screen.getByTestId('noaa-radio-scan'));
+      await screen.findByTestId('noaa-radio-scan-failed');
+
+      await scan();
+      expect(screen.queryByTestId('noaa-radio-scan-failed')).not.toBeInTheDocument();
+      expect(screen.getByTestId('noaa-radio-scan')).toHaveTextContent('Rescan');
     });
   });
 

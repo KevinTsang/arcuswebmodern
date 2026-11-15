@@ -31,8 +31,6 @@ function makeRadio(address: string, currentAlert: string): WeatherRadioStatus {
     playingState: 'PLAYING',
     currentAlert,
     lastAlertTime: 1,
-    stationSelected: 1,
-    frequency: undefined,
   };
 }
 
@@ -41,7 +39,6 @@ function weather(alertingRadios: WeatherRadioStatus[]): WeatherSubsystemState {
     address: 'SERV:subweather:place-1',
     radios: alertingRadios,
     alertingRadios,
-    alertActive: alertingRadios.length > 0,
     lastAlertTime: undefined,
   };
 }

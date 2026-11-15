@@ -7,6 +7,9 @@
  * readable names and marks the ones the legacy client listed as "popular".
  */
 
+import { Place } from '@arcus/core';
+import type { PlaceData } from '@/store/entityTypes';
+
 export interface WeatherAlertDefinition {
   /** Three-letter EAS event code, e.g. `TOR`. */
   code: string;
@@ -102,7 +105,7 @@ export const WEATHER_ALERTS: readonly WeatherAlertDefinition[] = [
 const ALERTS_BY_CODE = new Map(WEATHER_ALERTS.map((a) => [a.code, a]));
 
 /** Weather radios report this in `noaa:currentalert` when no alert is active. */
-export const NO_WEATHER_ALERT = 'NONE';
+const NO_WEATHER_ALERT = 'NONE';
 
 /**
  * Readable name for an EAS code. Unknown codes fall back to the code itself,
@@ -127,4 +130,14 @@ export function formatWeatherAlertTime(timestamp: number | undefined): string {
   const day = date.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
   const time = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
   return `${day} at ${time}`;
+}
+
+/**
+ * The place's state code, for the NOAA location and alert text. `place:state` can be saved as an
+ * empty string (the legacy add-place form did), so an empty value falls back to `place:stateProv`.
+ */
+export function placeStateCode(place: PlaceData | null | undefined): string {
+  return (place?.[Place.ATTR_STATE] as string | undefined)
+    || (place?.[Place.ATTR_STATEPROV] as string | undefined)
+    || '';
 }

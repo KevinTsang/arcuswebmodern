@@ -3,14 +3,17 @@
  * tracks, and exposes them as typed records so components don't have to
  * pick attributes out of raw device entities.
  *
+ * It's mounted app-wide (the weather alert banner), so it selects only the
+ * radio devices: an update to any other device doesn't re-render it.
+ *
  * Ported from the view models in the legacy client's
  * src/components/subsystem/weather/alerts/.
  */
 
 import { useMemo } from 'react';
+import { shallowEqual } from 'react-redux';
 import { Base, Device, WeatherRadio, WeatherSubsystem } from '@arcus/core';
 import { useAppSelector } from '@/store/hooks';
-import { selectAllDevices } from '@/store/slices/devicesSlice';
 import type { DeviceEntity } from '@/store/entityTypes';
 import { useSubsystem } from './useSubsystem';
 
@@ -25,8 +28,6 @@ export interface WeatherRadioStatus {
   /** EAS code of the active alert, or `NONE`. */
   currentAlert: string | undefined;
   lastAlertTime: number | undefined;
-  stationSelected: number | undefined;
-  frequency: string | undefined;
 }
 
 export interface WeatherSubsystemState {
@@ -36,8 +37,6 @@ export interface WeatherSubsystemState {
   radios: WeatherRadioStatus[];
   /** Radios sounding an alert that hasn't been hushed. */
   alertingRadios: WeatherRadioStatus[];
-  /** True while `subweather:weatherAlert` is `ALERT`. */
-  alertActive: boolean;
   lastAlertTime: number | undefined;
 }
 
@@ -49,22 +48,25 @@ export function toWeatherRadioStatus(device: DeviceEntity): WeatherRadioStatus {
     playingState: device[WeatherRadio.ATTR_PLAYINGSTATE] as string | undefined,
     currentAlert: device[WeatherRadio.ATTR_CURRENTALERT] as string | undefined,
     lastAlertTime: device[WeatherRadio.ATTR_LASTALERTTIME] as number | undefined,
-    stationSelected: device[WeatherRadio.ATTR_STATIONSELECTED] as number | undefined,
-    frequency: device[WeatherRadio.ATTR_FREQUENCY] as string | undefined,
   };
 }
 
+const NO_ADDRESSES: string[] = [];
+
 export function useWeatherSubsystem(): WeatherSubsystemState {
   const sub = useSubsystem(WeatherSubsystem.NAMESPACE);
-  const allDevices = useAppSelector(selectAllDevices);
+  const radioAddrs = (sub?.[WeatherSubsystem.ATTR_WEATHERRADIOS] as string[] | undefined) ?? NO_ADDRESSES;
+  // Just the radios, compared item by item, so other devices' updates don't re-render this.
+  const radioDevices = useAppSelector(
+    (state) => radioAddrs
+      .map((addr) => state.devices.entities[addr])
+      .filter((d): d is DeviceEntity => d !== undefined),
+    shallowEqual,
+  );
 
   return useMemo(() => {
-    const radioAddrs = (sub?.[WeatherSubsystem.ATTR_WEATHERRADIOS] as string[] | undefined) ?? [];
     const alertingAddrs = new Set((sub?.[WeatherSubsystem.ATTR_ALERTINGRADIOS] as string[] | undefined) ?? []);
-
-    const radios = allDevices
-      .filter((d) => radioAddrs.includes(d[Base.ATTR_ADDRESS]))
-      .map(toWeatherRadioStatus);
+    const radios = radioDevices.map(toWeatherRadioStatus);
 
     // A radio counts as alerting when the subsystem lists it or it reports
     // ALERT itself (in case the subsystem lags), unless it has been hushed.
@@ -77,8 +79,7 @@ export function useWeatherSubsystem(): WeatherSubsystemState {
       address: sub?.[Base.ATTR_ADDRESS],
       radios,
       alertingRadios,
-      alertActive: sub?.[WeatherSubsystem.ATTR_WEATHERALERT] === WeatherSubsystem.WEATHERALERT_ALERT,
       lastAlertTime: sub?.[WeatherSubsystem.ATTR_LASTWEATHERALERTTIME] as number | undefined,
     };
-  }, [sub, allDevices]);
+  }, [sub, radioDevices]);
 }

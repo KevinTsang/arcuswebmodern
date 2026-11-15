@@ -98,6 +98,39 @@ describe('NoaaWeatherAlertsConfigurator', () => {
     await waitFor(() => expect(screen.getByTestId('noaa-alert-SVR')).not.toBeDisabled());
   });
 
+  it('builds a quick second toggle on the first, before the store catches up', async () => {
+    render(<NoaaWeatherAlertsConfigurator address={ADDR} />);
+
+    fireEvent.click(screen.getByTestId('noaa-alert-SVR'));
+    await waitFor(() => expect(mockSetAttribute).toHaveBeenCalledTimes(1));
+    // The store still says ['TOR', 'BZW'], but the list already shows SVR as subscribed.
+    expect(screen.getByTestId('noaa-alert-SVR')).toBeChecked();
+
+    await waitFor(() => expect(screen.getByTestId('noaa-alert-AVA')).not.toBeDisabled());
+    fireEvent.click(screen.getByTestId('noaa-alert-AVA'));
+
+    await waitFor(() => expect(mockSetAttribute).toHaveBeenCalledTimes(2));
+    expect(mockSetAttribute).toHaveBeenLastCalledWith(WeatherRadio.ATTR_ALERTSOFINTEREST, ['TOR', 'BZW', 'SVR', 'AVA']);
+  });
+
+  it('restores the stored list when a save fails', async () => {
+    mockSetAttribute.mockRejectedValueOnce(new Error('fail'));
+    render(<NoaaWeatherAlertsConfigurator address={ADDR} />);
+    fireEvent.click(screen.getByTestId('noaa-alert-SVR'));
+
+    await waitFor(() => expect(mockDispatch).toHaveBeenCalledWith(UPDATE_FAILED));
+    expect(screen.getByTestId('noaa-alert-SVR')).not.toBeChecked();
+  });
+
+  it('follows the stored list when it changes', () => {
+    const { rerender } = render(<NoaaWeatherAlertsConfigurator address={ADDR} />);
+    mockDevice = makeDevice(ADDR, { [WeatherRadio.ATTR_ALERTSOFINTEREST]: ['AVA'] });
+    rerender(<NoaaWeatherAlertsConfigurator address={ADDR} />);
+
+    expect(screen.getByTestId('noaa-alert-AVA')).toBeChecked();
+    expect(screen.getByTestId('noaa-alert-TOR')).not.toBeChecked();
+  });
+
   it('treats a device without alerts of interest as subscribed to none', async () => {
     mockDevice = makeDevice(ADDR);
     render(<NoaaWeatherAlertsConfigurator address={ADDR} />);

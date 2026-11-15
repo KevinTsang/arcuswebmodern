@@ -5,10 +5,14 @@
  * radio sounds for. The selection is stored as EAS codes in
  * `noaa:alertsofinterest`.
  *
+ * Toggles apply to a local copy straight away, so a quick second toggle builds
+ * on the first even before the platform's value change reaches the store. The
+ * copy follows the store, and is restored from it when a save fails.
+ *
  * Ported from src/components/device/configurators/noaa-weather-alerts/.
  */
 
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { WeatherRadio } from '@arcus/core';
 import { useDevice } from '@/hooks/useDeviceCapability';
 import { useDeviceActions } from '@/hooks/useDeviceActions';
@@ -24,7 +28,18 @@ export default function NoaaWeatherAlertsConfigurator({ address }: { address: st
   const dispatch = useAppDispatch();
   const [saving, setSaving] = useState(false);
 
-  const subscribed = (device?.[WeatherRadio.ATTR_ALERTSOFINTEREST] as string[] | undefined) ?? EMPTY;
+  const stored = (device?.[WeatherRadio.ATTR_ALERTSOFINTEREST] as string[] | undefined) ?? EMPTY;
+  const [subscribed, setSubscribed] = useState(stored);
+  const [syncedStored, setSyncedStored] = useState(stored);
+  // Take the store's list whenever it changes (a saved toggle, or a change made elsewhere).
+  if (stored !== syncedStored) {
+    setSyncedStored(stored);
+    setSubscribed(stored);
+  }
+  const latestStored = useRef(stored);
+  useEffect(() => {
+    latestStored.current = stored;
+  }, [stored]);
 
   const groups = useMemo(() => {
     const mine = new Set(subscribed);
@@ -39,10 +54,12 @@ export default function NoaaWeatherAlertsConfigurator({ address }: { address: st
     const next = subscribed.includes(alert.code)
       ? subscribed.filter((c) => c !== alert.code)
       : [...subscribed, alert.code];
+    setSubscribed(next);
     setSaving(true);
     try {
       await setAttribute(WeatherRadio.ATTR_ALERTSOFINTEREST, next);
     } catch {
+      setSubscribed(latestStored.current);
       dispatch(addNotification({ type: 'error', message: 'Failed to update weather alerts' }));
     } finally {
       setSaving(false);
