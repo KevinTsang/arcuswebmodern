@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { Base, Device, Product, PairingDevice, PairingSubsystem } from '@arcus/core';
 import PairingPage from '@/app/(authenticated)/pairing/page';
 import type { PairingFlow } from '@/components/pairing/types';
@@ -77,6 +77,17 @@ jest.mock('@/components/pairing', () => ({
     capturedCompletedProps = props;
     return <div data-testid="completed-stage">CompletedStage</div>;
   },
+  S2PinPrompt: ({ pairingSubsystem }: any) => <div data-testid="s2-pin-prompt-mock">{pairingSubsystem}</div>,
+  S2PairingFailure: ({ pairingSubsystem }: any) => <div data-testid="s2-pairing-failure-mock">{pairingSubsystem}</div>,
+  S2PinEntryOption: ({ skipPin, onChange }: any) => (
+    <input
+      type="checkbox"
+      data-testid="s2-pin-entry-skip"
+      checked={skipPin}
+      onChange={(e) => onChange(e.target.checked)}
+    />
+  ),
+  PairedDeviceSecurity: ({ deviceAddress }: any) => <div data-testid="paired-device-security-mock">{deviceAddress}</div>,
 }));
 
 let mockPairingState: PairingState;
@@ -338,6 +349,124 @@ describe('PairingPage – lifecycle', () => {
   });
 });
 
+describe('PairingPage – Z-Wave S2 PIN entry', () => {
+  const pairingSubAddr = 'SERV:subpairing:place-1';
+
+  it('mounts the S2 PIN prompt and failure notice for the pairing subsystem', () => {
+    mockSubsystems = {
+      [pairingSubAddr]: { id: pairingSubAddr, [Base.ATTR_ADDRESS]: pairingSubAddr },
+    };
+    render(<PairingPage />);
+    expect(screen.getByTestId('s2-pin-prompt-mock')).toHaveTextContent(pairingSubAddr);
+    expect(screen.getByTestId('s2-pairing-failure-mock')).toHaveTextContent(pairingSubAddr);
+  });
+
+  it('leaves them out without a pairing subsystem', () => {
+    render(<PairingPage />);
+    expect(screen.queryByTestId('s2-pin-prompt-mock')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('s2-pairing-failure-mock')).not.toBeInTheDocument();
+  });
+
+  it('leaves them out while registering a hub', () => {
+    mockSubsystems = {
+      [pairingSubAddr]: { id: pairingSubAddr, [Base.ATTR_ADDRESS]: pairingSubAddr },
+    };
+    mockPairingState = { ...mockPairingState, isHubPairing: true };
+    render(<PairingPage />);
+    expect(screen.queryByTestId('s2-pin-prompt-mock')).not.toBeInTheDocument();
+  });
+
+  describe('pairing without the S2 PIN', () => {
+    const zwaveProduct = {
+      [Base.ATTR_ADDRESS]: 'SERV:product:lock1',
+      [Product.ATTR_NAME]: 'Smart Lock',
+      [Product.ATTR_PROTOFAMILY]: 'Z-Wave',
+    };
+
+    beforeEach(() => {
+      mockSubsystems = {
+        [pairingSubAddr]: { id: pairingSubAddr, [Base.ATTR_ADDRESS]: pairingSubAddr },
+      };
+    });
+
+    it('offers the option for a Z-Wave product on the steps screen', () => {
+      mockPairingState = { ...mockPairingState, product: zwaveProduct };
+      render(<PairingPage />);
+      expect(screen.getByTestId('s2-pin-entry-skip')).not.toBeChecked();
+    });
+
+    it('offers it again after a search timed out', () => {
+      mockPairingState = { ...mockPairingState, product: zwaveProduct, stage: 'searching', searchTimedOut: true };
+      render(<PairingPage />);
+      expect(screen.getByTestId('s2-pin-entry-skip')).toBeInTheDocument();
+    });
+
+    it('does not offer it while a search is running', () => {
+      mockPairingState = { ...mockPairingState, product: zwaveProduct, stage: 'searching' };
+      render(<PairingPage />);
+      expect(screen.queryByTestId('s2-pin-entry-skip')).not.toBeInTheDocument();
+    });
+
+    it('does not offer it for other protocols or hub pairing', () => {
+      mockPairingState = {
+        ...mockPairingState,
+        product: { ...zwaveProduct, [Product.ATTR_PROTOFAMILY]: 'ZigBee' },
+      };
+      const { unmount } = render(<PairingPage />);
+      expect(screen.queryByTestId('s2-pin-entry-skip')).not.toBeInTheDocument();
+      unmount();
+
+      mockPairingState = { ...mockPairingState, product: zwaveProduct, isHubPairing: true };
+      render(<PairingPage />);
+      expect(screen.queryByTestId('s2-pin-entry-skip')).not.toBeInTheDocument();
+    });
+
+    it('searches with s2PinEntry by default and without it once chosen', async () => {
+      mockBridgeRequest.mockResolvedValue({ steps: [{ id: 'step-1' }], devices: [] });
+      mockPairingState = { ...mockPairingState, product: zwaveProduct };
+      render(<PairingPage />);
+
+      await act(async () => {
+        await capturedStepsProps.onStartSearch();
+      });
+      expect(mockBridgeRequest).toHaveBeenCalledWith(
+        PairingSubsystem.CMD_SEARCH, pairingSubAddr, { productAddress: 'SERV:product:lock1', s2PinEntry: true },
+      );
+
+      fireEvent.click(screen.getByTestId('s2-pin-entry-skip'));
+      await act(async () => {
+        await capturedStepsProps.onStartSearch();
+      });
+      expect(mockBridgeRequest).toHaveBeenLastCalledWith(
+        PairingSubsystem.CMD_SEARCH, pairingSubAddr, { productAddress: 'SERV:product:lock1', s2PinEntry: false },
+      );
+    });
+  });
+
+  describe('security result after pairing', () => {
+    const paired = {
+      [PairingDevice.ATTR_DEVICEADDRESS]: 'DRIV:dev:lock-1',
+    };
+
+    it('shows the paired device\'s security on the completed screen', () => {
+      mockPairingState = { ...mockPairingState, stage: 'completed', activeDevice: paired };
+      render(<PairingPage />);
+      expect(screen.getByTestId('paired-device-security-mock')).toHaveTextContent('DRIV:dev:lock-1');
+    });
+
+    it('shows nothing without a paired device or for a hub', () => {
+      mockPairingState = { ...mockPairingState, stage: 'completed', activeDevice: null };
+      const { unmount } = render(<PairingPage />);
+      expect(screen.queryByTestId('paired-device-security-mock')).not.toBeInTheDocument();
+      unmount();
+
+      mockPairingState = { ...mockPairingState, stage: 'completed', activeDevice: paired, isHubPairing: true };
+      render(<PairingPage />);
+      expect(screen.queryByTestId('paired-device-security-mock')).not.toBeInTheDocument();
+    });
+  });
+});
+
 describe('PairingPage – auto-start pairing', () => {
   const pairingSubAddr = 'SERV:subpairing:place-1';
 
@@ -365,7 +494,7 @@ describe('PairingPage – auto-start pairing', () => {
       expect(mockBridgeRequest).toHaveBeenCalledWith(
         PairingSubsystem.CMD_STARTPAIRING,
         pairingSubAddr,
-        { productAddress: 'SERV:product:c3c055' },
+        { productAddress: 'SERV:product:c3c055', s2PinEntry: true },
       );
     });
   });
@@ -406,7 +535,7 @@ describe('PairingPage – auto-start pairing', () => {
       expect(mockBridgeRequest).toHaveBeenCalledWith(
         PairingSubsystem.CMD_SEARCH,
         pairingSubAddr,
-        { productAddress: '' },
+        { productAddress: '', s2PinEntry: true },
       );
     });
   });

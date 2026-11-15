@@ -47,6 +47,8 @@ jest.mock('@/components/pairing', () => ({
     capturedCompletedProps = props;
     return null;
   },
+  S2PinPrompt: () => null,
+  S2PairingFailure: () => null,
 }));
 
 // ── Helpers ───────────────────────────────────────────────────────────

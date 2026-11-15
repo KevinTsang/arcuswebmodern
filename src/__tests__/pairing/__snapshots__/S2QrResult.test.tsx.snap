@@ -1,0 +1,85 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`S2QrResult – different device matches snapshot 1`] = `
+<DocumentFragment>
+  <div
+    data-testid="s2-qr-mismatch"
+  >
+    <p
+      class="text-sm text-swift p-3 mb-4 border border-cardinal bg-cardinal/5 rounded-[var(--border-radius-base)]"
+      role="alert"
+    >
+      This QR code doesn't match the device that is joining. Make sure you scanned the right device. If you did, a different device may be trying to join: decline, and don't pair it.
+    </p>
+    <div
+      class="flex gap-2"
+    >
+      <button
+        class="flex-1 py-2 rounded-[var(--border-radius-base)] text-sm font-medium bg-cardinal text-crane hover:bg-cardinal/90"
+        data-testid="s2-qr-decline"
+        type="button"
+      >
+        Decline
+      </button>
+      <button
+        class="flex-1 py-2 border border-heron rounded-[var(--border-radius-base)] text-sm text-coot hover:bg-pigeon"
+        data-testid="s2-qr-scan-again"
+        type="button"
+      >
+        Scan again
+      </button>
+    </div>
+    <button
+      class="w-full mt-3 text-sm text-coot hover:underline"
+      data-testid="s2-qr-manual"
+      type="button"
+    >
+      Enter the PIN by hand
+    </button>
+  </div>
+</DocumentFragment>
+`;
+
+exports[`S2QrResult – matching code matches snapshot 1`] = `
+<DocumentFragment>
+  <div
+    data-testid="s2-qr-match"
+  >
+    <p
+      class="text-sm text-swift mb-1"
+    >
+      The QR code matches the device that is joining.
+    </p>
+    <p
+      class="text-sm text-coot mb-4"
+    >
+      Send PIN 
+      <span
+        class="font-mono text-swift"
+        data-testid="s2-qr-pin"
+      >
+        51525
+      </span>
+       to the hub?
+    </p>
+    <div
+      class="flex gap-2"
+    >
+      <button
+        class="flex-1 py-2 rounded-[var(--border-radius-base)] text-sm font-medium bg-peacock text-crane hover:bg-peacock/90"
+        data-testid="s2-qr-submit"
+        type="button"
+      >
+        Send PIN
+      </button>
+      <button
+        class="flex-1 py-2 border border-heron rounded-[var(--border-radius-base)] text-sm text-coot hover:bg-pigeon"
+        data-testid="s2-qr-back"
+        type="button"
+      >
+        Back
+      </button>
+    </div>
+  </div>
+</DocumentFragment>
+`;

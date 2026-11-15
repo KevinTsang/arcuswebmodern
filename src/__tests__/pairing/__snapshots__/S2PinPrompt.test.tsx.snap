@@ -1,0 +1,331 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`S2PinPrompt – QR code matches snapshot while scanning 1`] = `
+<DocumentFragment>
+  <div
+    class="fixed inset-0 bg-swift/30 flex items-center justify-center z-50 p-4"
+  >
+    <div
+      aria-labelledby="s2-pin-title"
+      aria-modal="true"
+      class="bg-crane rounded-[var(--border-radius-lg)] border border-heron p-6 w-full max-w-md shadow-lg max-h-full overflow-y-auto"
+      data-phase="scanning"
+      data-testid="s2-pin-prompt"
+      role="dialog"
+    >
+      <div
+        class="flex items-start justify-between gap-3 mb-3"
+      >
+        <h3
+          class="text-lg font-semibold text-swift"
+          id="s2-pin-title"
+        >
+          Secure this Z-Wave device
+        </h3>
+        <span
+          aria-label="195 seconds left"
+          class="font-mono text-sm text-coot"
+          data-testid="s2-pin-countdown"
+        >
+          3:15
+        </span>
+      </div>
+      <p
+        class="text-sm text-coot mb-3"
+      >
+        Check that these numbers match the DSK printed on the device or its box. The first five digits on the label are the PIN.
+      </p>
+      <div
+        class="mb-4"
+      >
+        <ol
+          aria-label="Device security key (DSK)"
+          class="grid grid-cols-4 gap-2 font-mono text-sm"
+          data-testid="s2-dsk"
+        >
+          <li
+            aria-label="Group 1: the PIN"
+            class="text-center py-1.5 border border-dashed border-peacock rounded-[var(--border-radius-base)] text-peacock"
+            data-testid="s2-dsk-group-1"
+          >
+            PIN
+          </li>
+          <li
+            class="text-center py-1.5 border rounded-[var(--border-radius-base)] text-swift border-heron bg-pigeon"
+            data-testid="s2-dsk-group-2"
+          >
+            35455
+          </li>
+          <li
+            class="text-center py-1.5 border rounded-[var(--border-radius-base)] text-swift border-heron bg-pigeon"
+            data-testid="s2-dsk-group-3"
+          >
+            41424
+          </li>
+          <li
+            class="text-center py-1.5 border rounded-[var(--border-radius-base)] text-swift border-heron bg-pigeon"
+            data-testid="s2-dsk-group-4"
+          >
+            34445
+          </li>
+          <li
+            class="text-center py-1.5 border rounded-[var(--border-radius-base)] text-swift border-heron bg-pigeon"
+            data-testid="s2-dsk-group-5"
+          >
+            31323
+          </li>
+          <li
+            class="text-center py-1.5 border rounded-[var(--border-radius-base)] text-swift border-heron bg-pigeon"
+            data-testid="s2-dsk-group-6"
+          >
+            33435
+          </li>
+          <li
+            class="text-center py-1.5 border rounded-[var(--border-radius-base)] text-swift border-heron bg-pigeon"
+            data-testid="s2-dsk-group-7"
+          >
+            21222
+          </li>
+          <li
+            class="text-center py-1.5 border rounded-[var(--border-radius-base)] text-swift border-heron bg-pigeon"
+            data-testid="s2-dsk-group-8"
+          >
+            32425
+          </li>
+        </ol>
+      </div>
+      <div
+        data-testid="qr-scanner-mock"
+      />
+      <button
+        class="flex-1 py-2 border border-heron rounded-[var(--border-radius-base)] text-sm text-coot hover:bg-pigeon w-full mt-3"
+        data-testid="s2-pin-scan-cancel"
+        type="button"
+      >
+        Enter the PIN by hand
+      </button>
+    </div>
+  </div>
+</DocumentFragment>
+`;
+
+exports[`S2PinPrompt – opening matches snapshot when asking for the PIN 1`] = `
+<DocumentFragment>
+  <div
+    class="fixed inset-0 bg-swift/30 flex items-center justify-center z-50 p-4"
+  >
+    <div
+      aria-labelledby="s2-pin-title"
+      aria-modal="true"
+      class="bg-crane rounded-[var(--border-radius-lg)] border border-heron p-6 w-full max-w-md shadow-lg max-h-full overflow-y-auto"
+      data-phase="entry"
+      data-testid="s2-pin-prompt"
+      role="dialog"
+    >
+      <div
+        class="flex items-start justify-between gap-3 mb-3"
+      >
+        <h3
+          class="text-lg font-semibold text-swift"
+          id="s2-pin-title"
+        >
+          Secure this Z-Wave device
+        </h3>
+        <span
+          aria-label="195 seconds left"
+          class="font-mono text-sm text-coot"
+          data-testid="s2-pin-countdown"
+        >
+          3:15
+        </span>
+      </div>
+      <p
+        class="text-sm text-coot mb-3"
+      >
+        Check that these numbers match the DSK printed on the device or its box. The first five digits on the label are the PIN.
+      </p>
+      <div
+        class="mb-4"
+      >
+        <ol
+          aria-label="Device security key (DSK)"
+          class="grid grid-cols-4 gap-2 font-mono text-sm"
+          data-testid="s2-dsk"
+        >
+          <li
+            aria-label="Group 1: the PIN"
+            class="text-center py-1.5 border border-dashed border-peacock rounded-[var(--border-radius-base)] text-peacock"
+            data-testid="s2-dsk-group-1"
+          >
+            PIN
+          </li>
+          <li
+            class="text-center py-1.5 border rounded-[var(--border-radius-base)] text-swift border-heron bg-pigeon"
+            data-testid="s2-dsk-group-2"
+          >
+            35455
+          </li>
+          <li
+            class="text-center py-1.5 border rounded-[var(--border-radius-base)] text-swift border-heron bg-pigeon"
+            data-testid="s2-dsk-group-3"
+          >
+            41424
+          </li>
+          <li
+            class="text-center py-1.5 border rounded-[var(--border-radius-base)] text-swift border-heron bg-pigeon"
+            data-testid="s2-dsk-group-4"
+          >
+            34445
+          </li>
+          <li
+            class="text-center py-1.5 border rounded-[var(--border-radius-base)] text-swift border-heron bg-pigeon"
+            data-testid="s2-dsk-group-5"
+          >
+            31323
+          </li>
+          <li
+            class="text-center py-1.5 border rounded-[var(--border-radius-base)] text-swift border-heron bg-pigeon"
+            data-testid="s2-dsk-group-6"
+          >
+            33435
+          </li>
+          <li
+            class="text-center py-1.5 border rounded-[var(--border-radius-base)] text-swift border-heron bg-pigeon"
+            data-testid="s2-dsk-group-7"
+          >
+            21222
+          </li>
+          <li
+            class="text-center py-1.5 border rounded-[var(--border-radius-base)] text-swift border-heron bg-pigeon"
+            data-testid="s2-dsk-group-8"
+          >
+            32425
+          </li>
+        </ol>
+      </div>
+      <form
+        novalidate=""
+      >
+        <label
+          class="block text-sm font-medium text-swift mb-1"
+          for="s2-pin-input"
+        >
+          PIN: the first five digits of the DSK on the label
+        </label>
+        <input
+          autocomplete="off"
+          class="w-full px-3 py-2 font-mono text-lg tracking-widest border border-heron rounded-[var(--border-radius-base)] bg-crane text-swift focus:outline-none focus:border-peacock"
+          data-testid="s2-pin-input"
+          id="s2-pin-input"
+          inputmode="numeric"
+          maxlength="5"
+          placeholder="00000"
+          value=""
+        />
+        <div
+          class="flex gap-2 mt-4"
+        >
+          <button
+            class="flex-1 py-2 rounded-[var(--border-radius-base)] text-sm font-medium bg-peacock text-crane hover:bg-peacock/90 disabled:opacity-50"
+            data-testid="s2-pin-submit"
+            disabled=""
+            type="submit"
+          >
+            Submit PIN
+          </button>
+          <button
+            class="flex-1 py-2 border border-heron rounded-[var(--border-radius-base)] text-sm text-coot hover:bg-pigeon"
+            data-testid="s2-pin-scan"
+            type="button"
+          >
+            Scan QR code
+          </button>
+        </div>
+        <button
+          class="w-full mt-3 text-sm text-coot hover:underline"
+          data-testid="s2-pin-decline"
+          type="button"
+        >
+          The numbers don't match, or I can't find the PIN
+        </button>
+      </form>
+    </div>
+  </div>
+</DocumentFragment>
+`;
+
+exports[`S2PinPrompt – opening matches snapshot while loading the DSK 1`] = `
+<DocumentFragment>
+  <div
+    class="fixed inset-0 bg-swift/30 flex items-center justify-center z-50 p-4"
+  >
+    <div
+      aria-labelledby="s2-pin-title"
+      aria-modal="true"
+      class="bg-crane rounded-[var(--border-radius-lg)] border border-heron p-6 w-full max-w-md shadow-lg max-h-full overflow-y-auto"
+      data-phase="loading"
+      data-testid="s2-pin-prompt"
+      role="dialog"
+    >
+      <div
+        class="flex items-start justify-between gap-3 mb-3"
+      >
+        <h3
+          class="text-lg font-semibold text-swift"
+          id="s2-pin-title"
+        >
+          Secure this Z-Wave device
+        </h3>
+      </div>
+      <p
+        class="text-sm text-grouse"
+        data-testid="s2-pin-loading"
+      >
+        Loading the device's security key…
+      </p>
+    </div>
+  </div>
+</DocumentFragment>
+`;
+
+exports[`S2PinPrompt – typing the PIN matches snapshot when the attempt is spent 1`] = `
+<DocumentFragment>
+  <div
+    class="fixed inset-0 bg-swift/30 flex items-center justify-center z-50 p-4"
+  >
+    <div
+      aria-labelledby="s2-pin-title"
+      aria-modal="true"
+      class="bg-crane rounded-[var(--border-radius-lg)] border border-heron p-6 w-full max-w-md shadow-lg max-h-full overflow-y-auto"
+      data-phase="spent"
+      data-testid="s2-pin-prompt"
+      role="dialog"
+    >
+      <div
+        class="flex items-start justify-between gap-3 mb-3"
+      >
+        <h3
+          class="text-lg font-semibold text-swift"
+          id="s2-pin-title"
+        >
+          Secure this Z-Wave device
+        </h3>
+      </div>
+      <p
+        class="text-sm text-coot mb-4"
+        data-testid="s2-pin-spent"
+        role="alert"
+      >
+        The hub didn't take the PIN. There is only one try per pairing, so the device will join without S2 security. Exclude or factory reset it, then pair it again to secure it.
+      </p>
+      <button
+        class="flex-1 py-2 rounded-[var(--border-radius-base)] text-sm font-medium bg-peacock text-crane hover:bg-peacock/90 w-full"
+        data-testid="s2-pin-close"
+        type="button"
+      >
+        Close
+      </button>
+    </div>
+  </div>
+</DocumentFragment>
+`;

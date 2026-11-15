@@ -17,7 +17,10 @@ import { addNotification } from '@/store/slices/uiSlice';
 import { useDeviceActions } from '@/hooks/useDeviceActions';
 import { useDeviceRemoval } from '@/hooks/useDeviceRemoval';
 import { testIdSlug } from '@/lib/testId';
+import { securityClassLabel, zwaveSecurityInfo } from '@/lib/zwaveSecurity';
+import type { ProtocolAttrs } from '@/lib/zwaveSecurity';
 import { DeviceRemovalSection } from './removal/DeviceRemovalSection';
+import { ZWaveSecurityNotice } from './ZWaveSecurityNotice';
 
 interface DeviceDetailPanelProps {
   address: string;
@@ -58,6 +61,9 @@ export function DeviceDetailPanel({ address }: DeviceDetailPanelProps) {
   const firmwareVersion = (device[DeviceAdvanced.ATTR_FIRMWAREVERSION] as string) ?? '';
   const battery = device[DevicePower.ATTR_BATTERY] as number | undefined;
   const powerSource = (device[DevicePower.ATTR_SOURCE] as string) ?? '';
+  const security = protocol === 'ZWAV'
+    ? zwaveSecurityInfo(device[DeviceAdvanced.ATTR_PROTOCOLATTRS] as ProtocolAttrs | undefined)
+    : null;
 
   return (
     <div>
@@ -92,6 +98,12 @@ export function DeviceDetailPanel({ address }: DeviceDetailPanelProps) {
         {protocol && (
           <InfoRow label="Protocol" value={formatProtocol(protocol)} />
         )}
+        {security && (
+          <InfoRow label="Security" value={security.granted ? securityClassLabel(security.granted) : 'Unknown'} />
+        )}
+        {security?.requested && (
+          <InfoRow label="Requested Security" value={securityClassLabel(security.requested)} />
+        )}
         {firmwareVersion && (
           <InfoRow label="Firmware" value={firmwareVersion} />
         )}
@@ -109,6 +121,8 @@ export function DeviceDetailPanel({ address }: DeviceDetailPanelProps) {
           />
         )}
       </dl>
+
+      {security && <ZWaveSecurityNotice security={security} className="-mt-4 mb-8" />}
 
       {/* Removal section */}
       <hr className="border-heron mb-4" />

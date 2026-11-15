@@ -1,0 +1,17 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`PairedDeviceSecurity matches snapshot for a fully secured device 1`] = `
+<DocumentFragment>
+  <div
+    class="mt-4 text-left"
+    data-testid="paired-device-security"
+  >
+    <p
+      class="text-sm text-coot "
+      data-testid="zwave-security-confirmed"
+    >
+      Secured with S2 Access Control.
+    </p>
+  </div>
+</DocumentFragment>
+`;

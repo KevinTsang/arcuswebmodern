@@ -1,0 +1,105 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`S2PinEntryForm matches snapshot 1`] = `
+<DocumentFragment>
+  <form
+    novalidate=""
+  >
+    <label
+      class="block text-sm font-medium text-swift mb-1"
+      for="s2-pin-input"
+    >
+      PIN: the first five digits of the DSK on the label
+    </label>
+    <input
+      autocomplete="off"
+      class="w-full px-3 py-2 font-mono text-lg tracking-widest border border-heron rounded-[var(--border-radius-base)] bg-crane text-swift focus:outline-none focus:border-peacock"
+      data-testid="s2-pin-input"
+      id="s2-pin-input"
+      inputmode="numeric"
+      maxlength="5"
+      placeholder="00000"
+      value="515"
+    />
+    <div
+      class="flex gap-2 mt-4"
+    >
+      <button
+        class="flex-1 py-2 rounded-[var(--border-radius-base)] text-sm font-medium bg-peacock text-crane hover:bg-peacock/90 disabled:opacity-50"
+        data-testid="s2-pin-submit"
+        disabled=""
+        type="submit"
+      >
+        Submit PIN
+      </button>
+      <button
+        class="flex-1 py-2 border border-heron rounded-[var(--border-radius-base)] text-sm text-coot hover:bg-pigeon"
+        data-testid="s2-pin-scan"
+        type="button"
+      >
+        Scan QR code
+      </button>
+    </div>
+    <button
+      class="w-full mt-3 text-sm text-coot hover:underline"
+      data-testid="s2-pin-decline"
+      type="button"
+    >
+      The numbers don't match, or I can't find the PIN
+    </button>
+  </form>
+</DocumentFragment>
+`;
+
+exports[`S2PinEntryForm matches snapshot with an error and no scanning 1`] = `
+<DocumentFragment>
+  <form
+    novalidate=""
+  >
+    <label
+      class="block text-sm font-medium text-swift mb-1"
+      for="s2-pin-input"
+    >
+      PIN: the first five digits of the DSK on the label
+    </label>
+    <input
+      aria-describedby="s2-pin-error"
+      aria-invalid="true"
+      autocomplete="off"
+      class="w-full px-3 py-2 font-mono text-lg tracking-widest border border-heron rounded-[var(--border-radius-base)] bg-crane text-swift focus:outline-none focus:border-peacock"
+      data-testid="s2-pin-input"
+      id="s2-pin-input"
+      inputmode="numeric"
+      maxlength="5"
+      placeholder="00000"
+      value="99999"
+    />
+    <p
+      class="text-sm text-cardinal mt-1"
+      data-testid="s2-pin-error"
+      id="s2-pin-error"
+      role="alert"
+    >
+      Bad PIN
+    </p>
+    <div
+      class="flex gap-2 mt-4"
+    >
+      <button
+        class="flex-1 py-2 rounded-[var(--border-radius-base)] text-sm font-medium bg-peacock text-crane hover:bg-peacock/90 disabled:opacity-50"
+        data-testid="s2-pin-submit"
+        type="submit"
+      >
+        Submit PIN
+      </button>
+    </div>
+    <button
+      class="w-full mt-3 text-sm text-coot hover:underline"
+      data-testid="s2-pin-decline"
+      type="button"
+    >
+      The numbers don't match, or I can't find the PIN
+    </button>
+  </form>
+</DocumentFragment>
+`;

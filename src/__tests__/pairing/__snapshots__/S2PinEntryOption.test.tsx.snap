@@ -1,0 +1,28 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`S2PinEntryOption matches snapshot 1`] = `
+<DocumentFragment>
+  <div
+    class="mb-4 p-3 border border-heron rounded-[var(--border-radius-base)] bg-pigeon"
+    data-testid="s2-pin-entry-option"
+  >
+    <label
+      class="flex items-start gap-2 text-sm text-swift"
+    >
+      <input
+        class="mt-0.5"
+        data-testid="s2-pin-entry-skip"
+        type="checkbox"
+      />
+      <span>
+        Pair without the S2 PIN
+        <span
+          class="block text-xs text-coot mt-0.5"
+        >
+          Only if this device failed secure pairing before. It will join with lower security (S2 Unauthenticated or S0), and you won't be asked for the PIN.
+        </span>
+      </span>
+    </label>
+  </div>
+</DocumentFragment>
+`;
