@@ -408,7 +408,7 @@ None.
 
 - "Current conditions" means the weather-alert state the platform reports (`subweather` + `noaa:*`); the platform has no temperature/forecast API, and the legacy client showed none.
 - The Halo panel action (light toggle / play-stop radio) and Halo hush stay with the Halo device controls item.
-- No Cypress coverage yet: the fake platform has no weather radio device or `subweather` subsystem.
+- Cypress coverage: `cypress/e2e/weather.cy.ts` covers the weather card, alert banner and panel, snooze and the three radio configurators. Each test adds the radio and the `subweather` subsystem itself, and the fake platform answers `nwssamecode`, the `noaa` radio commands and `subweather:SnoozeAllAlerts`.
 
 ---
 
