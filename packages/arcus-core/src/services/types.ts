@@ -69,3 +69,26 @@ export interface Invitation {
 export interface GetInvitationResponse {
   invitation: Invitation;
 }
+
+// ── NWS SAME code service ─────────────────────────────────────────
+
+/** A US state as listed by the NWS SAME code service. */
+export interface SameState {
+  /** Two-letter postal code, e.g. `TX`. */
+  stateCode: string;
+  /** Full state name, e.g. `Texas`. */
+  state: string;
+}
+
+export interface ListSameStatesResponse {
+  sameStates: SameState[];
+}
+
+export interface ListSameCountiesResponse {
+  counties: string[];
+}
+
+export interface GetSameCodeResponse {
+  /** Six-digit S.A.M.E. location code. */
+  code: string;
+}

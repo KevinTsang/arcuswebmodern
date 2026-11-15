@@ -10,3 +10,4 @@ export { default as HomeFamilyCard } from './HomeFamilyCard';
 export { default as LawnGardenCard } from './LawnGardenCard';
 export { default as LightsSwitchesCard } from './LightsSwitchesCard';
 export { default as WaterCard } from './WaterCard';
+export { default as WeatherCard } from './WeatherCard';

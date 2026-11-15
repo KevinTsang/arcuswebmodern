@@ -16,7 +16,7 @@
 import {
   Account, AlarmIncident, AlarmSubsystem, Base, Device, Hub, HubZwave, PairingDevice,
   PairingSubsystem, Person, Place, Rule, RuleTemplate, Scene, SceneTemplate, Scheduler,
-  SecuritySubsystem,
+  SecuritySubsystem, WeatherRadio, WeatherSubsystem,
 } from '../../../packages/arcus-core/src/capabilities/capabilities';
 import { createFixture, PLACE_ID } from './fixtures';
 import {
@@ -26,6 +26,24 @@ import {
 } from './types';
 
 type AppWindow = Window & typeof globalThis;
+
+/** NWS S.A.M.E. location codes the fake knows, by state code and county. */
+const SAME_CODES: Record<string, Record<string, string>> = {
+  TX: { Travis: '048453', Bexar: '048029' },
+  CA: { Marin: '006041' },
+};
+
+const SAME_STATES = [
+  { stateCode: 'TX', state: 'Texas' },
+  { stateCode: 'CA', state: 'California' },
+];
+
+/** What `noaa:ScanStations` finds: two audible stations and one out of range. */
+const WEATHER_STATIONS = [
+  { id: 1, freq: '162.400 MHz', rssi: 40 },
+  { id: 3, freq: '162.450 MHz', rssi: 75 },
+  { id: 5, freq: '162.500 MHz', rssi: 0 },
+];
 
 const WS_CONNECTING = 0;
 const WS_OPEN = 1;
@@ -704,6 +722,41 @@ export class MockPlatform {
 
     // Lists loaded when a place becomes active
     'subs:ListSubsystems': () => ({ subsystems: this.entitiesIn('SERV', 'sub', true) }),
+
+    // Weather: NWS S.A.M.E. codes, NOAA weather radios and the weather subsystem
+    'nwssamecode:ListSameStates': () => ({ sameStates: SAME_STATES }),
+    'nwssamecode:ListSameCounties': ({ attrs }) => ({
+      counties: Object.keys(SAME_CODES[attrs.stateCode as string] ?? {}),
+    }),
+    'nwssamecode:GetSameCode': ({ attrs }) => {
+      const code = SAME_CODES[attrs.stateCode as string]?.[attrs.county as string];
+      if (!code) throw new PlatformFailure('request.param.invalid', 'Unknown county');
+      return { code };
+    },
+    [WeatherRadio.CMD_SCANSTATIONS]: () => ({ stations: WEATHER_STATIONS }),
+    [WeatherRadio.CMD_PLAYSTATION]: ({ destination }) => {
+      this.updateEntity(destination, { [WeatherRadio.ATTR_PLAYINGSTATE]: WeatherRadio.PLAYINGSTATE_PLAYING });
+      return {};
+    },
+    [WeatherRadio.CMD_STOPPLAYINGSTATION]: ({ destination }) => {
+      this.updateEntity(destination, { [WeatherRadio.ATTR_PLAYINGSTATE]: WeatherRadio.PLAYINGSTATE_QUIET });
+      return {};
+    },
+    [WeatherRadio.CMD_SELECTSTATION]: ({ destination, attrs }) => {
+      this.updateEntity(destination, { [WeatherRadio.ATTR_STATIONSELECTED]: attrs.station });
+      return {};
+    },
+    [WeatherSubsystem.CMD_SNOOZEALLALERTS]: ({ destination }) => {
+      const sub = this.mustGet(destination);
+      for (const radio of (sub[WeatherSubsystem.ATTR_ALERTINGRADIOS] as string[] | undefined) ?? []) {
+        if (this.entity(radio)) this.updateEntity(radio, { [WeatherRadio.ATTR_ALERTSTATE]: WeatherRadio.ALERTSTATE_HUSHED });
+      }
+      this.updateEntity(destination, {
+        [WeatherSubsystem.ATTR_ALERTINGRADIOS]: [],
+        [WeatherSubsystem.ATTR_WEATHERALERT]: WeatherSubsystem.WEATHERALERT_READY,
+      });
+      return {};
+    },
     'scheduler:ListSchedulers': () => ({ schedulers: this.entitiesIn('SERV', 'scheduler') }),
     'scene:ListScenes': () => ({ scenes: this.entitiesIn('SERV', 'scene') }),
     'scene:ListSceneTemplates': () => ({

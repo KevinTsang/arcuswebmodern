@@ -8,7 +8,7 @@
 import {
   Alarm, AlarmIncident, AlarmSubsystem, CamerasSubsystem, CareSubsystem, ClimateSubsystem, DoorsNLocksSubsystem,
   LawnNGardenSubsystem, LightsNSwitchesSubsystem, PairingSubsystem, PresenceSubsystem,
-  SafetySubsystem, SecuritySubsystem, WaterSubsystem,
+  SafetySubsystem, SecuritySubsystem, WaterSubsystem, WeatherSubsystem,
 } from '@arcus/core';
 
 /**
@@ -20,7 +20,7 @@ import {
 const SUBSYSTEM_CAPABILITIES = [
   AlarmSubsystem, SecuritySubsystem, SafetySubsystem, CamerasSubsystem, CareSubsystem,
   ClimateSubsystem, DoorsNLocksSubsystem, PresenceSubsystem, LawnNGardenSubsystem,
-  LightsNSwitchesSubsystem, WaterSubsystem, PairingSubsystem,
+  LightsNSwitchesSubsystem, WaterSubsystem, PairingSubsystem, WeatherSubsystem,
 ] as const;
 
 export type SubsystemNamespace = (typeof SUBSYSTEM_CAPABILITIES)[number]['NAMESPACE'];

@@ -1,0 +1,46 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`WeatherAlertList matches snapshot 1`] = `
+<DocumentFragment>
+  <ul
+    class="space-y-3"
+  >
+    <li
+      class="border border-heron rounded-[var(--border-radius-base)] p-3"
+      data-testid="weather-alert-DRIV:dev:r1"
+    >
+      <p
+        class="text-sm font-semibold text-swift"
+      >
+        Tornado Warning Issued
+      </p>
+      <p
+        class="text-xs text-coot"
+        data-testid="weather-alert-time-DRIV:dev:r1"
+      >
+        time:1000
+      </p>
+      <div
+        class="flex items-center gap-2 mt-2"
+      >
+        <span
+          class="icon-platform-weather-alert text-cardinal"
+        />
+        <div>
+          <p
+            class="text-sm text-swift"
+          >
+            Kitchen Halo
+          </p>
+          <p
+            class="text-xs text-grouse"
+            data-testid="weather-alert-location-DRIV:dev:r1"
+          >
+            Travis County, TX
+          </p>
+        </div>
+      </div>
+    </li>
+  </ul>
+</DocumentFragment>
+`;

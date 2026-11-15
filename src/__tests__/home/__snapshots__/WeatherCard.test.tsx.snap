@@ -1,0 +1,100 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`WeatherCard matches snapshot 1`] = `
+<DocumentFragment>
+  <div
+    class="border border-heron rounded-[var(--border-radius-base)] overflow-hidden"
+    data-testid="card-weather"
+  >
+    <div
+      class="flex items-center justify-between px-4 py-3 bg-pigeon/20"
+    >
+      <div
+        class="flex items-center gap-2"
+      >
+        <span
+          class="icon-platform-weather-alert text-base text-peacock"
+        />
+        <span
+          class="text-sm font-semibold text-swift"
+        >
+          Weather
+        </span>
+      </div>
+    </div>
+    <div
+      class="px-4 py-3"
+    >
+      <div
+        class="flex gap-4"
+      >
+        <div
+          data-testid="status-badge-weather-status"
+        >
+          <p
+            class="text-lg font-light text-lovebird"
+            data-testid="status-value-weather-status"
+          >
+            All Clear
+          </p>
+          <p
+            class="text-xs text-grouse"
+          >
+            Status
+          </p>
+        </div>
+        <div
+          data-testid="status-badge-weather-radios"
+        >
+          <p
+            class="text-lg font-light text-grouse"
+            data-testid="status-value-weather-radios"
+          >
+            1
+          </p>
+          <p
+            class="text-xs text-grouse"
+          >
+            Radios
+          </p>
+        </div>
+        <div
+          data-testid="status-badge-weather-last-alert"
+        >
+          <p
+            class="text-lg font-light text-grouse"
+            data-testid="status-value-weather-last-alert"
+          >
+            None
+          </p>
+          <p
+            class="text-xs text-grouse"
+          >
+            Last Alert
+          </p>
+        </div>
+      </div>
+      <ul
+        class="mt-3 space-y-1"
+      >
+        <li
+          class="flex justify-between text-sm"
+          data-testid="weather-radio-DRIV:dev:r1"
+        >
+          <span
+            class="text-swift"
+          >
+            Radio DRIV:dev:r1
+          </span>
+          <span
+            class="text-grouse"
+            data-testid="weather-radio-status-DRIV:dev:r1"
+          >
+            No alerts
+          </span>
+        </li>
+      </ul>
+    </div>
+  </div>
+</DocumentFragment>
+`;

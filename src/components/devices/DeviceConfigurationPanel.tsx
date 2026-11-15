@@ -17,6 +17,9 @@ import ThermostatModeConfigurator from './ThermostatModeConfigurator';
 import ColorConfigurator from './ColorConfigurator';
 import ContactSettingConfigurator from './ContactSettingConfigurator';
 import DeviceSettingsConfigurator from './DeviceSettingsConfigurator';
+import NoaaLocationConfigurator from './NoaaLocationConfigurator';
+import NoaaRadioConfigurator from './NoaaRadioConfigurator';
+import NoaaWeatherAlertsConfigurator from './NoaaWeatherAlertsConfigurator';
 
 interface DeviceConfigurationPanelProps {
   address: string;
@@ -62,6 +65,12 @@ function Configurator({ type, address }: { type: string; address: string }) {
       return <ContactSettingConfigurator address={address} />;
     case 'device-settings':
       return <DeviceSettingsConfigurator address={address} />;
+    case 'noaa-location':
+      return <NoaaLocationConfigurator address={address} />;
+    case 'noaa-radio':
+      return <NoaaRadioConfigurator address={address} />;
+    case 'noaa-weather-alerts':
+      return <NoaaWeatherAlertsConfigurator address={address} />;
     default:
       return (
         <div className="text-xs text-grouse italic">

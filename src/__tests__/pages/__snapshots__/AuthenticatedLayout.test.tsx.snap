@@ -12,6 +12,9 @@ exports[`AuthenticatedLayout – rendering matches snapshot 1`] = `
       data-testid="alarm-banner"
     />
     <div
+      data-testid="weather-alert-banner"
+    />
+    <div
       data-testid="invitation-banner"
     />
     <main
