@@ -1,6 +1,7 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { Base, Product, PairingDevice } from '@arcus/core';
 import KitActivatePage from '@/app/(authenticated)/kit-activate/page';
+import { endPairingFlow } from '@/store/slices/pairingSlice';
 import type { DeviceEntity, PairingProduct, SubsystemEntity } from '@/store/entityTypes';
 
 // ── Mocks ─────────────────────────────────────────────────────────────
@@ -48,6 +49,7 @@ jest.mock('@/store/slices/devicesSlice', () => ({
 
 beforeEach(() => {
   jest.clearAllMocks();
+  mockBridgeRequest.mockResolvedValue({ kitInfo: [], devices: [] });
   mockDevices = [];
   mockProducts = [];
   mockSubsystems = {};
@@ -67,7 +69,6 @@ describe('KitActivatePage – empty kit', () => {
     mockSubsystems = {
       sub1: { id: 'sub1', [Base.ATTR_ADDRESS]: 'SERV:subpairing:place-1' },
     };
-    mockBridgeRequest.mockResolvedValue({ kitInfo: [], devices: [] });
     render(<KitActivatePage />);
     await waitFor(() => expect(screen.getByText('No kit devices found.')).toBeInTheDocument());
   });
@@ -76,7 +77,6 @@ describe('KitActivatePage – empty kit', () => {
     mockSubsystems = {
       sub1: { id: 'sub1', [Base.ATTR_ADDRESS]: 'SERV:subpairing:place-1' },
     };
-    mockBridgeRequest.mockResolvedValue({ kitInfo: [], devices: [] });
     render(<KitActivatePage />);
     await waitFor(() => expect(screen.getByText('Go to Devices')).toBeInTheDocument());
   });
@@ -85,7 +85,6 @@ describe('KitActivatePage – empty kit', () => {
     mockSubsystems = {
       sub1: { id: 'sub1', [Base.ATTR_ADDRESS]: 'SERV:subpairing:place-1' },
     };
-    mockBridgeRequest.mockResolvedValue({ kitInfo: [], devices: [] });
     render(<KitActivatePage />);
     await waitFor(() => expect(screen.getByText('Go to Devices')).toBeInTheDocument());
     fireEvent.click(screen.getByText('Go to Devices'));
@@ -136,6 +135,8 @@ describe('KitActivatePage – with kit devices', () => {
     await waitFor(() => expect(screen.getByText('Finish Later')).toBeInTheDocument());
     fireEvent.click(screen.getByText('Finish Later'));
     await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/devices'));
+    // DismissAll ends pairing, so the pairing page's next search starts a new flow
+    expect(mockDispatch).toHaveBeenCalledWith(endPairingFlow());
   });
 });
 
@@ -144,7 +145,7 @@ describe('KitActivatePage – error handling', () => {
     mockSubsystems = {
       sub1: { id: 'sub1', [Base.ATTR_ADDRESS]: 'SERV:subpairing:place-1' },
     };
-    mockBridgeRequest.mockRejectedValue(new Error('fail'));
+    mockBridgeRequest.mockRejectedValueOnce(new Error('fail'));
     render(<KitActivatePage />);
     await waitFor(() =>
       expect(mockDispatch).toHaveBeenCalledWith(

@@ -148,7 +148,7 @@ describe('Authentication', () => {
     cy.platform().its('data.login.password').should('eq', 'Brandnew99');
   });
 
-  it('shows the platform error when the reset code is wrong', () => {
+  it('shows a readable error when the reset code is wrong', () => {
     cy.visit('/login?view=reset-password');
     cy.get('input#rpEmail').type(LOGIN.email);
     cy.get('input#code').type('WRONG');
@@ -156,7 +156,7 @@ describe('Authentication', () => {
     cy.get('input#confirmPassword').type('Brandnew99');
     tid('reset-submit').click();
 
-    tid('reset-error').should('have.text', 'Invalid reset code');
+    tid('reset-error').should('have.text', 'That code is invalid or has expired. Check the code, or request a new one.');
     cy.location('search').should('include', 'view=reset-password');
   });
 });

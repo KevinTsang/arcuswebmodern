@@ -40,7 +40,6 @@ const defaultModeSettings = {
 };
 
 const defaultAlarm = {
-  recordOnSecurity: false,
   fanShutoffOnSmoke: false,
   fanShutoffOnCO: false,
   callTree: [],

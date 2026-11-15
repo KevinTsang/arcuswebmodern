@@ -31,7 +31,7 @@ jest.mock('@/store/thunks/loadPlaceDataThunk', () => ({
 }));
 
 jest.mock('@arcus/core/services', () => ({
-  PersonService: { SendPasswordReset: jest.fn(), ChangePassword: jest.fn() },
+  PersonService: { SendPasswordReset: jest.fn(), ResetPassword: jest.fn() },
 }));
 
 // ── Helpers ───────────────────────────────────────────────────────────
@@ -94,5 +94,39 @@ describe('LoginPage', () => {
     expect(mockReplace).not.toHaveBeenCalled();
     // The remembered page survives a failed attempt.
     expect(sessionStorage.getItem('arcus:nextPage')).toBe('/scenes');
+  });
+
+  describe('view routing', () => {
+    it('shows the login form by default and for an unknown view', () => {
+      mockSearchParams = new URLSearchParams('view=bogus');
+      render(<LoginPage />);
+      expect(screen.getByTestId('login-submit')).toBeInTheDocument();
+    });
+
+    it('shows the send-code step for view=send-code', () => {
+      mockSearchParams = new URLSearchParams('view=send-code');
+      render(<LoginPage />);
+      expect(screen.getByTestId('reset-send')).toBeInTheDocument();
+      expect(screen.queryByTestId('login-submit')).not.toBeInTheDocument();
+    });
+
+    it('shows the reset step for view=reset-password', () => {
+      mockSearchParams = new URLSearchParams('view=reset-password&email=a%40b.com&fromSendCode=1');
+      render(<LoginPage />);
+      expect(screen.getByTestId('reset-submit')).toBeInTheDocument();
+      expect(screen.getByTestId('reset-check-inbox')).toBeInTheDocument();
+    });
+
+    it('shows the confirmation for view=reset-confirmation', () => {
+      mockSearchParams = new URLSearchParams('view=reset-confirmation');
+      render(<LoginPage />);
+      expect(screen.getByTestId('reset-confirmation')).toBeInTheDocument();
+    });
+
+    it('keeps the branding panel on every view', () => {
+      mockSearchParams = new URLSearchParams('view=send-code');
+      render(<LoginPage />);
+      expect(screen.getByText('Smart Home')).toBeInTheDocument();
+    });
   });
 });
