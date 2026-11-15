@@ -1,10 +1,7 @@
 import { createHash } from 'crypto';
 import { ZWaveProtocol } from '@arcus/core';
 import {
-  QR_VERSION_S2,
-  QR_VERSION_SMARTSTART,
   ZWaveQrError,
-  isLongRangeOnly,
   parseZWaveQrCode,
   tryParseZWaveQrCode,
 } from '@/lib/zwaveQr';
@@ -44,9 +41,9 @@ function buildCode({
 // ── Tests ─────────────────────────────────────────────────────────────
 
 describe('parseZWaveQrCode – spec examples', () => {
-  it('parses the Acme Light Dimmer SmartStart code', () => {
+  it('parses the Acme Light Dimmer example (a version 01 code)', () => {
     expect(parseZWaveQrCode(ACME_DIMMER)).toEqual({
-      version: QR_VERSION_SMARTSTART,
+      version: 1,
       requestedSecurityClasses: [
         ZWaveProtocol.SECURITY_S2_UNAUTHENTICATED,
         ZWaveProtocol.SECURITY_S2_AUTHENTICATED,
@@ -67,7 +64,7 @@ describe('parseZWaveQrCode – spec examples', () => {
 
   it('parses an S2-only (version 00) code', () => {
     const result = parseZWaveQrCode(ACME_DIMMER_S2_ONLY);
-    expect(result.version).toBe(QR_VERSION_S2);
+    expect(result.version).toBe(0);
     expect(result.dsk).toBe(DSK);
   });
 
@@ -158,19 +155,11 @@ describe('parseZWaveQrCode – fields', () => {
     expect(result.pin).toBe('00042');
   });
 
-  it('reads the inclusion interval and supported protocols', () => {
+  it('reads the inclusion interval', () => {
     const result = parseZWaveQrCode(buildCode({
-      blocks: PRODUCT_TYPE + PRODUCT_ID + tlv(2, '05') + tlv(4, '03'),
+      blocks: PRODUCT_TYPE + PRODUCT_ID + tlv(2, '05'),
     }));
     expect(result.maxInclusionRequestInterval).toBe(640);
-    expect(result.supportedProtocols).toEqual(['ZWAVE', 'ZWAVE_LONG_RANGE']);
-  });
-
-  it('reads supported protocols written as 3 or 5 digits', () => {
-    expect(parseZWaveQrCode(buildCode({ blocks: PRODUCT_TYPE + PRODUCT_ID + tlv(4, '001') })).supportedProtocols)
-      .toEqual(['ZWAVE']);
-    expect(parseZWaveQrCode(buildCode({ blocks: PRODUCT_TYPE + PRODUCT_ID + tlv(4, '00002') })).supportedProtocols)
-      .toEqual(['ZWAVE_LONG_RANGE']);
   });
 
   it('keeps unknown non-critical blocks raw', () => {
@@ -227,22 +216,5 @@ describe('tryParseZWaveQrCode', () => {
 
   it('returns null for text that is not a Z-Wave code', () => {
     expect(tryParseZWaveQrCode('https://example.com')).toBeNull();
-  });
-});
-
-describe('isLongRangeOnly', () => {
-  const withProtocols = (digits: string) => parseZWaveQrCode(buildCode({ blocks: PRODUCT_TYPE + PRODUCT_ID + tlv(4, digits) }));
-
-  it('is true when the code lists only Long Range', () => {
-    expect(isLongRangeOnly(withProtocols('00002'))).toBe(true);
-  });
-
-  it('is false when the code also lists classic Z-Wave', () => {
-    expect(isLongRangeOnly(withProtocols('03'))).toBe(false);
-    expect(isLongRangeOnly(withProtocols('001'))).toBe(false);
-  });
-
-  it('is false when the code lists no protocols', () => {
-    expect(isLongRangeOnly(parseZWaveQrCode(buildCode({ blocks: PRODUCT_TYPE + PRODUCT_ID })))).toBe(false);
   });
 });

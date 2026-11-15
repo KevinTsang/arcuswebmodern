@@ -138,7 +138,6 @@ arcusplatform, under "What a client must do".
 | "Pair without the S2 PIN" option for Z-Wave products (leaves out `s2PinEntry`; device joins S2 Unauthenticated or S0) | No | Yes | **Done** |
 | Grant security classes per device (user chooses from the requested classes) | No | No | **Missing** (needs a platform API; the hub grants every requested class) |
 | Force S0-only or unencrypted inclusion | No | No | **Missing** (needs a `hub:PairingRequest` option in arcusplatform) |
-| SmartStart: add scanned QR codes to a provisioning list so devices join when powered on | No | No | **Missing** (blocked: no platform API yet) |
 
 ### Gaps
 
@@ -162,10 +161,6 @@ arcusplatform, under "What a client must do".
 - **Security visibility.** Show the granted S2/S0 class on the device's
   advanced info, so you can find devices that joined with less than they asked
   for.
-- **SmartStart (follow-up).** Scanning a QR code *before* inclusion, so the hub
-  adds the device as soon as it is powered, needs a provisioning-list API on the
-  platform (hubzwave or subpairing). It isn't in arcusplatform yet, so build the
-  QR scanner and parser so a provisioning flow can reuse them later.
 - **Testing.** Mock `getUserMedia` and the decoder in unit tests. Extend the
   Cypress fake platform with `GetS2PinRequest` / `SubmitS2Pin` / `CancelS2Pin`
   and the `s2PinRequestId` value changes.
@@ -186,7 +181,7 @@ arcusplatform, under "What a client must do".
 - **QR scan.** `QrScanner` opens the rear camera with `getUserMedia` and
   decodes with `BarcodeDetector` where it reads QR codes, otherwise with
   `jsqr` (loaded on demand) via `src/lib/qrDecoder.ts`. `src/lib/zwaveQr.ts`
-  is a pure, synchronous parser of the Z-Wave S2/SmartStart QR format,
+  is a pure, synchronous parser of the Z-Wave QR code format printed on S2 devices,
   following zwave-js `parseQRCodeString` (lead-in, version, SHA-1 checksum,
   requested keys, DSK, TLV blocks), checked against the spec's example codes.
   A matching DSK asks the user to confirm before sending group 1 as the PIN; a
@@ -200,8 +195,6 @@ arcusplatform, under "What a client must do".
   `ZWAV:SecurityRequested` from `devadv:protocolAttrs` and flags a device
   granted less than it asked for (`src/lib/zwaveSecurity.ts`). A missing
   `ZWAV:Security` is shown as Unknown.
-- **SmartStart.** Not built (no platform API). `parseZWaveQrCode` and
-  `QrScanner` are generic so a provisioning flow can reuse them.
 - **zwave-js S2 guide follow-ups.** Changes made after checking the zwave-js
   "Security S2" guide:
   - `PairedDeviceSecurity` on the completed screen confirms the granted class
@@ -215,9 +208,7 @@ arcusplatform, under "What a client must do".
   - `S2PinEntryOption` lets the user pair a Z-Wave product (`product:protoFamily`
     "Z-Wave") without the PIN, for locks that fail S2. It's shown on the steps
     screen and after a failed or timed-out search.
-  - The QR confirmation lists the requested security classes. A code for a
-    Long Range-only device is explained (Long Range needs SmartStart) instead
-    of the "different device" warning.
+  - The QR confirmation lists the requested security classes.
   - The prompt warns in words in the last 30 seconds.
   - Still open, both platform changes: per-device security class choice, and
     S0-only or unencrypted inclusion.
@@ -874,12 +865,10 @@ These are commonly used features that users will expect:
       matching `RulePanel`'s deliberate save order.
     - The last full run (before these fixes) passed every other spec: 208 of
       212 tests, with 1 test skipped in `history.cy.ts` by design.
-30. ~~**Next-generation Z-Wave (S2 + QR code pairing)**~~ — **DONE** except
-    SmartStart. S2 PIN entry during pairing, camera QR-code scanning to fill the
-    PIN and verify the DSK, S2 failure guidance, and granted vs requested
-    security class display. See §3.5. Platform support is in arcusplatform
-    PR #502. SmartStart provisioning is blocked on a platform API; the QR parser
-    (`src/lib/zwaveQr.ts`) and `QrScanner` are ready to reuse for it.
+30. ~~**Next-generation Z-Wave (S2 + QR code pairing)**~~ — **DONE.** S2 PIN
+    entry during pairing, camera QR-code scanning to fill the PIN and verify the
+    DSK, S2 failure guidance, and granted vs requested security class display.
+    See §3.5. Platform support is in arcusplatform PR #502.
 31. **Enforce the platform's 100-character password limit** — The platform rejects
     passwords over 100 characters (`MAX_PASSWORD_LENGTH` in arcusplatform's
     `ResetPasswordRESTHandler`). That check throws instead of returning an error

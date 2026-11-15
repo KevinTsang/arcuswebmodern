@@ -7,9 +7,6 @@
  * parent ends the scan by unmounting it. Reports each newly seen code text to
  * `onDetected`; the parent decides whether it is the code it wants. Calls
  * `onUnavailable` once, with a message, if the camera can't be used.
- *
- * Generic on purpose: the S2 PIN prompt uses it now, and a SmartStart
- * provisioning flow can use it later.
  */
 
 import { useEffect, useRef, useState } from 'react';

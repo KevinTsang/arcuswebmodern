@@ -83,36 +83,3 @@ exports[`S2QrResult – matching code matches snapshot 1`] = `
   </div>
 </DocumentFragment>
 `;
-
-exports[`S2QrResult – what the code says matches snapshot for a Long Range-only code 1`] = `
-<DocumentFragment>
-  <div
-    data-testid="s2-qr-long-range"
-  >
-    <p
-      class="text-sm text-swift p-3 mb-4 border border-heron bg-pigeon rounded-[var(--border-radius-base)]"
-      role="status"
-    >
-      This QR code is for a Z-Wave Long Range device. Long Range devices can only be added with SmartStart, which isn't available yet, so it isn't the device joining now. Scan the code of the device you're pairing, or enter its PIN by hand.
-    </p>
-    <div
-      class="flex gap-2"
-    >
-      <button
-        class="flex-1 py-2 border border-heron rounded-[var(--border-radius-base)] text-sm text-coot hover:bg-pigeon"
-        data-testid="s2-qr-scan-again"
-        type="button"
-      >
-        Scan again
-      </button>
-      <button
-        class="flex-1 py-2 border border-heron rounded-[var(--border-radius-base)] text-sm text-coot hover:bg-pigeon"
-        data-testid="s2-qr-manual"
-        type="button"
-      >
-        Enter the PIN by hand
-      </button>
-    </div>
-  </div>
-</DocumentFragment>
-`;

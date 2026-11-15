@@ -1,5 +1,5 @@
 /**
- * Parser for Z-Wave S2 / SmartStart QR codes.
+ * Parser for the Z-Wave QR code printed on S2 devices, used to read the S2 PIN.
  *
  * Follows the Z-Wave Alliance "Node Provisioning QR Code Format" as
  * implemented by zwave-js (`parseQRCodeString` in packages/core/src/qr). The
@@ -8,7 +8,7 @@
  * | Offset | Digits | Field |
  * |---|---|---|
  * | 0 | 2 | Lead-in, always `90` |
- * | 2 | 2 | Version: 00 S2, 01 SmartStart |
+ * | 2 | 2 | Version: 00 or 01 (both carry the DSK, so both are accepted) |
  * | 4 | 5 | Checksum: first two bytes (big-endian) of SHA-1 over everything from offset 9 |
  * | 9 | 3 | Requested keys bitmask: bit 0 S2 Unauthenticated, 1 S2 Authenticated, 2 S2 Access Control, 7 S0 |
  * | 12 | 40 | DSK, eight 5-digit groups; the first is the PIN |
@@ -17,8 +17,7 @@
  * Numbers are written in decimal: a byte as 3 digits, a 16-bit value as 5.
  * ProductType and ProductId blocks are required.
  *
- * Pure and synchronous, so the PIN prompt and a future SmartStart provisioning
- * flow can both use it.
+ * Pure and synchronous.
  */
 
 import { ZWaveProtocol } from '@arcus/core';
@@ -31,8 +30,8 @@ export type ZWaveSecurityClass =
   | typeof ZWaveProtocol.SECURITY_S2_ACCESS_CONTROL
   | typeof ZWaveProtocol.SECURITY_S0;
 
-export const QR_VERSION_S2 = 0;
-export const QR_VERSION_SMARTSTART = 1;
+/** The highest QR format version. Devices print 00 or 01; the DSK is read the same way. */
+export const QR_MAX_VERSION = 1;
 
 /** TLV block types. */
 export const QR_TLV = {
@@ -40,10 +39,7 @@ export const QR_TLV = {
   PRODUCT_ID: 0x01,
   MAX_INCLUSION_REQUEST_INTERVAL: 0x02,
   UUID16: 0x03,
-  SUPPORTED_PROTOCOLS: 0x04,
 } as const;
-
-export type ZWaveQrProtocol = 'ZWAVE' | 'ZWAVE_LONG_RANGE';
 
 /** A TLV block the parser does not interpret, kept as its raw digits. */
 export interface ZWaveQrExtraBlock {
@@ -52,7 +48,7 @@ export interface ZWaveQrExtraBlock {
 }
 
 export interface ZWaveQrCode {
-  /** 0 for an S2-only code, 1 for SmartStart. */
+  /** The format version printed on the label (00 or 01). */
   version: number;
   requestedSecurityClasses: ZWaveSecurityClass[];
   /** All eight DSK groups, dash separated. */
@@ -71,7 +67,6 @@ export interface ZWaveQrCode {
   maxInclusionRequestInterval?: number;
   /** 32 hex digits. */
   uuid?: string;
-  supportedProtocols?: ZWaveQrProtocol[];
   extraBlocks: ZWaveQrExtraBlock[];
   /** The code itself, without whitespace or text around it. */
   code: string;
@@ -155,16 +150,6 @@ function parseBlock(type: number, data: string): BlockFields | null {
       }
       return { uuid };
     }
-    case QR_TLV.SUPPORTED_PROTOCOLS: {
-      const mask = data.length === 2 ? readLevel(data, 0)
-        : data.length === 3 ? readUInt8(data, 0)
-          : data.length === 5 ? readUInt16(data, 0)
-            : 0;
-      const supportedProtocols: ZWaveQrProtocol[] = [];
-      if (mask & 0b01) supportedProtocols.push('ZWAVE');
-      if (mask & 0b10) supportedProtocols.push('ZWAVE_LONG_RANGE');
-      return { supportedProtocols };
-    }
     default:
       return null;
   }
@@ -181,7 +166,7 @@ function parseExact(code: string, findEnd: boolean): ZWaveQrCode {
   if (!/^\d+$/.test(code)) fail('contains invalid characters');
 
   const version = readLevel(code, 2);
-  if (version > QR_VERSION_SMARTSTART) fail('invalid version');
+  if (version > QR_MAX_VERSION) fail('invalid version');
 
   const expected = readUInt16(code, 4);
   if (!findEnd && checksum(code, code.length) !== expected) fail('invalid checksum');
@@ -298,12 +283,4 @@ export function tryParseZWaveQrCode(text: string): ZWaveQrCode | null {
     if (e instanceof ZWaveQrError) return null;
     throw e;
   }
-}
-
-/**
- * True when the code says the device supports only Z-Wave Long Range. Long Range devices can only
- * be added with SmartStart, so such a device can't be the one joining a classic inclusion.
- */
-export function isLongRangeOnly(code: ZWaveQrCode): boolean {
-  return !!code.supportedProtocols && code.supportedProtocols.length > 0 && !code.supportedProtocols.includes('ZWAVE');
 }

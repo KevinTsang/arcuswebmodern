@@ -28,7 +28,7 @@ import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { addNotification } from '@/store/slices/uiSlice';
 import { useSecondsLeft } from '@/hooks/useSecondsLeft';
 import { cameraUnavailableReason } from '@/lib/qrDecoder';
-import { isLongRangeOnly, tryParseZWaveQrCode } from '@/lib/zwaveQr';
+import { tryParseZWaveQrCode } from '@/lib/zwaveQr';
 import type { ZWaveQrCode } from '@/lib/zwaveQr';
 import {
   S2_PIN_INVALID_ERROR,
@@ -358,7 +358,6 @@ export function S2PinPrompt({ pairingSubsystem }: S2PinPromptProps) {
             matched={scanMatched}
             pin={scanned.pin}
             requestedSecurityClasses={scanned.requestedSecurityClasses}
-            longRangeOnly={isLongRangeOnly(scanned)}
             onSubmit={handleSubmitScanned}
             onDecline={handleDecline}
             onScanAgain={startScan}
