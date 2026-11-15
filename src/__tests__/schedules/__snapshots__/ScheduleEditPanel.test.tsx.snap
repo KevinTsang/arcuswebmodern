@@ -1,0 +1,535 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`ScheduleEditPanel matches snapshot for a rule schedule 1`] = `
+<DocumentFragment>
+  <div>
+    <p
+      class="text-sm text-grouse mb-4"
+      data-testid="schedule-target"
+    >
+      Lock up at night
+    </p>
+    <p
+      class="text-sm text-coot mb-4"
+      data-testid="schedule-instructions"
+    >
+      Choose when the rule is active.
+    </p>
+    <div
+      class="border border-heron rounded-[var(--border-radius-base)] overflow-hidden"
+    >
+      <div
+        class="grid grid-cols-[48px_repeat(7,1fr)] bg-pigeon/30 border-b border-heron"
+      >
+        <div
+          class="p-2 text-xs text-grouse"
+        />
+        <div
+          class="p-2 text-xs text-center font-medium text-swift"
+        >
+          Mon
+        </div>
+        <div
+          class="p-2 text-xs text-center font-medium text-swift"
+        >
+          Tue
+        </div>
+        <div
+          class="p-2 text-xs text-center font-medium text-swift"
+        >
+          Wed
+        </div>
+        <div
+          class="p-2 text-xs text-center font-medium text-swift"
+        >
+          Thu
+        </div>
+        <div
+          class="p-2 text-xs text-center font-medium text-swift"
+        >
+          Fri
+        </div>
+        <div
+          class="p-2 text-xs text-center font-medium text-swift"
+        >
+          Sat
+        </div>
+        <div
+          class="p-2 text-xs text-center font-medium text-swift"
+        >
+          Sun
+        </div>
+      </div>
+      <div
+        class="grid grid-cols-[48px_repeat(7,1fr)] relative"
+        style="height: 200px;"
+      >
+        <div
+          class="relative"
+        >
+          <div
+            class="absolute left-0 right-0 text-[10px] text-grouse px-1"
+            style="top: 0%;"
+          >
+            12 AM
+          </div>
+          <div
+            class="absolute left-0 right-0 text-[10px] text-grouse px-1"
+            style="top: 25%;"
+          >
+            6 AM
+          </div>
+          <div
+            class="absolute left-0 right-0 text-[10px] text-grouse px-1"
+            style="top: 50%;"
+          >
+            12 PM
+          </div>
+          <div
+            class="absolute left-0 right-0 text-[10px] text-grouse px-1"
+            style="top: 75%;"
+          >
+            6 PM
+          </div>
+        </div>
+        <div
+          class="relative border-l border-heron"
+        >
+          <div
+            class="absolute left-0 right-0 border-t border-heron/50"
+            style="top: 0%;"
+          />
+          <div
+            class="absolute left-0 right-0 border-t border-heron/50"
+            style="top: 25%;"
+          />
+          <div
+            class="absolute left-0 right-0 border-t border-heron/50"
+            style="top: 50%;"
+          />
+          <div
+            class="absolute left-0 right-0 border-t border-heron/50"
+            style="top: 75%;"
+          />
+          <button
+            class="absolute left-0.5 right-0.5 h-2 rounded-full cursor-pointer hover:opacity-80"
+            data-day="MON"
+            data-testid="schedule-event-cmd-1-mon"
+            data-time="22:00:00"
+            style="top: 91.66666666666666%; background-color: var(--color-grouse);"
+            title="Lock up at night: Inactive at 22:00:00"
+          />
+        </div>
+        <div
+          class="relative border-l border-heron"
+        >
+          <div
+            class="absolute left-0 right-0 border-t border-heron/50"
+            style="top: 0%;"
+          />
+          <div
+            class="absolute left-0 right-0 border-t border-heron/50"
+            style="top: 25%;"
+          />
+          <div
+            class="absolute left-0 right-0 border-t border-heron/50"
+            style="top: 50%;"
+          />
+          <div
+            class="absolute left-0 right-0 border-t border-heron/50"
+            style="top: 75%;"
+          />
+          <button
+            class="absolute left-0.5 right-0.5 h-2 rounded-full cursor-pointer hover:opacity-80"
+            data-day="TUE"
+            data-testid="schedule-event-cmd-1-tue"
+            data-time="22:00:00"
+            style="top: 91.66666666666666%; background-color: var(--color-grouse);"
+            title="Lock up at night: Inactive at 22:00:00"
+          />
+        </div>
+        <div
+          class="relative border-l border-heron"
+        >
+          <div
+            class="absolute left-0 right-0 border-t border-heron/50"
+            style="top: 0%;"
+          />
+          <div
+            class="absolute left-0 right-0 border-t border-heron/50"
+            style="top: 25%;"
+          />
+          <div
+            class="absolute left-0 right-0 border-t border-heron/50"
+            style="top: 50%;"
+          />
+          <div
+            class="absolute left-0 right-0 border-t border-heron/50"
+            style="top: 75%;"
+          />
+        </div>
+        <div
+          class="relative border-l border-heron"
+        >
+          <div
+            class="absolute left-0 right-0 border-t border-heron/50"
+            style="top: 0%;"
+          />
+          <div
+            class="absolute left-0 right-0 border-t border-heron/50"
+            style="top: 25%;"
+          />
+          <div
+            class="absolute left-0 right-0 border-t border-heron/50"
+            style="top: 50%;"
+          />
+          <div
+            class="absolute left-0 right-0 border-t border-heron/50"
+            style="top: 75%;"
+          />
+        </div>
+        <div
+          class="relative border-l border-heron"
+        >
+          <div
+            class="absolute left-0 right-0 border-t border-heron/50"
+            style="top: 0%;"
+          />
+          <div
+            class="absolute left-0 right-0 border-t border-heron/50"
+            style="top: 25%;"
+          />
+          <div
+            class="absolute left-0 right-0 border-t border-heron/50"
+            style="top: 50%;"
+          />
+          <div
+            class="absolute left-0 right-0 border-t border-heron/50"
+            style="top: 75%;"
+          />
+        </div>
+        <div
+          class="relative border-l border-heron"
+        >
+          <div
+            class="absolute left-0 right-0 border-t border-heron/50"
+            style="top: 0%;"
+          />
+          <div
+            class="absolute left-0 right-0 border-t border-heron/50"
+            style="top: 25%;"
+          />
+          <div
+            class="absolute left-0 right-0 border-t border-heron/50"
+            style="top: 50%;"
+          />
+          <div
+            class="absolute left-0 right-0 border-t border-heron/50"
+            style="top: 75%;"
+          />
+        </div>
+        <div
+          class="relative border-l border-heron"
+        >
+          <div
+            class="absolute left-0 right-0 border-t border-heron/50"
+            style="top: 0%;"
+          />
+          <div
+            class="absolute left-0 right-0 border-t border-heron/50"
+            style="top: 25%;"
+          />
+          <div
+            class="absolute left-0 right-0 border-t border-heron/50"
+            style="top: 50%;"
+          />
+          <div
+            class="absolute left-0 right-0 border-t border-heron/50"
+            style="top: 75%;"
+          />
+        </div>
+      </div>
+    </div>
+    <div
+      class="mt-4 flex gap-2"
+    >
+      <button
+        class="flex-1 py-2 bg-peacock text-crane rounded-[var(--border-radius-base)] text-sm font-medium hover:bg-peacock/90"
+        data-testid="schedule-add-event"
+      >
+        Add Event
+      </button>
+    </div>
+  </div>
+</DocumentFragment>
+`;
+
+exports[`ScheduleEditPanel matches snapshot with the timezone note 1`] = `
+<DocumentFragment>
+  <div>
+    <p
+      class="text-sm text-grouse mb-4"
+      data-testid="schedule-target"
+    >
+      Lock up at night
+    </p>
+    <p
+      class="text-sm text-coot mb-4"
+      data-testid="schedule-instructions"
+    >
+      Choose when the rule is active.
+    </p>
+    <p
+      class="text-xs text-grouse mb-4"
+      data-testid="schedule-timezone-note"
+    >
+      Times are shown in your time zone (Asia/Tokyo). This place is in Coordinated Universal Time.
+    </p>
+    <div
+      class="border border-heron rounded-[var(--border-radius-base)] overflow-hidden"
+    >
+      <div
+        class="grid grid-cols-[48px_repeat(7,1fr)] bg-pigeon/30 border-b border-heron"
+      >
+        <div
+          class="p-2 text-xs text-grouse"
+        />
+        <div
+          class="p-2 text-xs text-center font-medium text-swift"
+        >
+          Mon
+        </div>
+        <div
+          class="p-2 text-xs text-center font-medium text-swift"
+        >
+          Tue
+        </div>
+        <div
+          class="p-2 text-xs text-center font-medium text-swift"
+        >
+          Wed
+        </div>
+        <div
+          class="p-2 text-xs text-center font-medium text-swift"
+        >
+          Thu
+        </div>
+        <div
+          class="p-2 text-xs text-center font-medium text-swift"
+        >
+          Fri
+        </div>
+        <div
+          class="p-2 text-xs text-center font-medium text-swift"
+        >
+          Sat
+        </div>
+        <div
+          class="p-2 text-xs text-center font-medium text-swift"
+        >
+          Sun
+        </div>
+      </div>
+      <div
+        class="grid grid-cols-[48px_repeat(7,1fr)] relative"
+        style="height: 200px;"
+      >
+        <div
+          class="relative"
+        >
+          <div
+            class="absolute left-0 right-0 text-[10px] text-grouse px-1"
+            style="top: 0%;"
+          >
+            12 AM
+          </div>
+          <div
+            class="absolute left-0 right-0 text-[10px] text-grouse px-1"
+            style="top: 25%;"
+          >
+            6 AM
+          </div>
+          <div
+            class="absolute left-0 right-0 text-[10px] text-grouse px-1"
+            style="top: 50%;"
+          >
+            12 PM
+          </div>
+          <div
+            class="absolute left-0 right-0 text-[10px] text-grouse px-1"
+            style="top: 75%;"
+          >
+            6 PM
+          </div>
+        </div>
+        <div
+          class="relative border-l border-heron"
+        >
+          <div
+            class="absolute left-0 right-0 border-t border-heron/50"
+            style="top: 0%;"
+          />
+          <div
+            class="absolute left-0 right-0 border-t border-heron/50"
+            style="top: 25%;"
+          />
+          <div
+            class="absolute left-0 right-0 border-t border-heron/50"
+            style="top: 50%;"
+          />
+          <div
+            class="absolute left-0 right-0 border-t border-heron/50"
+            style="top: 75%;"
+          />
+        </div>
+        <div
+          class="relative border-l border-heron"
+        >
+          <div
+            class="absolute left-0 right-0 border-t border-heron/50"
+            style="top: 0%;"
+          />
+          <div
+            class="absolute left-0 right-0 border-t border-heron/50"
+            style="top: 25%;"
+          />
+          <div
+            class="absolute left-0 right-0 border-t border-heron/50"
+            style="top: 50%;"
+          />
+          <div
+            class="absolute left-0 right-0 border-t border-heron/50"
+            style="top: 75%;"
+          />
+          <button
+            class="absolute left-0.5 right-0.5 h-2 rounded-full cursor-pointer hover:opacity-80"
+            data-day="TUE"
+            data-testid="schedule-event-cmd-1-tue"
+            data-time="07:00:00"
+            style="top: 29.166666666666668%; background-color: var(--color-grouse);"
+            title="Lock up at night: Inactive at 07:00:00"
+          />
+        </div>
+        <div
+          class="relative border-l border-heron"
+        >
+          <div
+            class="absolute left-0 right-0 border-t border-heron/50"
+            style="top: 0%;"
+          />
+          <div
+            class="absolute left-0 right-0 border-t border-heron/50"
+            style="top: 25%;"
+          />
+          <div
+            class="absolute left-0 right-0 border-t border-heron/50"
+            style="top: 50%;"
+          />
+          <div
+            class="absolute left-0 right-0 border-t border-heron/50"
+            style="top: 75%;"
+          />
+          <button
+            class="absolute left-0.5 right-0.5 h-2 rounded-full cursor-pointer hover:opacity-80"
+            data-day="WED"
+            data-testid="schedule-event-cmd-1-wed"
+            data-time="07:00:00"
+            style="top: 29.166666666666668%; background-color: var(--color-grouse);"
+            title="Lock up at night: Inactive at 07:00:00"
+          />
+        </div>
+        <div
+          class="relative border-l border-heron"
+        >
+          <div
+            class="absolute left-0 right-0 border-t border-heron/50"
+            style="top: 0%;"
+          />
+          <div
+            class="absolute left-0 right-0 border-t border-heron/50"
+            style="top: 25%;"
+          />
+          <div
+            class="absolute left-0 right-0 border-t border-heron/50"
+            style="top: 50%;"
+          />
+          <div
+            class="absolute left-0 right-0 border-t border-heron/50"
+            style="top: 75%;"
+          />
+        </div>
+        <div
+          class="relative border-l border-heron"
+        >
+          <div
+            class="absolute left-0 right-0 border-t border-heron/50"
+            style="top: 0%;"
+          />
+          <div
+            class="absolute left-0 right-0 border-t border-heron/50"
+            style="top: 25%;"
+          />
+          <div
+            class="absolute left-0 right-0 border-t border-heron/50"
+            style="top: 50%;"
+          />
+          <div
+            class="absolute left-0 right-0 border-t border-heron/50"
+            style="top: 75%;"
+          />
+        </div>
+        <div
+          class="relative border-l border-heron"
+        >
+          <div
+            class="absolute left-0 right-0 border-t border-heron/50"
+            style="top: 0%;"
+          />
+          <div
+            class="absolute left-0 right-0 border-t border-heron/50"
+            style="top: 25%;"
+          />
+          <div
+            class="absolute left-0 right-0 border-t border-heron/50"
+            style="top: 50%;"
+          />
+          <div
+            class="absolute left-0 right-0 border-t border-heron/50"
+            style="top: 75%;"
+          />
+        </div>
+        <div
+          class="relative border-l border-heron"
+        >
+          <div
+            class="absolute left-0 right-0 border-t border-heron/50"
+            style="top: 0%;"
+          />
+          <div
+            class="absolute left-0 right-0 border-t border-heron/50"
+            style="top: 25%;"
+          />
+          <div
+            class="absolute left-0 right-0 border-t border-heron/50"
+            style="top: 50%;"
+          />
+          <div
+            class="absolute left-0 right-0 border-t border-heron/50"
+            style="top: 75%;"
+          />
+        </div>
+      </div>
+    </div>
+    <div
+      class="mt-4 flex gap-2"
+    >
+      <button
+        class="flex-1 py-2 bg-peacock text-crane rounded-[var(--border-radius-base)] text-sm font-medium hover:bg-peacock/90"
+        data-testid="schedule-add-event"
+      >
+        Add Event
+      </button>
+    </div>
+  </div>
+</DocumentFragment>
+`;

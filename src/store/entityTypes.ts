@@ -230,7 +230,9 @@ export type PlaceData = ArcusPayload
     Record<typeof Place.ATTR_STATEPROV, string> &
     Record<typeof Place.ATTR_ZIPCODE, string> &
     Record<typeof Place.ATTR_SERVICELEVEL, string> &
-    Record<typeof Place.ATTR_ACCOUNT, string>
+    Record<typeof Place.ATTR_ACCOUNT, string> &
+    Record<typeof Place.ATTR_TZID, string> &
+    Record<typeof Place.ATTR_TZNAME, string>
   >;
 
 /** Account data from API responses. */

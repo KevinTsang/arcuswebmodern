@@ -12,6 +12,8 @@ import { Thermostat } from '@arcus/core';
 import { SchedulerService } from '@arcus/core/services';
 import { useAppSelector } from '@/store/hooks';
 import { selectSchedulerByTarget } from '@/store/slices/schedulersSlice';
+import { useScheduleTimezone } from '@/hooks/useScheduleTimezone';
+import type { ScheduleMessageTypeOption } from './types';
 import {
   ScheduleCalendar,
   type ScheduleEvent,
@@ -28,6 +30,10 @@ interface ScheduleEditPanelProps {
   messageType: string;
   modes?: string[];
   attributeEditor?: React.ReactNode;
+  /** Commands an event can send (e.g. rule Active / Inactive); labels calendar events. */
+  messageTypeOptions?: ScheduleMessageTypeOption[];
+  /** Short guidance shown above the calendar. */
+  instructions?: string;
 }
 
 export function ScheduleEditPanel({
@@ -37,7 +43,10 @@ export function ScheduleEditPanel({
   messageType,
   modes,
   attributeEditor,
+  messageTypeOptions,
+  instructions,
 }: ScheduleEditPanelProps) {
+  const { converts, toLocal, localTimeZone, placeTimeZoneName } = useScheduleTimezone();
   const scheduler = useAppSelector((s) => selectSchedulerByTarget(s, targetAddress));
 
   const [view, setView] = useState<'calendar' | 'edit'>('calendar');
@@ -53,17 +62,26 @@ export function ScheduleEditPanel({
     const parsed: ScheduleEvent[] = [];
     for (const [id, cmd] of Object.entries(commands)) {
       const sId = (cmd['scheduleId'] as string) ?? defaultScheduleId;
+      const option = messageTypeOptions?.find((o) => o.value === cmd['messageType']);
+      const placeTime = (cmd['time'] as string) ?? '12:00:00';
+      const placeDays = (cmd['days'] as string[]) ?? [];
+      // Absolute times are stored in place time; show them in the viewer's.
+      const isAbsolute = (cmd['mode'] ?? 'ABSOLUTE') === 'ABSOLUTE';
+      const { time, days } = isAbsolute
+        ? toLocal(placeTime, placeDays)
+        : { time: placeTime, days: placeDays };
+      const modeColor = sId === Thermostat.HVACMODE_HEAT ? 'var(--color-cardinal)' : sId === Thermostat.HVACMODE_COOL ? 'var(--color-peacock)' : undefined;
       parsed.push({
         id,
-        time: (cmd['time'] as string) ?? '12:00:00',
-        days: (cmd['days'] as string[]) ?? [],
+        time,
+        days,
         scheduleId: sId,
-        label: targetName,
-        color: sId === Thermostat.HVACMODE_HEAT ? 'var(--color-cardinal)' : sId === Thermostat.HVACMODE_COOL ? 'var(--color-peacock)' : undefined,
+        label: option ? `${targetName}: ${option.label}` : targetName,
+        color: option?.inactive ? 'var(--color-grouse)' : modeColor,
       });
     }
     return parsed;
-  }, [scheduler, defaultScheduleId, targetName]);
+  }, [scheduler, defaultScheduleId, targetName, messageTypeOptions, toLocal]);
 
   const handleEventClick = useCallback(
     (event: ScheduleEvent) => {
@@ -97,6 +115,16 @@ export function ScheduleEditPanel({
   return (
     <div>
       <p data-testid="schedule-target" className="text-sm text-grouse mb-4">{targetName}</p>
+
+      {instructions && (
+        <p data-testid="schedule-instructions" className="text-sm text-coot mb-4">{instructions}</p>
+      )}
+
+      {converts && (
+        <p data-testid="schedule-timezone-note" className="text-xs text-grouse mb-4">
+          Times are shown in your time zone ({localTimeZone}). This place is in {placeTimeZoneName}.
+        </p>
+      )}
 
       {/* Mode selector (for multi-mode devices like thermostats) */}
       {modes && modes.length > 1 && (
@@ -149,6 +177,7 @@ export function ScheduleEditPanel({
           onCancel={() => setView('calendar')}
           onDelete={handleSaveOrDelete}
           attributeEditor={attributeEditor}
+          messageTypeOptions={messageTypeOptions}
         />
       )}
     </div>

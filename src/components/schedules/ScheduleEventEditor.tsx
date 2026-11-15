@@ -12,6 +12,9 @@ import { useState, useCallback } from 'react';
 import { SchedulerService } from '@arcus/core/services';
 import { useAppDispatch } from '@/store/hooks';
 import { addNotification } from '@/store/slices/uiSlice';
+import { useScheduleTimezone } from '@/hooks/useScheduleTimezone';
+import { testIdSlug } from '@/lib/testId';
+import type { ScheduleMessageTypeOption } from './types';
 
 const DAYS = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'] as const;
 const DAY_LABELS: Record<string, string> = {
@@ -40,6 +43,19 @@ interface ScheduleEventEditorProps {
   onCancel?: () => void;
   onDelete?: () => void;
   attributeEditor?: React.ReactNode;
+  /** Commands the event can send; renders a selector when given (e.g. rule Active / Inactive). */
+  messageTypeOptions?: ScheduleMessageTypeOption[];
+}
+
+/** The command an event starts with: its own, if it is one of the options, else the first option. */
+function initialMessageType(
+  messageType: string,
+  options: ScheduleMessageTypeOption[] | undefined,
+  eventMessageType: string | undefined,
+): string {
+  const current = eventMessageType ?? messageType;
+  if (!options || options.length === 0 || options.some((o) => o.value === current)) return current;
+  return options[0].value;
 }
 
 export function ScheduleEventEditor({
@@ -51,9 +67,14 @@ export function ScheduleEventEditor({
   onCancel,
   onDelete,
   attributeEditor,
+  messageTypeOptions,
 }: ScheduleEventEditorProps) {
   const dispatch = useAppDispatch();
+  const { toPlace } = useScheduleTimezone();
   const isEditing = !!event?.id;
+  const [selectedMessageType, setSelectedMessageType] = useState(
+    () => initialMessageType(messageType, messageTypeOptions, event?.messageType),
+  );
 
   const [time, setTime] = useState(event?.time ?? '12:00:00');
   const [mode, setMode] = useState<TimeMode>(event?.mode ?? 'ABSOLUTE');
@@ -99,20 +120,24 @@ export function ScheduleEventEditor({
     }
     setSaving(true);
     try {
-      const days = Array.from(selectedDays);
+      // Times are edited in the viewer's timezone; the platform stores place time.
+      const local = Array.from(selectedDays);
+      const { time: placeTime, days } = mode === 'ABSOLUTE'
+        ? toPlace(time, local)
+        : { time, days: local };
       if (isEditing && event?.id) {
         await SchedulerService.UpdateWeeklyCommand(
           target, scheduleId, event.id, days, mode,
-          mode === 'ABSOLUTE' ? time : undefined,
+          mode === 'ABSOLUTE' ? placeTime : undefined,
           mode !== 'ABSOLUTE' ? offsetMinutes : undefined,
-          messageType, attributes,
+          selectedMessageType, attributes,
         );
       } else {
         await SchedulerService.ScheduleWeeklyCommand(
           target, scheduleId, days, mode,
-          mode === 'ABSOLUTE' ? time : undefined,
+          mode === 'ABSOLUTE' ? placeTime : undefined,
           mode !== 'ABSOLUTE' ? offsetMinutes : undefined,
-          messageType, attributes,
+          selectedMessageType, attributes,
         );
       }
       dispatch(addNotification({ type: 'success', message: isEditing ? 'Event updated.' : 'Event created.' }));
@@ -122,7 +147,7 @@ export function ScheduleEventEditor({
     } finally {
       setSaving(false);
     }
-  }, [target, scheduleId, messageType, event, selectedDays, mode, time, offsetMinutes, attributes, isEditing, dispatch, onSave]);
+  }, [target, scheduleId, selectedMessageType, event, selectedDays, mode, time, offsetMinutes, attributes, isEditing, toPlace, dispatch, onSave]);
 
   const handleDelete = useCallback(async () => {
     if (!event?.id || !window.confirm('Delete this scheduled event?')) return;
@@ -140,6 +165,30 @@ export function ScheduleEventEditor({
 
   return (
     <div className="space-y-5">
+      {/* Command selector (e.g. rule Active / Inactive) */}
+      {messageTypeOptions && messageTypeOptions.length > 1 && (
+        <div>
+          <label className="block text-sm font-medium text-swift mb-2">State</label>
+          <div className="flex gap-1 bg-pigeon rounded-[var(--border-radius-base)] p-1 w-fit">
+            {messageTypeOptions.map((option) => (
+              <button
+                key={option.value}
+                data-testid={`schedule-action-${testIdSlug(option.label)}`}
+                aria-pressed={selectedMessageType === option.value}
+                onClick={() => setSelectedMessageType(option.value)}
+                className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
+                  selectedMessageType === option.value
+                    ? 'bg-crane text-swift shadow-sm'
+                    : 'text-grouse hover:text-coot'
+                }`}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Time mode */}
       <div>
         <label className="block text-sm font-medium text-swift mb-2">Time</label>
