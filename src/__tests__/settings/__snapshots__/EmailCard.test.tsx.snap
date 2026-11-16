@@ -1,0 +1,69 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`EmailCard matches snapshot 1`] = `
+<DocumentFragment>
+  <div
+    class="border border-heron rounded-[var(--border-radius-base)] overflow-hidden"
+    data-testid="info-card-email"
+  >
+    <div
+      class="flex items-center justify-between px-4 py-3 bg-pigeon/30"
+    >
+      <h3
+        class="text-sm font-medium text-swift"
+      >
+        Email
+      </h3>
+      <span
+        data-testid="info-card-email-action"
+      >
+        <button
+          class="text-sm text-peacock hover:underline disabled:opacity-50"
+        >
+          Change
+        </button>
+      </span>
+    </div>
+    <div
+      class="px-4 py-3 space-y-2"
+    >
+      <div
+        class="flex justify-between text-sm"
+      >
+        <span
+          class="text-grouse"
+        >
+          Email
+        </span>
+        <span
+          class="text-swift"
+          data-testid="info-card-email-value-email"
+        >
+          alex@example.com
+        </span>
+      </div>
+      <div
+        class="flex justify-between text-sm"
+      >
+        <span
+          class="text-grouse"
+        >
+          Status
+        </span>
+        <span
+          class="text-swift"
+          data-testid="info-card-email-value-status"
+        >
+          Not verified
+        </span>
+      </div>
+      <button
+        class="text-sm text-peacock hover:underline disabled:opacity-50"
+        data-testid="email-send-verification"
+      >
+        Send verification email
+      </button>
+    </div>
+  </div>
+</DocumentFragment>
+`;

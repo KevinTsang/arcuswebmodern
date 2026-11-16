@@ -4,6 +4,8 @@ import {
   NEW_LOGIN_FIELDS,
   NEW_PASSWORD_RULE,
   REQUIRED_PHONE_RULE,
+  SECURITY_ANSWER_RULE,
+  confirmEmailRule,
   confirmPasswordRule,
 } from '@/lib/validationRules';
 
@@ -91,5 +93,35 @@ describe('confirmPasswordRule', () => {
 describe('REQUIRED_PHONE_RULE', () => {
   it('rejects an empty phone, unlike the optional rule', () => {
     expect(validateFields({ phone: REQUIRED_PHONE_RULE }, ['phone'], { phone: '' })).toEqual({ phone: ["can't be blank"] });
+  });
+});
+
+describe('SECURITY_ANSWER_RULE', () => {
+  const errors = (answer: string) => validateFields({ answer: SECURITY_ANSWER_RULE }, ['answer'], { answer });
+
+  it('requires an answer', () => {
+    expect(errors('  ')).toEqual({ answer: ["can't be blank"] });
+  });
+
+  it('accepts any answer', () => {
+    expect(errors('Rex')).toEqual({});
+  });
+});
+
+describe('confirmEmailRule', () => {
+  const constraints = { email: { presence: true as const }, confirmEmail: confirmEmailRule('email') };
+  const errors = (email: string, confirmEmail: string) =>
+    validateFields(constraints, ['confirmEmail'], { email, confirmEmail });
+
+  it('accepts a matching confirmation', () => {
+    expect(errors('a@b.co', 'a@b.co')).toEqual({});
+  });
+
+  it('rejects a different confirmation', () => {
+    expect(errors('a@b.co', 'c@d.co')).toEqual({ confirmEmail: ['Emails do not match'] });
+  });
+
+  it('requires the confirmation', () => {
+    expect(errors('a@b.co', '')).toEqual({ confirmEmail: ["can't be blank"] });
   });
 });

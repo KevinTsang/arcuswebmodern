@@ -5,7 +5,8 @@
  */
 
 import { Account, Base, Person, Place } from '../../packages/arcus-core/src/capabilities/capabilities';
-import { GUEST_PERSON_ID, LAKE_PLACE_ID, LOGIN, PLACE_ID, addr } from '../support/platform/fixtures';
+import { ACCOUNT_ID, GUEST_PERSON_ID, LAKE_PLACE_ID, LOGIN, PLACE_ID, addr } from '../support/platform/fixtures';
+import { PlatformFailure } from '../support/platform/types';
 import { tid } from '../support/selectors';
 
 /** A settings `Field` input, keyed by its label slug. */
@@ -23,7 +24,7 @@ describe('Profile settings', () => {
 
   it('shows the profile and plan', () => {
     profileValue('contact-information', 'name').should('have.text', 'Alex Rivera');
-    profileValue('contact-information', 'email').should('have.text', LOGIN.email);
+    profileValue('email', 'email').should('have.text', LOGIN.email);
     profileValue('contact-information', 'phone').should('have.text', '5551234567');
     profileValue('service-plan', 'current-plan').should('have.text', 'Basic');
   });
@@ -92,6 +93,117 @@ describe('Profile settings', () => {
     tid('pin-save').click();
     tid('pin-error').should('have.text', 'PIN must be 4-8 digits.');
     cy.platform().then((p) => expect(p.requestsOf(Person.CMD_CHANGEPINV2)).to.be.empty);
+  });
+});
+
+describe('Account management', () => {
+  beforeEach(() => {
+    cy.signIn({ path: '/settings' });
+  });
+
+  it('shows the email as unverified and sends a verification email', () => {
+    profileValue('email', 'status').should('have.text', 'Not verified');
+    tid('email-send-verification').click();
+    cy.expectRequest(Person.CMD_SENDVERIFICATIONEMAIL, (r) =>
+      r.transport === 'rest' && r.destination === addr.person && r.attributes.source === 'WEB');
+    cy.toast(`Verification email sent to ${LOGIN.email}.`);
+  });
+
+  it('shows a verified email without the send button', () => {
+    cy.platform().then((p) => {
+      p.data.entities[addr.person][Person.ATTR_EMAILVERIFIED] = Date.now();
+    });
+    cy.reload();
+    profileValue('email', 'status').should('have.text', 'Verified');
+    tid('email-send-verification').should('not.exist');
+  });
+
+  it('changes the email', () => {
+    cardAction('email').click();
+    tid('side-panel-right-title').should('have.text', 'Change Email');
+    field('new-email').type('alex.new@example.com');
+    field('confirm-new-email').type('alex.new@example.com');
+    tid('change-email-save').click();
+
+    cy.expectRequestAttrs(Base.CMD_SETATTRIBUTES, { [Person.ATTR_EMAIL]: 'alex.new@example.com' });
+    cy.toast('Email changed. Use it the next time you sign in.');
+    profileValue('email', 'email').should('have.text', 'alex.new@example.com');
+    profileValue('email', 'status').should('have.text', 'Not verified');
+  });
+
+  it('rejects a mismatched email confirmation before calling the platform', () => {
+    cardAction('email').click();
+    field('new-email').type('alex.new@example.com');
+    field('confirm-new-email').type('alex.other@example.com');
+    tid('change-email-save').click();
+    tid('field-confirm-new-email-error').should('have.text', 'Emails do not match');
+    cy.platform().then((p) => expect(p.requestsOf(Base.CMD_SETATTRIBUTES)).to.be.empty);
+  });
+
+  it('lists, edits and adds security questions', () => {
+    tid('security-question-1').should('contain', 'What city were you born in?');
+
+    tid('security-question-edit-1').click();
+    tid('side-panel-right-title').should('have.text', 'Edit Security Question 1');
+    field('answer').should('have.value', 'Springfield').clear().type('Shelbyville');
+    tid('security-question-save').click();
+    cy.expectRequestAttrs(Person.CMD_SETSECURITYANSWERS, {
+      securityQuestion1: 'question2',
+      securityAnswer1: 'Shelbyville',
+    });
+    cy.toast('Security question saved.');
+
+    tid('security-question-add').click();
+    tid('side-panel-right-title').should('have.text', 'Add Security Question 2');
+    // A question already answered can't be picked again.
+    tid('security-question-select').find('option[value="question2"]').should('not.exist');
+    tid('security-question-select').select('question3');
+    field('answer').type('Volvo');
+    tid('security-question-save').click();
+    tid('security-question-2').should('contain', 'What was the make of your first car?');
+    cy.platform().its('securityAnswers').should('deep.equal', { question2: 'Shelbyville', question3: 'Volvo' });
+  });
+
+  it('shows an error with a retry when security questions fail to load', () => {
+    // Fail every load until the retry, so React's dev double-run of effects can't hide the failure.
+    let failing = true;
+    cy.platform().then((p) => {
+      p.onRequest(Person.CMD_GETSECURITYANSWERS, () => {
+        if (failing) throw new PlatformFailure('error.test', 'Simulated failure');
+        return { securityAnswers: { ...p.securityAnswers } };
+      });
+    });
+    cy.reload();
+    tid('security-questions-error').should('be.visible').then(() => {
+      failing = false;
+    });
+    tid('security-questions-retry').click();
+    tid('security-question-1').should('contain', 'What city were you born in?');
+  });
+
+  it('deletes the owned account after confirmation and signs out', () => {
+    cardAction('delete-account').click();
+    tid('side-panel-right-title').should('have.text', 'Delete My Arcus Account');
+    tid('delete-account-submit').should('be.disabled');
+    field('type-delete-to-continue').type('delete');
+    tid('delete-account-submit').click();
+    tid('delete-account-confirm').should('contain', 'cannot be reversed');
+    tid('delete-account-yes').click();
+
+    cy.expectRequest(Account.CMD_DELETE, (r) =>
+      r.destination === `SERV:account:${ACCOUNT_ID}` && r.attributes.deleteOwnerLogin === true);
+    cy.location('pathname', { timeout: 20000 }).should('eq', '/login');
+    cy.platform().its('authenticated').should('eq', false);
+  });
+
+  it('keeps the person signed in when deletion fails', () => {
+    cy.platform().invoke('failRequest', Account.CMD_DELETE);
+    cardAction('delete-account').click();
+    field('type-delete-to-continue').type('DELETE');
+    tid('delete-account-submit').click();
+    tid('delete-account-yes').click();
+    tid('delete-account-error').should('contain', 'Please try again later');
+    cy.location('pathname').should('eq', '/settings');
   });
 });
 

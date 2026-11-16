@@ -1,0 +1,56 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`SecurityQuestionsCard matches snapshot 1`] = `
+<DocumentFragment>
+  <div
+    class="border border-heron rounded-[var(--border-radius-base)] overflow-hidden"
+    data-testid="info-card-security-questions"
+  >
+    <div
+      class="flex items-center justify-between px-4 py-3 bg-pigeon/30"
+    >
+      <h3
+        class="text-sm font-medium text-swift"
+      >
+        Security Questions
+      </h3>
+      <span
+        data-testid="info-card-security-questions-action"
+      />
+    </div>
+    <div
+      class="px-4 py-3 space-y-2"
+    >
+      <div
+        class="flex items-start justify-between gap-4 text-sm"
+        data-testid="security-question-1"
+      >
+        <div>
+          <p
+            class="text-grouse"
+          >
+            Question 1
+          </p>
+          <p
+            class="text-swift"
+          >
+            Favorite teacher?
+          </p>
+        </div>
+        <button
+          class="text-sm text-peacock hover:underline"
+          data-testid="security-question-edit-1"
+        >
+          Edit
+        </button>
+      </div>
+      <button
+        class="text-sm text-peacock hover:underline"
+        data-testid="security-question-add"
+      >
+        Add a question
+      </button>
+    </div>
+  </div>
+</DocumentFragment>
+`;

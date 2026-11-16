@@ -1,0 +1,71 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`SecurityQuestionPanel matches snapshot 1`] = `
+<DocumentFragment>
+  <div
+    class="p-4 space-y-4"
+  >
+    <div>
+      <label
+        class="block text-sm text-grouse mb-1"
+        for="security-question"
+      >
+        Question
+      </label>
+      <select
+        class="w-full border border-heron rounded-[var(--border-radius-base)] px-3 py-2 text-sm text-swift focus:outline-none focus:border-peacock bg-crane disabled:opacity-50"
+        data-testid="security-question-select"
+        id="security-question"
+      >
+        <option
+          value=""
+        >
+          Select a question…
+        </option>
+        <option
+          value="question1"
+        >
+          First pet?
+        </option>
+        <option
+          value="question3"
+        >
+          Street you grew up on?
+        </option>
+      </select>
+    </div>
+    <div>
+      <label
+        class="block text-sm text-grouse mb-1"
+        for="security-answer"
+      >
+        Answer
+      </label>
+      <input
+        autocomplete="off"
+        class="w-full border border-heron rounded-[var(--border-radius-base)] px-3 py-2 text-sm text-swift focus:outline-none focus:border-peacock disabled:opacity-50"
+        data-testid="field-answer"
+        id="security-answer"
+        type="text"
+        value="Rex"
+      />
+    </div>
+    <div
+      class="flex gap-2 pt-2"
+    >
+      <button
+        class="px-4 py-2 bg-peacock text-crane rounded-[var(--border-radius-base)] text-sm font-medium hover:bg-peacock/90 disabled:opacity-50"
+        data-testid="security-question-save"
+        disabled=""
+      >
+        Save
+      </button>
+      <button
+        class="px-4 py-2 border border-heron rounded-[var(--border-radius-base)] text-sm text-coot hover:bg-pigeon"
+      >
+        Cancel
+      </button>
+    </div>
+  </div>
+</DocumentFragment>
+`;

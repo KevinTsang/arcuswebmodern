@@ -45,3 +45,11 @@ export const NEW_LOGIN_CONSTRAINTS: ValidationConstraints = {
 
 /** The fields `NEW_LOGIN_CONSTRAINTS` checks, for `formValidates`. */
 export const NEW_LOGIN_FIELDS = Object.keys(NEW_LOGIN_CONSTRAINTS);
+
+/** A required answer to a security question. */
+export const SECURITY_ANSWER_RULE: ValidationRule = { presence: true };
+
+/** A required confirmation that must match the email in the field named `emailField`. */
+export function confirmEmailRule(emailField: string): ValidationRule {
+  return { presence: true, equality: { attribute: emailField, message: '^Emails do not match' } };
+}
