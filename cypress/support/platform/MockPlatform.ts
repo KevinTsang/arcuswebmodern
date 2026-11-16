@@ -627,6 +627,19 @@ export class MockPlatform {
     },
 
     // Account
+    [Account.CMD_UPDATESERVICEPLAN]: ({ attrs }) => {
+      const address = `SERV:place:${attrs.placeID as string}`;
+      const place = this.mustGet(address);
+      const level = attrs.serviceLevel as string;
+      const promon = (l: unknown) => typeof l === 'string' && l.includes('PROMON');
+      if (promon(level) && !promon(place[Place.ATTR_SERVICELEVEL])) {
+        throw new PlatformFailure('error.invalid', 'Can only manually update to a PROMON service level if the place is already PROMON.');
+      }
+      if (level && level !== place[Place.ATTR_SERVICELEVEL]) {
+        this.updateEntity(address, { [Place.ATTR_SERVICELEVEL]: level });
+      }
+      return {};
+    },
     [Account.CMD_ADDPLACE]: ({ attrs }) => ({
       place: this.createPlace(attrs.place as Attrs, 'OWNER'),
     }),

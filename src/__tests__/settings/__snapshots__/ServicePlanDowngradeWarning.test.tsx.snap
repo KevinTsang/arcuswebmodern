@@ -1,0 +1,36 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`ServicePlanDowngradeWarning matches snapshot 1`] = `
+<DocumentFragment>
+  <div
+    class="p-3 border border-heron rounded-[var(--border-radius-base)] bg-pigeon/40 space-y-2"
+    data-testid="service-plan-downgrade-warning"
+    role="alert"
+  >
+    <p
+      class="text-sm font-medium text-swift"
+    >
+      Are you sure? This place will lose:
+    </p>
+    <ul
+      class="list-disc pl-5 space-y-1 text-xs text-coot"
+    >
+      <li>
+        24/7 professional monitoring of burglary, smoke, fire, carbon monoxide and panic alarms
+      </li>
+      <li>
+        Care behaviors that watch over your loved ones
+      </li>
+      <li>
+        Alarm Tracker
+      </li>
+      <li>
+        14 days of history (Basic keeps 1 day)
+      </li>
+      <li>
+        Alarm notifications for up to 6 people (Basic notifies 1)
+      </li>
+    </ul>
+  </div>
+</DocumentFragment>
+`;

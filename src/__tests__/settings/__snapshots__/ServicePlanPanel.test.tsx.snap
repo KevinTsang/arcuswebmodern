@@ -1,0 +1,125 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`ServicePlanPanel rendering matches snapshot 1`] = `
+<DocumentFragment>
+  <div
+    class="p-4 space-y-4"
+  >
+    <p
+      class="text-sm text-coot"
+    >
+      Current plan: 
+      <span
+        class="font-medium text-swift"
+        data-testid="service-plan-panel-current"
+      >
+        Basic
+      </span>
+    </p>
+    <fieldset
+      class="space-y-2"
+    >
+      <legend
+        class="text-sm text-grouse mb-2"
+      >
+        Choose a plan
+      </legend>
+      <label
+        class="flex gap-3 p-3 border rounded-[var(--border-radius-base)] border-peacock bg-peacock/5 cursor-pointer"
+        data-testid="service-plan-option-basic"
+      >
+        <input
+          aria-label="Basic"
+          checked=""
+          class="mt-1 accent-peacock"
+          name="service-plan"
+          type="radio"
+          value="BASIC"
+        />
+        <span
+          class="space-y-1"
+        >
+          <span
+            class="flex items-center gap-2"
+          >
+            <span
+              class="text-sm font-medium text-swift"
+            >
+              Basic
+            </span>
+            <span
+              class="text-xs px-1.5 py-0.5 rounded bg-lovebird/15 text-lovebird"
+              data-testid="service-plan-current-basic"
+            >
+              Current
+            </span>
+          </span>
+          <span
+            class="block text-xs text-grouse"
+          >
+            Unlimited devices, rules, scenes and schedules, with a 1-day history log and alarm notifications for 1 person.
+          </span>
+        </span>
+      </label>
+      <label
+        class="flex gap-3 p-3 border rounded-[var(--border-radius-base)] border-heron hover:bg-pigeon/40 cursor-pointer"
+        data-testid="service-plan-option-premium"
+      >
+        <input
+          aria-label="Premium"
+          class="mt-1 accent-peacock"
+          name="service-plan"
+          type="radio"
+          value="PREMIUM"
+        />
+        <span
+          class="space-y-1"
+        >
+          <span
+            class="flex items-center gap-2"
+          >
+            <span
+              class="text-sm font-medium text-swift"
+            >
+              Premium
+            </span>
+          </span>
+          <span
+            class="block text-xs text-grouse"
+          >
+            Everything in Basic, plus Care, Alarm Tracker, a 14-day history log and alarm notifications for up to 6 people.
+          </span>
+        </span>
+      </label>
+    </fieldset>
+    <p
+      class="text-xs text-grouse"
+      data-testid="service-plan-promon"
+    >
+      Want 24/7 professional monitoring? 
+      <a
+        class="text-peacock hover:underline"
+        href="/promonitoring"
+      >
+        Set up Pro Monitoring
+      </a>
+    </p>
+    <div
+      class="flex gap-2"
+    >
+      <button
+        class="px-4 py-2 bg-peacock text-crane rounded-[var(--border-radius-base)] text-sm font-medium hover:bg-peacock/90 disabled:opacity-50"
+        data-testid="service-plan-save"
+        disabled=""
+      >
+        Change Plan
+      </button>
+      <button
+        class="px-4 py-2 border border-heron rounded-[var(--border-radius-base)] text-sm text-coot hover:bg-pigeon"
+      >
+        Cancel
+      </button>
+    </div>
+  </div>
+</DocumentFragment>
+`;
