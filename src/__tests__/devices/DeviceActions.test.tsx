@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import { Base, DoorLock, Valve } from '@arcus/core';
+import { Base, DoorLock, Valve, WaterHeater, WaterSoftener } from '@arcus/core';
 import { DeviceActions } from '@/components/devices/DeviceActions';
 import type { DeviceEntity } from '@/store/entityTypes';
 import { makeDevice } from '../helpers/factories';
@@ -67,5 +67,17 @@ describe('DeviceActions', () => {
     render(<DeviceActions address="DRIV:dev:test" action="thermostat-slider" />);
     // Off mode renders "Off" text
     expect(screen.getByText('Off')).toBeInTheDocument();
+  });
+
+  it('renders WaterHeaterTemperatureControl for changeWaterHeaterTemperature action', () => {
+    mockDevice = makeDevice('DRIV:dev:test', { [WaterHeater.ATTR_SETPOINT]: 50 });
+    render(<DeviceActions address="DRIV:dev:test" action="changeWaterHeaterTemperature" />);
+    expect(screen.getByTestId('water-heater-setpoint-DRIV:dev:test')).toHaveTextContent('122°');
+  });
+
+  it('renders RechargeNowButton for recharge-now action', () => {
+    mockDevice = makeDevice('DRIV:dev:test', { [WaterSoftener.ATTR_RECHARGESTATUS]: WaterSoftener.RECHARGESTATUS_READY });
+    render(<DeviceActions address="DRIV:dev:test" action="recharge-now" />);
+    expect(screen.getByTestId('water-softener-recharge-DRIV:dev:test')).toHaveTextContent('Recharge Now');
   });
 });

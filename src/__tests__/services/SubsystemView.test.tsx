@@ -11,6 +11,7 @@ jest.mock('@/components/subsystems', () => ({
   HomeFamilyView: () => <div data-testid="home-family-view">HomeFamilyView</div>,
   LawnGardenView: () => <div data-testid="lawn-garden-view">LawnGardenView</div>,
   GenericDeviceListView: ({ config }: any) => <div data-testid="generic-view">{config.name}</div>,
+  WaterView: ({ config }: any) => <div data-testid="water-view">{config.name}</div>,
 }));
 
 function renderFor(slug: string, action = 'status') {
@@ -26,6 +27,7 @@ describe('SubsystemView', () => {
     ['doors-locks', 'doors-locks-view'],
     ['home-family', 'home-family-view'],
     ['lawn-garden', 'lawn-garden-view'],
+    ['water', 'water-view'],
   ])('renders the custom view for %s', (slug, testid) => {
     renderFor(slug);
     expect(screen.getByTestId(testid)).toBeInTheDocument();
@@ -33,7 +35,6 @@ describe('SubsystemView', () => {
 
   it.each([
     ['lights-switches', 'Lights & Switches'],
-    ['water', 'Water'],
   ])('falls back to the generic view for %s', (slug, name) => {
     renderFor(slug);
     expect(screen.getByTestId('generic-view')).toHaveTextContent(name);

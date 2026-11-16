@@ -1,0 +1,16 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`WaterView matches snapshot 1`] = `
+<DocumentFragment>
+  <div>
+    <div
+      data-testid="water-summary-mock"
+    />
+    <div
+      data-testid="generic-view"
+    >
+      Water
+    </div>
+  </div>
+</DocumentFragment>
+`;

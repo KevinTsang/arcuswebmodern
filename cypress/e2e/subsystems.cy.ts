@@ -4,10 +4,13 @@
  */
 
 import {
-  Base, CareSubsystem, Contact, DoorLock, DoorsNLocksSubsystem, MotorizedDoor, PresenceSubsystem, Valve,
+  AOSmithWaterHeaterController, Base, CareSubsystem, Contact, Device, DeviceConnection, DoorLock, DoorsNLocksSubsystem,
+  EcowaterWaterSoftener, Flow, MotorizedDoor, PresenceSubsystem, Valve, WaterHardness, WaterHeater,
+  WaterSoftener, WaterSubsystem,
 } from '../../packages/arcus-core/src/capabilities/capabilities';
 import { DEVICE, addr } from '../support/platform/fixtures';
 import { tid } from '../support/selectors';
+import type { MockPlatform } from '../support/platform/MockPlatform';
 
 /** Subsystem views render device panels directly (no list row wrapper). */
 const devicePanel = (address: string) => cy.get(`[data-testid="device-panel-${address}"]`);
@@ -161,6 +164,104 @@ describe('Water', () => {
   });
 });
 
+describe('Water heater & softener', () => {
+  const HEATER = addr.device('heater');
+  const SOFTENER = addr.device('softener');
+
+  /** Add an AO Smith heater and an EcoWater softener to the water subsystem. */
+  function withWaterAppliances(p: MockPlatform) {
+    const common = {
+      [Base.ATTR_TYPE]: 'dev',
+      [Base.ATTR_TAGS]: [],
+      [Device.ATTR_VENDOR]: 'Acme',
+      [DeviceConnection.ATTR_STATE]: DeviceConnection.STATE_ONLINE,
+    };
+    p.data.entities[HEATER] = {
+      ...common,
+      [Base.ATTR_ADDRESS]: HEATER,
+      [Base.ATTR_ID]: 'heater',
+      [Base.ATTR_CAPS]: ['base', 'dev', 'devconn', 'waterheater', 'aosmithwaterheatercontroller'],
+      [Device.ATTR_NAME]: 'Water Heater',
+      [Device.ATTR_DEVTYPEHINT]: 'WaterHeater',
+      [WaterHeater.ATTR_SETPOINT]: 50,
+      [WaterHeater.ATTR_MAXSETPOINT]: 60,
+      [WaterHeater.ATTR_HEATINGSTATE]: false,
+      [WaterHeater.ATTR_HOTWATERLEVEL]: WaterHeater.HOTWATERLEVEL_HIGH,
+      [AOSmithWaterHeaterController.ATTR_CONTROLMODE]: AOSmithWaterHeaterController.CONTROLMODE_STANDARD,
+    };
+    p.data.entities[SOFTENER] = {
+      ...common,
+      [Base.ATTR_ADDRESS]: SOFTENER,
+      [Base.ATTR_ID]: 'softener',
+      [Base.ATTR_CAPS]: ['base', 'dev', 'devconn', 'watersoftener', 'waterhardness', 'ecowater', 'flow'],
+      [Device.ATTR_NAME]: 'EcoWater Softener',
+      [Device.ATTR_DEVTYPEHINT]: 'WaterSoftener',
+      [WaterSoftener.ATTR_CURRENTSALTLEVEL]: 6,
+      [WaterSoftener.ATTR_MAXSALTLEVEL]: 12,
+      [WaterSoftener.ATTR_SALTLEVELENABLED]: true,
+      [WaterSoftener.ATTR_RECHARGESTATUS]: WaterSoftener.RECHARGESTATUS_READY,
+      [WaterSoftener.ATTR_RECHARGESTARTTIME]: 2,
+      [WaterHardness.ATTR_HARDNESS]: 15,
+      [EcowaterWaterSoftener.ATTR_CONTINUOUSRATE]: 2,
+      [EcowaterWaterSoftener.ATTR_ALERTONCONTINUOUSUSE]: true,
+      [EcowaterWaterSoftener.ATTR_ALERTONEXCESSIVEUSE]: false,
+      [Flow.ATTR_FLOW]: 1.5,
+    };
+    Object.assign(p.data.entities[addr.subsystem('subwater')], {
+      [WaterSubsystem.ATTR_WATERDEVICES]: [DEVICE.leak, DEVICE.valve, HEATER, SOFTENER],
+      [WaterSubsystem.ATTR_PRIMARYWATERHEATER]: HEATER,
+      [WaterSubsystem.ATTR_PRIMARYWATERSOFTENER]: SOFTENER,
+      [WaterSubsystem.ATTR_LOWSALTDEVICES]: [],
+    });
+  }
+
+  it('summarises the heater, softener and current flow', () => {
+    cy.signIn({ path: '/services/water/status', customize: withWaterAppliances });
+    tid('water-summary-heater-setpoint').should('have.text', '122°F');
+    tid('water-summary-salt').should('have.text', '50%');
+    tid('water-summary-flow-value').should('have.text', '1.5 GPM');
+    tid(`device-status-${SOFTENER}`).should('have.text', 'Ready');
+  });
+
+  it('raises the water heater setpoint', () => {
+    cy.signIn({ path: '/services/water/status', customize: withWaterAppliances });
+    tid(`water-heater-up-${HEATER}`).click();
+    cy.expectRequest(Base.CMD_SETATTRIBUTES, (r) =>
+      r.destination === HEATER && WaterHeater.ATTR_SETPOINT in r.attributes);
+    tid(`water-heater-setpoint-${HEATER}`).should('have.text', '123°');
+  });
+
+  it('starts a softener recharge and shows it recharging', () => {
+    cy.signIn({ path: '/services/water/status', customize: withWaterAppliances });
+    tid(`water-softener-recharge-${SOFTENER}`).should('have.text', 'Recharge Now').click();
+    cy.expectRequest(WaterSoftener.CMD_RECHARGENOW, (r) => r.destination === SOFTENER);
+    cy.platform().invoke('updateEntity', SOFTENER, {
+      [WaterSoftener.ATTR_RECHARGESTATUS]: WaterSoftener.RECHARGESTATUS_RECHARGING,
+      [WaterSoftener.ATTR_RECHARGETIMEREMAINING]: 75,
+    });
+    tid(`water-softener-recharge-${SOFTENER}`).should('have.text', 'Recharging').and('be.disabled');
+    tid(`device-status-${SOFTENER}`).should('have.text', 'Recharging: 1:15 Left');
+  });
+
+  it('changes the recharge time from the softener configuration', () => {
+    cy.signIn({ path: '/services/water/status', customize: withWaterAppliances });
+    tid(`device-config-${SOFTENER}`).click();
+    tid('water-softener-recharge-time').select('4:00 AM');
+    cy.expectRequest(Base.CMD_SETATTRIBUTES, (r) =>
+      r.destination === SOFTENER && r.attributes[WaterSoftener.ATTR_RECHARGESTARTTIME] === 4);
+  });
+
+  it('switches the heater to EnergySmart mode', () => {
+    cy.signIn({ path: '/services/water/status', customize: withWaterAppliances });
+    tid(`device-config-${HEATER}`).click();
+    tid('water-heater-mode-energy_smart').click();
+    cy.expectRequest(Base.CMD_SETATTRIBUTES, (r) =>
+      r.destination === HEATER
+      && r.attributes[AOSmithWaterHeaterController.ATTR_CONTROLMODE] === AOSmithWaterHeaterController.CONTROLMODE_ENERGY_SMART);
+    tid('water-heater-mode-energy_smart').should('have.attr', 'aria-pressed', 'true');
+  });
+});
+
 describe('Lights & Switches', () => {
   it('lists switch devices', () => {
     cy.signIn({ path: '/services/lights-switches/status' });
@@ -287,7 +388,7 @@ describe('Cameras', () => {
           [Base.ATTR_CAPS]: ['base', 'dev', 'devconn', 'camera'],
           'dev:name': 'Porch Camera',
           'dev:devtypehint': 'Camera',
-          'devconn:state': 'ONLINE',
+          [DeviceConnection.ATTR_STATE]: DeviceConnection.STATE_ONLINE,
         };
         p.data.entities[addr.subsystem('subcameras')]['subcameras:cameras'] = [camera];
       },

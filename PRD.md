@@ -75,8 +75,8 @@ None.
 | Thermostats | Mode, heat/cool setpoints, min/max enforcement, fan mode | Mode, heat/cool setpoints | **Partial** |
 | Fans | Multi-speed control | 4-level speed selector | **Done** |
 | Water valves | Open/close | Open/close | **Done** |
-| Water heaters | Mode control, temperature | None | **Missing** |
-| Water softeners | Salt level, recharge time, settings | None | **Missing** |
+| Water heaters | Mode control, temperature | Setpoint spinner (60°/80°–max, skips 61°–79°), AO Smith Standard/EnergySmart® mode, heating/hot-water/mode badges | **Done** |
+| Water softeners | Salt level, recharge time, settings | Recharge Now, recharge status, recharge hour, salt % badge/bar, hardness, EcoWater flow alerts | **Done** |
 | Shades / blinds | Position, tilt | Config references action but no component | **Missing** |
 | Irrigation controllers | Zone-by-zone control, schedules, modes | Zone list display only | **Partial** |
 | Cameras (live) | HLS streaming, PTZ, recording, clips | Device panel with status only | **Partial** |
@@ -340,16 +340,17 @@ None.
 | Shut-off valve control | Yes | Yes | **Done** |
 | Leak sensor status | Yes | Yes | **Done** |
 | Water device list | Yes | Yes | **Done** |
-| Flow monitoring / usage display | Yes | No | **Missing** |
-| Water heater mode & temperature | Yes | No | **Missing** |
-| Water softener settings (salt level, recharge) | Yes | No | **Missing** |
-| EcoWater / AO Smith integration | Yes | No | **Missing** |
+| Flow monitoring / usage display | Yes | Yes | **Done** |
+| Water heater mode & temperature | Yes | Yes | **Done** |
+| Water softener settings (salt level, recharge) | Yes | Yes | **Done** |
+| EcoWater / AO Smith integration | Yes | Yes | **Done** |
 
 ### Gaps
 
-- Flow monitoring and usage display.
-- Water heater controls.
-- Water softener controls.
+- ~~Flow monitoring and usage display.~~ **DONE.** The Water service page has a summary (`WaterStatusSummary`) showing current flow (`flow:flow`), the primary heater's setpoint and hot water level, the primary softener's salt % and recharge status, and `subwater` continuous-use / excessive-use / low-salt alerts. Softeners also show a `Flow` GPM badge.
+- ~~Water heater controls.~~ **DONE.** `changeWaterHeaterTemperature` panel action (`WaterHeaterTemperatureControl`) steps `waterheater:setpoint` like the legacy spinner (60° ↔ 80°, then 1° up to `waterheater:maxsetpoint` capped at 65°C). AO Smith heaters get a Standard / EnergySmart® mode configurator (`aosmithwaterheatercontroller:controlmode`; Vacation is shown, not selectable, as in legacy) and an EnergySmart®/Vacation badge. Device row status reads "Set to / Heating to N°".
+- ~~Water softener controls.~~ **DONE.** `recharge-now` action sends `watersoftener:rechargeNow` (disabled while recharging); row status shows "Recharge Time: 2:00 AM" / "Recharging: h:mm Left"; configurators for recharge hour, salt level + salt type guidance, read-only water hardness, and EcoWater continuous-flow threshold (OFF/LOW/MEDIUM/HIGH) + excessive-use alert. The salt badge is now a percentage of `maxSaltLevel` (was the raw level).
+- Not ported: the legacy "Shop Salt" / "Shop Test Kits" links and the water-heater schedule configurator (scheduling is tracked separately).
 
 ---
 
@@ -705,7 +706,7 @@ These are commonly used features that users will expect:
 
 ### Tier 3 — Completeness Gaps (Niche Device Types & Polish)
 
-13. **Water heater & softener controls** — Mode, temperature, salt level, recharge settings.
+13. ~~**Water heater & softener controls** — Mode, temperature, salt level, recharge settings.~~ **DONE.** Heater setpoint + AO Smith mode, softener recharge/salt/hardness/EcoWater flow alerts, Water page summary with flow and usage alerts.
 14. **Shade / blind controls** — Position and tilt control.
 15. **Weather subsystem** — NOAA alerts, current conditions, weather radio integration.
 16. **Thermostat fan mode & min/max enforcement** — Fan control, setpoint limits, separation enforcement.

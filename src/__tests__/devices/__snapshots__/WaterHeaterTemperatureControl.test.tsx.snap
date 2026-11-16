@@ -1,0 +1,30 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`WaterHeaterTemperatureControl matches snapshot 1`] = `
+<DocumentFragment>
+  <div
+    class="flex items-center gap-1"
+  >
+    <button
+      aria-label="Lower water heater temperature"
+      class="w-6 h-6 rounded bg-pigeon text-swift text-sm hover:bg-heron disabled:opacity-50"
+      data-testid="water-heater-down-DRIV:dev:heater"
+    >
+      -
+    </button>
+    <span
+      class="text-sm font-medium text-cardinal w-10 text-center"
+      data-testid="water-heater-setpoint-DRIV:dev:heater"
+    >
+      120°
+    </span>
+    <button
+      aria-label="Raise water heater temperature"
+      class="w-6 h-6 rounded bg-pigeon text-swift text-sm hover:bg-heron disabled:opacity-50"
+      data-testid="water-heater-up-DRIV:dev:heater"
+    >
+      +
+    </button>
+  </div>
+</DocumentFragment>
+`;

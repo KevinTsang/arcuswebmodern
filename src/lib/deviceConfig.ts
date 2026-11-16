@@ -133,8 +133,10 @@ export const capabilityPlugins: Record<string, CapabilityPlugin> = {
     },
   },
   [WaterHeater.ATTR_HEATINGSTATE]: { badges: ['heatingState'] },
-  [WaterHeater.ATTR_HOTWATERLEVEL]: { badges: ['hotWaterLevel'], configurators: ['water-heater-mode'] },
-  [AOSmithWaterHeaterController.ATTR_CONTROLMODE]: { badges: ['waterHeaterEnergySmart'] },
+  [WaterHeater.ATTR_HOTWATERLEVEL]: { badges: ['hotWaterLevel'] },
+  // Only AO Smith heaters report a control mode, so the mode picker hangs off
+  // it rather than (as in the legacy config) every heater's hot water level.
+  [AOSmithWaterHeaterController.ATTR_CONTROLMODE]: { badges: ['waterHeaterEnergySmart'], configurators: ['water-heater-mode'] },
   [WaterHeater.ATTR_SETPOINT]: { badges: ['lowHeatTarget'] },
   'nesttherm:hasleaf': { badges: ['leaf'] },
   [Thermostat.ATTR_HVACMODE]: { badges: ['thermostat'], configurators: ['thermostat-mode'] },

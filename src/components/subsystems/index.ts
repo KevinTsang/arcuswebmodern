@@ -6,3 +6,4 @@ export { DoorsLocksView } from './DoorsLocksView';
 export { HomeFamilyView } from './HomeFamilyView';
 export { LawnGardenView } from './LawnGardenView';
 export { GenericDeviceListView } from './GenericDeviceListView';
+export { WaterView } from './WaterView';

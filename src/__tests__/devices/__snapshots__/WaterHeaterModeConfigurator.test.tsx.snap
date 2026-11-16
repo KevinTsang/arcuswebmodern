@@ -1,0 +1,42 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`WaterHeaterModeConfigurator matches snapshot 1`] = `
+<DocumentFragment>
+  <div>
+    <p
+      class="text-sm font-medium text-swift mb-2"
+    >
+      Water Heater Mode
+    </p>
+    <p
+      class="text-xs text-grouse mb-3"
+    >
+      EnergySmart® mode is provided by your water heater manufacturer and saves energy by monitoring usage and adjusting the set point to match the water draw usage.
+    </p>
+    <div
+      class="flex gap-2"
+    >
+      <button
+        aria-pressed="true"
+        class="
+              px-3 py-1.5 text-sm rounded-[var(--border-radius-base)] transition-colors disabled:opacity-50
+              bg-peacock text-crane
+            "
+        data-testid="water-heater-mode-standard"
+      >
+        Standard
+      </button>
+      <button
+        aria-pressed="false"
+        class="
+              px-3 py-1.5 text-sm rounded-[var(--border-radius-base)] transition-colors disabled:opacity-50
+              bg-pigeon text-coot hover:bg-heron
+            "
+        data-testid="water-heater-mode-energy_smart"
+      >
+        EnergySmart®
+      </button>
+    </div>
+  </div>
+</DocumentFragment>
+`;

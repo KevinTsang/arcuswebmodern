@@ -7,6 +7,8 @@ import OpenCloseDoor from './OpenCloseDoor';
 import OpenCloseValve from './OpenCloseValve';
 import ThermostatControl from './ThermostatControl';
 import MultiToggle from './MultiToggle';
+import { WaterHeaterTemperatureControl } from './WaterHeaterTemperatureControl';
+import { RechargeNowButton } from './RechargeNowButton';
 
 interface DeviceActionsProps {
   address: string;
@@ -28,6 +30,10 @@ function DeviceActionsInner({ address, action }: DeviceActionsProps) {
       return <ThermostatControl address={address} />;
     case 'multi-toggle':
       return <MultiToggle address={address} />;
+    case 'changeWaterHeaterTemperature':
+      return <WaterHeaterTemperatureControl address={address} />;
+    case 'recharge-now':
+      return <RechargeNowButton address={address} />;
     default:
       return null;
   }

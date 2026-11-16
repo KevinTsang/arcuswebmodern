@@ -1,0 +1,90 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`WaterStatusSummary matches snapshot 1`] = `
+<DocumentFragment>
+  <div
+    class="space-y-4 mb-6"
+    data-testid="water-summary"
+  >
+    <div
+      class="flex flex-wrap gap-4"
+    >
+      <div
+        class="flex-1 min-w-40 bg-pigeon/50 rounded-[var(--border-radius-base)] p-4 text-center"
+        data-testid="water-summary-heater"
+      >
+        <div
+          class="text-3xl font-light text-swift"
+          data-testid="water-summary-heater-setpoint"
+        >
+          122
+          <span
+            class="text-lg"
+          >
+            °F
+          </span>
+        </div>
+        <p
+          class="text-xs text-grouse mt-1"
+        >
+          Water Heater
+        </p>
+        <p
+          class="text-xs text-coot mt-0.5"
+          data-testid="water-summary-hot-water"
+        >
+          Hot Water: Medium
+        </p>
+      </div>
+      <div
+        class="flex-1 min-w-40 bg-pigeon/50 rounded-[var(--border-radius-base)] p-4 text-center"
+        data-testid="water-summary-softener"
+      >
+        <div
+          class="text-3xl font-light text-swift"
+          data-testid="water-summary-salt"
+        >
+          50
+          <span
+            class="text-lg"
+          >
+            %
+          </span>
+        </div>
+        <p
+          class="text-xs text-grouse mt-1"
+        >
+          EcoWater Salt
+        </p>
+        <p
+          class="text-xs text-coot mt-0.5"
+          data-testid="water-summary-softener-status"
+        >
+          Ready
+        </p>
+      </div>
+      <div
+        class="flex-1 min-w-40 bg-pigeon/50 rounded-[var(--border-radius-base)] p-4 text-center"
+        data-testid="water-summary-flow"
+      >
+        <div
+          class="text-3xl font-light text-swift"
+          data-testid="water-summary-flow-value"
+        >
+          1.5
+          <span
+            class="text-lg"
+          >
+             GPM
+          </span>
+        </div>
+        <p
+          class="text-xs text-grouse mt-1"
+        >
+          Current Water Flow
+        </p>
+      </div>
+    </div>
+  </div>
+</DocumentFragment>
+`;

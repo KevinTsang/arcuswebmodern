@@ -142,4 +142,44 @@ describe('useWaterSubsystem', () => {
       expect(result.current.subsystem).toBe(sub);
     });
   });
+
+  describe('heater, softener and usage alerts', () => {
+    it('resolves the primary heater and softener and the alert device lists', () => {
+      const heater = makeDevice('DRIV:dev:heater');
+      const softener = makeDevice('DRIV:dev:softener');
+      mockDevices = [heater, softener];
+
+      mockUseSubsystem.mockReturnValue(makeSubsystem('SERV:subwater:abc', {
+        [WaterSubsystem.ATTR_PRIMARYWATERHEATER]: 'DRIV:dev:heater',
+        [WaterSubsystem.ATTR_PRIMARYWATERSOFTENER]: 'DRIV:dev:softener',
+        [WaterSubsystem.ATTR_LOWSALTDEVICES]: ['DRIV:dev:softener'],
+        [WaterSubsystem.ATTR_CONTINUOUSWATERUSEDEVICES]: ['DRIV:dev:softener'],
+        [WaterSubsystem.ATTR_EXCESSIVEWATERUSEDEVICES]: [],
+      }));
+
+      const { result } = renderHook(() => useWaterSubsystem());
+
+      expect(result.current.primaryWaterHeater).toBe(heater);
+      expect(result.current.primaryWaterSoftener).toBe(softener);
+      expect(result.current.lowSaltDevices).toEqual([softener]);
+      expect(result.current.continuousUseDevices).toEqual([softener]);
+      expect(result.current.excessiveUseDevices).toEqual([]);
+    });
+
+    it('returns null / empty when the attributes are missing, empty or unknown', () => {
+      mockDevices = [];
+      mockUseSubsystem.mockReturnValue(makeSubsystem('SERV:subwater:abc', {
+        [WaterSubsystem.ATTR_PRIMARYWATERHEATER]: '',
+        [WaterSubsystem.ATTR_PRIMARYWATERSOFTENER]: 'DRIV:dev:gone',
+      }));
+
+      const { result } = renderHook(() => useWaterSubsystem());
+
+      expect(result.current.primaryWaterHeater).toBeNull();
+      expect(result.current.primaryWaterSoftener).toBeNull();
+      expect(result.current.lowSaltDevices).toEqual([]);
+      expect(result.current.continuousUseDevices).toEqual([]);
+      expect(result.current.excessiveUseDevices).toEqual([]);
+    });
+  });
 });
