@@ -15,8 +15,8 @@ import Bridge from '@arcus/core/bridge';
 import { Base } from '@arcus/core';
 import { SessionService } from '@arcus/core/services';
 import type { SessionCreatedEvent, Account } from '@/arcus/types';
-import type { PersonData } from '@/store/entityTypes';
 import { loginSuccess } from '../slices/authSlice';
+import { fetchSessionPerson, withSessionPerson } from './sessionPerson';
 import { getDefaultPlaceId } from '../thunks/placeSelection';
 
 /**
@@ -102,11 +102,7 @@ export async function completeSession(
   // rejects the person fetch until SetActivePlace has resolved, so fetch it
   // now, alongside the account. It's optional: a failure falls back to the
   // session payload.
-  const personRequest = Bridge.request<PersonData>(Base.CMD_GETATTRIBUTES, `SERV:person:${personId}`, {})
-    .catch((e) => {
-      console.error('Failed to load person attributes:', e);
-      return null;
-    });
+  const personRequest = fetchSessionPerson(personId);
 
   // Fetch the account object for the selected place
   const account = await runStep('account', Bridge.request<Account>(
@@ -116,6 +112,6 @@ export async function completeSession(
   ));
   const person = await personRequest;
 
-  dispatch(loginSuccess({ person: { ...session, ...person }, account }));
+  dispatch(loginSuccess({ person: withSessionPerson(session, person), account }));
   return placeId;
 }

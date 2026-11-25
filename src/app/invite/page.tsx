@@ -30,7 +30,8 @@ import { formatPhoneNumber } from '@/lib/phoneNumber';
 import ChangePinForm from '@/components/ChangePinForm';
 import type { SessionCreatedEvent } from '@/arcus/types';
 import type { Invitation } from '@/store/slices/invitationsSlice';
-import { AccountData } from '@/store/entityTypes';
+import type { AccountData, PersonData } from '@/store/entityTypes';
+import { fetchSessionPerson, withSessionPerson } from '@/store/utils/sessionPerson';
 
 type InviteStep = 'code' | 'confirm' | 'create-login' | 'pin' | 'welcome';
 
@@ -152,8 +153,12 @@ export default function InvitePage() {
       setPlaceId(pId);
 
       let accountData: AccountData = {} as AccountData;
+      let loadedPerson: PersonData | null = null;
       if (pId) {
         await SessionService.SetActivePlace(pId);
+        // The session payload has only the person's id; fetch their name, email and phone now that
+        // the active place is set (the platform rejects it before), as sign-in does.
+        loadedPerson = await fetchSessionPerson(personId);
         localStorage.setItem('arcus:placeId', pId);
         const selectedPlace = places.find((p) => p.placeId === pId);
         if (selectedPlace?.accountId) {
@@ -165,7 +170,7 @@ export default function InvitePage() {
         }
       }
 
-      dispatch(loginSuccess({ person: sessionData, account: accountData }));
+      dispatch(loginSuccess({ person: withSessionPerson(sessionData, loadedPerson), account: accountData }));
       setStep('pin');
     } catch {
       setError('Failed to accept invitation. Please try again.');

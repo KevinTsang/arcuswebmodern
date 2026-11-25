@@ -211,15 +211,17 @@ export class MockPlatform {
   }
 
   /** The `SessionCreated` handshake frame: the person plus the places they can access. */
+  /**
+   * Like the platform (arcusplatform `HandshakeSessionListener`), `SessionCreated` carries the
+   * person's id and places but not their name, email or phone; clients fetch those separately.
+   */
   sendSessionCreated(socket: MockSocket): void {
-    const person = this.data.entities[`SERV:person:${this.data.personId}`] ?? {};
     socket.deliver({
       type: 'SessionCreated',
       headers: { isRequest: false },
       payload: {
         messageType: 'SessionCreated',
         attributes: {
-          ...person,
           personId: this.data.personId,
           places: this.data.places.map((p) => ({ ...p })),
         },

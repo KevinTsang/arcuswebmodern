@@ -4,6 +4,7 @@ import CredentialsStep from '@/components/create-account/CredentialsStep';
 import { CreateAccountProvider } from '@/components/create-account/CreateAccountContext';
 import { AccountService } from '@arcus/core/services';
 import auth from '@arcus/core/auth';
+import { loginSuccess } from '@/store/slices/authSlice';
 
 jest.mock('@/store/hooks', () => ({
   useAppSelector: () => null,
@@ -98,6 +99,42 @@ describe('CredentialsStep', () => {
 
     await waitFor(() => {
       expect(AccountService.CreateAccount).toHaveBeenCalled();
+    });
+  });
+
+  it('signs in with the new person from CreateAccount merged over the session payload', async () => {
+    const createdPerson = {
+      [Base.ATTR_ADDRESS]: 'SERV:person:p1',
+      [Person.ATTR_FIRSTNAME]: 'John',
+      [Person.ATTR_LASTNAME]: 'Doe',
+      [Person.ATTR_EMAIL]: 'john@test.com',
+    };
+    (AccountService.CreateAccount as jest.Mock).mockResolvedValue({ placeId: 'p1', account: {}, person: createdPerson });
+    (auth.authenticate as jest.Mock).mockResolvedValue(undefined);
+    (auth.on as jest.Mock).mockImplementation((event: string, cb: (data?: any) => void) => {
+      if (event === 'authentication:success') {
+        // Like the platform, the session payload has the person's id but not their details.
+        setTimeout(() => cb({ personId: 'p1', places: [], [Person.ATTR_CURRPLACE]: 'p1' }), 0);
+      }
+    });
+
+    renderStep();
+    fireEvent.change(screen.getByLabelText('First Name'), { target: { value: 'John' } });
+    fireEvent.change(screen.getByLabelText('Last Name'), { target: { value: 'Doe' } });
+    fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'john@test.com' } });
+    fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'password1' } });
+    fireEvent.change(screen.getByLabelText('Confirm Password'), { target: { value: 'password1' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Create Account' }));
+
+    await waitFor(() => expect(loginSuccess).toHaveBeenCalled());
+    expect(loginSuccess).toHaveBeenCalledWith({
+      person: expect.objectContaining({
+        personId: 'p1',
+        [Person.ATTR_FIRSTNAME]: 'John',
+        [Person.ATTR_LASTNAME]: 'Doe',
+        [Person.ATTR_EMAIL]: 'john@test.com',
+      }),
+      account: {},
     });
   });
 
