@@ -13,20 +13,12 @@ import { useAppDispatch } from '@/store/hooks';
 import { addNotification } from '@/store/slices/uiSlice';
 import type { ListHistoryEntriesResponse } from '@/arcus/types';
 import type { HistoryEntry } from '@/components/history/HistoryList';
+import { formatShortDateTime } from '@/lib/dateTime';
 
 export const PIN_HISTORY_PAGE_SIZE = 10;
 
 interface LockPinHistoryProps {
   lockAddress: string;
-}
-
-function formatWhen(ts: number): string {
-  return new Date(ts).toLocaleString(undefined, {
-    month: 'short',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-  });
 }
 
 export function LockPinHistory({ lockAddress }: LockPinHistoryProps) {
@@ -96,7 +88,7 @@ export function LockPinHistory({ lockAddress }: LockPinHistoryProps) {
             <ul className="space-y-1.5">
               {entries.map((entry, i) => (
                 <li key={`${entry.timestamp}-${i}`} className="flex gap-3 text-sm">
-                  <span className="text-xs text-grouse w-28 flex-shrink-0 pt-0.5">{formatWhen(entry.timestamp)}</span>
+                  <span className="text-xs text-grouse w-28 flex-shrink-0 pt-0.5">{formatShortDateTime(entry.timestamp)}</span>
                   <span className="text-swift">{entry.longMessage}</span>
                 </li>
               ))}

@@ -13,7 +13,7 @@ exports[`DoorChimeSettings matches snapshot 1`] = `
     <p
       class="text-xs text-grouse mt-0.5 mb-2"
     >
-      Chime the hub when a contact sensor or hinge is opened.
+      Chime the hub when a door contact sensor is opened.
     </p>
     <div
       class="flex items-start justify-between gap-4 py-3 border-b border-heron"

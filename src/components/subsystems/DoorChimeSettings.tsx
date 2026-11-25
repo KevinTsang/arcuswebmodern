@@ -2,7 +2,9 @@
 
 /**
  * DoorChimeSettings — the Doors & Locks "More" tab: whether the hub (and
- * keypad) chimes when each contact sensor or hinge opens.
+ * keypad) chimes when each door contact sensor opens. The platform lists only
+ * contact sensors marked as doors in `subdoorsnlocks:chimeConfig`; window
+ * sensors, locks and motion sensors are never in it.
  *
  * Replaces src/components/subsystem/doors-locks/settings/. Writes the whole
  * `subdoorsnlocks:chimeConfig` set back with one entry flipped, as the
@@ -71,7 +73,7 @@ export function DoorChimeSettings() {
     <div data-testid="door-chime-settings">
       <h3 className="text-base font-medium text-swift">Chime Hub</h3>
       <p className="text-xs text-grouse mt-0.5 mb-2">
-        Chime the hub when a contact sensor or hinge is opened.
+        Chime the hub when a door contact sensor is opened.
       </p>
       {rows.map(({ entry, name }) => (
         <SettingToggle

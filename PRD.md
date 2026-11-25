@@ -841,6 +841,21 @@ These are commonly used features that users will expect:
       change-password paths use the same 100-character maximum, and list the
       limit in the password rules each form shows.
 
+32. **Standardize date and time formatting in `src/lib/dateTime.ts`** — Components
+    format timestamps themselves with `toLocaleString` / `toLocaleDateString` /
+    `toLocaleTimeString`, each with its own options, so the same kind of time can
+    read differently from page to page. `src/lib/dateTime.ts` now holds the
+    shared formatters, starting with `formatShortDateTime` (Doors & Locks PIN
+    history).
+    - **Move there:** the `formatDate` / `formatTime` pairs duplicated in
+      `HistoryList.tsx` and `home/page.tsx`, and the inline dates in
+      `KeyCard.tsx`. Also move any formatters added by open PRs, such as the
+      weather alert time (`formatWeatherAlertTime`) and schedule times.
+    - **Agree a small set of named formats** (e.g. long date, short date and
+      time, time of day, relative "x minutes ago"), use them everywhere, and
+      give each a unit test.
+    - **After that,** calling `toLocaleString` and friends directly in a
+      component should be treated as a review finding.
 ---
 
 ## Testing
