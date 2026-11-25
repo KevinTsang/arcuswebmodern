@@ -432,7 +432,7 @@ None.
 - Cancel pending outgoing invitations.
 - Full-access vs partial-access (PIN-only) person roles.
 - Ownership transfer.
-- **Bug:** Contact info does not load on the person detail view.
+- ~~**Bug:** Contact info does not load.~~ **DONE.** The Edit Contact Info panel loads the person itself (`base:GetAttributes`) since the October fix, and a person's details on People & Places come from `place:ListPersons`, which includes email and phone. What was still broken: right after creating an account or accepting an invitation, the header greeting and the Profile tab's Contact Information card were blank until a page reload. `sess:SessionCreated` carries only the person's id, and only sign-in and session restore merged in the full person. Sign-up now merges the person `account:CreateAccount` returns, and invitation acceptance fetches it after `SetActivePlace`, through the shared `src/store/utils/sessionPerson.ts`. The Cypress fake platform's `SessionCreated` now matches the real one (no name, email or phone), so `onboarding.cy.ts` covers both flows.
 
 ---
 

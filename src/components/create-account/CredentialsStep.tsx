@@ -8,6 +8,8 @@ import auth from '@arcus/core/auth';
 import { loginSuccess } from '@/store/slices/authSlice';
 import { initializeCoreConfig } from '@/store/thunks/initConfig';
 import type { SessionCreatedEvent, Account } from '@/arcus/types';
+import type { PersonData } from '@/store/entityTypes';
+import { withSessionPerson } from '@/store/utils/sessionPerson';
 import { useCreateAccount } from './CreateAccountContext';
 import { setField, setLoading, setError, clearError, accountCreated } from './createAccountSlice';
 import FormField from './FormField';
@@ -68,7 +70,11 @@ export default function CredentialsStep() {
 
         const pId = (sessionData[Person.ATTR_CURRPLACE] as string) ?? (result['placeId'] as string);
 
-        reduxDispatch(loginSuccess({ person: sessionData, account: (result['account'] as Account) ?? ({} as Account) }));
+        // CreateAccount returns the new person (name, email, phone); the session payload has only the id.
+        reduxDispatch(loginSuccess({
+          person: withSessionPerson(sessionData, result['person'] as PersonData | undefined),
+          account: (result['account'] as Account) ?? ({} as Account),
+        }));
         dispatch(accountCreated({ personData: sessionData, placeId: pId }));
       } catch {
         dispatch(setError('Failed to create account. The email may already be in use.'));

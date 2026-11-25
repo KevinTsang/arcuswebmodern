@@ -5,6 +5,9 @@
 
 import { tid } from '../support/selectors';
 
+/** A value on the Profile tab's Contact Information card. */
+const profileValue = (label: string) => tid(`info-card-contact-information-value-${label}`);
+
 function fillCredentials() {
   cy.get('input#firstName').type('Taylor');
   cy.get('input#lastName').type('Brooks');
@@ -56,6 +59,12 @@ describe('Create account wizard', () => {
     cy.location('pathname', { timeout: 20000 }).should('eq', '/home');
     tid('header-greeting').should('have.text', 'Hello, Taylor');
     tid('dashboard-place-name').should('contain', 'My Home');
+
+    // Without a page load: the profile shows the new person's details, not just the session id.
+    tid('header-nav-settings').click();
+    profileValue('name').should('have.text', 'Taylor Brooks');
+    profileValue('email').should('have.text', 'taylor@example.com');
+    profileValue('phone').should('contain', '555');
   });
 
   it('shows an error when the platform refuses the account', () => {
@@ -116,6 +125,13 @@ describe('Accept invitation wizard', () => {
     tid('invite-finish').click();
     cy.location('pathname', { timeout: 20000 }).should('eq', '/home');
     tid('dashboard-place-name').should('contain', 'River Cabin');
+    tid('header-greeting').should('have.text', 'Hello, Jordan');
+
+    // Without a page load: the profile shows the new person's details, not just the session id.
+    tid('header-nav-settings').click();
+    profileValue('name').should('have.text', 'Jordan Lee');
+    profileValue('email').should('have.text', 'jordan@example.com');
+    profileValue('phone').should('contain', '555');
   });
 
   it('rejects a phone that is not a US number', () => {
