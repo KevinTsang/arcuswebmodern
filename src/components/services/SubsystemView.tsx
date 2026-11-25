@@ -4,7 +4,7 @@ import {
   CamerasView,
   CareView,
   ClimateView,
-  DoorsLocksView,
+  DoorsLocksServiceView,
   HomeFamilyView,
   LawnGardenView,
   GenericDeviceListView,
@@ -26,7 +26,7 @@ export function SubsystemView({ config, action }: { config: SubsystemConfigEntry
     case 'climate':
       return <ClimateView />;
     case 'doors-locks':
-      return <DoorsLocksView />;
+      return <DoorsLocksServiceView action={action} />;
     case 'home-family':
       return <HomeFamilyView />;
     case 'lawn-garden':

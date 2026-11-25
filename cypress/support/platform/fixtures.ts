@@ -17,6 +17,7 @@ import {
   RelativeHumidity, Rule, RuleTemplate, SafetySubsystem, Scene, Scheduler, SecurityAlarmMode,
   SecuritySubsystem, Subsystem, Switch, Temperature, Thermostat, Valve, WaterSubsystem,
 } from '../../../packages/arcus-core/src/capabilities/capabilities';
+import { LockAuthorizationState } from '../../../packages/arcus-core/src/capabilities/doorsNLocksTypes';
 import type { Attrs, HistoryEntryFixture, PlatformData } from './types';
 
 // ── Ids & addresses ───────────────────────────────────────────────────
@@ -272,7 +273,13 @@ export function createFixture(): PlatformData {
       [DoorsNLocksSubsystem.ATTR_CONTACTSENSORDEVICES]: [DEVICE.contact],
       [DoorsNLocksSubsystem.ATTR_MOTORIZEDDOORDEVICES]: [DEVICE.garageDoor],
       [DoorsNLocksSubsystem.ATTR_PETDOORDEVICES]: [],
-      [DoorsNLocksSubsystem.ATTR_CHIMECONFIG]: {},
+      [DoorsNLocksSubsystem.ATTR_CHIMECONFIG]: [{ device: DEVICE.contact, enabled: true }],
+      [DoorsNLocksSubsystem.ATTR_AUTHORIZATIONBYLOCK]: {
+        [DEVICE.lock]: [
+          { person: addr.person, state: LockAuthorizationState.STATE_AUTHORIZED },
+          { person: addr.guest, state: LockAuthorizationState.STATE_UNAUTHORIZED },
+        ],
+      },
     }),
     subsystem('sublightsnswitches', {
       [LightsNSwitchesSubsystem.ATTR_SWITCHDEVICES]: [DEVICE.lamp, DEVICE.coffee, DEVICE.relay],

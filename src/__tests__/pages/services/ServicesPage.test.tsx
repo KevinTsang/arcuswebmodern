@@ -38,7 +38,7 @@ jest.mock('@/components/subsystems', () => ({
   CamerasView: () => <div data-testid="cameras-view">CamerasView</div>,
   CareView: () => <div data-testid="care-view">CareView</div>,
   ClimateView: () => <div data-testid="climate-view">ClimateView</div>,
-  DoorsLocksView: () => <div data-testid="doors-locks-view">DoorsLocksView</div>,
+  DoorsLocksServiceView: () => <div data-testid="doors-locks-view">DoorsLocksServiceView</div>,
   HomeFamilyView: () => <div data-testid="home-family-view">HomeFamilyView</div>,
   LawnGardenView: () => <div data-testid="lawn-garden-view">LawnGardenView</div>,
   GenericDeviceListView: ({ config }: any) => <div data-testid="generic-view">{config.name}</div>,
@@ -133,9 +133,13 @@ describe('SubsystemPage – static params', () => {
     expect(bare).toEqual(withStatus);
   });
 
-  it('includes the alarm settings tab, and no extra tabs elsewhere', () => {
+  it('includes the alarm and doors & locks tabs, and no extra tabs elsewhere', () => {
     const params = generateStaticParams();
     const extra = params.filter((p) => p.action.length > 0 && p.action[0] !== 'status');
-    expect(extra).toEqual([{ subsystem: 'alarms', action: ['settings'] }]);
+    expect(extra).toEqual([
+      { subsystem: 'alarms', action: ['settings'] },
+      { subsystem: 'doors-locks', action: ['access-list'] },
+      { subsystem: 'doors-locks', action: ['more'] },
+    ]);
   });
 });

@@ -1,0 +1,119 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`LockAccessCard matches snapshot 1`] = `
+<DocumentFragment>
+  <div
+    class="rounded-[var(--border-radius-base)] border border-heron p-4"
+    data-testid="lock-access-DRIV:dev:lock1"
+  >
+    <div
+      class="flex items-baseline justify-between gap-2 mb-3"
+    >
+      <h4
+        class="text-sm font-medium text-swift"
+      >
+        Front Door
+      </h4>
+      <span
+        class="text-xs text-grouse"
+        data-testid="lock-access-slots-DRIV:dev:lock1"
+      >
+        2 of 30 PINs used
+      </span>
+    </div>
+    <ul
+      class="divide-y divide-heron"
+    >
+      <li
+        class="flex items-center justify-between gap-3 py-2"
+        data-state="PENDING"
+        data-testid="lock-person-DRIV:dev:lock1-SERV:person:alice"
+      >
+        <label
+          class="flex-1 min-w-0 cursor-pointer"
+          for="lock-person-DRIV:dev:lock1-SERV:person:alice"
+        >
+          <span
+            class="block text-sm text-swift"
+          >
+            Alice Johnson
+          </span>
+          <span
+            class="block text-xs text-grouse"
+          >
+            The lock is updating PINs, which may take a few minutes.
+          </span>
+        </label>
+        <input
+          aria-label="Alice Johnson can use their PIN on this lock"
+          checked=""
+          class="h-4 w-4 accent-peacock disabled:opacity-50"
+          data-testid="lock-person-toggle-DRIV:dev:lock1-SERV:person:alice"
+          disabled=""
+          id="lock-person-DRIV:dev:lock1-SERV:person:alice"
+          type="checkbox"
+        />
+      </li>
+      <li
+        class="flex items-center justify-between gap-3 py-2"
+        data-state="AUTHORIZED"
+        data-testid="lock-person-DRIV:dev:lock1-SERV:person:bob"
+      >
+        <label
+          class="flex-1 min-w-0 cursor-pointer"
+          for="lock-person-DRIV:dev:lock1-SERV:person:bob"
+        >
+          <span
+            class="block text-sm text-swift"
+          >
+            Bob Smith
+          </span>
+        </label>
+        <input
+          aria-label="Bob Smith can use their PIN on this lock"
+          checked=""
+          class="h-4 w-4 accent-peacock disabled:opacity-50"
+          data-testid="lock-person-toggle-DRIV:dev:lock1-SERV:person:bob"
+          id="lock-person-DRIV:dev:lock1-SERV:person:bob"
+          type="checkbox"
+        />
+      </li>
+    </ul>
+    <h5
+      class="text-xs font-medium text-coot uppercase tracking-wide mt-4 mb-1"
+    >
+      Add more people to your access list
+    </h5>
+    <ul
+      class="divide-y divide-heron"
+    >
+      <li
+        class="flex items-center justify-between gap-3 py-2"
+        data-state="UNAUTHORIZED"
+        data-testid="lock-person-DRIV:dev:lock1-SERV:person:carol"
+      >
+        <label
+          class="flex-1 min-w-0 cursor-pointer"
+          for="lock-person-DRIV:dev:lock1-SERV:person:carol"
+        >
+          <span
+            class="block text-sm text-swift"
+          >
+            Carol Davis
+          </span>
+        </label>
+        <input
+          aria-label="Carol Davis can use their PIN on this lock"
+          class="h-4 w-4 accent-peacock disabled:opacity-50"
+          data-testid="lock-person-toggle-DRIV:dev:lock1-SERV:person:carol"
+          id="lock-person-DRIV:dev:lock1-SERV:person:carol"
+          type="checkbox"
+        />
+      </li>
+    </ul>
+    <div
+      data-testid="pin-history-DRIV:dev:lock1"
+    />
+  </div>
+</DocumentFragment>
+`;

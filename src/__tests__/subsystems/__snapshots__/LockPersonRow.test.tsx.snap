@@ -1,0 +1,30 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`LockPersonRow matches snapshot 1`] = `
+<DocumentFragment>
+  <li
+    class="flex items-center justify-between gap-3 py-2"
+    data-state="AUTHORIZED"
+    data-testid="lock-person-DRIV:dev:lock1-SERV:person:p1"
+  >
+    <label
+      class="flex-1 min-w-0 cursor-pointer"
+      for="lock-person-DRIV:dev:lock1-SERV:person:p1"
+    >
+      <span
+        class="block text-sm text-swift"
+      >
+        Alice Johnson
+      </span>
+    </label>
+    <input
+      aria-label="Alice Johnson can use their PIN on this lock"
+      checked=""
+      class="h-4 w-4 accent-peacock disabled:opacity-50"
+      data-testid="lock-person-toggle-DRIV:dev:lock1-SERV:person:p1"
+      id="lock-person-DRIV:dev:lock1-SERV:person:p1"
+      type="checkbox"
+    />
+  </li>
+</DocumentFragment>
+`;

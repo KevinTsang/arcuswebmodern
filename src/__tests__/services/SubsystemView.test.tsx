@@ -7,7 +7,7 @@ jest.mock('@/components/subsystems', () => ({
   CamerasView: () => <div data-testid="cameras-view">CamerasView</div>,
   CareView: () => <div data-testid="care-view">CareView</div>,
   ClimateView: () => <div data-testid="climate-view">ClimateView</div>,
-  DoorsLocksView: () => <div data-testid="doors-locks-view">DoorsLocksView</div>,
+  DoorsLocksServiceView: ({ action }: any) => <div data-testid="doors-locks-view">DoorsLocksServiceView:{action}</div>,
   HomeFamilyView: () => <div data-testid="home-family-view">HomeFamilyView</div>,
   LawnGardenView: () => <div data-testid="lawn-garden-view">LawnGardenView</div>,
   GenericDeviceListView: ({ config }: any) => <div data-testid="generic-view">{config.name}</div>,
@@ -37,6 +37,11 @@ describe('SubsystemView', () => {
   ])('falls back to the generic view for %s', (slug, name) => {
     renderFor(slug);
     expect(screen.getByTestId('generic-view')).toHaveTextContent(name);
+  });
+
+  it('passes the action segment to the doors & locks view', () => {
+    renderFor('doors-locks', 'access-list');
+    expect(screen.getByTestId('doors-locks-view')).toHaveTextContent('DoorsLocksServiceView:access-list');
   });
 
   it('passes the action segment to the alarms view', () => {

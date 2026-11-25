@@ -1,5 +1,5 @@
 import { renderHook, act, waitFor } from '@testing-library/react';
-import { Place } from '@arcus/core';
+import { Device, Place } from '@arcus/core';
 import useHistoryFetch from '@/components/history/useHistoryFetch';
 import Bridge from '@arcus/core/bridge';
 import type { ListHistoryEntriesResponse } from '@/arcus/types';
@@ -185,5 +185,89 @@ describe('useHistoryFetch – error handling', () => {
 
     expect(result.current.entries).toEqual([]);
     expect(result.current.hasMore).toBe(false);
+  });
+});
+
+describe('useHistoryFetch – options', () => {
+  const LOCK = 'DRIV:dev:lock';
+
+  it('sends the given command and page size', async () => {
+    mockRequest.mockResolvedValue({ results: page1 });
+    renderHook(() => useHistoryFetch(LOCK, { command: Device.CMD_LISTHISTORYENTRIES, pageSize: 10 }));
+
+    await waitFor(() => expect(mockRequest).toHaveBeenCalledWith(
+      Device.CMD_LISTHISTORYENTRIES, LOCK, { limit: 10, token: undefined },
+    ));
+  });
+
+  it('defaults to the place command', async () => {
+    mockRequest.mockResolvedValue({ results: page1 });
+    renderHook(() => useHistoryFetch('SERV:place:place-1'));
+    await waitFor(() => expect(mockRequest).toHaveBeenCalledWith(
+      Place.CMD_LISTHISTORYENTRIES, 'SERV:place:place-1', expect.anything(),
+    ));
+  });
+
+  it('waits until enabled, then fetches once', async () => {
+    mockRequest.mockResolvedValue({ results: page1 });
+    const { result, rerender } = renderHook(({ enabled }) => useHistoryFetch(LOCK, { enabled }), {
+      initialProps: { enabled: false },
+    });
+    expect(mockRequest).not.toHaveBeenCalled();
+    expect(result.current.loaded).toBe(false);
+
+    rerender({ enabled: true });
+    await waitFor(() => expect(result.current.loaded).toBe(true));
+    rerender({ enabled: false });
+    rerender({ enabled: true });
+    expect(mockRequest).toHaveBeenCalledTimes(1);
+  });
+
+  it('reports a failure, calls onError, and retries the same page', async () => {
+    const onError = jest.fn();
+    mockRequest.mockRejectedValueOnce(new Error('fail')).mockResolvedValueOnce({ results: page1 });
+    const { result } = renderHook(() => useHistoryFetch(LOCK, { onError }));
+
+    await waitFor(() => expect(result.current.failed).toBe(true));
+    expect(onError).toHaveBeenCalledTimes(1);
+
+    act(() => { result.current.retry(); });
+    await waitFor(() => expect(result.current.loaded).toBe(true));
+    expect(result.current.failed).toBe(false);
+    expect(result.current.entries).toEqual(page1);
+  });
+
+  it('retries a failed next page from its token', async () => {
+    mockRequest
+      .mockResolvedValueOnce({ results: page1, nextToken: 'tok-2' })
+      .mockRejectedValueOnce(new Error('fail'))
+      .mockResolvedValueOnce({ results: page2 });
+    const { result } = renderHook(() => useHistoryFetch(LOCK));
+    await waitFor(() => expect(result.current.loaded).toBe(true));
+
+    act(() => { result.current.loadMore(); });
+    await waitFor(() => expect(result.current.failed).toBe(true));
+    act(() => { result.current.retry(); });
+
+    await waitFor(() => expect(result.current.entries).toEqual([...page1, ...page2]));
+    expect(mockRequest).toHaveBeenLastCalledWith(Place.CMD_LISTHISTORYENTRIES, LOCK, { limit: 20, token: 'tok-2' });
+  });
+
+  it('ignores a second loadMore while the first is still loading', async () => {
+    let resolvePage2: (v: ListHistoryEntriesResponse) => void = () => {};
+    mockRequest
+      .mockResolvedValueOnce({ results: page1, nextToken: 'tok-2' })
+      .mockReturnValueOnce(new Promise((r) => { resolvePage2 = r; }));
+    const { result } = renderHook(() => useHistoryFetch(LOCK));
+    await waitFor(() => expect(result.current.loaded).toBe(true));
+
+    act(() => {
+      result.current.loadMore();
+      result.current.loadMore();
+    });
+    expect(mockRequest).toHaveBeenCalledTimes(2);
+
+    await act(async () => { resolvePage2({ results: page2 }); });
+    expect(result.current.entries).toEqual([...page1, ...page2]);
   });
 });

@@ -1,7 +1,7 @@
 import { renderHook } from '@testing-library/react';
-import { DoorLock, Contact, MotorizedDoor, DoorsNLocksSubsystem } from '@arcus/core';
+import { DoorLock, Contact, MotorizedDoor, DoorsNLocksSubsystem, LockAuthorizationState } from '@arcus/core';
 import { useDoorsLocksSubsystem } from '@/hooks/useDoorsLocksSubsystem';
-import type { SubsystemEntity, DeviceEntity, ChimeConfig } from '@/store/entityTypes';
+import type { SubsystemEntity, DeviceEntity, ChimeConfig, LockAuthorizationMap } from '@/store/entityTypes';
 import { makeDevice, makeSubsystem } from '../helpers/factories';
 
 // ── Mocks ─────────────────────────────────────────────────────────────
@@ -42,7 +42,8 @@ describe('useDoorsLocksSubsystem', () => {
       expect(result.current.motorized).toEqual([]);
       expect(result.current.contacts).toEqual([]);
       expect(result.current.petDoors).toEqual([]);
-      expect(result.current.chimeConfig).toEqual({});
+      expect(result.current.chimeConfig).toEqual([]);
+      expect(result.current.authorizationByLock).toEqual({});
       expect(result.current.unlockedCount).toBe(0);
       expect(result.current.openCount).toBe(0);
       expect(result.current.totalDevices).toBe(0);
@@ -114,7 +115,10 @@ describe('useDoorsLocksSubsystem', () => {
 
   describe('chimeConfig', () => {
     it('returns chimeConfig from the subsystem', () => {
-      const chime: ChimeConfig = { 'DRIV:dev:lock1': true, 'DRIV:dev:lock2': false };
+      const chime: ChimeConfig = [
+        { device: 'DRIV:dev:contact1', enabled: true },
+        { device: 'DRIV:dev:contact2', enabled: false },
+      ];
       mockUseSubsystem.mockReturnValue(makeSubsystem('SERV:subdoorsnlocks:abc', {
         [DoorsNLocksSubsystem.ATTR_CHIMECONFIG]: chime,
       }));
@@ -124,12 +128,48 @@ describe('useDoorsLocksSubsystem', () => {
       expect(result.current.chimeConfig).toEqual(chime);
     });
 
-    it('defaults chimeConfig to empty object when absent', () => {
+    it('defaults chimeConfig to an empty list when absent', () => {
       mockUseSubsystem.mockReturnValue(makeSubsystem('SERV:subdoorsnlocks:abc'));
 
       const { result } = renderHook(() => useDoorsLocksSubsystem());
 
-      expect(result.current.chimeConfig).toEqual({});
+      expect(result.current.chimeConfig).toEqual([]);
+    });
+
+    it('ignores a chimeConfig that is not a list', () => {
+      mockUseSubsystem.mockReturnValue(makeSubsystem('SERV:subdoorsnlocks:abc', {
+        [DoorsNLocksSubsystem.ATTR_CHIMECONFIG]: {},
+      }));
+
+      const { result } = renderHook(() => useDoorsLocksSubsystem());
+
+      expect(result.current.chimeConfig).toEqual([]);
+    });
+  });
+
+  describe('authorizationByLock', () => {
+    it('returns the authorizations keyed by lock', () => {
+      const auth: LockAuthorizationMap = {
+        'DRIV:dev:lock1': [
+          { person: 'SERV:person:p1', state: LockAuthorizationState.STATE_AUTHORIZED },
+          { person: 'SERV:person:p2', state: LockAuthorizationState.STATE_UNAUTHORIZED },
+        ],
+      };
+      mockUseSubsystem.mockReturnValue(makeSubsystem('SERV:subdoorsnlocks:abc', {
+        [DoorsNLocksSubsystem.ATTR_AUTHORIZATIONBYLOCK]: auth,
+      }));
+
+      const { result } = renderHook(() => useDoorsLocksSubsystem());
+
+      expect(result.current.authorizationByLock).toEqual(auth);
+    });
+
+    it('defaults to an empty map when absent', () => {
+      mockUseSubsystem.mockReturnValue(makeSubsystem('SERV:subdoorsnlocks:abc'));
+
+      const { result } = renderHook(() => useDoorsLocksSubsystem());
+
+      expect(result.current.authorizationByLock).toEqual({});
     });
   });
 

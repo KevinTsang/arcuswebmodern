@@ -3,7 +3,7 @@ import { Base, DoorLock, Contact, MotorizedDoor, DoorsNLocksSubsystem } from '@a
 import { useAppSelector } from '@/store/hooks';
 import { selectAllDevices } from '@/store/slices/devicesSlice';
 import { useSubsystem } from './useSubsystem';
-import type { ChimeConfig } from '@/store/entityTypes';
+import { normalizeAuthorizationByLock, normalizeChimeConfig } from '@/lib/doorsLocks';
 
 export function useDoorsLocksSubsystem() {
   const sub = useSubsystem('subdoorsnlocks');
@@ -14,7 +14,11 @@ export function useDoorsLocksSubsystem() {
     const motorizedAddrs = (sub?.[DoorsNLocksSubsystem.ATTR_MOTORIZEDDOORDEVICES] as string[]) ?? [];
     const contactAddrs = (sub?.[DoorsNLocksSubsystem.ATTR_CONTACTSENSORDEVICES] as string[]) ?? [];
     const petDoorAddrs = (sub?.[DoorsNLocksSubsystem.ATTR_PETDOORDEVICES] as string[]) ?? [];
-    const chimeConfig = (sub?.[DoorsNLocksSubsystem.ATTR_CHIMECONFIG] as ChimeConfig) ?? {};
+    // Struct attributes from the platform: anything not in the documented shape is dropped.
+    const chimeConfig = normalizeChimeConfig(sub?.[DoorsNLocksSubsystem.ATTR_CHIMECONFIG] as object | undefined);
+    const authorizationByLock = normalizeAuthorizationByLock(
+      sub?.[DoorsNLocksSubsystem.ATTR_AUTHORIZATIONBYLOCK] as object | undefined,
+    );
 
     const locks = allDevices.filter((d) => lockAddrs.includes(d[Base.ATTR_ADDRESS]));
     const motorized = allDevices.filter((d) => motorizedAddrs.includes(d[Base.ATTR_ADDRESS]));
@@ -32,6 +36,7 @@ export function useDoorsLocksSubsystem() {
       contacts,
       petDoors,
       chimeConfig,
+      authorizationByLock,
       unlockedCount,
       openCount,
       totalDevices: locks.length + motorized.length + contacts.length + petDoors.length,
