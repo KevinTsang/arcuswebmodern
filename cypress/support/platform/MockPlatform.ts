@@ -927,13 +927,15 @@ export class MockPlatform {
     // Doors & Locks: apply each operation to the lock's access list at once
     // (the real subsystem reports PENDING until the lock confirms).
     [DoorsNLocksSubsystem.CMD_AUTHORIZEPEOPLE]: ({ destination, attrs }) => {
-      interface AuthState { person: string; state: string }
-      interface AuthOperation { person: string; operation: string }
+      // Type aliases rather than interfaces: an object type alias satisfies Json's index signature,
+      // so these cast to and from Json directly.
+      type AuthState = { person: string; state: string };
+      type AuthOperation = { person: string; operation: string };
       const entity = this.mustGet(destination);
       const device = attrs.device as string;
-      const ops = attrs.operations as unknown as AuthOperation[];
-      const byLock = {
-        ...((entity[DoorsNLocksSubsystem.ATTR_AUTHORIZATIONBYLOCK] as unknown as Record<string, AuthState[]> | undefined) ?? {}),
+      const ops = attrs.operations as AuthOperation[];
+      const byLock: Record<string, AuthState[]> = {
+        ...((entity[DoorsNLocksSubsystem.ATTR_AUTHORIZATIONBYLOCK] as Record<string, AuthState[]> | undefined) ?? {}),
       };
       byLock[device] = (byLock[device] ?? []).map((entry) => {
         const op = ops.find((o) => o.person === entry.person);
@@ -945,7 +947,7 @@ export class MockPlatform {
             : LockAuthorizationState.STATE_UNAUTHORIZED,
         };
       });
-      this.updateEntity(destination, { [DoorsNLocksSubsystem.ATTR_AUTHORIZATIONBYLOCK]: byLock as unknown as Json });
+      this.updateEntity(destination, { [DoorsNLocksSubsystem.ATTR_AUTHORIZATIONBYLOCK]: byLock });
       return {};
     },
 
