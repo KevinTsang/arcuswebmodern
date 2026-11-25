@@ -4,6 +4,7 @@
  * LockPersonRow — one person on a lock's access list, with a checkbox for
  * whether their PIN is on the lock. A PENDING person's PIN is still being
  * written to (or removed from) the lock, so their checkbox is disabled.
+ * `removing` marks a PENDING removal: shown unticked, as "Removing…".
  */
 
 import { useCallback } from 'react';
@@ -14,13 +15,15 @@ interface LockPersonRowProps {
   lockAddress: string;
   entry: LockAuthorizationEntry;
   name: string;
+  /** The PIN is being removed from the lock (PENDING after a DEAUTHORIZE). */
+  removing?: boolean;
   disabled: boolean;
   onToggle: (entry: LockAuthorizationEntry) => void;
 }
 
-export function LockPersonRow({ lockAddress, entry, name, disabled, onToggle }: LockPersonRowProps) {
+export function LockPersonRow({ lockAddress, entry, name, removing = false, disabled, onToggle }: LockPersonRowProps) {
   const pending = entry.state === LockAuthorizationState.STATE_PENDING;
-  const checked = entry.state !== LockAuthorizationState.STATE_UNAUTHORIZED;
+  const checked = entry.state !== LockAuthorizationState.STATE_UNAUTHORIZED && !removing;
   const inputId = `lock-person-${lockAddress}-${entry.person}`;
 
   const handleChange = useCallback(() => onToggle(entry), [onToggle, entry]);
@@ -29,13 +32,16 @@ export function LockPersonRow({ lockAddress, entry, name, disabled, onToggle }: 
     <li
       data-testid={inputId}
       data-state={entry.state}
+      data-removing={removing || undefined}
       className="flex items-center justify-between gap-3 py-2"
     >
       <label htmlFor={inputId} className="flex-1 min-w-0 cursor-pointer">
         <span className="block text-sm text-swift">{name}</span>
         {pending && (
           <span className="block text-xs text-grouse">
-            The lock is updating PINs, which may take a few minutes.
+            {removing
+              ? 'Removing… The lock is deleting this PIN, which may take a few minutes.'
+              : 'The lock is updating PINs, which may take a few minutes.'}
           </span>
         )}
       </label>

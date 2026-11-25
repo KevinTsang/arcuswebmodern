@@ -14,6 +14,7 @@
 
 import { notFound } from 'next/navigation';
 import { subsystemConfigs, getSubsystemConfigBySlug } from '@/lib/subsystemConfig';
+import { DEFAULT_SUBSYSTEM_ACTION, extraSubsystemActions } from '@/lib/subsystemTabs';
 import {
   ServicesContextBar,
   SubsystemSidebar,
@@ -21,13 +22,7 @@ import {
   SubsystemView,
 } from '@/components/services';
 
-const DEFAULT_ACTION = 'status';
-
-/** Sub-tabs a view routes to beyond the default (see AlarmsView's tabs). */
-const EXTRA_ACTIONS: Partial<Record<string, string[]>> = {
-  alarms: ['settings'],
-  'doors-locks': ['access-list', 'more'],
-};
+const DEFAULT_ACTION = DEFAULT_SUBSYSTEM_ACTION;
 
 /**
  * The app is a static export, so every URL this route serves must be listed
@@ -38,7 +33,8 @@ export function generateStaticParams() {
     .filter((c) => c.visible)
     .flatMap((c) => [
       { subsystem: c.slug, action: [] },
-      ...[DEFAULT_ACTION, ...(EXTRA_ACTIONS[c.slug] ?? [])].map((a) => ({ subsystem: c.slug, action: [a] })),
+      // Sub-tabs come from src/lib/subsystemTabs.ts, the same list the views render.
+      ...[DEFAULT_ACTION, ...extraSubsystemActions(c.slug)].map((a) => ({ subsystem: c.slug, action: [a] })),
     ]);
 }
 

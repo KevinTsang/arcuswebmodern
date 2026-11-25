@@ -6,6 +6,7 @@
  * - `LockAuthorizationState` — entries of `subdoorsnlocks:authorizationByLock`.
  * - `LockAuthorizationOperation` — items of `subdoorsnlocks:AuthorizePeople`'s `operations`.
  * - `DoorChimeConfig` — entries of `subdoorsnlocks:chimeConfig`.
+ * - `AuthorizePeopleRequest` — the arguments of `subdoorsnlocks:AuthorizePeople`.
  */
 
 export const LockAuthorizationState = {
@@ -26,4 +27,9 @@ export const LockAuthorizationOperation = {
 export const DoorChimeConfig = {
   ATTR_DEVICE: 'device',
   ATTR_ENABLED: 'enabled',
+} as const;
+
+export const AuthorizePeopleRequest = {
+  ATTR_DEVICE: 'device',
+  ATTR_OPERATIONS: 'operations',
 } as const;

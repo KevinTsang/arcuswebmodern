@@ -50,4 +50,4 @@ export {
 export * from './capabilities/capabilities';
 
 // Doors & Locks struct constants (hand-written; not generated)
-export { LockAuthorizationState, LockAuthorizationOperation, DoorChimeConfig } from './capabilities/doorsNLocksTypes';
+export { LockAuthorizationState, LockAuthorizationOperation, DoorChimeConfig, AuthorizePeopleRequest } from './capabilities/doorsNLocksTypes';

@@ -3,7 +3,7 @@ import { Base, DoorLock, Contact, MotorizedDoor, DoorsNLocksSubsystem } from '@a
 import { useAppSelector } from '@/store/hooks';
 import { selectAllDevices } from '@/store/slices/devicesSlice';
 import { useSubsystem } from './useSubsystem';
-import type { ChimeConfig, LockAuthorizationMap } from '@/store/entityTypes';
+import { normalizeAuthorizationByLock, normalizeChimeConfig } from '@/lib/doorsLocks';
 
 export function useDoorsLocksSubsystem() {
   const sub = useSubsystem('subdoorsnlocks');
@@ -14,10 +14,11 @@ export function useDoorsLocksSubsystem() {
     const motorizedAddrs = (sub?.[DoorsNLocksSubsystem.ATTR_MOTORIZEDDOORDEVICES] as string[]) ?? [];
     const contactAddrs = (sub?.[DoorsNLocksSubsystem.ATTR_CONTACTSENSORDEVICES] as string[]) ?? [];
     const petDoorAddrs = (sub?.[DoorsNLocksSubsystem.ATTR_PETDOORDEVICES] as string[]) ?? [];
-    // chimeConfig is a set of DoorChimeConfig structs; ignore any other shape.
-    const rawChime = sub?.[DoorsNLocksSubsystem.ATTR_CHIMECONFIG];
-    const chimeConfig: ChimeConfig = Array.isArray(rawChime) ? (rawChime as ChimeConfig) : [];
-    const authorizationByLock = (sub?.[DoorsNLocksSubsystem.ATTR_AUTHORIZATIONBYLOCK] as LockAuthorizationMap) ?? {};
+    // Struct attributes from the platform: anything not in the documented shape is dropped.
+    const chimeConfig = normalizeChimeConfig(sub?.[DoorsNLocksSubsystem.ATTR_CHIMECONFIG] as object | undefined);
+    const authorizationByLock = normalizeAuthorizationByLock(
+      sub?.[DoorsNLocksSubsystem.ATTR_AUTHORIZATIONBYLOCK] as object | undefined,
+    );
 
     const locks = allDevices.filter((d) => lockAddrs.includes(d[Base.ATTR_ADDRESS]));
     const motorized = allDevices.filter((d) => motorizedAddrs.includes(d[Base.ATTR_ADDRESS]));

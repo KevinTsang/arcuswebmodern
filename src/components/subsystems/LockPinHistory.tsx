@@ -6,13 +6,11 @@
  * default; the first page loads when it is opened, more on request.
  */
 
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { Device } from '@arcus/core';
-import Bridge from '@arcus/core/bridge';
 import { useAppDispatch } from '@/store/hooks';
 import { addNotification } from '@/store/slices/uiSlice';
-import type { ListHistoryEntriesResponse } from '@/arcus/types';
-import type { HistoryEntry } from '@/components/history/HistoryList';
+import useHistoryFetch from '@/components/history/useHistoryFetch';
 import { formatShortDateTime } from '@/lib/dateTime';
 
 export const PIN_HISTORY_PAGE_SIZE = 10;
@@ -24,51 +22,20 @@ interface LockPinHistoryProps {
 export function LockPinHistory({ lockAddress }: LockPinHistoryProps) {
   const dispatch = useAppDispatch();
   const [open, setOpen] = useState(false);
-  const [entries, setEntries] = useState<HistoryEntry[]>([]);
-  const [nextToken, setNextToken] = useState<string | undefined>(undefined);
-  const [loading, setLoading] = useState(false);
-  const [loaded, setLoaded] = useState(false);
-  const [failed, setFailed] = useState(false);
-  const mountedRef = useRef(true);
 
-  useEffect(() => {
-    mountedRef.current = true;
-    return () => { mountedRef.current = false; };
-  }, []);
+  const handleError = useCallback(() => {
+    dispatch(addNotification({ type: 'error', message: 'Failed to load lock history' }));
+  }, [dispatch]);
 
-  const fetchPage = useCallback(async (token?: string) => {
-    setLoading(true);
-    setFailed(false);
-    try {
-      const res = await Bridge.request<ListHistoryEntriesResponse>(
-        Device.CMD_LISTHISTORYENTRIES, lockAddress, { limit: PIN_HISTORY_PAGE_SIZE, token },
-      );
-      if (!mountedRef.current) return;
-      const results = res?.results ?? [];
-      setEntries((prev) => (token ? [...prev, ...results] : results));
-      setNextToken(res?.nextToken || undefined);
-      setLoaded(true);
-    } catch {
-      if (!mountedRef.current) return;
-      setFailed(true);
-      dispatch(addNotification({ type: 'error', message: 'Failed to load lock history' }));
-    }
-    if (mountedRef.current) setLoading(false);
-  }, [lockAddress, dispatch]);
+  // The first page loads when the history is first opened; it stays loaded if it's closed again.
+  const { entries, loading, loaded, failed, hasMore, loadMore, retry } = useHistoryFetch(lockAddress, {
+    command: Device.CMD_LISTHISTORYENTRIES,
+    pageSize: PIN_HISTORY_PAGE_SIZE,
+    enabled: open,
+    onError: handleError,
+  });
 
-  const handleToggleOpen = useCallback(() => {
-    const opening = !open;
-    setOpen(opening);
-    if (opening && !loaded && !loading) fetchPage();
-  }, [open, loaded, loading, fetchPage]);
-
-  const handleLoadMore = useCallback(() => {
-    if (nextToken && !loading) fetchPage(nextToken);
-  }, [nextToken, loading, fetchPage]);
-
-  const handleRetry = useCallback(() => {
-    fetchPage(loaded ? nextToken : undefined);
-  }, [fetchPage, loaded, nextToken]);
+  const handleToggleOpen = useCallback(() => setOpen((o) => !o), []);
 
   return (
     <div className="mt-4 pt-3 border-t border-heron">
@@ -108,7 +75,7 @@ export function LockPinHistory({ lockAddress }: LockPinHistoryProps) {
               Couldn&apos;t load the history.{' '}
               <button
                 type="button"
-                onClick={handleRetry}
+                onClick={retry}
                 data-testid={`lock-history-retry-${lockAddress}`}
                 className="text-peacock hover:underline"
               >
@@ -117,10 +84,10 @@ export function LockPinHistory({ lockAddress }: LockPinHistoryProps) {
             </p>
           )}
 
-          {nextToken && !loading && !failed && (
+          {hasMore && loaded && !loading && !failed && (
             <button
               type="button"
-              onClick={handleLoadMore}
+              onClick={loadMore}
               data-testid={`lock-history-more-${lockAddress}`}
               className="mt-2 text-sm text-peacock hover:underline"
             >

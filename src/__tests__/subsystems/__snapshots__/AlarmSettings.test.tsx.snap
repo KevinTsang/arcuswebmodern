@@ -33,7 +33,7 @@ exports[`AlarmSettings matches snapshot 1`] = `
           <button
             aria-checked="false"
             aria-label="Fan Shutoff on Smoke"
-            class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 bg-heron"
+            class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed bg-heron"
             data-testid="setting-fan-shutoff-on-smoke"
             role="switch"
           >
@@ -60,7 +60,7 @@ exports[`AlarmSettings matches snapshot 1`] = `
           <button
             aria-checked="false"
             aria-label="Fan Shutoff on CO"
-            class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 bg-heron"
+            class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed bg-heron"
             data-testid="setting-fan-shutoff-on-co"
             role="switch"
           >
@@ -255,7 +255,7 @@ exports[`AlarmSettings matches snapshot 1`] = `
               <button
                 aria-checked="true"
                 aria-label="Arming Sounds"
-                class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 bg-peacock"
+                class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed bg-peacock"
                 data-testid="arming-sounds-on"
                 role="switch"
               >
@@ -282,7 +282,7 @@ exports[`AlarmSettings matches snapshot 1`] = `
               <button
                 aria-checked="false"
                 aria-label="Silent Alarm"
-                class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 bg-heron"
+                class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed bg-heron"
                 data-testid="silent-alarm-on"
                 role="switch"
               >
@@ -445,7 +445,7 @@ exports[`AlarmSettings matches snapshot 1`] = `
               <button
                 aria-checked="true"
                 aria-label="Arming Sounds"
-                class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 bg-peacock"
+                class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed bg-peacock"
                 data-testid="arming-sounds-partial"
                 role="switch"
               >
@@ -472,7 +472,7 @@ exports[`AlarmSettings matches snapshot 1`] = `
               <button
                 aria-checked="false"
                 aria-label="Silent Alarm"
-                class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 bg-heron"
+                class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed bg-heron"
                 data-testid="silent-alarm-partial"
                 role="switch"
               >

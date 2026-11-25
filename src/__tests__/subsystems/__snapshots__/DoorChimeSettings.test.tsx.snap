@@ -33,7 +33,7 @@ exports[`DoorChimeSettings matches snapshot 1`] = `
       <button
         aria-checked="true"
         aria-label="Back Door"
-        class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 bg-peacock"
+        class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed bg-peacock"
         data-testid="door-chime-toggle-DRIV:dev:back"
         role="switch"
       >
@@ -60,7 +60,7 @@ exports[`DoorChimeSettings matches snapshot 1`] = `
       <button
         aria-checked="false"
         aria-label="Kitchen Window"
-        class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 bg-heron"
+        class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed bg-heron"
         data-testid="door-chime-toggle-DRIV:dev:kitchen"
         role="switch"
       >

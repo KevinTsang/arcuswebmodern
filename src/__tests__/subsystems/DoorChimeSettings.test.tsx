@@ -124,6 +124,53 @@ describe('DoorChimeSettings', () => {
         payload: { type: 'error', message: 'Failed to update door chime' },
       }));
     });
+
+    it('disables the switches while a save is in flight', async () => {
+      let resolve: (v: object) => void = () => {};
+      mockBridgeRequest.mockReturnValueOnce(new Promise((r) => { resolve = r; }));
+      render(<DoorChimeSettings />);
+      fireEvent.click(toggle(KITCHEN));
+
+      expect(toggle(BACK)).toBeDisabled();
+      expect(toggle(KITCHEN)).toBeDisabled();
+      resolve({});
+      await waitFor(() => expect(toggle(BACK)).not.toBeDisabled());
+    });
+
+    it('builds a quick second toggle on the first, before the store catches up', async () => {
+      render(<DoorChimeSettings />);
+      fireEvent.click(toggle(KITCHEN));
+      await waitFor(() => expect(toggle(BACK)).not.toBeDisabled());
+      // The store still has Kitchen off, but the switch already shows it on.
+      expect(toggle(KITCHEN)).toHaveAttribute('aria-checked', 'true');
+
+      fireEvent.click(toggle(BACK));
+      await waitFor(() => expect(mockBridgeRequest).toHaveBeenCalledTimes(2));
+      expect(mockBridgeRequest).toHaveBeenLastCalledWith(Base.CMD_SETATTRIBUTES, SUB, {
+        [DoorsNLocksSubsystem.ATTR_CHIMECONFIG]: [
+          { device: KITCHEN, enabled: true },
+          { device: BACK, enabled: false },
+        ],
+      });
+    });
+
+    it('restores the stored config when a save fails', async () => {
+      mockBridgeRequest.mockRejectedValueOnce(new Error('fail'));
+      render(<DoorChimeSettings />);
+      fireEvent.click(toggle(KITCHEN));
+
+      await waitFor(() => expect(mockDispatch).toHaveBeenCalled());
+      expect(toggle(KITCHEN)).toHaveAttribute('aria-checked', 'false');
+    });
+
+    it('follows the stored config when it changes', () => {
+      const { rerender } = render(<DoorChimeSettings />);
+      mockDoorsLocks = { ...mockDoorsLocks, chimeConfig: [{ device: KITCHEN, enabled: true }, { device: BACK, enabled: false }] };
+      rerender(<DoorChimeSettings />);
+
+      expect(toggle(KITCHEN)).toHaveAttribute('aria-checked', 'true');
+      expect(toggle(BACK)).toHaveAttribute('aria-checked', 'false');
+    });
   });
 
   describe('edge cases', () => {

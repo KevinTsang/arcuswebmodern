@@ -8,11 +8,15 @@
  * Ticking or unticking a person sends `subdoorsnlocks:AuthorizePeople` with
  * a single AUTHORIZE / DEAUTHORIZE operation, as the legacy client did; the
  * subsystem then reports the person as PENDING until the lock confirms.
+ *
+ * PENDING doesn't say which way the change is going, so the card remembers
+ * the removals it sent: a person being removed is shown as "Removing…" with
+ * the people not on the lock, and isn't counted as using a PIN slot.
  */
 
 import { useState, useCallback, useMemo } from 'react';
 import {
-  Base, Device, DoorLock, DoorsNLocksSubsystem, Person,
+  AuthorizePeopleRequest, Base, Device, DoorLock, DoorsNLocksSubsystem, Person,
   LockAuthorizationOperation, LockAuthorizationState,
 } from '@arcus/core';
 import Bridge from '@arcus/core/bridge';
@@ -34,27 +38,60 @@ export function LockAccessCard({ lock, subsystemAddress, entries }: LockAccessCa
   const dispatch = useAppDispatch();
   const people = useAppSelector(selectAllPeople);
   const [busyPerson, setBusyPerson] = useState<string | null>(null);
+  /**
+   * People this card asked the lock to remove, until their state settles; the value says
+   * whether the lock has reported them PENDING yet.
+   */
+  const [removing, setRemoving] = useState<ReadonlyMap<string, boolean>>(() => new Map());
 
   const lockAddress = lock[Base.ATTR_ADDRESS];
   const lockName = (lock[Device.ATTR_NAME] as string | undefined) ?? 'Lock';
   const slots = lock[DoorLock.ATTR_NUMPINSSUPPORTED] as number | undefined;
 
-  const getPersonName = useCallback((personAddr: string): string => {
-    const person = people.find((p) => p[Base.ATTR_ADDRESS] === personAddr);
-    if (!person) return 'Unknown person';
-    const first = person[Person.ATTR_FIRSTNAME] ?? '';
-    const last = person[Person.ATTR_LASTNAME] ?? '';
-    return `${first} ${last}`.trim() || 'Unknown person';
+  const namesByAddress = useMemo(() => {
+    const names = new Map<string, string>();
+    for (const person of people) {
+      const name = `${person[Person.ATTR_FIRSTNAME] ?? ''} ${person[Person.ATTR_LASTNAME] ?? ''}`.trim();
+      names.set(person[Base.ATTR_ADDRESS], name || 'Unknown person');
+    }
+    return names;
   }, [people]);
+
+  const getPersonName = useCallback(
+    (personAddr: string): string => namesByAddress.get(personAddr) ?? 'Unknown person',
+    [namesByAddress],
+  );
+
+  // Follow each removal: note when the lock reports PENDING, and forget it once the person is
+  // UNAUTHORIZED, or PENDING has come and gone (the lock gave up and kept the PIN).
+  let nextRemoving: Map<string, boolean> | null = null;
+  for (const e of entries) {
+    const seenPending = removing.get(e.person);
+    if (seenPending === undefined) continue;
+    const isPending = e.state === LockAuthorizationState.STATE_PENDING;
+    const done = e.state === LockAuthorizationState.STATE_UNAUTHORIZED || (seenPending && !isPending);
+    if (done || (isPending && !seenPending)) {
+      nextRemoving ??= new Map(removing);
+      if (done) nextRemoving.delete(e.person);
+      else nextRemoving.set(e.person, true);
+    }
+  }
+  if (nextRemoving) setRemoving(nextRemoving);
+
+  const isRemoving = useCallback(
+    (e: LockAuthorizationEntry) => e.state === LockAuthorizationState.STATE_PENDING && removing.has(e.person),
+    [removing],
+  );
 
   const { onLock, offLock } = useMemo(() => {
     const byName = (a: LockAuthorizationEntry, b: LockAuthorizationEntry) =>
       getPersonName(a.person).localeCompare(getPersonName(b.person));
+    const isOff = (e: LockAuthorizationEntry) => e.state === LockAuthorizationState.STATE_UNAUTHORIZED || isRemoving(e);
     return {
-      onLock: entries.filter((e) => e.state !== LockAuthorizationState.STATE_UNAUTHORIZED).sort(byName),
-      offLock: entries.filter((e) => e.state === LockAuthorizationState.STATE_UNAUTHORIZED).sort(byName),
+      onLock: entries.filter((e) => !isOff(e)).sort(byName),
+      offLock: entries.filter(isOff).sort(byName),
     };
-  }, [entries, getPersonName]);
+  }, [entries, getPersonName, isRemoving]);
 
   const handleToggle = useCallback(async (entry: LockAuthorizationEntry) => {
     if (busyPerson) return;
@@ -62,14 +99,15 @@ export function LockAccessCard({ lock, subsystemAddress, entries }: LockAccessCa
     setBusyPerson(entry.person);
     try {
       await Bridge.request(DoorsNLocksSubsystem.CMD_AUTHORIZEPEOPLE, subsystemAddress, {
-        device: lockAddress,
-        operations: [{
+        [AuthorizePeopleRequest.ATTR_DEVICE]: lockAddress,
+        [AuthorizePeopleRequest.ATTR_OPERATIONS]: [{
           [LockAuthorizationOperation.ATTR_PERSON]: entry.person,
           [LockAuthorizationOperation.ATTR_OPERATION]: authorize
             ? LockAuthorizationOperation.OPERATION_AUTHORIZE
             : LockAuthorizationOperation.OPERATION_DEAUTHORIZE,
         }],
       });
+      if (!authorize) setRemoving((prev) => new Map(prev).set(entry.person, false));
     } catch {
       const name = getPersonName(entry.person);
       dispatch(addNotification({
@@ -108,6 +146,7 @@ export function LockAccessCard({ lock, subsystemAddress, entries }: LockAccessCa
               lockAddress={lockAddress}
               entry={entry}
               name={getPersonName(entry.person)}
+              removing={isRemoving(entry)}
               disabled={busyPerson !== null}
               onToggle={handleToggle}
             />
@@ -127,6 +166,7 @@ export function LockAccessCard({ lock, subsystemAddress, entries }: LockAccessCa
                 lockAddress={lockAddress}
                 entry={entry}
                 name={getPersonName(entry.person)}
+                removing={isRemoving(entry)}
                 disabled={busyPerson !== null}
                 onToggle={handleToggle}
               />

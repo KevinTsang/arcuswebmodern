@@ -173,6 +173,62 @@ describe('LockAccessCard', () => {
     });
   });
 
+  describe('a removal still in progress', () => {
+    const withBob = (state: string) => [
+      { person: BOB, state: state as LockAuthorizationEntry['state'] },
+      { person: CAROL, state: LockAuthorizationState.STATE_UNAUTHORIZED },
+    ];
+    const card = (entries: LockAuthorizationEntry[]) => (
+      <LockAccessCard lock={lock} subsystemAddress={SUB} entries={entries} />
+    );
+
+    it('shows a person being removed as "Removing…", unticked, and not using a PIN slot', async () => {
+      const { rerender } = render(card(withBob(LockAuthorizationState.STATE_AUTHORIZED)));
+      expect(screen.getByTestId(`lock-access-slots-${LOCK}`)).toHaveTextContent('1 of 30 PINs used');
+
+      fireEvent.click(toggle(BOB));
+      await waitFor(() => expect(mockBridgeRequest).toHaveBeenCalled());
+      // The platform reports PENDING while the lock deletes the PIN.
+      rerender(card(withBob(LockAuthorizationState.STATE_PENDING)));
+
+      expect(toggle(BOB)).not.toBeChecked();
+      expect(toggle(BOB)).toBeDisabled();
+      expect(screen.getByTestId(`lock-person-${LOCK}-${BOB}`)).toHaveAttribute('data-removing', 'true');
+      expect(screen.getByTestId(`lock-person-${LOCK}-${BOB}`)).toHaveTextContent('Removing…');
+      expect(screen.getByTestId(`lock-access-slots-${LOCK}`)).toHaveTextContent('0 of 30 PINs used');
+    });
+
+    it('still treats a PENDING person it didn\'t remove as being added', () => {
+      render(card(withBob(LockAuthorizationState.STATE_PENDING)));
+      expect(toggle(BOB)).toBeChecked();
+      expect(screen.getByTestId(`lock-access-slots-${LOCK}`)).toHaveTextContent('1 of 30 PINs used');
+    });
+
+    it('forgets the removal once the lock confirms it', async () => {
+      const { rerender } = render(card(withBob(LockAuthorizationState.STATE_AUTHORIZED)));
+      fireEvent.click(toggle(BOB));
+      await waitFor(() => expect(mockBridgeRequest).toHaveBeenCalled());
+      rerender(card(withBob(LockAuthorizationState.STATE_PENDING)));
+      rerender(card(withBob(LockAuthorizationState.STATE_UNAUTHORIZED)));
+      // A later PENDING (say, re-adding Bob) is shown as an addition again.
+      rerender(card(withBob(LockAuthorizationState.STATE_PENDING)));
+
+      expect(toggle(BOB)).toBeChecked();
+      expect(screen.getByTestId(`lock-person-${LOCK}-${BOB}`)).not.toHaveAttribute('data-removing');
+    });
+
+    it('goes back to on-the-lock if the lock gives up and keeps the PIN', async () => {
+      const { rerender } = render(card(withBob(LockAuthorizationState.STATE_AUTHORIZED)));
+      fireEvent.click(toggle(BOB));
+      await waitFor(() => expect(mockBridgeRequest).toHaveBeenCalled());
+      rerender(card(withBob(LockAuthorizationState.STATE_PENDING)));
+      rerender(card(withBob(LockAuthorizationState.STATE_AUTHORIZED)));
+      rerender(card(withBob(LockAuthorizationState.STATE_PENDING)));
+
+      expect(toggle(BOB)).toBeChecked();
+    });
+  });
+
   describe('edge cases', () => {
     it('says when no one is on the lock', () => {
       renderCard([{ person: CAROL, state: LockAuthorizationState.STATE_UNAUTHORIZED }]);

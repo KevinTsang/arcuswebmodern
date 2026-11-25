@@ -6,21 +6,18 @@
  * Status (device summary), Access List (PINs per lock) and More (door chime).
  */
 
+import { resolveSubsystemAction } from '@/lib/subsystemTabs';
 import { DoorsLocksView } from './DoorsLocksView';
-import { DoorsLocksTabs, DOORS_LOCKS_TABS, type DoorsLocksAction } from './DoorsLocksTabs';
+import { SubsystemTabs } from './SubsystemTabs';
 import { LockAccessList } from './LockAccessList';
 import { DoorChimeSettings } from './DoorChimeSettings';
 
-function toAction(action: string): DoorsLocksAction {
-  return DOORS_LOCKS_TABS.find((t) => t.action === action)?.action ?? 'status';
-}
-
-export function DoorsLocksServiceView({ action = 'status' }: { action?: string }) {
-  const active = toAction(action);
+export function DoorsLocksServiceView({ action }: { action?: string }) {
+  const active = resolveSubsystemAction('doors-locks', action);
 
   return (
     <div>
-      <DoorsLocksTabs active={active} />
+      <SubsystemTabs slug="doors-locks" active={active} testIdPrefix="doors-tab" />
       {active === 'access-list' && <LockAccessList />}
       {active === 'more' && <DoorChimeSettings />}
       {active === 'status' && <DoorsLocksView />}
