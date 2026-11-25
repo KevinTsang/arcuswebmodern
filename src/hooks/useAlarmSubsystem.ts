@@ -16,7 +16,6 @@ export function useAlarmSubsystem() {
     const triggeredDevices = (security?.[SecuritySubsystem.ATTR_TRIGGEREDDEVICES] as string[]) ?? [];
     const offlineDevices = (security?.[SecuritySubsystem.ATTR_OFFLINEDEVICES] as string[]) ?? [];
     const callTree = (alarm?.[AlarmSubsystem.ATTR_CALLTREE] as AlarmCallEntry[]) ?? [];
-    const recordOnSecurity = (alarm?.[AlarmSubsystem.ATTR_RECORDONSECURITY] as boolean) ?? false;
     const fanShutoffOnSmoke = (alarm?.[AlarmSubsystem.ATTR_FANSHUTOFFONSMOKE] as boolean) ?? false;
     const fanShutoffOnCO = (alarm?.[AlarmSubsystem.ATTR_FANSHUTOFFONCO] as boolean) ?? false;
 
@@ -51,7 +50,6 @@ export function useAlarmSubsystem() {
       offlineDevices,
       callTree,
       modeSettings,
-      recordOnSecurity,
       fanShutoffOnSmoke,
       fanShutoffOnCO,
       securitySubsystem: security,

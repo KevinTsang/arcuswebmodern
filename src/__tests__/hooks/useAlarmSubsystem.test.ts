@@ -71,7 +71,6 @@ describe('useAlarmSubsystem', () => {
       expect(result.current.triggeredDevices).toEqual([]);
       expect(result.current.offlineDevices).toEqual([]);
       expect(result.current.callTree).toEqual([]);
-      expect(result.current.recordOnSecurity).toBe(false);
       expect(result.current.fanShutoffOnSmoke).toBe(false);
       expect(result.current.fanShutoffOnCO).toBe(false);
       expect(result.current.securitySubsystem).toBeUndefined();
@@ -188,18 +187,6 @@ describe('useAlarmSubsystem', () => {
   });
 
   describe('toggle settings from alarm subsystem', () => {
-    it('returns recordOnSecurity as true when set', () => {
-      setupSubsystems({
-        alarm: makeAlarmSubsystem({
-          [AlarmSubsystem.ATTR_RECORDONSECURITY]: true,
-        }),
-      });
-
-      const { result } = renderHook(() => useAlarmSubsystem());
-
-      expect(result.current.recordOnSecurity).toBe(true);
-    });
-
     it('returns fanShutoffOnSmoke as true when set', () => {
       setupSubsystems({
         alarm: makeAlarmSubsystem({
@@ -231,7 +218,6 @@ describe('useAlarmSubsystem', () => {
 
       const { result } = renderHook(() => useAlarmSubsystem());
 
-      expect(result.current.recordOnSecurity).toBe(false);
       expect(result.current.fanShutoffOnSmoke).toBe(false);
       expect(result.current.fanShutoffOnCO).toBe(false);
     });

@@ -68,4 +68,32 @@ describe('FormField', () => {
     render(<FormField label="Name" id="name" value="" onChange={jest.fn()} form={form} allValues={{}} />);
     expect(screen.queryByText('is required')).not.toBeInTheDocument();
   });
+
+  it('uses name as the validation key when it differs from the id', () => {
+    const form = {
+      markChanged: jest.fn(),
+      markVisited: jest.fn(),
+      validateSingle: jest.fn(),
+      getFieldErrors: jest.fn(() => ['is invalid']),
+      visited: { emailAddress: true },
+    } as any;
+    const allValues = { emailAddress: 'x' };
+    render(
+      <FormField label="Email" id="email" name="emailAddress" value="x" onChange={jest.fn()} form={form} allValues={allValues} />,
+    );
+    const input = screen.getByLabelText('Email');
+    expect(input).toHaveAttribute('id', 'email');
+    fireEvent.change(input, { target: { value: 'xy' } });
+    fireEvent.blur(input);
+    expect(form.markChanged).toHaveBeenCalledWith('emailAddress');
+    expect(form.markVisited).toHaveBeenCalledWith('emailAddress');
+    expect(form.validateSingle).toHaveBeenCalledWith('emailAddress', 'x', allValues);
+    expect(form.getFieldErrors).toHaveBeenCalledWith('emailAddress');
+    expect(screen.getByText('is invalid')).toBeInTheDocument();
+  });
+
+  it('applies className to the wrapper', () => {
+    const { container } = render(<FormField label="Email" id="email" className="mb-4" value="" onChange={jest.fn()} />);
+    expect(container.firstChild).toHaveClass('mb-4');
+  });
 });

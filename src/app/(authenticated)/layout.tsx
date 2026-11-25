@@ -12,6 +12,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import { loadPlaceDataThunk } from '@/store/thunks/loadPlaceDataThunk';
 import { getDefaultPlaceId } from '@/store/thunks/placeSelection';
+import { usePairingFlowExit } from '@/hooks/usePairingFlowExit';
 import Header from '@/components/Header';
 import AlarmBanner from '@/components/AlarmBanner';
 import InvitationBanner from '@/components/InvitationBanner';
@@ -63,6 +64,9 @@ export default function AuthenticatedLayout({
     }
     prevIncidentRef.current = currentIncident;
   }, [currentIncident, pathname, router]);
+
+  // End the pairing flow when the user leaves the pairing pages.
+  usePairingFlowExit();
 
   // Show loading while authenticating or loading place data
   if (authenticating || !authenticated) {

@@ -5,6 +5,8 @@ interface CompletedStageProps {
   isHubPairing: boolean;
   activeDevice: PairingDevice | null;
   productName: string;
+  /** Finish or Pair Another is under way. */
+  busy: boolean;
   onFinish: () => void;
   onPairAnother: () => void;
 }
@@ -13,6 +15,7 @@ export default function CompletedStage({
   isHubPairing,
   activeDevice,
   productName,
+  busy,
   onFinish,
   onPairAnother,
 }: CompletedStageProps) {
@@ -51,14 +54,16 @@ export default function CompletedStage({
         <button
           onClick={onFinish}
           data-testid="pairing-finish"
-          className="px-6 py-2.5 bg-peacock text-crane rounded-[var(--border-radius-base)] text-sm font-medium hover:bg-peacock/90"
+          disabled={busy}
+          className="px-6 py-2.5 bg-peacock text-crane rounded-[var(--border-radius-base)] text-sm font-medium hover:bg-peacock/90 disabled:opacity-50"
         >
           Go to Devices
         </button>
         <button
           onClick={onPairAnother}
           data-testid="pairing-pair-another"
-          className="px-4 py-2.5 border border-heron rounded-[var(--border-radius-base)] text-sm text-coot hover:bg-pigeon"
+          disabled={busy}
+          className="px-4 py-2.5 border border-heron rounded-[var(--border-radius-base)] text-sm text-coot hover:bg-pigeon disabled:opacity-50"
         >
           Pair Another
         </button>

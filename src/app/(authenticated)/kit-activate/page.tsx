@@ -17,6 +17,7 @@ import type { PairingDevice as PairingDeviceData } from '@/store/entityTypes';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import { selectAllDevices } from '@/store/slices/devicesSlice';
 import { addNotification } from '@/store/slices/uiSlice';
+import { endPairingFlow } from '@/store/slices/pairingSlice';
 
 type DeviceState = 'inactive' | 'customizable' | 'active' | 'mispaired' | 'missing';
 
@@ -159,6 +160,10 @@ export default function KitActivatePage() {
 
   // Finish kit activation
   const handleFinish = useCallback(async () => {
+    // DismissAll ends pairing, so the next pairing starts a new flow. The flow
+    // ends before DismissAll is sent, so leaving while the request is in
+    // flight doesn't send DismissAll again (usePairingFlowExit).
+    dispatch(endPairingFlow());
     if (pairingSubAddr) {
       try {
         await Bridge.request(PairingSubsystem.CMD_DISMISSALL, pairingSubAddr, {});
@@ -167,7 +172,7 @@ export default function KitActivatePage() {
       }
     }
     router.push('/devices');
-  }, [pairingSubAddr, router]);
+  }, [pairingSubAddr, router, dispatch]);
 
   if (loading) {
     return (
