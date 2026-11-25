@@ -14,8 +14,9 @@ import { useCareSubsystem } from '@/hooks/useCareSubsystem';
 import { useAppDispatch } from '@/store/hooks';
 import { addNotification } from '@/store/slices/uiSlice';
 import { testIdSlug } from '@/lib/testId';
+import { CareNotificationList } from './CareNotificationList';
 
-type CareViewTab = 'status' | 'behaviors';
+type CareViewTab = 'status' | 'behaviors' | 'notifications';
 
 export function CareView() {
   const [tab, setTab] = useState<CareViewTab>('status');
@@ -26,7 +27,7 @@ export function CareView() {
         <button
           onClick={() => setTab('status')}
           data-testid="care-tab-status"
-          className={`px-4 py-1.5 rounded text-sm font-medium transition-colors ${
+          className={`px-4 py-1.5 rounded-[var(--border-radius-base)] text-sm font-medium transition-colors ${
             tab === 'status' ? 'bg-crane text-swift shadow-sm' : 'text-grouse hover:text-coot'
           }`}
         >
@@ -35,15 +36,26 @@ export function CareView() {
         <button
           onClick={() => setTab('behaviors')}
           data-testid="care-tab-behaviors"
-          className={`px-4 py-1.5 rounded text-sm font-medium transition-colors ${
+          className={`px-4 py-1.5 rounded-[var(--border-radius-base)] text-sm font-medium transition-colors ${
             tab === 'behaviors' ? 'bg-crane text-swift shadow-sm' : 'text-grouse hover:text-coot'
           }`}
         >
           Behaviors
         </button>
+        <button
+          onClick={() => setTab('notifications')}
+          data-testid="care-tab-notifications"
+          className={`px-4 py-1.5 rounded-[var(--border-radius-base)] text-sm font-medium transition-colors ${
+            tab === 'notifications' ? 'bg-crane text-swift shadow-sm' : 'text-grouse hover:text-coot'
+          }`}
+        >
+          Notifications
+        </button>
       </div>
 
-      {tab === 'status' ? <CareStatus /> : <CareBehaviors />}
+      {tab === 'status' && <CareStatus />}
+      {tab === 'behaviors' && <CareBehaviors />}
+      {tab === 'notifications' && <CareNotificationList />}
     </div>
   );
 }

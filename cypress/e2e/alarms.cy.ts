@@ -186,6 +186,12 @@ describe('Alarm settings', () => {
     tid(`calltree-entry-${addr.guest}`).should('have.attr', 'data-enabled', 'true');
   });
 
+  it('keeps the place owner notified and shows the six-person limit', () => {
+    tid(`calltree-toggle-${addr.person}`).should('be.disabled')
+      .and('have.attr', 'title', 'The account owner is always notified');
+    tid('calltree-limit').should('contain', 'Up to 6 people can be notified');
+  });
+
   it('sets per-mode delays and sounds', () => {
     tid('exit-delay-on').should('have.value', '30').select('60');
     cy.expectRequest(Base.CMD_SETATTRIBUTES, (r) =>

@@ -515,6 +515,16 @@ export class MockPlatform {
     // Place
     [Place.CMD_LISTDEVICES]: () => ({ devices: this.entitiesIn('DRIV', 'dev') }),
     [Place.CMD_LISTPERSONS]: () => ({ persons: this.entitiesIn('SERV', 'person') }),
+    [Place.CMD_LISTPERSONSWITHACCESS]: () => {
+      const account = Object.values(this.data.entities).find((e) => e[Base.ATTR_TYPE] === 'account');
+      const ownerId = account?.[Account.ATTR_OWNER];
+      return {
+        persons: this.entitiesIn('SERV', 'person').map((person) => ({
+          person,
+          role: person[Base.ATTR_ID] === ownerId ? 'OWNER' : 'FULL_ACCESS',
+        })),
+      };
+    },
     [Place.CMD_GETHUB]: () => ({
       hub: Object.values(this.data.entities).find((e) => e[Base.ATTR_TYPE] === 'hub') ?? {},
     }),

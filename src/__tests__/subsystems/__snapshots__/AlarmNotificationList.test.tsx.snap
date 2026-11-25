@@ -13,11 +13,17 @@ exports[`AlarmNotificationList matches snapshot 1`] = `
     >
       People will be notified in this order when an alarm is triggered.
     </p>
+    <p
+      class="text-xs text-grouse mb-3"
+      data-testid="calltree-limit"
+    >
+      Up to 6 people can be notified (2 of 6 selected).
+    </p>
     <div
       class="space-y-2"
     >
       <div
-        class="flex items-center gap-3 px-3 py-2.5 rounded border border-heron "
+        class="flex items-center gap-3 px-3 py-2.5 rounded-[var(--border-radius-base)] border border-heron "
         data-enabled="true"
         data-position="1"
         data-testid="calltree-entry-SERV:person:person-1"
@@ -74,7 +80,7 @@ exports[`AlarmNotificationList matches snapshot 1`] = `
         <button
           aria-checked="true"
           aria-label="Disable notifications for Alice Johnson"
-          class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 bg-peacock"
+          class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 disabled:cursor-not-allowed bg-peacock"
           data-testid="calltree-toggle-SERV:person:person-1"
           role="switch"
         >
@@ -84,7 +90,7 @@ exports[`AlarmNotificationList matches snapshot 1`] = `
         </button>
       </div>
       <div
-        class="flex items-center gap-3 px-3 py-2.5 rounded border border-heron "
+        class="flex items-center gap-3 px-3 py-2.5 rounded-[var(--border-radius-base)] border border-heron "
         data-enabled="true"
         data-position="2"
         data-testid="calltree-entry-SERV:person:person-2"
@@ -140,7 +146,7 @@ exports[`AlarmNotificationList matches snapshot 1`] = `
         <button
           aria-checked="true"
           aria-label="Disable notifications for Bob Smith"
-          class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 bg-peacock"
+          class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 disabled:cursor-not-allowed bg-peacock"
           data-testid="calltree-toggle-SERV:person:person-2"
           role="switch"
         >
@@ -150,7 +156,7 @@ exports[`AlarmNotificationList matches snapshot 1`] = `
         </button>
       </div>
       <div
-        class="flex items-center gap-3 px-3 py-2.5 rounded border border-heron opacity-50"
+        class="flex items-center gap-3 px-3 py-2.5 rounded-[var(--border-radius-base)] border border-heron opacity-50"
         data-enabled="false"
         data-position="3"
         data-testid="calltree-entry-SERV:person:person-3"
@@ -207,7 +213,7 @@ exports[`AlarmNotificationList matches snapshot 1`] = `
         <button
           aria-checked="false"
           aria-label="Enable notifications for Carol Davis"
-          class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 bg-heron"
+          class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 disabled:cursor-not-allowed bg-heron"
           data-testid="calltree-toggle-SERV:person:person-3"
           role="switch"
         >

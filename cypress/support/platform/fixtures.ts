@@ -307,6 +307,10 @@ export function createFixture(): PlatformData {
       [CareSubsystem.ATTR_ALARMSTATE]: CareSubsystem.ALARMSTATE_READY,
       [CareSubsystem.ATTR_ALARMMODE]: CareSubsystem.ALARMMODE_ON,
       [CareSubsystem.ATTR_SILENT]: false,
+      [CareSubsystem.ATTR_CALLTREE]: [
+        { person: addr.person, enabled: true },
+        { person: addr.guest, enabled: false },
+      ],
     }),
     subsystem(PresenceSubsystem.NAMESPACE, {
       [PresenceSubsystem.ATTR_PEOPLEATHOME]: [addr.person],
